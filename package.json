@@ -19,7 +19,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "ip": "node -e \"const os=require('os');const nets=os.networkInterfaces();Object.values(nets).flat().filter(i=>i.family==='IPv4'&&!i.internal).forEach(i=>console.log('Network URL: http://'+i.address+':3000'))\""
   },
   "eslintConfig": {
     "extends": [
