@@ -1,0 +1,186 @@
+[debug] [2025-10-29T07:19:44.307Z] ----------------------------------------------------------------------
+[debug] [2025-10-29T07:19:44.308Z] Command:       /usr/local/share/nvm/versions/node/v22.17.0/bin/node /home/codespace/nvm/current/bin/firebase emulators:start
+[debug] [2025-10-29T07:19:44.309Z] CLI Version:   14.22.0
+[debug] [2025-10-29T07:19:44.309Z] Platform:      linux
+[debug] [2025-10-29T07:19:44.309Z] Node Version:  v22.17.0
+[debug] [2025-10-29T07:19:44.309Z] Time:          Wed Oct 29 2025 07:19:44 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-10-29T07:19:44.309Z] Env Overrides: GITHUB_API_URL, GITHUB_API_URL
+[debug] [2025-10-29T07:19:44.310Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-29T07:19:44.593Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-29T07:19:44.593Z] > authorizing via signed-in user (alexmouth01@gmail.com)
+[debug] [2025-10-29T07:19:44.642Z] openjdk version "21.0.7" 2025-04-15 LTS
+OpenJDK Runtime Environment Microsoft-11369942 (build 21.0.7+6-LTS)
+OpenJDK 64-Bit Server VM Microsoft-11369942 (build 21.0.7+6-LTS, mixed mode, sharing)
+
+[debug] [2025-10-29T07:19:44.647Z] Parsed Java major version: 21
+[info] i  emulators: Starting emulators: functions, firestore, hosting, extensions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions, firestore, hosting, extensions"}}
+[debug] [2025-10-29T07:19:44.649Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:44.649Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:44.650Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/wellness-marketplace/services/cloudresourcemanager.googleapis.com [none]
+[debug] [2025-10-29T07:19:44.650Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/wellness-marketplace/services/cloudresourcemanager.googleapis.com x-goog-quota-user=projects/wellness-marketplace
+[debug] [2025-10-29T07:19:45.148Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/wellness-marketplace/services/cloudresourcemanager.googleapis.com 403
+[debug] [2025-10-29T07:19:45.148Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/wellness-marketplace/services/cloudresourcemanager.googleapis.com [omitted]
+[debug] [2025-10-29T07:19:45.149Z] Unable to check that https://cloudresourcemanager.googleapis.com is enabled on wellness-marketplace. Calls to it will fail if it is not enabled
+[debug] [2025-10-29T07:19:45.149Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:45.149Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:45.149Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/wellness-marketplace [none]
+[debug] [2025-10-29T07:19:45.456Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/wellness-marketplace 403
+[debug] [2025-10-29T07:19:45.457Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/wellness-marketplace {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[error] ⬢  extensions: Unable to look up project number for wellness-marketplace.
+ If this is a real project, ensure that you are logged in and have access to it.
+ If this is a fake project, please use a project ID starting with 'demo-' to skip production calls.
+ Continuing with a fake project number - secrets and other features that require production access may behave unexpectedly. {"metadata":{"emulator":{"name":"extensions"},"message":"Unable to look up project number for wellness-marketplace.\n If this is a real project, ensure that you are logged in and have access to it.\n If this is a fake project, please use a project ID starting with 'demo-' to skip production calls.\n Continuing with a fake project number - secrets and other features that require production access may behave unexpectedly."}}
+[debug] [2025-10-29T07:19:45.463Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.463Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.463Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.463Z] [hosting] Hosting Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.463Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4402},{"address":"::1","family":"IPv6","port":4402}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4002},{"address":"::1","family":"IPv6","port":4002}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4502}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8082}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-10-29T07:19:45.469Z] Emulator locator file path: /tmp/hub-wellness-marketplace.json
+[warn] ⚠  emulators: It seems that you are running multiple instances of the emulator suite for project wellness-marketplace. This may result in unexpected behavior. 
+[debug] [2025-10-29T07:19:45.469Z] [hub] writing locator at /tmp/hub-wellness-marketplace.json
+[debug] [2025-10-29T07:19:45.474Z] [Extensions] Started Extensions emulator, this is a noop.
+[debug] [2025-10-29T07:19:45.475Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.475Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.475Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-29T07:19:45.476Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4402},{"address":"::1","family":"IPv6","port":4402}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4002},{"address":"::1","family":"IPv6","port":4002}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4502}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8082}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5002}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, database, pubsub, storage, dataconnect\u001b[22m"}}
+[debug] [2025-10-29T07:19:45.488Z] defaultcredentials: writing to file /home/codespace/.config/firebase/alexmouth01_gmail_com_application_default_credentials.json
+[debug] [2025-10-29T07:19:45.490Z] Setting GAC to /home/codespace/.config/firebase/alexmouth01_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /home/codespace/.config/firebase/alexmouth01_gmail_com_application_default_credentials.json"}}
+[debug] [2025-10-29T07:19:45.490Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:45.490Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:45.490Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/adminSdkConfig [none]
+[debug] [2025-10-29T07:19:45.656Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/adminSdkConfig 403
+[debug] [2025-10-29T07:19:45.656Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/adminSdkConfig {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-10-29T07:19:45.656Z] Failed to get Admin SDK config for wellness-marketplace, falling back to cache Failed to get Admin SDK for Firebase project wellness-marketplace. Please make sure the project exists and your account has permission to access it. {"name":"FirebaseError","children":[],"exit":2,"message":"Failed to get Admin SDK for Firebase project wellness-marketplace. Please make sure the project exists and your account has permission to access it.","original":{"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}},"response":{"statusCode":403}},"exit":1,"message":"Request to https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/adminSdkConfig had HTTP Error: 403, The caller does not have permission","status":403},"status":500}
+[warn] ⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect. {"metadata":{"emulator":{"name":"functions"},"message":"Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect."}}
+[debug] [2025-10-29T07:19:45.666Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2025-10-29T07:19:45.667Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2025-10-29T07:19:45.667Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/home/codespace/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar","--host","127.0.0.1","--port",8082,"--websocket_port",9150,"--project_id","wellness-marketplace","--rules","/workspaces/wellcafeland/wellness-marketplace/firestore.rules","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8082} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/home/codespace/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar\",\"--host\",\"127.0.0.1\",\"--port\",8082,\"--websocket_port\",9150,\"--project_id\",\"wellness-marketplace\",\"--rules\",\"/workspaces/wellcafeland/wellness-marketplace/firestore.rules\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8082}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to \u001b[1mfirestore-debug.log\u001b[22m"}}
+[debug] [2025-10-29T07:19:47.307Z] Oct 29, 2025 7:19:47 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Oct 29, 2025 7:19:47 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2025-10-29T07:19:47.336Z] API endpoint: http:// {"metadata":{"emulator":{"name":"firestore"},"message":"API endpoint: http://"}}
+[debug] [2025-10-29T07:19:47.337Z] 127.0.0.1:8082
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8082
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8082
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"127.0.0.1:8082\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8082\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8082\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[debug] [2025-10-29T07:19:47.489Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:47.489Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:47.490Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/wellness-marketplace/sites 
+[debug] [2025-10-29T07:19:47.846Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/wellness-marketplace/sites 403
+[debug] [2025-10-29T07:19:47.847Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/wellness-marketplace/sites {"error":{"code":403,"message":"Permission 'firebasehosting.sites.get' denied on resource 'projects/wellness-marketplace' (or it may not exist)","status":"PERMISSION_DENIED"}}
+[debug] [2025-10-29T07:19:47.847Z] Failed to list hosting sites
+[debug] Request to https://firebasehosting.googleapis.com/v1beta1/projects/wellness-marketplace/sites had HTTP Error: 403, Permission 'firebasehosting.sites.get' denied on resource 'projects/wellness-marketplace' (or it may not exist)
+[debug] [2025-10-29T07:19:47.847Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:47.847Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:47.847Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/webApps/-/config [none]
+[debug] [2025-10-29T07:19:47.949Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/webApps/-/config 403
+[debug] [2025-10-29T07:19:47.949Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/webApps/-/config {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-10-29T07:19:47.949Z] fetchWebSetup error: FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace/webApps/-/config had HTTP Error: 403, The caller does not have permission
+[warn] ⚠  hosting: Authentication error when trying to fetch your current web app configuration, have you run firebase login? 
+[warn] ⚠  hosting: Could not fetch web app configuration and there is no cached configuration on this machine. Check your internet connection and make sure you are authenticated. To continue, you must call firebase.initializeApp({...}) in your code before using Firebase. 
+[debug] [2025-10-29T07:19:47.950Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:47.950Z] Checked if tokens are valid: true, expires at: 1761724993057
+[debug] [2025-10-29T07:19:47.951Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace [none]
+[debug] [2025-10-29T07:19:48.149Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace 403
+[debug] [2025-10-29T07:19:48.149Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-10-29T07:19:48.149Z] Request to https://firebase.googleapis.com/v1beta1/projects/wellness-marketplace had HTTP Error: 403, The caller does not have permission
+[debug] [2025-10-29T07:19:48.150Z] Specified "public" directory "dist" does not exist; Deploy to Hosting site "wellness-marketplace" may fail or be empty.
+[info] i  hosting[wellness-marketplace]: Serving hosting files from: dist {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mdist\u001b[22m"}}
+[info] ✔  hosting[wellness-marketplace]: Local server: http://127.0.0.1:5002 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://127.0.0.1:5002\u001b[22m\u001b[24m"}}
+[debug] [2025-10-29T07:19:48.171Z] [Extensions] Connecting Extensions emulator, this is a noop.
+[info] i  functions: Watching "/workspaces/wellcafeland/wellness-marketplace/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/workspaces/wellcafeland/wellness-marketplace/functions\" for Cloud Functions..."}}
+[debug] [2025-10-29T07:19:48.178Z] Validating nodejs source
+[debug] [2025-10-29T07:19:48.787Z] > [functions] package.json contents: {
+  "name": "wellness-marketplace-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions for the Wellness Marketplace",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "firebase-admin": "^10.0.0",
+    "firebase-functions": "^3.14.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4",
+    "eslint": "^7.32.0",
+    "@typescript-eslint/parser": "^5.10.0",
+    "@typescript-eslint/eslint-plugin": "^5.10.0"
+  },
+  "engines": {
+    "node": "14"
+  },
+  "private": true
+}
+[debug] [2025-10-29T07:19:48.788Z] Building nodejs source
+[debug] [2025-10-29T07:19:48.788Z] Failed to find version of module node: reached end of search path /workspaces/wellcafeland/wellness-marketplace/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "14" doesn't match your global version "22". Using node@22 from host. 
+[debug] [2025-10-29T07:19:48.790Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-10-29T07:19:48.793Z] Found firebase-functions binary at '/workspaces/wellcafeland/wellness-marketplace/node_modules/.bin/firebase-functions'
+[info] Serving at port 8241
+
+[error] TypeError: functions.firestore.document is not a function
+    at file:///workspaces/wellcafeland/wellness-marketplace/functions/src/index.ts:9:4
+    at ModuleJobSync.runSync (node:internal/modules/esm/module_job:436:37)
+    at ModuleLoader.importSyncForRequire (node:internal/modules/esm/loader:427:47)
+    at loadESMFromCJS (node:internal/modules/cjs/loader:1561:24)
+    at Module._compile (node:internal/modules/cjs/loader:1712:5)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+
+[debug] [2025-10-29T07:19:49.232Z] Got response code 400; body Failed to generate manifest from function source: functions.firestore.document is not a function
+[error] ⬢  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}
+[debug] [2025-10-29T07:19:53.247Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4002/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────┬────────────────┬──────────────────────────────────┐
+│ Emulator   │ Host:Port      │ View in Emulator UI              │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Functions  │ 127.0.0.1:5001 │ http://127.0.0.1:4002/functions  │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Firestore  │ 127.0.0.1:8082 │ http://127.0.0.1:4002/firestore  │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Hosting    │ 127.0.0.1:5002 │ n/a                              │
+├────────────┼────────────────┼──────────────────────────────────┤
+│ Extensions │ 127.0.0.1:5001 │ http://127.0.0.1:4002/extensions │
+└────────────┴────────────────┴──────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4402
+  Other reserved ports: 4502, 9150
+┌─────────────────────────┬───────────────┬─────────────────────┐
+│ Extension Instance Name │ Extension Ref │ View in Emulator UI │
+└─────────────────────────┴───────────────┴─────────────────────┘
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2025-10-29T07:49:18.170Z] Oct 29, 2025 7:49:18 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Oct 29, 2025 7:49:18 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-10-29T07:49:19.514Z] Oct 29, 2025 7:49:19 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Oct 29, 2025 7:49:19 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected non-HTTP/2 connection.\n"}}
+[debug] [2025-10-29T07:49:19.585Z] Oct 29, 2025 7:49:19 AM io.gapi.emulators.netty.NotFoundHandler handleRequest
+INFO: Unknown request URI: /favicon.ico
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Oct 29, 2025 7:49:19 AM io.gapi.emulators.netty.NotFoundHandler handleRequest\nINFO: Unknown request URI: /favicon.ico\n"}}

@@ -28,7 +28,7 @@ const Header = ({ image = defaultImage, title = "Wellnesscafe" }) => {
             <div className="image-wrapper">
               <img 
                 src={image} 
-                alt={`${title} wellness image`} 
+                alt={title} 
                 className="wellness-image"
               />
             </div>
