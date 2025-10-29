@@ -1,15 +1,11 @@
+// ...existing code...
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './Views/HomePage';
-
 import Signup from './features/auth/Signup';
 
-// inside <Routes>
-<Route path="/signup" element={<Signup/>}/>
-
-
-// Section pages (create these files next)
+// Section pages (create/ensure these files exist)
 import Recovery from './Views/Recovery';
 import Yoga from './Views/Yoga';
 import Acuwellness from './Views/Acuwellness';
@@ -23,6 +19,7 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/recovery" element={<Recovery />} />
         <Route path="/yoga" element={<Yoga />} />
         <Route path="/acuwellness" element={<Acuwellness />} />
@@ -35,3 +32,4 @@ function App() {
 }
 
 export default App;
+// ...existing code...
