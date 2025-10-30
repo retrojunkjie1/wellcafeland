@@ -6,6 +6,15 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    {
+  "emulators": {
+    "functions": { "host": "127.0.0.1", "port": 5003 },
+    "firestore": { "host": "127.0.0.1", "port": 8085 },
+    "hosting": { "host": "127.0.0.1", "port": 5004 },
+    "ui": { "enabled": true, "host": "127.0.0.1", "port": 4002 },
+    "logging": { "host": "127.0.0.1", "port": 4502 }
+  }
+}
     "rewrites": [
       {
         "source": "**",
