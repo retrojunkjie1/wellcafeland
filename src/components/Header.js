@@ -58,15 +58,7 @@ const Header = ({ image = defaultImage, title = "Wellnesscafe" }) => {
           </div>
         </div>
       </div>
-    </header>    # check running node processes
-    ps aux | grep -E "node|react-scripts" | grep -v grep
-    
-    # check listening ports (dev server)
-    sudo lsof -iTCP -sTCP:LISTEN -Pn | grep 300
-    
-    # if dev server not running, start and capture output
-    npm start
-    # copy any errors shown
+    </header>
   );
 };
 
