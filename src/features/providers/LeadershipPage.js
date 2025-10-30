@@ -177,7 +177,10 @@ const LeadershipPage = () => {
                   <h4>Areas of Expertise:</h4>
                   <div className="expertise-tags">
                     {exec.expertise.map((skill) => (
-                      <span key={`${exec.name}-${skill}`} className="expertise-tag">
+                      <span
+                        key={`${exec.name}-${skill}`}
+                        className="expertise-tag"
+                      >
                         {skill}
                       </span>
                     ))}

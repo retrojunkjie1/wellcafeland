@@ -277,8 +277,7 @@ const ProviderSignup = () => {
       <form className="pv-form" onSubmit={handleSubmit}>
         <div className="pv-grid">
           <label>
-            Full name
-            {" "}
+            Full name{" "}
             <input
               name="fullName"
               value={form.fullName}
@@ -287,13 +286,11 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            Organization (optional)
-            {" "}
+            Organization (optional){" "}
             <input name="orgName" value={form.orgName} onChange={onChange} />
           </label>
           <label>
-            Email
-            {" "}
+            Email{" "}
             <input
               name="email"
               type="email"
@@ -303,13 +300,10 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            Phone
-            {" "}
-            <input name="phone" value={form.phone} onChange={onChange} />
+            Phone <input name="phone" value={form.phone} onChange={onChange} />
           </label>
           <label>
-            Role
-            {" "}
+            Role{" "}
             <select name="role" value={form.role} onChange={onChange}>
               {roles.map((r) => (
                 <option key={r} value={r}>
@@ -319,8 +313,7 @@ const ProviderSignup = () => {
             </select>
           </label>
           <label>
-            Years experience
-            {" "}
+            Years experience{" "}
             <input
               name="years"
               type="number"
@@ -330,8 +323,7 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            Rate per hour (USD)
-            {" "}
+            Rate per hour (USD){" "}
             <input
               name="ratePerHour"
               type="number"
@@ -341,18 +333,14 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            City
-            {" "}
-            <input name="city" value={form.city} onChange={onChange} />
+            City <input name="city" value={form.city} onChange={onChange} />
           </label>
           <label>
-            Country
-            {" "}
+            Country{" "}
             <input name="country" value={form.country} onChange={onChange} />
           </label>
           <label>
-            Calendar link (Cal/Calendly)
-            {" "}
+            Calendar link (Cal/Calendly){" "}
             <input
               name="calendarUrl"
               value={form.calendarUrl}
@@ -362,8 +350,7 @@ const ProviderSignup = () => {
         </div>
 
         <label>
-          Certifications
-          {" "}
+          Certifications{" "}
           <textarea
             name="certifications"
             rows="2"
@@ -372,8 +359,7 @@ const ProviderSignup = () => {
           />
         </label>
         <label>
-          Bio
-          {" "}
+          Bio{" "}
           <textarea
             name="bio"
             rows="4"
@@ -385,8 +371,7 @@ const ProviderSignup = () => {
 
         <div className="pv-grid">
           <label>
-            License Number
-            {" "}
+            License Number{" "}
             <input
               name="licenseNumber"
               value={form.licenseNumber}
@@ -394,8 +379,7 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            License State/Region
-            {" "}
+            License State/Region{" "}
             <input
               name="licenseState"
               value={form.licenseState}
@@ -403,8 +387,7 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            License Expiry
-            {" "}
+            License Expiry{" "}
             <input
               name="licenseExpires"
               type="date"
@@ -413,8 +396,7 @@ const ProviderSignup = () => {
             />
           </label>
           <label>
-            NPI (if applicable)
-            {" "}
+            NPI (if applicable){" "}
             <input
               name="npiNumber"
               value={form.npiNumber}
