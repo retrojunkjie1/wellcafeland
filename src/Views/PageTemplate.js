@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import Header from "../components/Header";
 import "./PageTemplate.css";
 import productImage from "../assets/images/WellnessCafe-Product-v1.png";
@@ -65,8 +66,11 @@ const PageTemplate = ({ title, intro, features, ctaText, pageType }) => {
 
       {/* === FEATURES SECTION === */}
       <section className="page-features">
-        {features.map((feature, index) => (
-          <div key={index} className="feature-card">
+        {features.map((feature) => (
+          <div
+            key={`${feature.title}-${feature.desc.substring(0, 20)}`}
+            className="feature-card"
+          >
             <div className="wellness-icon-card wellness-icon-sm">
               {feature.icon}
             </div>
@@ -83,6 +87,28 @@ const PageTemplate = ({ title, intro, features, ctaText, pageType }) => {
       </section>
     </div>
   );
+};
+
+PageTemplate.propTypes = {
+  title: PropTypes.string,
+  intro: PropTypes.string,
+  features: PropTypes.arrayOf(
+    PropTypes.shape({
+      title: PropTypes.string,
+      desc: PropTypes.string,
+      icon: PropTypes.node,
+    })
+  ),
+  ctaText: PropTypes.string,
+  pageType: PropTypes.string,
+};
+
+PageTemplate.defaultProps = {
+  title: "",
+  intro: "",
+  features: [],
+  ctaText: "",
+  pageType: "",
 };
 
 export default PageTemplate;

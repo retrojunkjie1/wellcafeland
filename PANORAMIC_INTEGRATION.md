@@ -33,12 +33,15 @@ Once images are generated:
 
 1. **Add image files** to `src/assets/images/` folder
 2. **Uncomment imports** in `src/components/TopFold.js`:
+
    ```js
    import heroPanorama from "../assets/images/hero-panorama.png";
    import loungePanorama from "../assets/images/wellness-lounge-panorama.png";
    import zenLandscapePanorama from "../assets/images/meditation-landscape-panorama.png";
    ```
+
 3. **Uncomment image element** in TopFold component:
+
    ```jsx
    <img
      src={heroPanorama}
@@ -46,6 +49,7 @@ Once images are generated:
      className="hero-panorama-image"
    />
    ```
+
 4. **Test build**: `npm run build`
 
 ## 🎯 Expected Result

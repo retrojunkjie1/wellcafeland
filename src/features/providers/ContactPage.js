@@ -143,8 +143,8 @@ const ContactPage = () => {
         <div className="contact-methods">
           <h2>How Can We Help?</h2>
           <div className="methods-grid">
-            {contactMethods.map((method, index) => (
-              <div key={index} className="contact-method-card">
+            {contactMethods.map((method) => (
+              <div key={method.title} className="contact-method-card">
                 <div className="method-icon">{method.icon}</div>
                 <h3>{method.title}</h3>
                 <p>{method.description}</p>
@@ -252,12 +252,12 @@ const ContactPage = () => {
         <div className="offices-section">
           <h2>Our Offices</h2>
           <div className="offices-grid">
-            {offices.map((office, index) => (
-              <div key={index} className="office-card">
+            {offices.map((office) => (
+              <div key={office.name} className="office-card">
                 <h3>{office.name}</h3>
                 <address>
-                  {office.address.split("\n").map((line, i) => (
-                    <span key={i}>
+                  {office.address.split("\n").map((line) => (
+                    <span key={`${office.name}-${line}`}>
                       {line}
                       <br />
                     </span>

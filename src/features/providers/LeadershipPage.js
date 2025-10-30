@@ -162,8 +162,8 @@ const LeadershipPage = () => {
         <div className="executives-section">
           <h2>Executive Leadership</h2>
           <div className="executives-grid">
-            {executives.map((exec, index) => (
-              <div key={index} className="executive-card">
+            {executives.map((exec) => (
+              <div key={exec.name} className="executive-card">
                 <div className="executive-header">
                   <div className="executive-avatar">{exec.image}</div>
                   <div className="executive-info">
@@ -176,8 +176,8 @@ const LeadershipPage = () => {
                 <div className="executive-expertise">
                   <h4>Areas of Expertise:</h4>
                   <div className="expertise-tags">
-                    {exec.expertise.map((skill, skillIndex) => (
-                      <span key={skillIndex} className="expertise-tag">
+                    {exec.expertise.map((skill) => (
+                      <span key={`${exec.name}-${skill}`} className="expertise-tag">
                         {skill}
                       </span>
                     ))}
@@ -197,8 +197,8 @@ const LeadershipPage = () => {
             community health to ensure WellnessCafe fulfills its mission.
           </p>
           <div className="board-grid">
-            {boardMembers.map((member, index) => (
-              <div key={index} className="board-member-card">
+            {boardMembers.map((member) => (
+              <div key={member.name} className="board-member-card">
                 <h3>{member.name}</h3>
                 <p className="board-title">{member.title}</p>
                 <p className="board-affiliation">{member.affiliation}</p>
@@ -217,8 +217,8 @@ const LeadershipPage = () => {
             agility to innovate and adapt to emerging needs.
           </p>
           <div className="departments-grid">
-            {departments.map((dept, index) => (
-              <div key={index} className="department-card">
+            {departments.map((dept) => (
+              <div key={dept.name} className="department-card">
                 <h3>{dept.name}</h3>
                 <p className="department-description">{dept.description}</p>
                 <div className="department-details">

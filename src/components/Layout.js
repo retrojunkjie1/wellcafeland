@@ -1,5 +1,6 @@
 // src/components/Layout.js
 import React from 'react';
+import PropTypes from 'prop-types';
 import {motion, AnimatePresence} from 'framer-motion';
 import {useLocation} from 'react-router-dom';
 import Header from './Header';
@@ -26,6 +27,11 @@ const Layout = ({children, theme='default'}) => {
       <Footer />
     </div>
   );
+};
+
+Layout.propTypes = {
+  children: PropTypes.node,
+  theme: PropTypes.string,
 };
 
 export default Layout;

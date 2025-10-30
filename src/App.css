@@ -9,7 +9,7 @@
 /* --- Hero Section --- */
 .wellcafe-hero {
   background: linear-gradient(135deg, #cbb4ff 0%, #d4b483 100%);
-  color: #fff;
+  color: #1a1a1a;
   padding: 3rem 1.5rem;
   display: flex;
   flex-direction: column;

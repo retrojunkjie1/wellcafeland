@@ -101,8 +101,8 @@ const AboutPage = () => {
         <div className="values-section">
           <h2>Our Core Values</h2>
           <div className="values-grid">
-            {values.map((value, index) => (
-              <div key={index} className="value-card">
+            {values.map((value) => (
+              <div key={value.title} className="value-card">
                 <div className="value-icon">{value.icon}</div>
                 <h3>{value.title}</h3>
                 <p>{value.description}</p>
@@ -164,8 +164,8 @@ const AboutPage = () => {
         <div className="impact-section">
           <h2>Our Impact</h2>
           <div className="stats-grid">
-            {stats.map((stat, index) => (
-              <div key={index} className="stat-card">
+            {stats.map((stat) => (
+              <div key={`${stat.number}-${stat.label}`} className="stat-card">
                 <div className="stat-number">{stat.number}</div>
                 <div className="stat-label">{stat.label}</div>
               </div>

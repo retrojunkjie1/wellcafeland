@@ -77,7 +77,7 @@ const ProductPage = () => (
         </details>
       </section>
       <div className="cta-banner">
-        Ready when you are — start a 2‑minute check‑in now.
+        Ready when you are — start a 2‑minute check‑in now.{" "}
         <a className="btn" href="/check-in">
           Start check‑in
         </a>

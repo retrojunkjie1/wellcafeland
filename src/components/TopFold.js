@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./TopFold.css";
-// TODO: Uncomment these imports once panoramic images are generated
 import heroPanorama from "../assets/images/wellnesscafe -HomePage-header-v1.png";
-// import loungePanorama from '../assets/images/wellness-lounge-panorama.png';
-// import zenLandscapePanorama from '../assets/images/meditation-landscape-panorama.png';
 
 const TopFold = () => {
   const navigate = useNavigate();
@@ -22,11 +19,17 @@ const TopFold = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleKeyDown = (event, callback) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      callback();
+    }
+  };
+
   return (
     <section className="topfold-container">
       {/* Panoramic Hero Background */}
       <div className="panoramic-background">
-        {/* TODO: Uncomment once hero-panorama.png is generated */}
         <img
           src={heroPanorama}
           alt="WellnessCafe Hero Panorama"
@@ -37,12 +40,54 @@ const TopFold = () => {
       <nav className={`topfold-navbar ${navActive ? "active" : ""}`}>
         <div className="nav-logo">WELLNESSCAFE</div>
         <ul className="nav-links">
-          <li onClick={() => navigate("/")}>Home</li>
-          <li onClick={() => navigate("/product")}>Product</li>
-          <li onClick={() => navigate("/tools")}>Tools</li>
-          <li onClick={() => navigate("/events")}>Events</li>
-          <li onClick={() => navigate("/spiritual")}>Spiritual</li>
-          <li onClick={() => navigate("/blog")}>Blog</li>
+          <li
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/"))}
+          >
+            Home
+          </li>
+          <li
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/product")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/product"))}
+          >
+            Product
+          </li>
+          <li
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/tools")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/tools"))}
+          >
+            Tools
+          </li>
+          <li
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/events")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/events"))}
+          >
+            Events
+          </li>
+          <li
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/spiritual")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/spiritual"))}
+          >
+            Spiritual
+          </li>
+          <li
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/blog")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/blog"))}
+          >
+            Blog
+          </li>
         </ul>
         <div className="nav-buttons">
           <button
@@ -71,22 +116,43 @@ const TopFold = () => {
           mindfulness, and personal growth.
         </p>
         <div className="topfold-features">
-          <div className="feature-item" onClick={() => navigate("/recovery")}>
+          <div
+            className="feature-item"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/recovery")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/recovery"))}
+          >
             <span className="feature-icon">🧠</span>
             <span>AI-Powered Recovery Support</span>
           </div>
-          <div className="feature-item" onClick={() => navigate("/yoga")}>
+          <div
+            className="feature-item"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/yoga")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/yoga"))}
+          >
             <span className="feature-icon">🧘</span>
             <span>Guided Mindfulness & Yoga</span>
           </div>
           <div
             className="feature-item"
+            role="button"
+            tabIndex={0}
             onClick={() => navigate("/acuwellness")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/acuwellness"))}
           >
             <span className="feature-icon">🌿</span>
             <span>Acuwellness Integration</span>
           </div>
-          <div className="feature-item" onClick={() => navigate("/events")}>
+          <div
+            className="feature-item"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/events")}
+            onKeyDown={(e) => handleKeyDown(e, () => navigate("/events"))}
+          >
             <span className="feature-icon">👥</span>
             <span>Community Events & Support</span>
           </div>

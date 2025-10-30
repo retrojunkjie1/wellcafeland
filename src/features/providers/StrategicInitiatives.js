@@ -164,8 +164,8 @@ const StrategicInitiatives = () => {
         <div className="initiatives-section">
           <h2>Core Strategic Initiatives</h2>
           <div className="initiatives-grid">
-            {initiatives.map((initiative, index) => (
-              <div key={index} className="initiative-card">
+            {initiatives.map((initiative) => (
+              <div key={initiative.title} className="initiative-card">
                 <div className="initiative-header">
                   <div className="initiative-icon">{initiative.icon}</div>
                   <h3>{initiative.title}</h3>
@@ -177,8 +177,15 @@ const StrategicInitiatives = () => {
                 <div className="initiative-details">
                   <h4>Key Objectives:</h4>
                   <ul>
-                    {initiative.objectives.map((objective, objIndex) => (
-                      <li key={objIndex}>{objective}</li>
+                    {initiative.objectives.map((objective) => (
+                      <li
+                        key={`${initiative.title}-${objective.substring(
+                          0,
+                          30
+                        )}`}
+                      >
+                        {objective}
+                      </li>
                     ))}
                   </ul>
 
@@ -196,15 +203,15 @@ const StrategicInitiatives = () => {
         <div className="priorities-section">
           <h2>Cross-Cutting Priorities</h2>
           <div className="priorities-grid">
-            {priorities.map((priority, index) => (
-              <div key={index} className="priority-card">
+            {priorities.map((priority) => (
+              <div key={priority.title} className="priority-card">
                 <h3>{priority.title}</h3>
                 <p>{priority.description}</p>
                 <div className="priority-metrics">
                   <h4>Key Metrics:</h4>
                   <ul>
-                    {priority.metrics.map((metric, metricIndex) => (
-                      <li key={metricIndex}>{metric}</li>
+                    {priority.metrics.map((metric) => (
+                      <li key={`${priority.title}-${metric.substring(0, 20)}`}>{metric}</li>
                     ))}
                   </ul>
                 </div>
