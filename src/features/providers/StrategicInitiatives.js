@@ -211,7 +211,9 @@ const StrategicInitiatives = () => {
                   <h4>Key Metrics:</h4>
                   <ul>
                     {priority.metrics.map((metric) => (
-                      <li key={`${priority.title}-${metric.substring(0, 20)}`}>{metric}</li>
+                      <li key={`${priority.title}-${metric.substring(0, 20)}`}>
+                        {metric}
+                      </li>
                     ))}
                   </ul>
                 </div>
