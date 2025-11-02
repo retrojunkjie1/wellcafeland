@@ -1,6 +1,7 @@
 import React from "react";
 import "./Page.css";
 import PanoramicHero from "../components/PanoramicHero";
+import PageBanner from "../components/PageBanner";
 import Header from "../components/Header";
 import GlassSection from "../components/GlassSection";
 import AssistanceDirectory from "../features/assistance/AssistanceDirectory";
@@ -36,8 +37,13 @@ const AssistPage = () => {
   return (
     <div className="page">
       <Header />
+      <PageBanner
+        imageSrc={`${process.env.PUBLIC_URL}/images/rituals.jpg`}
+        altText="Supportive wellness guidance environment"
+        overlayClasses="pb-overlay-emerald"
+      />
       <main className="container">
-        <PanoramicHero />
+        
         <GlassSection
           title="Government Assistance & Support Programs"
           subtitle="Navigate financial aid, housing, healthcare, and recovery resources with guidance tailored to your region."

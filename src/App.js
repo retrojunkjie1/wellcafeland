@@ -33,6 +33,7 @@ import TraumaEducationPage from "./Views/TraumaEducationPage";
 import CareersPage from "./Views/CareersPage";
 import FAQPage from "./Views/FAQPage";
 import NewsPage from "./Views/NewsPage";
+import NewsBlogsPage from "./Views/NewsBlogsPage";
 import ResourceDetail from "./Views/ResourceDetail";
 
 function App() {
@@ -91,6 +92,7 @@ function App() {
             <Route path="/about/careers" element={<CareersPage />} />
             <Route path="/about/faq" element={<FAQPage />} />
             <Route path="/about/news" element={<NewsPage />} />
+            <Route path="/news" element={<NewsBlogsPage />} />
           </Routes>
         </Router>
       </ThemeProvider>

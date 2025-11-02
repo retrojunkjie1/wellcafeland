@@ -1,13 +1,17 @@
 import React from "react";
 import "./Page.css";
 import Header from "../components/Header";
-import PanoramicHero from "../components/PanoramicHero";
+import PageBanner from "../components/PageBanner";
 
 const BlogPage = () => (
   <div className="page blog-page">
     <Header />
+    <PageBanner
+      imageSrc={`${process.env.PUBLIC_URL}/images/reminder.jpg`}
+      altText="Wellness resources still life"
+      overlayClasses=""
+    />
     <main className="container">
-      <PanoramicHero />
       <div className="page-hero">
         <h1>Blog</h1>
         <p>
