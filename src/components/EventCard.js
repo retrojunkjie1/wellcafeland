@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import "./EventCard.css";
+import Thumbnail from "./Thumbnail";
 
 const EventCard = ({ event }) => (
   <div className="wc-glass-card wc-event">
-    <img src={event.image} alt={event.title} className="wc-event-img" />
+    <Thumbnail src={event.image} alt={event.title} className="wc-event-img" />
     <div className="wc-event-body">
       <h3>{event.title}</h3>
       <p className="wc-event-date">{event.date}</p>

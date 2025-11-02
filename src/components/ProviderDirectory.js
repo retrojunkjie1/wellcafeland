@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Thumbnail from "./Thumbnail";
 import {
   collection,
   query,
@@ -364,7 +365,10 @@ const ProviderDirectory = () => {
               <div className="provider-header">
                 <div className="provider-avatar">
                   {provider.profileImage ? (
-                    <img src={provider.profileImage} alt={provider.name} />
+                    <Thumbnail
+                      src={provider.profileImage}
+                      alt={provider.name}
+                    />
                   ) : (
                     <div className="avatar-placeholder">
                       {provider.name
