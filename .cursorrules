@@ -1,0 +1,194 @@
+# WellnessCafe OS - Cursor Rules
+
+## Project Overview
+WellnessCafe OS is a luxury, lightweight, fully responsive React application built with Vite, Tailwind CSS v3, and React Router. The project emphasizes clean architecture, theme consistency, and AI-powered wellness features.
+
+## Tech Stack
+- **Framework**: React 19 + Vite 7
+- **Styling**: Tailwind CSS v3.4.18 (classic PostCSS stack)
+- **Routing**: React Router DOM v7
+- **State Management**: Zustand
+- **UI Primitives**: Radix UI (@radix-ui/react-slot)
+- **Icons**: Lucide React
+- **Backend**: Firebase (Firestore)
+- **Language**: JavaScript (ES Modules)
+
+## File Structure
+```
+src/
+├── apps/           # Feature modules (core, ai, recovery, tools, providers, dashboard, auth)
+├── components/     # Reusable UI components (ui/ for shadcn-style components)
+├── hooks/          # Custom React hooks
+├── layouts/        # Layout components (OSLayout)
+├── lib/            # Utilities and helpers (apiClient, utils, themeEngine)
+├── services/       # Service layers (telemetry, memory)
+├── admin/          # Admin-specific components
+└── agents/         # AI agent wrappers
+```
+
+## Code Style & Conventions
+
+### Imports
+- Use path alias `@/` for `src/` directory (e.g., `@/hooks/useThemeEngine`)
+- Group imports: React → external libs → internal modules
+- Use named exports for hooks and utilities
+- Use default exports for components
+
+### Components
+- Use functional components with hooks
+- Use `className` (not `class`) for Tailwind classes
+- Prefer composition over configuration
+- Keep components focused and single-purpose
+
+### Styling
+- **Always use Tailwind CSS utility classes**
+- Use theme tokens: `bg-background`, `text-foreground`, `border-border`, etc.
+- Use CSS variables via `hsl(var(--variable-name))`
+- Dark mode: Use `dark:` prefix for dark mode styles
+- Use `@apply` sparingly (only in `src/index.css` for global utilities)
+- Opacity syntax: Use `/[0.10]` not `/10` (e.g., `bg-white/[0.08]`)
+
+### Theme System
+- Theme tokens are defined in `src/index.css` as CSS variables
+- Tailwind config maps these to utility classes
+- Use `useThemeEngine()` hook for theme toggling
+- Theme preference stored in localStorage as `wc-theme`
+- Dark mode applied via `.dark` class on `<html>` element
+
+### State Management
+- Use Zustand for global state (e.g., `useAIStore`)
+- Use React `useState` for local component state
+- Keep state as close to where it's used as possible
+
+### API Client
+- Use `src/lib/apiClient.js` for all backend calls
+- Endpoints: `/aiSession`, `/aiMedia`, `/aiTemplate`
+- Always handle errors and loading states
+- Use async/await with try/catch
+
+### Routing
+- All routes nested under `<OSLayout />` using `<Outlet />`
+- Use `<NavLink>` for navigation with active state styling
+- Route paths follow RESTful conventions
+
+### File Naming
+- Components: PascalCase (e.g., `HomePage.jsx`)
+- Hooks: camelCase with `use` prefix (e.g., `useThemeEngine.js`)
+- Utilities: camelCase (e.g., `apiClient.js`)
+- Services: camelCase (e.g., `telemetry.js`)
+
+## Tailwind CSS Guidelines
+
+### Configuration
+- Tailwind v3.4.18 with CommonJS config (`module.exports`)
+- PostCSS uses classic plugin syntax: `tailwindcss: {}, autoprefixer: {}`
+- Dark mode: `darkMode: "class"` in config
+- Content paths: `["./index.html", "./src/**/*.{js,jsx}"]`
+
+### Theme Tokens
+All theme colors use CSS variables:
+- `background`, `foreground`
+- `card`, `cardForeground`
+- `border`, `input`
+- `primary`, `primaryForeground`
+- `secondary`, `secondaryForeground`
+- `accent`, `accentForeground`
+- `destructive`, `destructiveForeground`
+- `ring`
+
+Border radius uses CSS variables:
+- `lg`: `var(--radius-lg)` (0.75rem)
+- `md`: `var(--radius-md)` (0.5rem)
+- `sm`: `var(--radius-sm)` (0.25rem)
+
+### Utility Classes
+- Use `border-border` not `border=border`
+- Use `shadow` not `shadow-lg` (unless specifically needed)
+- Use opacity syntax: `bg-white/[0.08]` not `bg-white/10`
+
+## React Patterns
+
+### Hooks
+- Custom hooks in `src/hooks/`
+- Export as named exports: `export function useThemeEngine()`
+- Use `useEffect` for side effects
+- Clean up subscriptions and listeners
+
+### Component Structure
+```jsx
+import React from "react";
+import { useThemeEngine } from "@/hooks/useThemeEngine";
+
+const ComponentName = () => {
+  const { theme, toggleTheme } = useThemeEngine();
+  
+  return (
+    <div className="bg-background text-foreground">
+      {/* Component JSX */}
+    </div>
+  );
+};
+
+export default ComponentName;
+```
+
+## Error Handling
+- Always wrap async operations in try/catch
+- Provide user-friendly error messages
+- Log errors to console for debugging
+- Use Zustand store for global error state when needed
+
+## Performance
+- Use React.memo for expensive components when appropriate
+- Lazy load routes if needed
+- Optimize images and assets
+- Keep bundle size minimal
+
+## Testing & Quality
+- Run `npm run lint` before committing
+- Ensure dev server runs without errors: `npm run dev`
+- Verify Tailwind classes compile correctly
+- Test dark mode toggle functionality
+
+## Git & Version Control
+- Commit messages should be descriptive
+- Don't commit `node_modules/`, `.vite/`, or build artifacts
+- Keep `.gitignore` updated
+
+## Common Tasks
+
+### Adding a New Page
+1. Create component in appropriate `src/apps/` subdirectory
+2. Add route to `src/App.jsx`
+3. Add navigation link to `src/layouts/OSLayout.jsx` if needed
+
+### Adding a New Theme Token
+1. Add CSS variable to `:root` and `.dark` in `src/index.css`
+2. Add color mapping to `tailwind.config.js` theme.extend.colors
+3. Use new token in components
+
+### Adding a New Hook
+1. Create file in `src/hooks/`
+2. Export as named export
+3. Import using `@/hooks/` alias
+
+## Important Notes
+- **Never** use Tailwind v4 syntax (we're on v3)
+- **Always** use `module.exports` for Tailwind config (CommonJS)
+- **Always** use `@/` alias for src imports
+- **Always** ensure `src/main.jsx` imports `./index.css` as first line
+- **Never** duplicate CSS imports in multiple files
+- **Always** use `className` not `class` in JSX
+
+## AI Integration
+- AI console state managed via `useAIStore` (Zustand)
+- AI endpoints: `/aiSession` (POST with `mode`, `intent`, `prompt`)
+- Telemetry service tracks user events
+- Memory service handles long-term memory (Pinecone)
+
+## Admin Features
+- Admin console at `/admin`
+- Theme control panel at `/admin/theme`
+- Firebase integration for global theme overrides
+- Telemetry monitoring and AI insights
+
