@@ -1,7 +1,16 @@
 // src/services/providerTimeline.js
 // Service for building client emotional timelines from telemetry
 
-import { collection, query, where, getDocs, orderBy, limit, addDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit as fsLimit,
+  getDocs,
+  addDoc,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { getSessionHistory } from "./sessionHistory";
 import { getTelemetrySnapshot } from "./telemetry";
@@ -294,10 +303,80 @@ export async function getRecentRiskSnapshots({ providerId, clientId, limit: limi
   }
 }
 
+/**
+ * Normalize a raw Firestore doc into a risk event object.
+ * This must be safe even if fields are missing.
+ */
+function normalizeRiskEvent(doc) {
+  const data = doc.data?.() || doc.data || {};
+
+  // Handle Firestore Timestamp conversion
+  let createdAt = Date.now();
+  if (data.createdAt) {
+    if (data.createdAt.toMillis && typeof data.createdAt.toMillis === "function") {
+      createdAt = data.createdAt.toMillis();
+    } else if (data.createdAt.seconds) {
+      createdAt = data.createdAt.seconds * 1000;
+    } else if (typeof data.createdAt === "number") {
+      createdAt = data.createdAt;
+    } else if (data.createdAt instanceof Date) {
+      createdAt = data.createdAt.getTime();
+    }
+  }
+
+  return {
+    id: doc.id || data.id || `${Date.now()}-${Math.random()}`,
+    userId: data.userId || null,
+    riskLevel: data.riskLevel || "low",
+    reasons: Array.isArray(data.reasons) ? data.reasons : [],
+    domains: Array.isArray(data.domains) ? data.domains : [],
+    emotion: data.emotion || null,
+    createdAt,
+  };
+}
+
+/**
+ * List recent risk events for a given user.
+ * Safe: Returns [] if Firestore is not configured or collection doesn't exist.
+ *
+ * @param {string} userId
+ * @param {{ limit?: number }} options
+ * @returns {Promise<Array>}
+ */
+export async function listRecentRiskEvents(userId, { limit = 50 } = {}) {
+  if (!userId) {
+    return [];
+  }
+
+  try {
+    if (!db) {
+      return [];
+    }
+
+    const colRef = collection(db, "riskEvents");
+    const q = query(
+      colRef,
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
+      fsLimit(limit)
+    );
+
+    const snapshot = await getDocs(q);
+    const events = snapshot.docs.map((doc) => normalizeRiskEvent(doc));
+
+    return events.sort((a, b) => b.createdAt - a.createdAt);
+  } catch (_err) {
+    // Best-effort only; never break the app if this fails.
+    console.warn("[providerTimeline] listRecentRiskEvents failed, returning []");
+    return [];
+  }
+}
+
 export default {
   getClientTimeline,
   getTimelineSummary,
   logRiskSnapshot,
   getRecentRiskSnapshots,
+  listRecentRiskEvents,
 };
 

@@ -5,9 +5,10 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { getClient } from "@/services/clientRegistry";
-import { getClientTimeline, getTimelineSummary, getRecentRiskSnapshots } from "@/services/providerTimeline";
+import { getClientTimeline, getTimelineSummary, getRecentRiskSnapshots, listRecentRiskEvents } from "@/services/providerTimeline";
 import { getSuggestedActionsForClient } from "@/services/providerSuggestions";
 import { listClientNotes, createClientNote } from "@/services/providerNotes";
+import EmotionalTimelinePanel from "@/components/analysis/EmotionalTimelinePanel";
 import { ArrowLeft, Calendar, TrendingUp, AlertCircle, FileText, Plus, Loader2, MessageSquare, Wrench, Folder } from "lucide-react";
 
 const ClientTimelinePage = () => {
@@ -25,6 +26,8 @@ const ClientTimelinePage = () => {
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   const [newNote, setNewNote] = useState({ content: "", noteType: "session_note", tags: [] });
   const [signals, setSignals] = useState([]);
+  const [emotionalEvents, setEmotionalEvents] = useState([]);
+  const [loadingTimeline, setLoadingTimeline] = useState(false);
 
   useEffect(() => {
     if (!identityLoading && !isProvider && !isAdmin) {
@@ -47,6 +50,34 @@ const ClientTimelinePage = () => {
     loadSignals();
     return () => { mounted = false; };
   }, [userId, clientId, isProvider, isAdmin, identityLoading, navigate]);
+
+  // Load emotional timeline events
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTimeline() {
+      if (!clientId) return;
+      try {
+        setLoadingTimeline(true);
+        const events = await listRecentRiskEvents(clientId);
+        if (isMounted) {
+          setEmotionalEvents(events);
+        }
+      } catch {
+        if (isMounted) {
+          setEmotionalEvents([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingTimeline(false);
+        }
+      }
+    }
+
+    loadTimeline();
+    // For now we only depend on clientId to avoid noisy re-renders.
+    return () => { isMounted = false; };
+  }, [clientId]);
 
   const loadClientData = async () => {
     setLoading(true);
@@ -235,6 +266,17 @@ const ClientTimelinePage = () => {
         <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
           {/* Main Timeline */}
           <div className="space-y-6">
+            {/* Emotional Timeline Panel */}
+            <section className="mb-4">
+              {loadingTimeline ? (
+                <div className="w-full animate-pulse rounded-2xl border border-white/5 bg-white/5 px-4 py-3 text-xs text-white/50">
+                  Loading emotional timeline…
+                </div>
+              ) : (
+                <EmotionalTimelinePanel events={emotionalEvents} />
+              )}
+            </section>
+
             {/* Timeline Summary */}
             {summary && (
               <div className="rounded-lg border border-white/10 bg-white/5 p-4">
