@@ -16,7 +16,7 @@ The WellnessCafe OS now has a secure admin access control system using **Option 
 
 You can override this by setting an environment variable:
 ```bash
-VITE_MASTER_ADMIN_KEY=your-custom-key-here
+VITE_MASTER_ADMIN_KEY=ikukuW2024
 ```
 
 ## How It Works

@@ -1,0 +1,55 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="150" cy="150" r="150" fill="#050814" />
+
+  <!-- Outer Ring (Thick) -->
+  <circle
+    cx="150"
+    cy="150"
+    r="140"
+    fill="none"
+    stroke="#D4AF37"
+    stroke-width="8"
+  />
+
+  <!-- Inner Ring (Thinner) -->
+  <circle
+    cx="150"
+    cy="150"
+    r="110"
+    fill="none"
+    stroke="#D4AF37"
+    stroke-width="4"
+  />
+
+  <!-- WC Monogram - Large Bold Serif-style Letters -->
+  <text
+    x="150"
+    y="165"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    fill="#D4AF37"
+    font-size="100"
+    font-weight="bold"
+    font-family="serif"
+    letter-spacing="8"
+  >
+    WC
+  </text>
+
+  <!-- Bottom Text - WELLNESSCAFE OS (positioned with 10px padding from inner ring) -->
+  <text
+    x="150"
+    y="243"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    fill="#D4AF37"
+    font-size="12"
+    font-weight="600"
+    letter-spacing="2"
+    font-family="sans-serif"
+  >
+    WELLNESSCAFE OS
+  </text>
+</svg>
+

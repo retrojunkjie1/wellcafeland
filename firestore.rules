@@ -2,58 +2,208 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check admin access via header
-    function isAdmin() {
-      return request.headers['x-admin-secret'] == resource.data.adminSecret || 
-             request.auth != null && request.auth.token.admin == true;
+    // --- Helpers ---
+    function signedIn() {
+      return request.auth != null;
     }
-    
-    // Users collection: anonymous users can only read/write their own data
-    match /users/{userId} {
-      allow read, write: if request.resource.data.userId == userId || isAdmin();
+
+    function ownsExistingDoc(field) {
+      return signedIn() &&
+        resource != null &&
+        resource.data[field] == request.auth.uid;
     }
+
+    function ownsNewDoc(field) {
+      return signedIn() &&
+        request.resource != null &&
+        request.resource.data[field] == request.auth.uid;
+    }
+
+    function hasRole(role) {
+      return signedIn() && request.auth.token.role == role;
+    }
+
+    function hasAnyRole(roles) {
+      return signedIn() && request.auth.token.role in roles;
+    }
+
+    // --- USERS ---
+    // Basic profile + role mirror (NOT source of truth for permissions).
+    match /users/{uid} {
+      // User can read and update their own profile
+      allow read, update: if signedIn() && request.auth.uid == uid;
+      // Allow create for new signups
+      allow create: if signedIn() && request.auth.uid == uid;
+      // Only admin/superadmin can list all users
+      allow list: if hasAnyRole(['admin', 'superadmin']);
+      // No deletes from client
+      allow delete: if false;
+    }
+
+    // --- TOOL USAGE (Recovery Tools Suite) ---
+    // Each document has userId field.
+    match /tool_usage/{docId} {
+      // Client can create tool usage for themselves
+      allow create: if ownsNewDoc("userId");
+
+      // Client can read their own entries
+      allow read: if ownsExistingDoc("userId");
+
+      // Providers can ONLY read entries for assigned clients
+      // Admins can read all
+      allow list, get: if signedIn() && (
+        hasAnyRole(['admin', 'superadmin']) ||
+        (hasRole('provider') && 
+         // Provider must have assignment - checked via client_assignments
+         // Note: Firestore rules can't do joins, so we allow providers to list
+         // but enforce filtering in the application layer
+         true)
+      );
+
+      // Updates should be rare; allow only for owner or admin
+      allow update: if ownsExistingDoc("userId") ||
+        hasAnyRole(['admin', 'superadmin']);
+
+      // No client deletes (for audit trail); admin only
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- TELEMETRY EVENTS (if you use a generic telemetry collection) ---
+    match /telemetry_events/{docId} {
+      // Any signed-in client can create events about themselves
+      allow create: if ownsNewDoc("userId");
+
+      // Client can read their own events if userId matches
+      allow read: if ownsExistingDoc("userId");
+
+      // Providers can read for assigned clients only (enforced in app layer)
+      // Admins can read all
+      allow list, get: if signedIn() && (
+        hasAnyRole(['admin', 'superadmin']) ||
+        hasRole('provider')
+      );
+
+      // Updates/deletes: admin only
+      allow update, delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- AGENT EVENTS (Seer, Sentinel, Overseer, etc.) ---
+    match /agent_events/{docId} {
+      // Writes usually come from backend or privileged client calls.
+      allow create: if signedIn();
+
+      // Providers can read events for assigned clients only (enforced in app layer)
+      // Admins can read all
+      allow read, list: if signedIn() && (
+        hasAnyRole(['admin', 'superadmin']) ||
+        (hasRole('provider') && resource.data.userId != null)
+      );
+
+      // No client updates/deletes; admin only
+      allow update, delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- SYSTEM SETTINGS (flags, thresholds) ---
+    match /system_settings/{docId} {
+      // Only admin/superadmin can read and write
+      allow read, write: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- SESSION TEMPLATES (MIR, Men's Group, Spiritual Concepts, etc.) ---
+    match /session_templates/{docId} {
+      // Providers and admins can read templates
+      allow read, list: if hasAnyRole(['provider', 'admin', 'superadmin']);
+
+      // Only admin/superadmin can create/update templates
+      allow create, update, delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- SESSION LOGS (provider notes, group documentation) ---
+    // Each log should have fields: createdBy (uid), maybe clientId, groupType, etc.
+    match /session_logs/{docId} {
+      // Providers/admin can create their own logs
+      allow create: if signedIn() &&
+        hasAnyRole(['provider', 'admin', 'superadmin']) &&
+        request.resource.data.createdBy == request.auth.uid;
+
+      // Providers/admins can read logs for clinical work
+      allow read, list: if hasAnyRole(['provider', 'admin', 'superadmin']);
+
+      // Updates only by the author or admin
+      allow update: if signedIn() &&
+        (request.auth.uid == resource.data.createdBy ||
+          hasAnyRole(['admin', 'superadmin']));
+
+      // No deletes except admin
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- JOURNALS (Client personal reflections) ---
+    // Each doc has userId == owner.
+    match /journals/{docId} {
+      // Only the owner can create/read/update
+      allow create: if ownsNewDoc("userId");
+      allow read: if ownsExistingDoc("userId");
+      allow update: if ownsExistingDoc("userId");
+
+      // No deletes from client side (optional).
+      allow delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- CLIENT ASSIGNMENTS (Provider-Client mapping) ---
+    match /client_assignments/{docId} {
+      // Providers/admins can create assignments
+      allow create: if signedIn() &&
+        hasAnyRole(['provider', 'admin', 'superadmin']) &&
+        request.resource.data.providerId == request.auth.uid;
+
+      // Providers can read their own assignments, admins can read all
+      allow read: if signedIn() &&
+        (resource.data.providerId == request.auth.uid ||
+         hasAnyRole(['admin', 'superadmin']));
+
+      // Only admins can update/delete
+      allow update, delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- LEGACY COLLECTIONS (for backward compatibility) ---
     
     // Sessions collection: users can create, but only read their own (admin can read all)
     match /sessions/{sessionId} {
-      allow create: if true; // Anyone can create
-      allow read: if resource.data.userId == request.resource.data.userId || isAdmin();
-      allow update, delete: if resource.data.userId == request.resource.data.userId || isAdmin();
+      allow create: if signedIn() || true; // Allow anonymous for now
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || hasAnyRole(['admin', 'superadmin']));
+      allow update, delete: if signedIn() && (resource.data.userId == request.auth.uid || hasAnyRole(['admin', 'superadmin']));
     }
-    
+
     // Telemetry collection: anyone can create, only admin can read
     match /telemetry/{telemetryId} {
-      allow create: if true;
-      allow read: if isAdmin();
-      allow update, delete: if isAdmin();
+      allow create: if true; // Allow anonymous for backward compatibility
+      allow read: if hasAnyRole(['admin', 'superadmin']);
+      allow update, delete: if hasAnyRole(['admin', 'superadmin']);
     }
-    
+
     // Memory collection: users can create, but only read their own (admin can read all)
     match /memory/{memoryId} {
-      allow create: if true;
-      allow read: if resource.data.userId == request.resource.data.userId || isAdmin();
-      allow update, delete: if resource.data.userId == request.resource.data.userId || isAdmin();
+      allow create: if true; // Allow anonymous for backward compatibility
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || hasAnyRole(['admin', 'superadmin']));
+      allow update, delete: if signedIn() && (resource.data.userId == request.auth.uid || hasAnyRole(['admin', 'superadmin']));
     }
-    
-    // Session templates: public read, admin write
+
+    // Session templates (legacy): public read, admin write
     match /sessionTemplates/{templateId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Admin users collection: only admins can read/write
-    match /admin_users/{adminId} {
-      allow read, write: if isAdmin();
+
+    // Agent executions: anyone can create (for agent runs), only admin can read
+    match /agentExecutions/{executionId} {
+      allow create: if true; // Allow anonymous for backward compatibility
+      allow read, update, delete: if hasAnyRole(['admin', 'superadmin']);
     }
-    
-    // Admin configuration: only admins can read/write
-    match /admin/{doc} {
-      allow read, write: if isAdmin();
-    }
-    
-    // Default: deny all other collections
+
+    // --- DEFAULT DENY ---
     match /{document=**} {
       allow read, write: if false;
     }
   }
 }
-

@@ -4,6 +4,7 @@
  */
 
 import { getAnonymousUserId } from "./userId";
+import { auth } from "../firebase";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
@@ -37,7 +38,8 @@ class ApiClient {
    */
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`
-    const userId = getAnonymousUserId();
+    // Use Firebase Auth UID if available, otherwise fall back to anonymous ID
+    const userId = auth?.currentUser?.uid || getAnonymousUserId();
     
     // Extract body if it exists and merge userId
     let body = options.body;

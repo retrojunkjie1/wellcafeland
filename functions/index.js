@@ -1,5 +1,10 @@
 // functions/index.js
 
+/**
+ * Firebase Functions Entry Point (v1 - Legacy)
+ * Note: Milestone engine is in functions/src/index.js (v2)
+ */
+
 const functions = require("firebase-functions");
 const aiBrain = require("./aiBrain");
 

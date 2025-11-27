@@ -14,8 +14,8 @@ export const defaultAdminConfig = {
   homeHeroHeadline: "recovery, tools, and support.",
   homeHeroBody:
     "We learn what works for you and help you take the next right step—without judgment.",
-  homeHeroPrimaryCta: "Let the OS read my day",
-  homeHeroSecondaryCta: "Browse AI sessions",
+  homeHeroPrimaryCta: "Let my guide read my day",
+  homeHeroSecondaryCta: "Browse guided sessions",
 
   // Recovery card copy
   recoverySubtitle: "Track sobriety, urges, triggers, and wins in one calm space.",

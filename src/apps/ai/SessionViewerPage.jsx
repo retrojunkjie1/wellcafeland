@@ -65,8 +65,15 @@ const SessionViewerPage = () => {
 
   if (!session) {
     return (
-      <div className="lux-shell py-10 text-sm text-muted-foreground">
-        <p>We couldn&apos;t find a session to show. Taking you back to Sessions…</p>
+      <div className="lux-shell py-10">
+        <div className="lux-card p-8 text-center space-y-3">
+          <p className="text-sm text-muted-foreground">
+            We couldn&apos;t find a session to show.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Taking you back to Sessions…
+          </p>
+        </div>
       </div>
     );
   }
@@ -208,14 +215,18 @@ const SessionViewerPage = () => {
 
         {/* Steps */}
         <section className="space-y-4">
-          {steps.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              This session doesn&apos;t have a detailed flow yet. You can still
-              use the title and summary as a grounding prompt.
-            </p>
-          )}
-
-          {steps.map((step, index) => {
+          {steps.length === 0 ? (
+            <div className="lux-card p-8 text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                This session doesn&apos;t have a detailed flow yet.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                You can still use the title and summary as a grounding prompt.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {steps.map((step, index) => {
             const kindLabel =
               KIND_LABELS[step.kind] || step.kind || `Step ${index + 1}`;
 
@@ -261,6 +272,8 @@ const SessionViewerPage = () => {
               </div>
             );
           })}
+            </div>
+          )}
         </section>
       </div>
     </div>

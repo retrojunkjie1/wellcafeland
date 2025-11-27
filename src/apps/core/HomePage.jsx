@@ -1,186 +1,130 @@
 // src/apps/core/HomePage.jsx
+// Minimal, ChatGPT-style landing page
 
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { trackAction, trackPageView } from "../../services/telemetry";
-import { useAIStore } from "../ai/useAIStore";
-import { useAdminConfigStore } from "../../stores/adminConfigStore";
+import { MessageCircle, Wrench, Clock, Sparkles } from "lucide-react";
+import { trackPageView } from "../../services/telemetry";
+import { useSessionIdentity } from "@/hooks/useSessionIdentity";
+import Logo from "@/components/Logo";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { startWithPrompt } = useAIStore();
-  const { config } = useAdminConfigStore();
-
-  const {
-    homeHeroEyebrow,
-    homeHeroHeadline,
-    homeHeroBody,
-    homeHeroPrimaryCta,
-    homeHeroSecondaryCta,
-    recoverySubtitle,
-    toolsSubtitle,
-    providersSubtitle,
-    dashboardSubtitle,
-  } = config;
+  const identity = useSessionIdentity();
 
   useEffect(() => {
-    document.title = "WellnessCafe OS - Home";
+    document.title = "WellnessCafe - Home";
     trackPageView("home");
   }, []);
 
-  function handleReadMyDay() {
-    trackAction("home_read_my_day", {});
-    startWithPrompt(
-      "Read my day and gently reflect back what you see. Help me notice patterns, stress points, and any small next step I can take."
-    );
-  }
-
-  function handleBrowseAISessions() {
-    trackAction("home_browse_ai_sessions", {});
-    navigate("/sessions/templates");
-  }
-
-  function handleOpenRecovery() {
-    trackAction("home_open_recovery_card", {});
-    navigate("/recovery");
-  }
-
-  function handleOpenTools() {
-    trackAction("home_open_tools_card", {});
-    navigate("/tools");
-  }
-
-  function handleOpenProviders() {
-    trackAction("home_open_providers_card", {});
-    navigate("/providers");
-  }
-
-  function handleOpenDashboard() {
-    trackAction("home_open_dashboard_card", {});
-    navigate("/dashboard");
-  }
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Hero */}
-      <section className="border-b border-border bg-gradient-to-b from-amber-50/60 via-background to-background">
-        <div className="lux-shell py-10 md:py-14 lg:py-16">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
-            {homeHeroEyebrow}
-          </p>
-          <h1 className="text-4xl md:text-[2.8rem] lg:text-[3.2rem] font-semibold tracking-tight leading-[1.15] max-w-3xl">
-            Your wellness guide for{" "}
-            <span className="underline underline-offset-[6px] decoration-[1.5px]">
-              {homeHeroHeadline}
-            </span>
-          </h1>
-          <p className="mt-4 text-sm md:text-base text-muted-foreground max-w-2xl">
-            {homeHeroBody}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              onClick={handleReadMyDay}
-              className="inline-flex items-center justify-center rounded-full border border-foreground px-6 py-2 text-sm font-medium tracking-tight hover:bg-foreground hover:text-background transition-colors"
-            >
-              {homeHeroPrimaryCta}
-            </button>
-            <button
-              onClick={handleBrowseAISessions}
-              className="inline-flex items-center justify-center rounded-full border border-border px-6 py-2 text-sm font-medium tracking-tight text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              {homeHeroSecondaryCta}
-            </button>
-          </div>
-          <p className="mt-4 text-[11px] text-muted-foreground">
-            Hint: the orb at the bottom-right speaks OS intelligence.
-          </p>
+    <div className="space-y-12 py-12">
+      {/* Welcome Section */}
+      <section className="space-y-6 text-center">
+        <div className="flex justify-center mb-4">
+          <Logo size="lg" showText={true} />
         </div>
+        <h1 className="text-4xl font-light tracking-wide text-white">
+          Welcome to WellnessCafe
+        </h1>
+        <p className="text-lg text-white/70">
+          How can we support you today?
+        </p>
       </section>
 
-      {/* Core modules */}
-      <section className="lux-shell py-10 md:py-12 lg:py-14 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
-            Your Wellness Tools
-          </h2>
-          <p className="text-[11px] text-muted-foreground">
-            Start anywhere. We&apos;ll connect the dots.
+      {/* Primary Actions */}
+      <section className="space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate("/guide")}
+          className="glass-panel w-full p-6 text-left transition hover:bg-white/10"
+        >
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-wcGold/20 p-3">
+              <MessageCircle className="h-6 w-6 text-wcGold" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-medium text-white">Talk to your Wellness Guide</h2>
+              <p className="text-sm text-white/60 mt-1">
+                Get personalized support, grounding practices, and compassionate guidance
+              </p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/tools")}
+          className="glass-panel w-full p-6 text-left transition hover:bg-white/10"
+        >
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-white/10 p-3">
+              <Wrench className="h-6 w-6 text-white/80" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-medium text-white">Use grounding & breathing tools</h2>
+              <p className="text-sm text-white/60 mt-1">
+                Breathing exercises, 5-4-3-2-1 grounding, journaling, and more
+              </p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard?view=moments")}
+          className="glass-panel w-full p-6 text-left transition hover:bg-white/10"
+        >
+          <div className="flex items-center gap-4">
+            <div className="rounded-full bg-white/10 p-3">
+              <Clock className="h-6 w-6 text-white/80" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-medium text-white">Check in with yourself</h2>
+              <p className="text-sm text-white/60 mt-1">
+                Track your moments, reflections, and progress
+              </p>
+            </div>
+          </div>
+        </button>
+      </section>
+
+      {/* Guest Mode Notice */}
+      {identity.mode === "guest" && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+          <p className="text-sm text-white/70 mb-3">
+            You don't need an account to use WellnessCafe.
           </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Recovery */}
+          <p className="text-sm text-white/60 mb-4">
+            To save your journey across devices, you can create one anytime.
+          </p>
           <button
             type="button"
-            onClick={handleOpenRecovery}
-            className="lux-card flex flex-col items-start p-4 text-left"
+            onClick={() => navigate("/signup")}
+            className="rounded-full border border-wcGold/50 bg-wcGold/10 px-6 py-2 text-sm font-medium text-wcGold transition hover:bg-wcGold/20"
           >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Client OS
-            </p>
-            <h3 className="mt-1 text-sm font-semibold">Recovery</h3>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {recoverySubtitle}
-            </p>
-            <span className="mt-3 text-[11px] text-muted-foreground">
-              Open →
-            </span>
-          </button>
-
-          {/* Tools */}
-          <button
-            type="button"
-            onClick={handleOpenTools}
-            className="lux-card flex flex-col items-start p-4 text-left"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Daily practice
-            </p>
-            <h3 className="mt-1 text-sm font-semibold">Tools</h3>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {toolsSubtitle}
-            </p>
-            <span className="mt-3 text-[11px] text-muted-foreground">
-              Open →
-            </span>
-          </button>
-
-          {/* Providers */}
-          <button
-            type="button"
-            onClick={handleOpenProviders}
-            className="lux-card flex flex-col items-start p-4 text-left"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Network
-            </p>
-            <h3 className="mt-1 text-sm font-semibold">Providers</h3>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {providersSubtitle}
-            </p>
-            <span className="mt-3 text-[11px] text-muted-foreground">
-              Open →
-            </span>
-          </button>
-
-          {/* Dashboard */}
-          <button
-            type="button"
-            onClick={handleOpenDashboard}
-            className="lux-card flex flex-col items-start p-4 text-left"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Insights
-            </p>
-            <h3 className="mt-1 text-sm font-semibold">Dashboard</h3>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {dashboardSubtitle}
-            </p>
-            <span className="mt-3 text-[11px] text-muted-foreground">
-              Open →
-            </span>
+            Create a free account
           </button>
         </div>
+      )}
+
+      {/* Quick Links */}
+      <section className="flex flex-wrap gap-3 justify-center">
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard?view=insights")}
+          className="menu-chip"
+        >
+          <Sparkles className="h-3.5 w-3.5 mr-2" />
+          Weekly Insights
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate("/support")}
+          className="menu-chip"
+        >
+          Support Resources
+        </button>
       </section>
     </div>
   );

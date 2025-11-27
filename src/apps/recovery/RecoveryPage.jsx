@@ -2,11 +2,13 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trophy } from "lucide-react";
 import { trackPageView, trackAction } from "../../services/telemetry";
 import {
   getLastSession,
   getStreakStats,
 } from "../../services/sessionHistory";
+import PageHeader from "@/components/navigation/PageHeader";
 
 const RecoveryPage = () => {
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ const RecoveryPage = () => {
   });
 
   useEffect(() => {
-    document.title = "Recovery - WellnessCafe OS";
+    document.title = "Recovery - WellnessCafe";
     trackPageView("recovery");
 
     // Use setTimeout to avoid synchronous setState in effect
@@ -122,6 +124,10 @@ const RecoveryPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PageHeader 
+        title="Recovery" 
+        subtitle="Track sobriety, urges, triggers, and wins in one calm space"
+      />
       <div className="lux-shell py-10 space-y-8">
         {/* Header */}
         <header className="space-y-2">
@@ -181,13 +187,23 @@ const RecoveryPage = () => {
                   {streak.longestStreak || 0} days
                 </span>
               </span>
-              <button
-                type="button"
-                onClick={handleOpenSessions}
-                className="underline-offset-2 hover:underline"
-              >
-                Open sessions
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate("/milestones")}
+                  className="inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                >
+                  <Trophy className="h-3 w-3" />
+                  Milestones
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenSessions}
+                  className="underline-offset-2 hover:underline"
+                >
+                  Sessions
+                </button>
+              </div>
             </div>
 
             {/* Last session pill inside card */}

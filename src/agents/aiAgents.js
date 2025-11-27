@@ -5,24 +5,30 @@
 
 const SESSION_ENDPOINT = "/aiSession";
 
-const callAgent = async (agent,payload)=>{
-  try{
-    const res=await fetch(SESSION_ENDPOINT,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        mode:"agent",
+/**
+ * Call an AI agent with payload
+ * @param {string} agent - Agent ID (seer, oracle, overseer, sentinel)
+ * @param {object} payload - Agent-specific payload
+ * @returns {Promise<object|null>} Agent response or null on error
+ */
+export const callAgent = async (agent, payload = {}) => {
+  try {
+    const res = await fetch(SESSION_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: "agent",
         agent,
-        ...payload
-      })
+        ...payload,
+      }),
     });
-    if(!res.ok){
-      console.error("Agent call failed",agent,res.status);
+    if (!res.ok) {
+      console.error("Agent call failed", agent, res.status);
       return null;
     }
     return await res.json();
-  }catch(err){
-    console.error("Agent call error",agent,err);
+  } catch (err) {
+    console.error("Agent call error", agent, err);
     return null;
   }
 };

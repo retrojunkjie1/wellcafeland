@@ -319,6 +319,11 @@ async function handleSession(req, res) {
       return res.status(200).json({ session });
     }
 
+    // MODE: agent → run specific AI agent (Seer, Oracle, Overseer, Sentinel)
+    if (mode === "agent") {
+      return await handleAgent(req, res, { ...body, userId });
+    }
+
     // (Future) MODE: template_detail, admin_list, admin_save can be added here
 
     // DEFAULT: simple chat / generic AI reply (backwards compatible)
@@ -330,9 +335,22 @@ async function handleSession(req, res) {
 
     const context = body.context || "";
 
-    const result = await runSimpleChat(prompt, context);
-
-    return res.status(200).json(result);
+    try {
+      const result = await runSimpleChat(prompt, context);
+      
+      // Ensure we return a consistent format
+      return res.status(200).json({
+        reply: result.reply || result.content || "I'm here. Let's take this one breath at a time.",
+        ...result, // Include any other fields for backwards compatibility
+      });
+    } catch (chatErr) {
+      console.error("Simple chat error:", chatErr);
+      return res.status(500).json({
+        error: "Chat error",
+        message: chatErr.message || "Failed to generate response",
+        reply: "I'm having trouble right now. Please try again in a moment.",
+      });
+    }
   } catch (err) {
     console.error("aiSession error:", err);
     return res.status(500).json({
@@ -347,6 +365,105 @@ async function handleSession(req, res) {
  */
 async function handleMedia(req, res) {
   res.status(501).json({ error: "aiMedia not implemented yet" });
+}
+
+/**
+ * Handle agent execution requests
+ */
+async function handleAgent(req, res, body) {
+  const agent = body.agent || "seer";
+  const userId = body.userId || "unknown";
+
+  // Agent-specific system prompts
+  const agentPrompts = {
+    seer: `You are The Seer, an AI agent that observes patterns in how people use WellnessCafe OS.
+Your role: Analyze telemetry data and identify trends, usage patterns, and insights.
+Be concise, data-driven, and focus on actionable observations.
+Respond with a JSON object: { "summary": "your pattern analysis", "insights": ["insight1", "insight2"] }`,
+
+    oracle: `You are The Oracle, an AI agent that provides deep wisdom by fusing memory with questions.
+Your role: Connect user context with long-term memory to offer profound, trauma-informed guidance.
+Be wise, compassionate, and grounded. Speak like a trusted counselor.
+Respond with a JSON object: { "summary": "your guidance", "wisdom": "deeper insight" }`,
+
+    overseer: `You are The Overseer, an AI agent that orchestrates actions and creates structured plans.
+Your role: Turn insights into clear, actionable next-right-step plans and session orchestrations.
+Be practical, structured, and focused on creating helpful session plans.
+Respond with a JSON object: { "summary": "your plan", "steps": ["step1", "step2"], "session": {...} }`,
+
+    sentinel: `You are The Sentinel, an AI agent that monitors for risk and flags alerts.
+Your role: Watch for triggers, escalation signals, and crisis indicators in user behavior.
+Be vigilant, protective, and clear about risk levels.
+Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"], "riskLevel": "low|medium|high" }`,
+  };
+
+  const systemPrompt = agentPrompts[agent] || agentPrompts.seer;
+  const userPrompt = body.question || body.prompt || "Analyze the current state.";
+
+  // Build context from payload
+  let context = "";
+  if (body.telemetry) {
+    context += `Telemetry data: ${JSON.stringify(body.telemetry)}\n\n`;
+  }
+  if (body.memory) {
+    context += `Memory context: ${JSON.stringify(body.memory)}\n\n`;
+  }
+  if (body.state) {
+    context += `State snapshot: ${JSON.stringify(body.state)}\n\n`;
+  }
+  if (body.goal) {
+    context += `Goal: ${body.goal}\n\n`;
+  }
+  if (body.thresholds) {
+    context += `Risk thresholds: ${JSON.stringify(body.thresholds)}\n\n`;
+  }
+
+  const fullUserPrompt = context ? `${context}${userPrompt}` : userPrompt;
+
+  try {
+    const result = await callFireworksJSON(systemPrompt, fullUserPrompt);
+
+    // Store agent execution in Firestore
+    try {
+      await db.collection("agentExecutions").add({
+        userId,
+        agent,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        success: true,
+        responseTime: 0, // Would need to track this
+        result: result,
+      });
+    } catch (err) {
+      console.error("Failed to store agent execution:", err);
+    }
+
+    return res.status(200).json({
+      agent,
+      success: true,
+      result: result,
+    });
+  } catch (err) {
+    console.error(`Agent ${agent} execution error:`, err);
+
+    // Store failed execution
+    try {
+      await db.collection("agentExecutions").add({
+        userId,
+        agent,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        success: false,
+        error: err.message,
+      });
+    } catch (storeErr) {
+      console.error("Failed to store agent execution error:", storeErr);
+    }
+
+    return res.status(500).json({
+      agent,
+      success: false,
+      error: err.message || "Agent execution failed",
+    });
+  }
 }
 
 module.exports = {

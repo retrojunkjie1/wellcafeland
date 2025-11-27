@@ -24,7 +24,7 @@ const saveSessions = (sessions) => {
 const welcomeMessage = {
   id:"welcome",
   role:"system",
-  content:"Welcome to WellnessCafe OS. I am your living guide. Tell me what's happening in your world right now."
+  content:"Welcome to WellnessCafe. I'm your living guide. Tell me what's happening in your world right now."
 };
 
 export const useAIStore = create((set,get) => ({

@@ -1,7 +1,7 @@
 // src/components/AdminRoute.jsx
 
 import React, { useState } from "react";
-import { getAdminStatus } from "../services/adminAccess";
+import { hasAdminSession } from "../services/adminAccess";
 import AccessDeniedPage from "../apps/auth/AccessDeniedPage";
 
 /**
@@ -9,7 +9,7 @@ import AccessDeniedPage from "../apps/auth/AccessDeniedPage";
  * Shows AccessDeniedPage if user is not admin
  */
 const AdminRoute = ({ children }) => {
-  const [isAdmin] = useState(() => getAdminStatus());
+  const [isAdmin] = useState(() => hasAdminSession());
 
   if (!isAdmin) {
     return <AccessDeniedPage />;

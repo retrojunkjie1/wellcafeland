@@ -1,408 +1,276 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --primary: 222.2 47.4% 11.2%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
+  --background: 225 55% 4%;
+  --foreground: 210 40% 98%;
+  --card: 225 55% 6%;
+  --card-foreground: 210 40% 98%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --primary: 213 94% 68%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 225 20% 16%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 230 22% 18%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62% 40%;
   --destructive-foreground: 210 40% 98%;
-  --ring: 222.2 84% 4.9%;
-  --radius-lg: 0.75rem;
+  --ring: 210 40% 96%;
+  --radius-lg: 1rem;
   --radius-md: 0.5rem;
-  --radius-sm: 0.25rem;
+  --radius-sm: 0.3rem;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
+  --background: 220 45% 3%;
   --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 222.2 47.4% 11.2%;
-  --secondary-foreground: 210 40% 98%;
-  --accent: 222.2 47.4% 11.2%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --ring: 210 40% 98%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Phase 18: Prevent horizontal scrolling globally */
+* {
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 html {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 body {
-  height: 100%;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  top: 0;
-  left: 0;
-  @apply bg-background text-foreground;
+  min-height: 100vh;
+  font-family: "Space Grotesk", "Inter", ui-sans-serif, system-ui;
+  font-size: 16px; /* Increased from default 14px */
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* Phase 18: Safe area padding for iPhone/Android */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 #root {
-  height: 100%;
-  overflow: hidden;
-  position: relative;
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.08), transparent 45%),
+    radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.08), transparent 35%),
+    linear-gradient(180deg, rgba(3, 7, 18, 0.95), rgba(2, 6, 23, 1));
 }
 
-/* Smooth, infinite-feeling scroll */
-* {
-  scroll-behavior: smooth;
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-size: 16px; /* Base font size */
+  }
 
-/* Momentum scrolling for iOS */
-@supports (-webkit-overflow-scrolling: touch) {
-  * {
-    -webkit-overflow-scrolling: touch;
+  a {
+    color: inherit;
+  }
+
+  /* Heading hierarchy with proper sizes */
+  h1 {
+    @apply text-4xl font-semibold tracking-tight text-white;
+    line-height: 1.2;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold tracking-tight text-white;
+    line-height: 1.3;
+  }
+
+  h3 {
+    @apply text-2xl font-medium tracking-tight text-white;
+    line-height: 1.4;
+  }
+
+  h4 {
+    @apply text-xl font-medium tracking-tight text-white;
+    line-height: 1.4;
+  }
+
+  h5 {
+    @apply text-lg font-medium text-white;
+    line-height: 1.5;
+  }
+
+  h6 {
+    @apply text-base font-medium text-white;
+    line-height: 1.5;
+  }
+
+  p {
+    @apply text-base text-white/90;
+    line-height: 1.6;
   }
 }
 
-/* Light mode background image - fixed/static, doesn't scroll */
-html:not(.dark) body {
-  background-image: url('/light-bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  /* Background stays static - only content scrolls */
-  overflow: hidden;
-}
+@layer components {
+  /* Phase 18: Universal screen container with safe area */
+  .wc-screen {
+    @apply w-full min-h-screen;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 
-/* Ensure content is readable over the image with subtle overlay */
-html:not(.dark) .wc-shell {
-  background: rgba(255, 255, 255, 0.92);
-  height: 100%;
-  position: relative;
-  z-index: 1;
-  /* Content scrolls, background stays fixed */
-  overflow: visible;
-}
+  .lux-shell {
+    @apply mx-auto w-full max-w-3xl px-4 md:px-6 py-8 lg:px-10;
+  }
 
-/* Dark mode - ensure background stays static */
-.dark body {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  overflow: hidden;
+  .lux-card {
+    @apply rounded-3xl border border-white/5 bg-white/[0.03] p-6 shadow-glow;
+  }
+
+  .chat-bubble-assistant {
+    @apply w-full rounded-3xl bg-white/5 p-4 text-base leading-relaxed text-white/90 break-words whitespace-pre-wrap;
+  }
+
+  .chat-bubble-user {
+    @apply w-full text-right text-base font-medium text-white break-words whitespace-pre-wrap;
+  }
 }
 
 @layer utilities {
-  /* Soft fade-slide-in for hero */
-  .wc-fade-slide {
-    opacity: 0;
-    transform: translateY(12px);
-    animation: wcFadeSlide 0.8s ease-out forwards;
+  .glass-panel {
+    @apply rounded-3xl border border-white/5 bg-white/[0.03] backdrop-blur-xl;
   }
 
-  @keyframes wcFadeSlide {
+  .menu-chip {
+    @apply rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 transition hover:border-white/40 hover:text-white;
+  }
+
+  .page-section {
+    @apply space-y-4 py-8;
+  }
+
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
 
-  /* Button micro-pulse (very subtle) */
-  .wc-button-pulse {
-    transition: transform 0.2s ease, background-color 0.2s ease;
+  .animate-scale-fade {
+    animation: scaleFade 0.3s ease-out forwards;
   }
 
-  .wc-button-pulse:hover {
-    transform: translateY(-1px);
-  }
-
-  /* Underline micro-motion */
-  .wc-underline-hover {
-    position: relative;
-    display: inline-block;
-  }
-
-  .wc-underline-hover::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    width: 0%;
-    height: 2px;
-    background: currentColor;
-    transition: width 0.25s ease;
-  }
-
-  .wc-underline-hover:hover::after {
-    width: 100%;
-  }
-
-  /* Orb breathing aura */
-  .wc-orb-breathe {
-    animation: wcOrbBreathe 4s ease-in-out infinite;
-  }
-
-  @keyframes wcOrbBreathe {
-    0% {
-      box-shadow: 0 0 0px 0px rgba(255, 190, 70, 0.25);
+  @keyframes scaleFade {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
     }
-
-    50% {
-      box-shadow: 0 0 32px 6px rgba(255, 190, 70, 0.35);
-    }
-
-    100% {
-      box-shadow: 0 0 0px 0px rgba(255, 190, 70, 0.25);
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
   }
 
-  /* Smart content adaptation when chat opens */
-  .wc-content-adapt {
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                filter 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                padding-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
 
-  /* Subtle pulse when chat is active */
-  @keyframes wcChatPulse {
+  /* Breathing pulse animation */
+  @keyframes breathePulse {
     0%, 100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.05);
       opacity: 1;
     }
-    50% {
-      opacity: 0.85;
+  }
+
+  .breathe-pulse {
+    animation: breathePulse 4s ease-in-out infinite;
+  }
+
+  /* Smooth transitions for OS modes */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
     }
   }
 
-  .wc-chat-active {
-    animation: wcChatPulse 3s ease-in-out infinite;
+  @keyframes slideInFromLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes scaleFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInFromLeft 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInFromRight 0.3s ease-out forwards;
+  }
+
+  .animate-scale-fade-in {
+    animation: scaleFadeIn 0.3s ease-out forwards;
+  }
+
+  /* Sidebar slide animation */
+  .sidebar-transition {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
-
-@layer components {
-  /* Content container - centered with proper padding */
-  .lux-shell,
-  .wc-max {
-    width: 100%;
-    max-width: 1280px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: clamp(1rem, 4vw, 2.5rem);
-    padding-right: clamp(1rem, 4vw, 2.5rem);
-  }
-
-  /* Responsive padding adjustments */
-  @media (min-width: 640px) {
-    .lux-shell,
-    .wc-max {
-      padding-left: clamp(1.5rem, 5vw, 3rem);
-      padding-right: clamp(1.5rem, 5vw, 3rem);
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .lux-shell,
-    .wc-max {
-      padding-left: clamp(2rem, 6vw, 4rem);
-      padding-right: clamp(2rem, 6vw, 4rem);
-    }
-  }
-
-  /* Luxury card styling */
-  .lux-card {
-    @apply rounded-lg border border-border/50 bg-card/60 backdrop-blur-sm;
-    transition: all 0.2s ease;
-  }
-
-  .lux-card:hover {
-    @apply border-border bg-card/80;
-    transform: translateY(-1px);
-  }
-
-  /* Global button pulse for all buttons (except disabled and explicitly excluded) */
-  button:not(:disabled):not(.no-pulse) {
-    transition: transform 0.2s ease, background-color 0.2s ease;
-  }
-
-  button:not(:disabled):not(.no-pulse):hover {
-    transform: translateY(-1px);
-  }
-
-  /* Global underline hover for text links (not buttons or nav items) */
-  a:not(.no-underline-hover):not(button):not([role="button"]) {
-    position: relative;
-  }
-
-  a:not(.no-underline-hover):not(button):not([role="button"])::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -2px;
-    width: 0%;
-    height: 2px;
-    background: currentColor;
-    transition: width 0.25s ease;
-    opacity: 0.6;
-  }
-
-  a:not(.no-underline-hover):not(button):not([role="button"]):hover::after {
-    width: 100%;
-    opacity: 1;
-  }
-
-  /* Infinite scroll feel - smooth, momentum-based scrolling */
-  .wc-infinite-scroll {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    scroll-snap-type: none;
-    scroll-padding: 0;
-    /* Better scroll performance for infinite feel */
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    /* Prevent scroll chaining - keeps infinite flow */
-    overscroll-behavior-y: contain;
-  }
-
-  /* Custom scrollbar for infinite feel */
-  .wc-infinite-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  .wc-infinite-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .wc-infinite-scroll::-webkit-scrollbar-thumb {
-    background: hsl(var(--border) / 0.3);
-    border-radius: 4px;
-    transition: background 0.2s ease;
-  }
-
-  .wc-infinite-scroll::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--border) / 0.5);
-  }
-
-  /* Firefox scrollbar */
-  .wc-infinite-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border) / 0.3) transparent;
-  }
-
-  /* Smooth fade-in as content scrolls into view */
-  .wc-scroll-fade {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity, transform;
-  }
-
-  .wc-scroll-fade.wc-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Staggered fade for children */
-  .wc-scroll-fade-stagger > * {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
-                transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .wc-scroll-fade-stagger.wc-visible > *:nth-child(1) {
-    transition-delay: 0.1s;
-  }
-  .wc-scroll-fade-stagger.wc-visible > *:nth-child(2) {
-    transition-delay: 0.2s;
-  }
-  .wc-scroll-fade-stagger.wc-visible > *:nth-child(3) {
-    transition-delay: 0.3s;
-  }
-  .wc-scroll-fade-stagger.wc-visible > *:nth-child(4) {
-    transition-delay: 0.4s;
-  }
-  .wc-scroll-fade-stagger.wc-visible > *:nth-child(5) {
-    transition-delay: 0.5s;
-  }
-  .wc-scroll-fade-stagger.wc-visible > *:nth-child(n) {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* Parallax effect for depth */
-  .wc-parallax-slow {
-    will-change: transform;
-    transition: transform 0.1s ease-out;
-  }
-
-  /* Seamless content flow */
-  .wc-seamless {
-    position: relative;
-    overflow: visible;
-  }
-
-  .wc-seamless::before,
-  .wc-seamless::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(
-      to right,
-      transparent,
-      hsl(var(--border) / 0.2),
-      transparent
-    );
-    pointer-events: none;
-  }
-
-  .wc-seamless::before {
-    top: 0;
-  }
-
-  .wc-seamless::after {
-    bottom: 0;
-  }
-
-  /* Infinite scroll - no gradient overlays, just smooth scrolling */
-
-  /* Momentum-based easing for natural feel */
-  @supports (scroll-behavior: smooth) {
-    .wc-infinite-scroll {
-      scroll-behavior: smooth;
-    }
-  }
-
-  /* Enhanced scroll performance */
-  .wc-infinite-scroll * {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-}
-

@@ -1,38 +1,59 @@
 // src/services/telemetry.js
 
 import { getAnonymousUserId } from "../lib/userId";
+import { auth } from "../firebase";
+import { logError } from "@/lib/logger";
 
 const TELEMETRY_ENDPOINT = "/aiSession";
 
 // in-memory buffer so Admin can see something even before backend wiring
 const telemetryBuffer = [];
 
-const basePayload = ()=>({
-  source:"wellnesscafe-os",
-  userId: getAnonymousUserId(),
-  ts:new Date().toISOString()
-});
+const basePayload = () => {
+  const userId = auth?.currentUser?.uid || getAnonymousUserId();
+  return {
+    source: "wellnesscafe-os",
+    clientId: userId, // For provider mode compatibility
+    userId, // Keep for backward compatibility
+    timestamp: new Date().toISOString(),
+    ts: new Date().toISOString(), // Keep for backward compatibility
+  };
+};
 
-const safeFetch = async (body)=>{
-  try{
-    await fetch(TELEMETRY_ENDPOINT,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(body)
+const safeFetch = async (body) => {
+  try {
+    await fetch(TELEMETRY_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-  }catch(err){
+  } catch (err) {
     // don't ever crash the UI because telemetry failed
-    console.error("Telemetry error",err);
+    logError("telemetry", err, {
+      file: "telemetry.js",
+      function: "safeFetch",
+    });
   }
 };
 
-export const trackEvent = async (event)=>{
-  const payload={...basePayload(),type:"event",event};
+export const trackEvent = async (event) => {
+  const payload = {
+    ...basePayload(),
+    type: "event",
+    event: {
+      ...event,
+      // Ensure event has required fields
+      kind: event.kind || "unknown",
+      timestamp: event.timestamp || new Date().toISOString(),
+    },
+  };
+  
   telemetryBuffer.push(payload);
-  if(telemetryBuffer.length>200){
+  if (telemetryBuffer.length > 200) {
     telemetryBuffer.shift();
   }
-  await safeFetch({mode:"telemetry",event:payload});
+  
+  await safeFetch({ mode: "telemetry", event: payload });
 };
 
 export const trackPageView = async (path)=>{

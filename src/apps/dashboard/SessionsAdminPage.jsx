@@ -1,3 +1,4 @@
+
 // src/apps/dashboard/SessionsAdminPage.jsx
 
 import React, { useEffect, useState } from "react";
@@ -11,9 +12,10 @@ const SessionsAdminPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    document.title = "Admin · Sessions - WellnessCafe";
-    trackPageView("admin_sessions");
-    loadTemplates();
+      document.title = "Admin · Sessions - WellnessCafe";
+      trackPageView("admin_sessions");
+      loadTemplates();
+    
   }, []);
 
   const loadTemplates = async () => {

@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "wellnesscafe-os",
+    "wcprod": "wellnesscafelanding",
+    "wcos": "wellnesscafe-os"
+  },
+  "targets": {},
+  "etags": {}
+}

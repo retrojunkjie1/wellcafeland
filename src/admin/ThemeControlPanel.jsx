@@ -1,14 +1,14 @@
 // src/admin/ThemeControlPanel.jsx
 
-import React,{useState} from "react";
-import {doc,setDoc,serverTimestamp} from "firebase/firestore";
-import {db} from "../firebase";
-import {useDynamicThemeEngine} from "../hooks/useDynamicThemeEngine";
+import React, { useState } from "react";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase";
+import { useDynamicThemeEngine } from "../hooks/useDynamicThemeEngine";
 
-const ThemeControlPanel=()=>{
-  const {theme,adminActive,adminMode}=useDynamicThemeEngine();
-  const [saving,setSaving]=useState(false);
-  const [error,setError]=useState("");
+const ThemeControlPanel = () => {
+  const { theme, adminActive, adminMode } = useDynamicThemeEngine();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const setGlobalTheme=async(mode,override)=>{
     if(!db){
