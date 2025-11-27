@@ -549,7 +549,7 @@ const ChatPanel = () => {
     if (enrichedMessage.risk?.riskLevel === "high") setLastRiskEvent(enrichedMessage.risk);
     
     // Add enriched message to store (pass full object to preserve emotion/triggers/risk)
-    const newMsg = addMessage("user", {
+    addMessage("user", {
       content: enrichedMessage.content,
       emotion: enrichedMessage.emotion,
       triggers: enrichedMessage.triggers,
@@ -564,15 +564,14 @@ const ChatPanel = () => {
       risk: signals.risk,
     });
     
-    // Phase 17: Show recommendation if available (after a short delay)
+    // Phase 21: Show recommendation if available (after a short delay)
     if (recommendation) {
       setTimeout(() => {
-        const toolName = TOOL_NAMES[recommendation.toolId] || recommendation.toolId;
         addMessage("assistant", {
           id: `recommendation-${Date.now()}`,
           role: "assistant",
           type: "recommendation",
-          content: recommendation.reason,
+          content: recommendation.reason || "Based on what you just shared, we can try a short practice together.",
           suggestion: recommendation,
           timestamp: Date.now(),
         });
@@ -656,12 +655,11 @@ const ChatPanel = () => {
             
             if (recommendation) {
               setTimeout(() => {
-                const toolName = TOOL_NAMES[recommendation.toolId] || recommendation.toolId;
                 addMessage("assistant", {
                   id: `recommendation-${Date.now()}`,
                   role: "assistant",
                   type: "recommendation",
-                  content: recommendation.reason,
+                  content: recommendation.reason || "Based on what you just shared, we can try a short practice together.",
                   suggestion: recommendation,
                   timestamp: Date.now(),
                 });
@@ -725,32 +723,64 @@ const ChatPanel = () => {
                       </div>
                     );
                   }
-                  // Phase 17: Handle recommendation messages
+                  // Phase 21: Handle recommendation messages with improved UI
                   if (msg.type === "recommendation" && msg.suggestion) {
                     const toolName = TOOL_NAMES[msg.suggestion.toolId] || msg.suggestion.toolId;
+                    const handleOpenSuggestedTool = (suggestion) => {
+                      if (suggestion?.toolId) {
+                        injectToolIntoChat(suggestion.toolId, {});
+                      }
+                    };
+                    const dismissSuggestion = (messageId) => {
+                      // Remove the recommendation message from the store
+                      const currentMessages = useOSStore.getState().messages;
+                      const filteredMessages = currentMessages.filter(m => m.id !== messageId);
+                      useOSStore.setState({ messages: filteredMessages });
+                      
+                      // Also update the current chat
+                      const currentChatId = useOSStore.getState().currentChatId;
+                      const chats = useOSStore.getState().chats;
+                      const updatedChats = chats.map(chat => {
+                        if (chat.id === currentChatId) {
+                          return {
+                            ...chat,
+                            messages: filteredMessages,
+                            updatedAt: Date.now(),
+                          };
+                        }
+                        return chat;
+                      });
+                      useOSStore.setState({ chats: updatedChats });
+                    };
+                    
                     return (
-                      <div key={msg.id} className="space-y-2 animate-fade-in">
-                        <div className="ml-0 sm:ml-12 max-w-full sm:max-w-[85%] rounded-2xl bg-wcGold/10 border border-wcGold/30 p-3 sm:p-4">
-                          <p className="text-sm sm:text-base text-white/90 mb-3">{msg.content || msg.text}</p>
-                          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                            <button
-                              onClick={() => {
-                                // Open tool using existing workspace/tool system
-                                injectToolIntoChat(msg.suggestion.toolId, {});
-                              }}
-                              className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg bg-wcGold/20 hover:bg-wcGold/30 text-wcGold border border-wcGold/40 transition-colors text-sm sm:text-base font-medium"
-                            >
-                              Open {toolName}
-                            </button>
-                            <button
-                              onClick={() => {
-                                // Remove recommendation message (optional - could just leave it)
-                                // For now, we'll just do nothing (user can ignore)
-                              }}
-                              className="w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 border border-white/10 transition-colors text-sm sm:text-base"
-                            >
-                              Not now
-                            </button>
+                      <div key={msg.id} className="flex items-start gap-2 sm:gap-4 animate-fade-in">
+                        <div className="flex-shrink-0">
+                          <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/10 flex items-center justify-center">
+                            <span className="text-[10px] sm:text-xs font-medium text-white">SG</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="w-full max-w-full rounded-xl bg-amber-500/10 border border-amber-400/40 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                            <p className="text-sm text-amber-50 flex-1">
+                              {msg.content || msg.text || "Based on what you just shared, we can try a short practice together."}
+                            </p>
+                            <div className="flex flex-row flex-wrap gap-2 justify-start sm:justify-end">
+                              <button
+                                type="button"
+                                className="px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-amber-400 text-slate-950 hover:bg-amber-300 transition min-h-[40px] sm:min-h-0"
+                                onClick={() => handleOpenSuggestedTool(msg.suggestion)}
+                              >
+                                Open {toolName}
+                              </button>
+                              <button
+                                type="button"
+                                className="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-amber-300/60 text-amber-100 hover:bg-amber-300/10 transition min-h-[40px] sm:min-h-0"
+                                onClick={() => dismissSuggestion(msg.id)}
+                              >
+                                Not now
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -73,7 +73,7 @@ const OSLayout = () => {
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition backdrop-blur-sm"
+              className="fixed top-2 left-2 sm:top-4 sm:left-4 z-[60] inline-flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition backdrop-blur-sm shadow-lg"
               aria-label="Home"
             >
               <img
@@ -87,7 +87,7 @@ const OSLayout = () => {
             <button
               type="button"
               onClick={() => setDrawerOpen(true)}
-              className="fixed top-2 right-2 sm:top-4 sm:right-4 z-50 md:hidden inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition backdrop-blur-sm"
+              className="fixed top-2 right-2 sm:top-4 sm:right-4 z-[60] md:hidden inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition backdrop-blur-sm shadow-lg"
               aria-label="Open menu"
             >
               <Menu className="h-4 w-4 sm:h-5 sm:w-5" />

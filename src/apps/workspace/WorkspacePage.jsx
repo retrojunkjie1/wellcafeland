@@ -165,28 +165,30 @@ const WorkspacePage = () => {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 animate-fade-in w-full max-w-screen-xl mx-auto overflow-hidden">
-      {/* Header - Simple ChatGPT style */}
-      <div className="border-b border-white/10 bg-slate-950 px-4 sm:px-6 py-3 sm:py-4 md:py-5 flex-shrink-0">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {/* Phase 18: Back button */}
+      {/* Header - Simple ChatGPT style with proper spacing for fixed home button */}
+      <div className="border-b border-white/10 bg-slate-950 px-4 sm:px-6 py-3 sm:py-4 md:py-5 flex-shrink-0 pt-12 sm:pt-14 md:pt-16">
+        <div className="flex items-center justify-between gap-3 sm:gap-4 w-full">
+          {/* Left: Back button + Title */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            {/* Back button */}
             <button
               type="button"
               onClick={() => {
                 closeWorkspace();
                 navigate("/");
               }}
-              className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white/70 hover:text-white hover:bg-white/10 transition"
+              className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white/70 hover:text-white hover:bg-white/10 transition min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
               aria-label="Back"
             >
               ←
             </button>
+            {/* Title section */}
             <div className="flex-1 min-w-0">
               <h1 className="text-base sm:text-lg md:text-xl font-medium text-white truncate">
                 {workspace.title}
               </h1>
               {workspace.type && (
-                <p className="text-xs text-white/50 mt-1 hidden sm:block">
+                <p className="text-xs text-white/50 mt-0.5 hidden sm:block truncate">
                   {workspace.type === "tool" && "Practice at your own pace"}
                   {workspace.type === "support" && "Find the help you need"}
                   {workspace.type === "provider" && "Connect with care providers"}
@@ -195,13 +197,14 @@ const WorkspacePage = () => {
               )}
             </div>
           </div>
+          {/* Right: Back to Chat button */}
           <button
             type="button"
             onClick={() => {
               closeWorkspace();
               navigate("/");
             }}
-            className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white/70 hover:text-white hover:bg-white/10 transition whitespace-nowrap min-h-[48px] sm:min-h-0"
+            className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white/70 hover:text-white hover:bg-white/10 transition whitespace-nowrap min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
           >
             Back to Chat
           </button>

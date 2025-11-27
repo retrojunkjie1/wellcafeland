@@ -3,7 +3,7 @@
 
 import { getClientEvents } from "./clientRegistry";
 import { listClientsForProvider } from "./providerRegistry";
-import { logError, logInfo } from "./logService";
+import { logError } from "./logService";
 
 /**
  * Calculate risk label from events
@@ -262,6 +262,7 @@ export async function getAlertsForProvider(providerId) {
 
 /**
  * Evaluate message risk level based on text, emotion, and triggers
+ * Phase 22: Enhanced with expanded risk detection rules
  * @param {Object} params
  * @param {string} params.text - Message text
  * @param {Object} params.emotion - Emotion analysis result (optional)
@@ -269,28 +270,60 @@ export async function getAlertsForProvider(providerId) {
  * @returns {Object} { riskLevel, reasons, domains }
  */
 export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
-  if (!text || typeof text !== "string") {
-    return {
-      riskLevel: "low",
-      reasons: [],
-      domains: [],
-    };
-  }
+  try {
+    if (!text || typeof text !== "string") {
+      return {
+        riskLevel: "low",
+        reasons: [],
+        domains: [],
+      };
+    }
 
-  const lowerText = text.toLowerCase();
-  const reasons = [];
-  const domains = [];
+    const lowerText = text.toLowerCase();
+    const reasons = [];
+    const domains = [];
 
+  // ============================================
+  // LOW RISK: No concerning terms
+  // ============================================
+  // (Default state - no action needed)
+
+  // ============================================
+  // MODERATE RISK: Cravings, urges, emotional spirals, shame implosion
+  // ============================================
+  
   // Cravings/urge detection
   const cravingPhrases = [
     "use", "drink", "relapse", "craving", "urge", "tempted", "using",
     "want to use", "need to use", "thinking about using", "getting high",
-    "want a drink", "want to get high"
+    "want a drink", "want to get high", "i know what would make this easier"
   ];
   const hasCraving = cravingPhrases.some(phrase => lowerText.includes(phrase));
-  if (hasCraving || triggers.includes("cravings")) {
+  if (hasCraving || triggers.includes("cravings") || triggers.includes("relapse_pressure")) {
     reasons.push("mentions cravings");
     domains.push("cravings");
+  }
+
+  // Emotional spirals
+  const spiralPhrases = [
+    "spiraling", "it keeps getting worse", "everything is piling", "piling up",
+    "getting worse", "can't stop", "out of control"
+  ];
+  const hasSpiral = spiralPhrases.some(phrase => lowerText.includes(phrase));
+  if (hasSpiral) {
+    reasons.push("emotional spiral detected");
+    domains.push("emotional_flooding");
+  }
+
+  // Shame implosion
+  const shameImplosionPhrases = [
+    "i'm disgusting", "i'm worthless", "i'm a failure", "i hate myself",
+    "disgusted with myself", "i'm broken", "i'm damaged", "i'm ruined"
+  ];
+  const hasShameImplosion = shameImplosionPhrases.some(phrase => lowerText.includes(phrase));
+  if (hasShameImplosion || triggers.includes("shame") || triggers.includes("self_worth_collapse")) {
+    reasons.push("shame implosion detected");
+    domains.push("shame");
   }
 
   // Hopelessness detection
@@ -299,16 +332,27 @@ export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
     "nothing matters", "why bother", "it's useless", "won't work", "never get better"
   ];
   const hasHopelessness = hopelessPhrases.some(phrase => lowerText.includes(phrase));
-  if (hasHopelessness) {
+  if (hasHopelessness || triggers.includes("hopelessness")) {
     reasons.push("mentions hopelessness");
     domains.push("hopelessness");
   }
 
+  // Isolation mentions
+  if (triggers.includes("loneliness") || triggers.includes("social_isolation") || triggers.includes("isolation")) {
+    reasons.push("mentions isolation");
+    domains.push("isolation");
+  }
+
+  // ============================================
+  // HIGH RISK: Self-harm language, severe hopelessness, collapse states
+  // ============================================
+  
   // Self-harm ideation (conservative detection)
   const selfHarmPhrases = [
     "want to disappear", "don't want to be here", "don't want to exist",
     "better off without me", "they'd be better", "no one would miss",
-    "end it all", "not worth living"
+    "end it all", "not worth living", "i disappear", "i don't want to exist",
+    "want to die", "kill myself", "suicide", "self-harm"
   ];
   const hasSelfHarm = selfHarmPhrases.some(phrase => lowerText.includes(phrase));
   if (hasSelfHarm) {
@@ -316,10 +360,35 @@ export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
     domains.push("self-harm");
   }
 
-  // Isolation mentions
-  if (triggers.includes("isolation")) {
-    reasons.push("mentions isolation");
-    domains.push("isolation");
+  // Severe hopelessness
+  const severeHopelessPhrases = [
+    "nothing matters anymore", "completely hopeless", "no way out",
+    "trapped forever", "never getting better", "it's over", "i'm done"
+  ];
+  const hasSevereHopelessness = severeHopelessPhrases.some(phrase => lowerText.includes(phrase));
+  if (hasSevereHopelessness && hasHopelessness) {
+    reasons.push("severe hopelessness");
+    domains.push("hopelessness");
+  }
+
+  // Collapse states + emotional implosion
+  const collapsePhrases = [
+    "i'm collapsing", "falling apart", "breaking down", "can't hold it together",
+    "everything is falling apart", "i'm done", "i give up", "completely broken"
+  ];
+  const hasCollapse = collapsePhrases.some(phrase => lowerText.includes(phrase));
+  if (hasCollapse) {
+    reasons.push("collapse state detected");
+    domains.push("internal_collapse");
+  }
+
+  // Emotional implosion (multiple high-intensity emotions)
+  const highIntensityEmotions = ["panicked", "hopeless", "defeated", "ashamed", "guilty"];
+  const hasHighIntensityEmotion = emotion && highIntensityEmotions.includes(emotion.label) && emotion.intensity >= 0.8;
+  const hasMultipleTriggers = triggers.length >= 4;
+  if (hasHighIntensityEmotion && hasMultipleTriggers) {
+    reasons.push("emotional implosion");
+    domains.push("emotional_flooding");
   }
 
   // High emotional intensity from emotion analysis
@@ -330,14 +399,27 @@ export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
     }
   }
 
-  // Determine risk level
+  // ============================================
+  // RISK LEVEL DETERMINATION
+  // ============================================
   let riskLevel = "low";
   
+  // High risk conditions
   if (hasSelfHarm) {
     riskLevel = "high";
-  } else if (hasCraving && hasHopelessness) {
+  } else if (hasSevereHopelessness && hasCollapse) {
     riskLevel = "high";
+  } else if (hasCollapse && hasHighIntensityEmotion) {
+    riskLevel = "high";
+  } else if (hasCraving && hasHopelessness && hasSpiral) {
+    riskLevel = "high";
+  }
+  // Moderate risk conditions
+  else if (hasCraving && hasHopelessness) {
+    riskLevel = "moderate";
   } else if (hasCraving || hasHopelessness) {
+    riskLevel = "moderate";
+  } else if (hasSpiral || hasShameImplosion) {
     riskLevel = "moderate";
   } else if (emotion && emotion.intensity >= 0.7 && emotion.valence === "distressed") {
     riskLevel = "moderate";
@@ -345,11 +427,20 @@ export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
     riskLevel = "moderate";
   }
 
-  return {
-    riskLevel,
-    reasons: [...new Set(reasons)], // Remove duplicates
-    domains: [...new Set(domains)], // Remove duplicates
-  };
+    return {
+      riskLevel,
+      reasons: [...new Set(reasons)], // Remove duplicates
+      domains: [...new Set(domains)], // Remove duplicates
+    };
+  } catch (err) {
+    console.warn("[riskService] evaluateMessageRisk failed:", err);
+    // Never throw - return safe default
+    return {
+      riskLevel: "low",
+      reasons: [],
+      domains: [],
+    };
+  }
 }
 
 export default {

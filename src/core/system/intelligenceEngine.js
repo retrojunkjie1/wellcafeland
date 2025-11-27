@@ -6,6 +6,7 @@ import { analyzeEmotionalState, analyzeMessageEmotion, detectTriggerDomains } fr
 import { analyzeSpiritualState } from "@/services/spiritualAnalysis";
 import { forecastRecoveryRisk } from "@/services/recoveryForecast";
 import { evaluateMessageRisk } from "@/services/riskService";
+import { EMOTIONAL_STATES, TRIGGER_DOMAINS } from "@/ai/human/humanMap";
 
 // System states
 export const SYSTEM_STATES = {
@@ -131,7 +132,7 @@ export function interpret(observation) {
 export function adapt(interpretedState) {
   if (!interpretedState) return;
 
-  const { systemState, needsAudio, needsVideo, recommendTool, error } = interpretedState;
+  const { systemState, needsAudio: _needsAudio, needsVideo: _needsVideo, recommendTool: _recommendTool, error } = interpretedState;
 
   // Store in context memory
   if (systemState) {
@@ -355,6 +356,8 @@ export function analyzeMessageSignals(message) {
 
 /**
  * Get recommended tool based on message, emotion, triggers, and risk
+ * Phase 21: Enhanced with Human Map ontology
+ * Phase 22: Expanded with deeper recommendation logic
  * @param {Object} params
  * @param {Object} params.message - Message object
  * @param {Object} params.emotion - Emotion analysis result
@@ -364,46 +367,32 @@ export function analyzeMessageSignals(message) {
  */
 export function getRecommendedTool({ message, emotion, triggers, risk }) {
   try {
-    if (!message || !emotion || !triggers || !risk) {
-      return null;
-    }
+    const _emotion = emotion || message?.emotion;
+    const _triggers = triggers || [];
+    const _risk = risk || { riskLevel: "low", reasons: [], domains: [] };
+    const riskLevel = _risk.riskLevel || "low";
+    const label = _emotion?.label || "";
 
-    // Cravings → urge-surfing
-    if (triggers.includes("cravings") || risk.domains.includes("cravings")) {
+    // 1. Cravings → urge-surfing
+    if (_triggers.includes("cravings") || _triggers.includes("relapse_pressure") || _risk.domains?.includes("cravings")) {
       return {
         kind: "tool",
         toolId: "urge-surfing",
-        reason: "Because you mentioned cravings, we can try a short urge surfing exercise.",
+        reason: "Because you hinted at wanting relief or escape, we can surf the urge instead of fighting it.",
       };
     }
 
-    // Anxious or overwhelmed → breathing or grounding
-    if (emotion.label === "anxious" || emotion.label === "overwhelmed" || emotion.intensity >= 0.7) {
-      // Prefer grounding if very intense, breathing if moderate
-      if (emotion.intensity >= 0.8) {
-        return {
-          kind: "tool",
-          toolId: "grounding",
-          reason: "Because you're feeling overwhelmed, we can try a grounding exercise to help you feel more present.",
-        };
-      }
+    // 2. Shame → self-surgeon
+    if (_triggers.includes("shame") || _triggers.includes("self_worth_collapse") || label === "ashamed") {
       return {
         kind: "tool",
-        toolId: "breathing",
-        reason: "Because you're feeling anxious, we can try a breathing exercise to help you calm down.",
+        toolId: "self-surgeon",
+        reason: "Because you're carrying heavy self-blame, we can gently explore and clean that narrative.",
       };
     }
 
-    // Shame or guilt → journaling or self-surgeon
-    if (triggers.includes("shame") || triggers.includes("guilt")) {
-      // Prefer self-surgeon for shame, journaling for guilt
-      if (triggers.includes("shame")) {
-        return {
-          kind: "tool",
-          toolId: "self-surgeon",
-          reason: "Because you mentioned shame, we can try a self-inquiry exercise to help you reframe these feelings.",
-        };
-      }
+    // 3. Guilt → journaling
+    if (_triggers.includes("guilt") || label === "guilty") {
       return {
         kind: "tool",
         toolId: "journaling",
@@ -411,8 +400,62 @@ export function getRecommendedTool({ message, emotion, triggers, risk }) {
       };
     }
 
-    // High risk → grounding (safest option)
-    if (risk.riskLevel === "high") {
+    // 4. Anxiety → breathing
+    if (_triggers.includes("anxiety") || ["anxious", "panicked", "fearful"].includes(label)) {
+      return {
+        kind: "tool",
+        toolId: "breathing",
+        reason: "Because your nervous system sounds under pressure, we can try a short breathing reset.",
+      };
+    }
+
+    // 5. Overwhelm → grounding
+    if (_triggers.includes("overwhelm") || label === "overwhelmed" || _triggers.includes("pressure_stacking")) {
+      return {
+        kind: "tool",
+        toolId: "grounding",
+        reason: "Because you're feeling overwhelmed, we can try a grounding exercise to help you feel more present.",
+      };
+    }
+
+    // 6. Grief / loss → grounding
+    if (_triggers.includes("loss_grief") || label === "grieving") {
+      return {
+        kind: "tool",
+        toolId: "grounding",
+        reason: "Because grief can pull you out of your body, we can try a short grounding practice.",
+      };
+    }
+
+    // 7. Loneliness / isolation → journaling
+    if (_triggers.includes("loneliness") || _triggers.includes("social_isolation") || label === "lonely") {
+      return {
+        kind: "tool",
+        toolId: "journaling",
+        reason: "Because you mentioned feeling alone or unseen, we can create safe space on the page.",
+      };
+    }
+
+    // 8. Identity collapse → self-surgeon (for identity exploration)
+    if (_triggers.includes("identity_crisis") || _triggers.includes("purpose_confusion")) {
+      return {
+        kind: "tool",
+        toolId: "self-surgeon",
+        reason: "Because you mentioned feeling lost or confused about who you are, we can explore that together.",
+      };
+    }
+
+    // 9. Anger → breathing (for regulation)
+    if (_triggers.includes("anger") || label === "angry" || label === "frustrated") {
+      return {
+        kind: "tool",
+        toolId: "breathing",
+        reason: "Because you're feeling anger or frustration, we can try a breathing exercise to help you regulate.",
+      };
+    }
+
+    // 10. High risk → grounding (safest option)
+    if (riskLevel === "high") {
       return {
         kind: "tool",
         toolId: "grounding",
@@ -420,15 +463,7 @@ export function getRecommendedTool({ message, emotion, triggers, risk }) {
       };
     }
 
-    // Moderate risk with isolation → journaling
-    if (risk.riskLevel === "moderate" && triggers.includes("isolation")) {
-      return {
-        kind: "tool",
-        toolId: "journaling",
-        reason: "Because you mentioned feeling isolated, we can try journaling to help you process your thoughts.",
-      };
-    }
-
+    // If no rule applies, return null (as requested by product owner).
     return null;
   } catch (err) {
     console.warn("[intel] Failed to get recommended tool:", err);
