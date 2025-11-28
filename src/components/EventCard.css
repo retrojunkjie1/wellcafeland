@@ -1,0 +1,58 @@
+.wc-event {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.25rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.wc-event-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-top-left-radius: 1.25rem;
+  border-top-right-radius: 1.25rem;
+}
+
+.wc-event-body {
+  padding: 1rem 1.25rem;
+  background: rgba(0, 0, 0, 0.45); /* ensure contrast behind text */
+  border-bottom-left-radius: 1.25rem;
+  border-bottom-right-radius: 1.25rem;
+}
+
+.wc-event h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+  color: var(--on-dark-text);
+}
+
+.wc-event-date,
+.wc-event-loc {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  margin: 0.2rem 0;
+}
+
+.wc-event-desc {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.85rem;
+  margin: 0.6rem 0 1rem;
+}
+
+.wc-event-btn {
+  background: linear-gradient(120deg, #8b6aff, #bda6ff);
+  border: none;
+  color: var(--on-dark-text);
+  border-radius: 0.5rem;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.wc-event-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(120deg, #a08bff, #d0baff);
+}

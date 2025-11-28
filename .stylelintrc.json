@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/stylelintrc",
+  "extends": ["stylelint-config-standard"],
+  "ignoreFiles": [
+    "build/**/*",
+    "node_modules/**/*",
+    "public/**/*",
+    "static/**/*"
+  ],
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": [
+          "tailwind",
+          "apply",
+          "variants",
+          "responsive",
+          "screen"
+        ]
+      }
+    ],
+    "property-no-vendor-prefix": null,
+    "value-no-vendor-prefix": null,
+    "no-descending-specificity": null,
+    "function-url-quotes": "always",
+    "alpha-value-notation": "number",
+    "color-hex-length": null,
+    "selector-pseudo-element-no-unknown": null,
+    "color-function-notation": null,
+    "media-feature-range-notation": null,
+    "font-family-name-quotes": null,
+    "declaration-block-no-redundant-longhand-properties": null,
+    "shorthand-property-no-redundant-values": null,
+    "rule-empty-line-before": null,
+    "comment-empty-line-before": null,
+    "at-rule-empty-line-before": null,
+    "declaration-block-single-line-max-declarations": null,
+    "keyframes-name-pattern": null,
+    "length-zero-no-unit": null,
+    "selector-class-pattern": null
+  }
+}

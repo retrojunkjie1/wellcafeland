@@ -1,0 +1,158 @@
+/* src/Views/AboutPage.css */
+
+.about-page {
+  padding: 2rem 1rem;
+  color: #f0f0f0;
+}
+
+.about-hero {
+  text-align: center;
+  padding: 4rem 1rem;
+  border-radius: 16px;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(40, 40, 70, 0.5),
+    rgba(20, 20, 40, 0.6)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.about-hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("/public/images/community.jpg") no-repeat center center/cover;
+  opacity: 0.1;
+  z-index: -1;
+}
+
+.about-hero h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.about-hero p {
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: 0 auto;
+  color: #c0c0c0;
+}
+
+.mission-section {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.mission-section h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.mission-card {
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.mission-card p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #d0d0d0;
+}
+
+.values-section,
+.team-section,
+.stats-section {
+  margin-bottom: 4rem;
+}
+
+.values-section h2,
+.team-section h2,
+.stats-section h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.values-grid,
+.team-grid,
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.value-card,
+.team-member-card,
+.stat-card {
+  background: rgba(35, 35, 65, 0.7);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.value-card:hover,
+.team-member-card:hover,
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.value-card .icon,
+.team-member-card .icon,
+.stat-card .icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #8a63d2; /* A nice purple accent */
+}
+
+.value-card h3,
+.team-member-card h3,
+.stat-card h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.value-card p,
+.team-member-card p {
+  font-size: 1rem;
+  color: #b0b0b0;
+  line-height: 1.6;
+}
+
+.team-member-card .role {
+  font-style: italic;
+  color: #a0a0a0;
+}
+
+.stat-card .stat-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-label {
+  font-size: 1rem;
+  color: #b0b0b0;
+}

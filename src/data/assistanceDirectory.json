@@ -1,0 +1,589 @@
+[
+  {
+    "category": "Recovery Centers",
+    "name": "Foundry Steamboat Springs",
+    "type": "Inpatient/Outpatient Treatment",
+    "contact": {
+      "phone": "(970) 870-2449",
+      "website": "https://foundrytreatmentcenter.com",
+      "email": "info@foundrytreatmentcenter.com"
+    },
+    "location": "Steamboat Springs, CO",
+    "state": "CO",
+    "description": "Comprehensive substance use recovery programs combining therapy, mindfulness, and wellness.",
+    "services": [
+      "Residential, PHP, IOP, OP",
+      "Medication-assisted treatment (as appropriate)",
+      "Family programming and aftercare"
+    ],
+    "eligibility": "Adults seeking substance use or co-occurring treatment; clinical assessment required.",
+    "howToApply": "Call intake line or complete web contact form for pre-screening.",
+    "documents": [
+      "Photo ID",
+      "Insurance card (if applicable)",
+      "Medication list"
+    ],
+    "languages": "English; interpreter services on request",
+    "cost": "Insurance/self-pay; partial scholarships as available"
+  },
+  {
+    "category": "Financial Assistance",
+    "name": "Crime Victim Compensation (CVC)",
+    "type": "State Compensation Programs",
+    "contact": {
+      "phone": "",
+      "website": "https://ovc.ojp.gov/program/crime-victim-compensation/state-compensation-and-assistance",
+      "email": ""
+    },
+    "location": "United States (State-administered)",
+    "state": "US",
+    "description": "State programs that may reimburse medical, counseling, lost wages, and other costs for eligible crime victims.",
+    "eligibility": "Varies by state; generally requires reporting the crime and cooperating with law enforcement.",
+    "howToApply": "Use the OVC directory to find your state's CVC office and follow their application steps.",
+    "documents": [
+      "Police report number",
+      "Receipts/Bills",
+      "Proof of identity"
+    ],
+    "languages": "Varies by state"
+  },
+  {
+    "category": "Financial Assistance",
+    "name": "DisasterAssistance.gov",
+    "type": "FEMA & Federal Aid",
+    "contact": {
+      "phone": "(800) 621-3362",
+      "website": "https://www.disasterassistance.gov",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Find and apply for federal assistance after disasters, including housing, medical, and counseling support.",
+    "eligibility": "Residents in federally declared disaster areas; program-specific requirements apply.",
+    "howToApply": "Check current disaster declarations and apply online; you can also call the FEMA helpline.",
+    "documents": ["Photo ID", "Proof of residence", "Insurance information"],
+    "hours": "Daily; see website for details"
+  },
+  {
+    "category": "Financial Assistance",
+    "name": "VA Disability for PTSD",
+    "type": "Veterans Benefits",
+    "contact": {
+      "phone": "(800) 827-1000",
+      "website": "https://www.va.gov/disability/eligibility/ptsd/",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Monthly disability compensation and healthcare for eligible veterans with PTSD related to service.",
+    "eligibility": "Veterans with qualifying service-connected PTSD; evidence requirements apply.",
+    "howToApply": "Apply online via VA.gov or with a VSO; submit medical and service records.",
+    "documents": ["DD214", "Medical records", "Service records"],
+    "languages": "English; translation support via VA partners"
+  },
+  {
+    "category": "Financial Assistance",
+    "name": "VictimConnect Resource Center",
+    "type": "Navigation & Referral",
+    "contact": {
+      "phone": "(855) 4-VICTIM",
+      "website": "https://victimconnect.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Confidential referrals to financial assistance, counseling, legal aid, and other services for crime victims.",
+    "howToApply": "Call, chat, or browse resources to get connected to local programs, including compensation.",
+    "hours": "See website; chat often available weekdays"
+  },
+  {
+    "category": "Recovery Centers",
+    "name": "SAMHSA Treatment Locator",
+    "type": "National Directory",
+    "contact": {
+      "phone": "(800) 662-HELP",
+      "website": "https://findtreatment.gov",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Search thousands of licensed treatment facilities nationwide.",
+    "services": ["Detox, residential, outpatient", "Mental health clinics"],
+    "howToApply": "Search by ZIP code; contact facilities directly.",
+    "languages": "Varies by provider"
+  },
+  {
+    "category": "Sober Living Homes",
+    "name": "Travis House",
+    "type": "Men’s Transitional Home",
+    "contact": {
+      "phone": "(303) 555-8721",
+      "website": "https://travishousecolorado.org",
+      "email": "support@travishouse.org"
+    },
+    "location": "Denver, CO",
+    "state": "CO",
+    "description": "Safe, structured housing supporting men in early recovery with peer accountability.",
+    "services": ["Curated peer support", "Random UA testing", "Job readiness"],
+    "eligibility": "Adults 18+ in recovery; sobriety verification and interview.",
+    "howToApply": "Apply online; schedule interview; deposit may be required.",
+    "cost": "Weekly program fee; limited scholarship beds"
+  },
+  {
+    "category": "Sober Living Homes",
+    "name": "NARR Directory",
+    "type": "Accredited Residences",
+    "contact": {
+      "phone": "",
+      "website": "https://narronline.com/find-a-home/",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Find certified recovery residences that meet national standards.",
+    "howToApply": "Search directory; contact residences directly.",
+    "notes": "Certification availability varies by state."
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "988 Suicide & Crisis Lifeline",
+    "type": "24/7 Crisis Support",
+    "contact": {
+      "phone": "988",
+      "website": "https://988lifeline.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Free and confidential support for people in distress, prevention and crisis resources.",
+    "hours": "24/7",
+    "languages": "English, Spanish; interpretation for 240+ languages"
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "211 (United Way)",
+    "type": "Community Resources",
+    "contact": {
+      "phone": "211",
+      "website": "https://www.211.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Referrals for emergency food, shelter, utility assistance, and more.",
+    "hours": "24/7",
+    "languages": "Varies; multilingual support in most regions"
+  },
+  {
+    "category": "Legal Aid",
+    "name": "Colorado Legal Services",
+    "type": "Civil Legal Aid",
+    "contact": {
+      "phone": "(303) 837-1313",
+      "website": "https://www.coloradolegalservices.org",
+      "email": ""
+    },
+    "location": "Colorado",
+    "state": "CO",
+    "description": "Legal help for low-income Coloradans in civil cases including housing and benefits.",
+    "services": [
+      "Eviction defense",
+      "Benefits appeals",
+      "Consumer and family law"
+    ],
+    "eligibility": "Income-qualified; case priority guidelines apply.",
+    "howToApply": "Apply online or by phone; intake availability varies by county.",
+    "languages": "English, Spanish; interpreters available"
+  },
+  {
+    "category": "Legal Aid",
+    "name": "Legal Aid Society (Directory)",
+    "type": "Nationwide Finder",
+    "contact": {
+      "phone": "",
+      "website": "https://www.lsc.gov/about-lsc/what-legal-aid/find-legal-aid",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Find your local Legal Aid office funded by the Legal Services Corporation.",
+    "howToApply": "Enter your ZIP code to see local intake options."
+  },
+  {
+    "category": "Financial Assistance",
+    "name": "Benefits.gov",
+    "type": "Program Finder",
+    "contact": {
+      "phone": "",
+      "website": "https://www.benefits.gov",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Official U.S. government website for finding benefit and assistance programs.",
+    "services": [
+      "Program eligibility screener",
+      "Direct links to applications"
+    ],
+    "howToApply": "Use the Benefit Finder questionnaire; follow links to your state."
+  },
+  {
+    "category": "Financial Assistance",
+    "name": "LIHEAP (Energy Assistance)",
+    "type": "Utility Bill Support",
+    "contact": {
+      "phone": "(202) 401-9351",
+      "website": "https://www.acf.hhs.gov/ocs/low-income-home-energy-assistance-program-liheap",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Helps eligible households with heating/cooling energy costs and weatherization.",
+    "eligibility": "Income-qualified; priority for elderly, disabled, and households with young children.",
+    "howToApply": "Find your state LIHEAP office via the website and follow application steps.",
+    "documents": ["Photo ID", "Proof of income", "Utility bill"],
+    "languages": "Varies by state"
+  },
+  {
+    "category": "Housing Assistance",
+    "name": "Housing Choice Voucher (Section 8)",
+    "type": "Rental Assistance",
+    "contact": {
+      "phone": "(800) 955-2232",
+      "website": "https://www.hud.gov/topics/housing_choice_voucher_program_section_8",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Helps very low-income families, the elderly, and disabled afford decent, safe housing.",
+    "eligibility": "Income-qualified by local PHA; waitlists common.",
+    "howToApply": "Contact your local Public Housing Agency (PHA) to check waitlist status.",
+    "documents": ["Photo ID", "Proof of income", "Household composition"],
+    "notes": "Some PHAs open waitlists periodically; check frequently."
+  },
+  {
+    "category": "Housing Assistance",
+    "name": "HUD Continuum of Care (CoC)",
+    "type": "Homeless Services",
+    "contact": {
+      "phone": "(202) 708-1112",
+      "website": "https://www.hudexchange.info/grantees/",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Local networks that coordinate housing and services funding for homeless families and individuals.",
+    "howToApply": "Find your CoC on HUD Exchange and contact lead agencies for coordinated entry.",
+    "languages": "Varies by provider"
+  },
+  {
+    "category": "Healthcare Navigation",
+    "name": "Medicaid Enrollment (CO)",
+    "type": "State Medicaid",
+    "contact": {
+      "phone": "(800) 221-3943",
+      "website": "https://www.healthfirstcolorado.com",
+      "email": ""
+    },
+    "location": "Colorado",
+    "state": "CO",
+    "description": "Health First Colorado (Colorado's Medicaid Program) information and enrollment.",
+    "howToApply": "Apply online or at county human services offices.",
+    "documents": ["Photo ID", "Proof of income", "Household information"]
+  },
+  {
+    "category": "Healthcare Navigation",
+    "name": "HealthCare.gov Marketplace",
+    "type": "ACA Plans",
+    "contact": {
+      "phone": "(800) 318-2596",
+      "website": "https://www.healthcare.gov",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Enroll in health plans with premium tax credits and cost-sharing reductions, if eligible.",
+    "howToApply": "Open enrollment or special enrollment after qualifying life events.",
+    "documents": [
+      "Household income",
+      "Social Security numbers",
+      "Employer coverage info"
+    ]
+  },
+  {
+    "category": "Employment & Education",
+    "name": "Colorado Workforce Centers",
+    "type": "Job Placement & Training",
+    "contact": {
+      "phone": "(303) 318-8000",
+      "website": "https://cdle.colorado.gov/wfc",
+      "email": ""
+    },
+    "location": "Colorado",
+    "state": "CO",
+    "description": "Job search assistance, training, and career services statewide.",
+    "services": ["Workshops", "Training grants (WIOA)", "Career coaching"],
+    "howToApply": "Register online then visit your local office for orientation."
+  },
+  {
+    "category": "Employment & Education",
+    "name": "Job Corps",
+    "type": "Education & Training",
+    "contact": {
+      "phone": "(800) 733-5627",
+      "website": "https://www.jobcorps.gov",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Free education and vocational training program for ages 16–24.",
+    "eligibility": "Ages 16–24; income and other criteria may apply.",
+    "howToApply": "Submit interest form online; an admissions counselor will contact you."
+  },
+  {
+    "category": "Sober Living Homes",
+    "name": "Oxford House Directory",
+    "type": "Self-run Recovery Homes",
+    "contact": {
+      "phone": "",
+      "website": "https://www.oxfordhouse.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Peer-run sober living homes with shared responsibility and democratic operations across the U.S.",
+    "howToApply": "Use the directory to contact a local house for interview and availability.",
+    "notes": "Availability and house rules vary by location."
+  },
+  {
+    "category": "Recovery Centers",
+    "name": "VA Vet Centers (Readjustment Counseling)",
+    "type": "Community Counseling",
+    "contact": {
+      "phone": "(877) 927-8387",
+      "website": "https://www.vetcenter.va.gov",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Confidential counseling for veterans, service members, and their families for combat and MST-related trauma.",
+    "eligibility": "Veterans, service members, and certain family members; eligibility varies by service history.",
+    "howToApply": "Find your nearest Vet Center and call for an intake; 24/7 call center available.",
+    "languages": "English; interpreters available upon request"
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "RAINN — National Sexual Assault Hotline",
+    "type": "24/7 Crisis Support",
+    "contact": {
+      "phone": "(800) 656-4673",
+      "website": "https://www.rainn.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Confidential support and referrals for sexual assault survivors via phone and online chat.",
+    "hours": "24/7",
+    "languages": "English, Spanish; interpreters available"
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "National Domestic Violence Hotline",
+    "type": "24/7 Crisis Support",
+    "contact": {
+      "phone": "(800) 799-7233",
+      "website": "https://www.thehotline.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Safety planning, crisis counseling, and referrals for domestic violence survivors.",
+    "hours": "24/7",
+    "languages": "English, Spanish; interpreters for 200+ languages"
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "Crisis Text Line",
+    "type": "Text-based Support",
+    "contact": {
+      "phone": "",
+      "website": "https://www.crisistextline.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Text HOME to 741741 to connect with a volunteer counselor for free, 24/7 support.",
+    "hours": "24/7"
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "Veterans Crisis Line",
+    "type": "24/7 Crisis Support",
+    "contact": {
+      "phone": "988",
+      "website": "https://www.veteranscrisisline.net",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Dial 988 then press 1 for confidential crisis support for Veterans, service members, National Guard and Reserve, and their loved ones.",
+    "hours": "24/7",
+    "notes": "Chat and text options available via website."
+  },
+  {
+    "category": "Crisis & Hotlines",
+    "name": "SAMHSA National Helpline",
+    "type": "Treatment & Support Referrals",
+    "contact": {
+      "phone": "(800) 662-4357",
+      "website": "https://www.samhsa.gov/find-help/national-helpline",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Free, confidential, 24/7 treatment referral and information service for individuals facing mental and/or substance use disorders.",
+    "hours": "24/7",
+    "languages": "English, Spanish"
+  },
+  {
+    "category": "Legal Aid",
+    "name": "OVC Directory of Services for Crime Victims",
+    "type": "Victim Services Finder",
+    "contact": {
+      "phone": "",
+      "website": "https://ovc.ojp.gov/help-for-victims/find-help",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Search victim assistance and compensation programs, including legal advocacy and counseling.",
+    "howToApply": "Search by state or ZIP; contact listed programs directly."
+  },
+  {
+    "category": "Legal Aid",
+    "name": "EEOC — File a Charge of Discrimination",
+    "type": "Federal Civil Rights",
+    "contact": {
+      "phone": "(800) 669-4000",
+      "website": "https://www.eeoc.gov/filing-charge-discrimination",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Guidance and intake for workplace discrimination and harassment, including retaliation and disability accommodations.",
+    "howToApply": "Start a charge online or contact your nearest EEOC office."
+  },
+  {
+    "category": "Housing Assistance",
+    "name": "HUD Housing Counseling Agency Finder",
+    "type": "HUD-Approved Counseling",
+    "contact": {
+      "phone": "(800) 569-4287",
+      "website": "https://www.hud.gov/findacounselor",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Free or low-cost counseling for renting, homebuying, credit, foreclosure avoidance, and disaster recovery.",
+    "howToApply": "Search for nearby agencies and call to schedule an appointment."
+  },
+  {
+    "category": "Housing Assistance",
+    "name": "Public Housing Agency (PHA) Contacts",
+    "type": "Local HUD Contacts",
+    "contact": {
+      "phone": "",
+      "website": "https://www.hud.gov/program_offices/public_indian_housing/pha/contacts",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Find your local PHA to apply for Section 8/HCV and public housing, check waitlists, and get application guidance.",
+    "howToApply": "Use the directory to reach your local PHA and follow their process."
+  },
+  {
+    "category": "Housing Assistance",
+    "name": "HUD-VASH for Veterans",
+    "type": "Veteran Housing Assistance",
+    "contact": {
+      "phone": "",
+      "website": "https://www.va.gov/homeless/hud-vash/",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Supports eligible homeless Veterans and their families with housing vouchers and case management through HUD and VA partnership.",
+    "eligibility": "Veterans experiencing homelessness; VA eligibility and local availability apply.",
+    "howToApply": "Contact your nearest VA medical center homeless program or PHA."
+  },
+  {
+    "category": "Employment & Education",
+    "name": "American Job Center Finder",
+    "type": "Workforce Services (DOL)",
+    "contact": {
+      "phone": "",
+      "website": "https://www.careeronestop.org/LocalHelp/AmericanJobCenters/find-american-job-centers.aspx",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Find local American Job Centers for job search, resume help, training, and supportive services (WIOA).",
+    "howToApply": "Find a center and visit or call for orientation and enrollment."
+  },
+  {
+    "category": "Employment & Education",
+    "name": "Vocational Rehabilitation (State VR)",
+    "type": "Disability Employment Services",
+    "contact": {
+      "phone": "",
+      "website": "https://rsa.ed.gov/about/states",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "State VR agencies help people with disabilities prepare for, obtain, and retain employment.",
+    "howToApply": "Select your state to find the VR agency and start an application."
+  },
+  {
+    "category": "Employment & Education",
+    "name": "Apprenticeship Finder",
+    "type": "Earn-and-Learn Programs",
+    "contact": {
+      "phone": "",
+      "website": "https://www.apprenticeship.gov/apprenticeship-job-finder",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Search registered apprenticeships that combine paid work with training and credentials.",
+    "howToApply": "Search opportunities and apply with sponsoring employers."
+  },
+  {
+    "category": "Resource Hubs",
+    "name": "Findhelp (formerly Aunt Bertha)",
+    "type": "Community Resource Search",
+    "contact": {
+      "phone": "",
+      "website": "https://www.findhelp.org",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Search nearby programs for food, housing, goods, transit, health, money, care, education, and work.",
+    "howToApply": "Enter your ZIP code and contact programs directly from listings."
+  },
+  {
+    "category": "Resource Hubs",
+    "name": "NAMI HelpLine",
+    "type": "Mental Health Information & Referrals",
+    "contact": {
+      "phone": "(800) 950-6264",
+      "website": "https://www.nami.org/help",
+      "email": ""
+    },
+    "location": "United States",
+    "state": "US",
+    "description": "Information, support, and local referrals for individuals and families navigating mental health conditions.",
+    "hours": "Weekdays; see site for hours"
+  }
+]

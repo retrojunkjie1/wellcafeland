@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
+
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  transition: background 0.8s ease;
+}
+
+main {
+  flex: 1;
+  padding: 4rem 2rem;
+}
+
+/* Theme gradients */
+.theme-default {background: linear-gradient(135deg,#0f0e1a,#1a1446);}
+.theme-home {background: linear-gradient(135deg,#0d0b25,#352f7d);}
+.theme-product {background: linear-gradient(135deg,#1a1446,#6e5bd7);}
+.theme-tools {background: linear-gradient(135deg,#0b2e2a,#138b72);}
+.theme-events {background: linear-gradient(135deg,#2a1412,#e49b68);}
+.theme-spiritual {background: linear-gradient(135deg,#0d0c21,#b38c3d);}
+.theme-blog {background: linear-gradient(135deg,#f7f6f3,#ddd0c2); color: #222;}

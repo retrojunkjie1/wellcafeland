@@ -1,0 +1,204 @@
+.video-section {
+  padding: 2rem;
+  text-align: center;
+  background-color: #000;
+}
+
+.video-section h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+  background: #000;
+  margin: 0 auto;
+}
+
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.video-section p {
+  margin-top: 1rem;
+  color: #ccc;
+  font-size: 1.1rem;
+}
+
+.video-gallery-section {
+  padding: 4rem 2rem;
+  background-color: #000;
+  text-align: center;
+}
+
+.video-gallery-title {
+  font-size: 2.5rem;
+  color: #fff;
+  margin-bottom: 2.5rem;
+  font-weight: 600;
+}
+
+.video-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.video-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: transform 0.3s ease;
+}
+
+.video-card:hover {
+  transform: translateY(-10px);
+}
+
+.video-card .video-container {
+  padding-bottom: 56.25%; /* Maintain 16:9 aspect ratio */
+}
+
+.video-title {
+  font-size: 1.4rem;
+  color: #fff;
+  margin: 1rem 1rem 0.5rem;
+  font-weight: 500;
+}
+
+.video-description {
+  font-size: 1rem;
+  color: #ccc;
+  padding: 0 1rem 1.5rem;
+  line-height: 1.6;
+}
+
+/* Main Video Player Section */
+.video-player-section {
+  background-color: #000;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main-video-container {
+  width: 100%;
+  max-width: 900px;
+  background: #111;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.main-video-container iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.main-video-info {
+  max-width: 900px;
+  width: 100%;
+  text-align: left;
+  padding: 1.5rem 0;
+}
+
+.main-video-title {
+  font-size: 2rem;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.main-video-description {
+  font-size: 1.1rem;
+  color: #ccc;
+  line-height: 1.6;
+}
+
+/* Thumbnail Gallery */
+.video-thumbnail-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.thumbnail-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.thumbnail-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.thumbnail-card.active {
+  border-color: var(--brand, #d4b483);
+  box-shadow: 0 0 20px rgba(212, 180, 131, 0.5);
+}
+
+.thumbnail-image {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.thumbnail-title {
+  font-size: 1rem;
+  color: #fff;
+  padding: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Fallbacks for browsers without aspect-ratio support (e.g., older iOS Safari) */
+@supports not (aspect-ratio: 1 / 1) {
+  .main-video-container {
+    position: relative;
+    height: 0;
+    padding-bottom: 56.25%;
+  }
+  .main-video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .thumbnail-image {
+    height: auto; /* rely on intrinsic thumbnail ratio */
+  }
+}
+
+@supports (aspect-ratio: 1 / 1) {
+  .main-video-container {
+    aspect-ratio: 16 / 9;
+  }
+  .thumbnail-image {
+    aspect-ratio: 16 / 9;
+  }
+}

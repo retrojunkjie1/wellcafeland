@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="220" viewBox="0 0 400 220">
+  <defs>
+    <linearGradient id="reminder-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fc466b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3f5efb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="220" fill="url(#reminder-grad)"/>
+  
+  <!-- Bell icon -->
+  <path d="M 180 80 Q 180 60 200 60 Q 220 60 220 80 L 220 120 Q 230 130 230 140 L 170 140 Q 170 130 180 120 Z" 
+        fill="rgba(255,255,255,0.9)" stroke="white" stroke-width="1"/>
+  
+  <!-- Bell clapper -->
+  <circle cx="200" cy="145" r="4" fill="white"/>
+  
+  <!-- Notification dots -->
+  <circle cx="225" cy="75" r="6" fill="#ff6b6b"/>
+  <circle cx="225" cy="75" r="3" fill="white"/>
+  
+  <!-- Time indicators -->
+  <rect x="150" y="160" width="100" height="8" rx="4" fill="rgba(255,255,255,0.6)"/>
+  <rect x="150" y="175" width="80" height="6" rx="3" fill="rgba(255,255,255,0.4)"/>
+  <rect x="150" y="187" width="90" height="6" rx="3" fill="rgba(255,255,255,0.5)"/>
+  
+  <!-- Clock elements -->
+  <circle cx="320" cy="90" r="15" fill="rgba(255,255,255,0.3)" stroke="white" stroke-width="1"/>
+  <line x1="320" y1="90" x2="320" y2="82" stroke="white" stroke-width="2"/>
+  <line x1="320" y1="90" x2="325" y2="90" stroke="white" stroke-width="1"/>
+  
+  <text x="200" y="205" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Smart Reminders</text>
+</svg>

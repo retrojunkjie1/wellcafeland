@@ -1,0 +1,383 @@
+/* EventCalendar.css */
+.event-calendar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.calendar-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.calendar-header h1 {
+  color: #2d3748;
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.calendar-header p {
+  color: #718096;
+  font-size: 18px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Calendar Controls */
+.calendar-controls {
+  background: rgb(9, 77, 150);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #bba215;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #c4a484;
+}
+
+.filter-section {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-select,
+.filter-input {
+  padding: 10px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  min-width: 150px;
+  transition: border-color 0.2s ease;
+}
+
+.filter-select:focus,
+.filter-input:focus {
+  outline: none;
+  border-color: #c4a484;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.view-toggle button {
+  padding: 8px 16px;
+  border: 2px solid #e2e8f0;
+  background: rgb(6, 71, 141);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.view-toggle button:hover {
+  border-color: #c4a484;
+}
+
+.view-toggle button.active {
+  border-color: #c4a484;
+  background: #047caf;
+  color: var(--on-dark-text);
+}
+
+/* Events Section */
+.events-section {
+  margin-top: 30px;
+}
+
+.results-header {
+  margin-bottom: 20px;
+}
+
+.results-header h2 {
+  color: #2d3748;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* Event Cards */
+.event-card {
+  background: rgb(5, 131, 163);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.event-category {
+  background: #c4a484;
+  color: #2d3748; /* darker text on light badge */
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.event-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.event-status.live {
+  background: #f8d7da;
+  color: #842029; /* bootstrap-like high contrast */
+}
+
+.event-status.today {
+  background: #fff3cd;
+  color: #664d03; /* bootstrap-like high contrast */
+}
+
+.event-status.upcoming {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.event-status.completed {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.event-content {
+  padding: 20px;
+  background: #ffffff; /* ensure dark text remains readable on card */
+}
+
+.event-title {
+  color: #2d3748;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.event-description {
+  color: #4a5568;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.event-datetime {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #718096;
+  font-size: 14px;
+}
+
+.date {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.event-location,
+.event-capacity {
+  color: #718096;
+  font-size: 14px;
+}
+
+.event-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.event-price {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.free-event {
+  color: #38a169;
+}
+
+.paid-event {
+  color: #c4a484;
+}
+
+.event-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.event-tag {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.event-actions {
+  padding: 0 20px 20px 20px;
+  display: flex;
+  gap: 12px;
+}
+
+.view-details-btn,
+.register-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-details-btn {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.view-details-btn:hover {
+  background: #e2e8f0;
+}
+
+.register-btn {
+  background: linear-gradient(135deg, #c4a484 0%, #a89070 100%);
+  color: #2d3748; /* dark text for contrast on light gradient */
+}
+
+.register-btn:hover {
+  background: linear-gradient(135deg, #b8997a 0%, #9a8166 100%);
+  transform: translateY(-1px);
+}
+
+/* Grid View */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+/* List View */
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.events-list .event-card {
+  margin-bottom: 0;
+}
+
+/* No Events */
+.no-events {
+  text-align: center;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin: 40px 0;
+}
+
+.no-events h3 {
+  color: #4a5568;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.no-events p {
+  color: #718096;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  text-align: center;
+  padding: 60px;
+  color: #718096;
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .event-calendar {
+    padding: 16px;
+  }
+
+  .calendar-header h1 {
+    font-size: 24px;
+  }
+
+  .filter-section {
+    flex-direction: column;
+  }
+
+  .filter-select,
+  .filter-input {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .events-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-header {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .event-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .event-actions {
+    flex-direction: column;
+  }
+
+  .event-details {
+    gap: 6px;
+  }
+}

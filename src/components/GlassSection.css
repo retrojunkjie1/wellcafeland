@@ -1,0 +1,95 @@
+.wc-glass-section {
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  color: #fff;
+  background: linear-gradient(160deg, #0b0f0c 0%, #0f1813 70%, #172420 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.wc-glass-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.18);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.wc-glass-title {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  background: linear-gradient(120deg, #ffffff 0%, #cbb1ff 40%, #8b6aff 70%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem;
+}
+
+.wc-glass-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 720px;
+  margin: 0 auto 3rem;
+  line-height: 1.6;
+}
+
+.wc-glass-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.wc-glass-card {
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 1.25rem;
+  padding: 1.4rem;
+  transition: all 0.3s ease;
+  color: var(--on-dark-text);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.wc-glass-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.wc-glass-icon {
+  font-size: 2rem;
+  margin-bottom: 0.6rem;
+  filter: drop-shadow(0 0 6px rgba(138, 100, 255, 0.6));
+}
+
+.wc-glass-card h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0.4rem 0;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+.wc-glass-desc {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .wc-glass-title {
+    font-size: 2.2rem;
+  }
+  .wc-glass-card {
+    padding: 1rem;
+  }
+}
