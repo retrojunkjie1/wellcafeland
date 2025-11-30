@@ -1,5 +1,6 @@
 // src/core/system/intelligenceEngine.js
 // Universal intelligence layer for system awareness and auto-correction
+// Phase 25: Aligned to use sub-engines (emotionEngine, riskEngine, patternEngine)
 
 import { ContextMemory } from "@/services/contextMemory";
 import { analyzeEmotionalState, analyzeMessageEmotion, detectTriggerDomains } from "@/services/emotionalAnalysis";
@@ -7,6 +8,12 @@ import { analyzeSpiritualState } from "@/services/spiritualAnalysis";
 import { forecastRecoveryRisk } from "@/services/recoveryForecast";
 import { evaluateMessageRisk } from "@/services/riskService";
 import { EMOTIONAL_STATES, TRIGGER_DOMAINS } from "@/ai/human/humanMap";
+import { analyzeIdentitySignals, buildIdentitySnapshot } from "@/ai/human/identityModel";
+import { analyzeRelationshipSignals, buildRelationshipSnapshot } from "@/ai/relationship/relationshipModel";
+import { enrichMessageWithEmotionSafe } from "./emotionEngine";
+import { analyzeMessageSignalsSafe } from "./riskEngine";
+import { getPhrasingStyle, buildAssistantResponse } from "./phrasingEngine";
+import { computeMessageDrift } from "./behavioralDriftEngine";
 
 // System states
 export const SYSTEM_STATES = {
@@ -295,69 +302,72 @@ export function clearObservations() {
 
 /**
  * Enrich a message object with emotion analysis
+ * Phase 25: Delegates to emotionEngine for consistency.
  * @param {Object} message - Message object with role and content
  * @returns {Object} Message with emotion field attached (if user message)
  */
 export function enrichMessageWithEmotion(message) {
-  try {
-    if (!message || typeof message !== "object") {
-      return message;
-    }
-
-    // Only enrich user messages with non-empty content
-    if (message.role === "user" && message.content && typeof message.content === "string" && message.content.trim()) {
-      const emotion = analyzeMessageEmotion(message.content);
-      return {
-        ...message,
-        emotion,
-      };
-    }
-
-    return message;
-  } catch (err) {
-    console.warn("[intel] Failed to enrich message with emotion:", err);
-    return message; // Return original on error
-  }
+  return enrichMessageWithEmotionSafe(message);
 }
 
 /**
  * Analyze message signals (triggers and risk)
+ * Phase 25: Delegates to riskEngine for consistency.
  * @param {Object} message - Message object (should have content and optionally emotion)
  * @returns {Object} { triggers, risk }
  */
 export function analyzeMessageSignals(message) {
+  return analyzeMessageSignalsSafe(message);
+}
+
+/**
+ * Enrich a message with relationship stress mapping.
+ * Phase 29: Relationship Stress Mapping Engine
+ * @param {Object} message - Message object with content and optionally emotion
+ * @returns {Object} Message with relationship field attached
+ */
+export function enrichMessageWithRelationship(message) {
   try {
-    if (!message || typeof message !== "object" || !message.content || typeof message.content !== "string") {
-      return {
-        triggers: [],
-        risk: { riskLevel: "low", reasons: [], domains: [] },
-      };
+    if (!message || typeof message !== "object" || !message.content) {
+      return message;
     }
 
-    const triggerDomains = detectTriggerDomains(message.content);
-    const risk = evaluateMessageRisk({
-      text: message.content,
-      emotion: message.emotion,
-      triggers: triggerDomains,
-    });
-
+    const relationship = analyzeRelationshipSignals(message);
     return {
-      triggers: triggerDomains,
-      risk,
+      ...message,
+      relationship,
     };
   } catch (err) {
-    console.warn("[intel] Failed to analyze message signals:", err);
+    console.warn("[intel] Failed to enrich relationship signals:", err);
+    return message;
+  }
+}
+
+/**
+ * Enrich a message with identity fracture modeling.
+ * @param {Object} message
+ * @returns {Object} message with identity field
+ */
+export function enrichMessageWithIdentity(message) {
+  try {
+    if (!message || typeof message !== "object") return message;
+    if (!message.content || typeof message.content !== "string") return message;
+
+    const identity = analyzeIdentitySignals(message);
     return {
-      triggers: [],
-      risk: { riskLevel: "low", reasons: [], domains: [] },
+      ...message,
+      identity,
     };
+  } catch (err) {
+    console.warn("[intel] Failed to enrich message with identity:", err);
+    return message;
   }
 }
 
 /**
  * Get recommended tool based on message, emotion, triggers, and risk
  * Phase 21: Enhanced with Human Map ontology
- * Phase 22: Expanded with deeper recommendation logic
+ * Phase 22: Expanded with deeper recommendation logic and nuanced mappings
  * @param {Object} params
  * @param {Object} params.message - Message object
  * @param {Object} params.emotion - Emotion analysis result
@@ -372,89 +382,9 @@ export function getRecommendedTool({ message, emotion, triggers, risk }) {
     const _risk = risk || { riskLevel: "low", reasons: [], domains: [] };
     const riskLevel = _risk.riskLevel || "low";
     const label = _emotion?.label || "";
+    const intensity = _emotion?.intensity || 0;
 
-    // 1. Cravings → urge-surfing
-    if (_triggers.includes("cravings") || _triggers.includes("relapse_pressure") || _risk.domains?.includes("cravings")) {
-      return {
-        kind: "tool",
-        toolId: "urge-surfing",
-        reason: "Because you hinted at wanting relief or escape, we can surf the urge instead of fighting it.",
-      };
-    }
-
-    // 2. Shame → self-surgeon
-    if (_triggers.includes("shame") || _triggers.includes("self_worth_collapse") || label === "ashamed") {
-      return {
-        kind: "tool",
-        toolId: "self-surgeon",
-        reason: "Because you're carrying heavy self-blame, we can gently explore and clean that narrative.",
-      };
-    }
-
-    // 3. Guilt → journaling
-    if (_triggers.includes("guilt") || label === "guilty") {
-      return {
-        kind: "tool",
-        toolId: "journaling",
-        reason: "Because you mentioned guilt, we can try journaling to help you process these feelings.",
-      };
-    }
-
-    // 4. Anxiety → breathing
-    if (_triggers.includes("anxiety") || ["anxious", "panicked", "fearful"].includes(label)) {
-      return {
-        kind: "tool",
-        toolId: "breathing",
-        reason: "Because your nervous system sounds under pressure, we can try a short breathing reset.",
-      };
-    }
-
-    // 5. Overwhelm → grounding
-    if (_triggers.includes("overwhelm") || label === "overwhelmed" || _triggers.includes("pressure_stacking")) {
-      return {
-        kind: "tool",
-        toolId: "grounding",
-        reason: "Because you're feeling overwhelmed, we can try a grounding exercise to help you feel more present.",
-      };
-    }
-
-    // 6. Grief / loss → grounding
-    if (_triggers.includes("loss_grief") || label === "grieving") {
-      return {
-        kind: "tool",
-        toolId: "grounding",
-        reason: "Because grief can pull you out of your body, we can try a short grounding practice.",
-      };
-    }
-
-    // 7. Loneliness / isolation → journaling
-    if (_triggers.includes("loneliness") || _triggers.includes("social_isolation") || label === "lonely") {
-      return {
-        kind: "tool",
-        toolId: "journaling",
-        reason: "Because you mentioned feeling alone or unseen, we can create safe space on the page.",
-      };
-    }
-
-    // 8. Identity collapse → self-surgeon (for identity exploration)
-    if (_triggers.includes("identity_crisis") || _triggers.includes("purpose_confusion")) {
-      return {
-        kind: "tool",
-        toolId: "self-surgeon",
-        reason: "Because you mentioned feeling lost or confused about who you are, we can explore that together.",
-      };
-    }
-
-    // 9. Anger → breathing (for regulation)
-    if (_triggers.includes("anger") || label === "angry" || label === "frustrated") {
-      return {
-        kind: "tool",
-        toolId: "breathing",
-        reason: "Because you're feeling anger or frustration, we can try a breathing exercise to help you regulate.",
-      };
-    }
-
-    // 10. High risk → grounding (safest option)
+    // Priority 1: High-risk situations → grounding (safest, most stabilizing)
     if (riskLevel === "high") {
       return {
         kind: "tool",
@@ -463,11 +393,543 @@ export function getRecommendedTool({ message, emotion, triggers, risk }) {
       };
     }
 
+    // Priority 2: Cravings / relapse pressure → urge-surfing
+    if (_triggers.includes("cravings") || _triggers.includes("relapse_pressure") || _risk.domains?.includes("cravings")) {
+      return {
+        kind: "tool",
+        toolId: "urge-surfing",
+        reason: "Because you hinted at wanting relief or escape, we can surf the urge instead of fighting it.",
+      };
+    }
+
+    // Priority 3: Shame / self-worth collapse → self-surgeon (for narrative reframing)
+    if (_triggers.includes("shame") || _triggers.includes("self_worth_collapse") || label === "ashamed" || label === "humiliated") {
+      return {
+        kind: "tool",
+        toolId: "self-surgeon",
+        reason: "Because you're carrying heavy self-blame, we can gently explore and clean that narrative.",
+      };
+    }
+
+    // Priority 4: Guilt → journaling (for processing and release)
+    if (_triggers.includes("guilt") || label === "guilty" || label === "regretful") {
+      return {
+        kind: "tool",
+        toolId: "journaling",
+        reason: "Because you mentioned guilt, we can try journaling to help you process these feelings.",
+      };
+    }
+
+    // Priority 5: Anxiety / panic / fear → breathing (for nervous system regulation)
+    if (_triggers.includes("anxiety") || ["anxious", "panicked", "fearful", "stressed", "tense"].includes(label) || intensity >= 0.8) {
+      return {
+        kind: "tool",
+        toolId: "breathing",
+        reason: "Because your nervous system sounds under pressure, we can try a short breathing reset.",
+      };
+    }
+
+    // Priority 6: Overwhelm / pressure stacking → grounding (for presence and stability)
+    if (_triggers.includes("overwhelm") || label === "overwhelmed" || _triggers.includes("pressure_stacking") || _triggers.includes("burnout")) {
+      return {
+        kind: "tool",
+        toolId: "grounding",
+        reason: "Because you're feeling overwhelmed, we can try a grounding exercise to help you feel more present.",
+      };
+    }
+
+    // Priority 7: Grief / loss → grounding (grief ritual tool mapped to grounding for body presence)
+    if (_triggers.includes("loss_grief") || label === "grieving" || label === "sad" || _triggers.includes("grief_waves")) {
+      return {
+        kind: "tool",
+        toolId: "grounding",
+        reason: "Because grief can pull you out of your body, we can try a short grounding practice to help you stay present with what you're feeling.",
+      };
+    }
+
+    // Priority 8: Loneliness / isolation → journaling (for connection and self-expression)
+    if (_triggers.includes("loneliness") || _triggers.includes("social_isolation") || label === "lonely" || label === "abandoned") {
+      return {
+        kind: "tool",
+        toolId: "journaling",
+        reason: "Because you mentioned feeling alone or unseen, we can create safe space on the page.",
+      };
+    }
+
+    // Priority 9: Identity confusion / existential fatigue → self-surgeon (identity reset tool mapped to self-surgeon)
+    if (_triggers.includes("identity_crisis") || _triggers.includes("purpose_confusion") || _triggers.includes("spiritual_emptiness") || label === "confused") {
+      return {
+        kind: "tool",
+        toolId: "self-surgeon",
+        reason: "Because you mentioned feeling lost or confused about who you are, we can explore that together.",
+      };
+    }
+
+    // Priority 10: Anger / frustration / resentment → breathing (anger channeling tool mapped to breathing for regulation)
+    if (_triggers.includes("anger") || _triggers.includes("resentment") || _triggers.includes("anger_dysregulation") || ["angry", "frustrated", "irritated", "bitter", "resentful"].includes(label)) {
+      return {
+        kind: "tool",
+        toolId: "breathing",
+        reason: "Because you're feeling anger or frustration, we can try a breathing exercise to help you regulate and find space.",
+      };
+    }
+
+    // Priority 11: Numbness / disconnection → grounding (for reconnection)
+    if (label === "numb" || label === "detached" || _triggers.includes("emotional_numbness") || _triggers.includes("freeze_response")) {
+      return {
+        kind: "tool",
+        toolId: "grounding",
+        reason: "Because you mentioned feeling disconnected, we can try a grounding practice to help you reconnect with your body.",
+      };
+    }
+
+    // Priority 12: Exhaustion / burnout → breathing (for energy regulation)
+    if (_triggers.includes("exhaustion") || _triggers.includes("burnout") || label === "exhausted" || label === "depleted") {
+      return {
+        kind: "tool",
+        toolId: "breathing",
+        reason: "Because you're feeling exhausted, we can try a gentle breathing practice to help restore your energy.",
+      };
+    }
+
+    // Priority 13: Hopelessness / despair → journaling (for processing and finding meaning)
+    if (_triggers.includes("hopelessness") || label === "hopeless" || label === "defeated") {
+      return {
+        kind: "tool",
+        toolId: "journaling",
+        reason: "Because you're feeling hopeless, we can try journaling to help you explore what's underneath these feelings.",
+      };
+    }
+
+    // Priority 14: Trauma echoes / emotional flashbacks → grounding (for safety and presence)
+    if (_triggers.includes("trauma_echoes") || _triggers.includes("emotional_flashbacks") || _triggers.includes("childhood_memory")) {
+      return {
+        kind: "tool",
+        toolId: "grounding",
+        reason: "Because you mentioned something that brought up difficult memories, we can try a grounding practice to help you feel safe in the present moment.",
+      };
+    }
+
+    // Priority 15: Rumination / intrusive thinking → breathing (for mental space)
+    if (_triggers.includes("rumination") || _triggers.includes("intrusive_thinking")) {
+      return {
+        kind: "tool",
+        toolId: "breathing",
+        reason: "Because your mind feels stuck in loops, we can try a breathing exercise to help create some mental space.",
+      };
+    }
+
     // If no rule applies, return null (as requested by product owner).
     return null;
   } catch (err) {
     console.warn("[intel] Failed to get recommended tool:", err);
     return null;
+  }
+}
+
+/**
+ * Compute emotional drift over recent history.
+ * Phase 24: Emotional Graph Engine
+ * @param {Array<{intensity:number}>} history
+ * @returns {{ direction: "rising"|"falling"|"volatile"|"stable", rate: number }}
+ */
+export function detectEmotionalDrift(history) {
+  const data = Array.isArray(history) ? history : [];
+  if (data.length < 2) {
+    return { direction: "stable", rate: 0 };
+  }
+
+  // Use last up to 5 points for drift.
+  const windowSize = Math.min(5, data.length);
+  const recent = data.slice(-windowSize);
+  const intensities = recent
+    .map((h) => typeof h.intensity === "number" ? h.intensity : 0)
+    .filter((v) => !Number.isNaN(v));
+
+  if (intensities.length < 2) {
+    return { direction: "stable", rate: 0 };
+  }
+
+  // Simple slope approx: compare average of first half vs second half.
+  const mid = Math.floor(intensities.length / 2);
+  const firstAvg = intensities.slice(0, mid).reduce((a, b) => a + b, 0) / mid;
+  const secondAvg = intensities.slice(mid).reduce((a, b) => a + b, 0) / (intensities.length - mid || 1);
+  const delta = secondAvg - firstAvg;
+
+  // Normalize rate into 0–1 range.
+  const rate = Math.min(1, Math.max(0, Math.abs(delta)));
+
+  if (Math.abs(delta) < 0.05) {
+    return { direction: "stable", rate: 0 };
+  }
+
+  if (delta > 0.05) {
+    // Rising emotional intensity
+    return { direction: "rising", rate };
+  }
+
+  // Falling emotional intensity
+  return { direction: "falling", rate };
+}
+
+/**
+ * Detect a simple emotional pattern cluster from history.
+ * Phase 24: Emotional Graph Engine
+ * @param {Array<{label?:string, triggers?:string[], riskLevel?:string}>} history
+ * @returns {{ cluster: string | null, confidence: number }}
+ */
+export function detectPatternCluster(history) {
+  const data = Array.isArray(history) ? history : [];
+  if (data.length < 3) {
+    return { cluster: null, confidence: 0 };
+  }
+
+  const recent = data.slice(-8); // look at last up to 8 messages
+  const labels = recent.map((h) => (h.label || "").toLowerCase());
+  const allTriggers = recent.flatMap((h) => Array.isArray(h.triggers) ? h.triggers : []);
+  const riskLevels = recent.map((h) => h.riskLevel || "low");
+
+  const hasCraving = allTriggers.includes("cravings");
+  const hasIsolation = allTriggers.includes("isolation") || allTriggers.includes("withdrawal");
+  const hasShame = allTriggers.includes("shame") || allTriggers.includes("guilt");
+  const hasGrief = allTriggers.includes("grief") || allTriggers.includes("loss");
+  const hasAnxietyLabel = labels.includes("anxious") || labels.includes("overwhelmed");
+  const hasHighRisk = riskLevels.includes("high");
+
+  // Urge-cycle: shame → isolation → cravings
+  if (hasShame && hasIsolation && hasCraving) {
+    return {
+      cluster: "urge-cycle",
+      confidence: hasHighRisk ? 0.9 : 0.7,
+    };
+  }
+
+  // Shame-cycle: guilt/shame + negative labels
+  const hasNegativeLabel =
+    labels.includes("ashamed") ||
+    labels.includes("numb") ||
+    labels.includes("sad") ||
+    labels.includes("angry");
+  if (hasShame && hasNegativeLabel) {
+    return {
+      cluster: "shame-cycle",
+      confidence: hasHighRisk ? 0.85 : 0.65,
+    };
+  }
+
+  // Isolation-loop
+  if (hasIsolation && (labels.includes("numb") || labels.includes("neutral"))) {
+    return {
+      cluster: "isolation-loop",
+      confidence: hasHighRisk ? 0.8 : 0.6,
+    };
+  }
+
+  // Anxiety-spike
+  if (hasAnxietyLabel && hasHighRisk) {
+    return {
+      cluster: "anxiety-spike",
+      confidence: 0.8,
+    };
+  }
+
+  // Grief-wave
+  if (hasGrief) {
+    return {
+      cluster: "grief-wave",
+      confidence: 0.7,
+    };
+  }
+
+  return { cluster: null, confidence: 0 };
+}
+
+/**
+ * Forecast emotional direction based on drift, cluster, and last emotion.
+ * Phase 24: Emotional Graph Engine
+ * @param {{ drift: {direction:string, rate:number}, cluster: {cluster:string|null, confidence:number}, lastEmotion?: {label?:string, intensity?:number} }} input
+ * @returns {{ forecast: "improving"|"declining"|"volatile"|"unknown", confidence: number }}
+ */
+export function forecastEmotionalDirection({ drift, cluster, lastEmotion }) {
+  const safeDrift = drift || { direction: "stable", rate: 0 };
+  const safeCluster = cluster || { cluster: null, confidence: 0 };
+  const label = (lastEmotion?.label || "").toLowerCase();
+  const intensity = typeof lastEmotion?.intensity === "number" ? lastEmotion.intensity : 0;
+
+  // Defaults
+  let forecast = "unknown";
+  let confidence = 0.2;
+
+  // If there is a concerning cluster and rising intensity.
+  if (safeDrift.direction === "rising" && safeDrift.rate > 0.3 && safeCluster.cluster) {
+    forecast = "declining";
+    confidence = Math.max(0.7, safeCluster.confidence);
+  } else if (safeDrift.direction === "falling" && intensity < 0.5) {
+    forecast = "improving";
+    confidence = 0.6;
+  } else if (safeDrift.direction === "stable" && safeCluster.cluster) {
+    forecast = "volatile";
+    confidence = safeCluster.confidence;
+  }
+
+  // If label is clearly calmer and intensity is low, override.
+  if ((label === "calm" || label === "hopeful") && intensity < 0.4) {
+    forecast = "improving";
+    confidence = Math.max(confidence, 0.7);
+  }
+
+  return { forecast, confidence };
+}
+
+/**
+ * Apply phrasing style to base text.
+ * Phase 27: Adaptive Response Phrasing Engine helper.
+ * @param {string} baseText
+ * @param {Object} toneProfile
+ * @returns {string}
+ */
+export function applyPhrasing(baseText, toneProfile) {
+  try {
+    const style = getPhrasingStyle(toneProfile);
+    return buildAssistantResponse(baseText, style);
+  } catch (err) {
+    console.warn("[intelligenceEngine] applyPhrasing failed:", err);
+    return baseText;
+  }
+}
+
+/**
+ * Analyze behavioral drift from message history.
+ * Phase 28: Behavioral Drift Engine helper.
+ * @param {Array} messages
+ * @returns {Object|null}
+ */
+export function analyzeDriftSnapshot(messages) {
+  try {
+    return computeMessageDrift(messages);
+  } catch (err) {
+    console.warn("[intelligenceEngine] analyzeDriftSnapshot failed:", err);
+    return null;
+  }
+}
+
+/**
+ * Compute a simple identity trajectory over history.
+ * @param {Array<{ tensionScore?:number, dissonanceScore?:number }>} history
+ * @returns {{ fractureTrend: "stable"|"worsening"|"healing", intensity:number }}
+ */
+export function computeIdentityTrajectory(history) {
+  const data = Array.isArray(history) ? history : [];
+  if (data.length < 2) {
+    return { fractureTrend: "stable", intensity: 0 };
+  }
+
+  const scores = data
+    .map((h) =>
+      typeof h.tensionScore === "number" ? h.tensionScore : 0
+    )
+    .filter((v) => !Number.isNaN(v));
+
+  if (scores.length < 2) {
+    return { fractureTrend: "stable", intensity: 0 };
+  }
+
+  const first = scores[0];
+  const last = scores[scores.length - 1];
+  const delta = last - first;
+  const intensity = Math.min(1, Math.max(0, Math.abs(delta)));
+
+  if (Math.abs(delta) < 0.1) {
+    return { fractureTrend: "stable", intensity };
+  }
+  if (delta > 0.1) {
+    return { fractureTrend: "worsening", intensity };
+  }
+  return { fractureTrend: "healing", intensity };
+}
+
+/**
+ * Merge emotion from text and face signals.
+ * Phase 31 — Face Signal Engine integration.
+ * @param {Object} textEmotion - Emotion from text analysis
+ * @param {Object} faceEmotion - Emotion from face scan
+ * @returns {Object} Merged emotion
+ */
+export function mergeEmotionChannels(textEmotion, faceEmotion) {
+  if (!faceEmotion) return textEmotion;
+
+  // Weighted blend: face can boost intensity, but text label takes priority if present
+  const textLabel = textEmotion?.label || "neutral";
+  const faceLabel = faceEmotion?.label || "neutral";
+  const textIntensity = typeof textEmotion?.intensity === "number" ? textEmotion.intensity : 0;
+  const faceIntensity = typeof faceEmotion?.intensity === "number" ? faceEmotion.intensity : 0;
+
+  // Use text label if available, otherwise face label
+  const label = textLabel !== "neutral" ? textLabel : faceLabel;
+
+  // Intensity: take the maximum (face can amplify but not override strong text signals)
+  const intensity = Math.max(textIntensity, faceIntensity * 0.8);
+
+  // Valence: prefer face if it's more specific, otherwise text
+  const valence = faceEmotion?.valence && faceEmotion.valence !== "neutral"
+    ? faceEmotion.valence
+    : textEmotion?.valence || "neutral";
+
+  return {
+    label,
+    intensity: Math.max(0, Math.min(1, intensity)),
+    valence,
+    source: ["text", "face"],
+  };
+}
+
+/**
+ * Compute a crisis forecast based on emotional history, last emotion,
+ * last risk event, and last relationship snapshot.
+ *
+ * Phase 30 — Crisis Forecast Engine
+ *
+ * @param {Object} params
+ * @param {Array<{intensity:number,label?:string,triggers?:string[],riskLevel?:string}>} params.emotionalHistory
+ * @param {{label?:string,intensity?:number}|null} params.lastEmotion
+ * @param {{riskLevel?:string,reasons?:string[],domains?:string[]}|null} params.lastRisk
+ * @param {{tension?:number,tensionScore?:number,domains?:string[],patternTags?:string[],summaryTag?:string}|null} params.lastRelationship
+ * @returns {{
+ *   level: "stable"|"watch"|"elevated"|"critical",
+ *   confidence: number,
+ *   drivers: string[],
+ *   drift: {direction:string,rate:number},
+ *   cluster: {cluster:string|null,confidence:number}
+ * }}
+ */
+export function computeCrisisForecast({
+  emotionalHistory,
+  lastEmotion,
+  lastRisk,
+  lastRelationship,
+}) {
+  try {
+    const history = Array.isArray(emotionalHistory) ? emotionalHistory : [];
+
+    // Use existing emotional graph helpers
+    const drift = detectEmotionalDrift(history);
+    const cluster = detectPatternCluster(history);
+
+    const risk = lastRisk || { riskLevel: "low", reasons: [], domains: [] };
+    const riskLevel = risk.riskLevel || "low";
+
+    const label = (lastEmotion?.label || "").toLowerCase();
+    const intensity =
+      typeof lastEmotion?.intensity === "number" ? lastEmotion.intensity : 0;
+
+    const tension =
+      typeof lastRelationship?.tension === "number"
+        ? lastRelationship.tension
+        : typeof lastRelationship?.tensionScore === "number"
+        ? lastRelationship.tensionScore
+        : 0;
+
+    let level = "stable";
+    let confidence = 0.2;
+    const drivers = [];
+
+    // Baseline signals from risk
+    if (riskLevel === "moderate") {
+      level = "watch";
+      confidence = 0.5;
+      drivers.push("recent_moderate_risk_signal");
+    }
+
+    if (riskLevel === "high") {
+      level = "elevated";
+      confidence = 0.7;
+      drivers.push("recent_high_risk_signal");
+    }
+
+    // Relationship tension as a driver
+    if (tension >= 0.6) {
+      if (level === "stable") {
+        level = "watch";
+        confidence = Math.max(confidence, 0.5);
+      }
+      drivers.push("relationship_tension_high");
+    } else if (tension >= 0.4) {
+      if (level === "stable") {
+        level = "watch";
+        confidence = Math.max(confidence, 0.4);
+      }
+      drivers.push("relationship_tension_rising");
+    }
+
+    // Emotional drift + intensity
+    if (drift.direction === "rising" && drift.rate > 0.3 && intensity > 0.7) {
+      if (level === "stable") {
+        level = "watch";
+      } else if (level === "watch") {
+        level = "elevated";
+      }
+      confidence = Math.max(confidence, 0.7);
+      drivers.push("emotional_intensity_rising");
+    }
+
+    // Pattern clusters (from Phase 24)
+    if (cluster.cluster === "urge-cycle" || cluster.cluster === "shame-cycle") {
+      drivers.push(`pattern_${cluster.cluster}`);
+      confidence = Math.max(confidence, cluster.confidence || 0.7);
+
+      if (riskLevel === "high" || tension >= 0.6) {
+        level = "critical";
+      } else if (level === "stable") {
+        level = "elevated";
+      }
+    }
+
+    if (cluster.cluster === "anxiety-spike") {
+      drivers.push("anxiety_spike_pattern");
+      confidence = Math.max(confidence, 0.7);
+      if (level === "stable") level = "watch";
+    }
+
+    // Hopelessness / panic signals
+    const hopelessLike =
+      label === "hopeless" ||
+      label === "defeated" ||
+      label === "panicked" ||
+      label === "overwhelmed";
+
+    if (hopelessLike && intensity > 0.8) {
+      drivers.push("hopeless_or_panic_language");
+      if (riskLevel === "high" || tension >= 0.5) {
+        level = "critical";
+        confidence = Math.max(confidence, 0.85);
+      } else {
+        level = level === "stable" ? "elevated" : level;
+        confidence = Math.max(confidence, 0.75);
+      }
+    }
+
+    // If nothing concerning, normalize back to stable
+    if (drivers.length === 0 && riskLevel === "low" && tension < 0.4) {
+      level = "stable";
+      confidence = 0.2;
+    }
+
+    return {
+      level,
+      confidence,
+      drivers,
+      drift,
+      cluster,
+    };
+  } catch (err) {
+    console.warn("[intel] Failed to compute crisis forecast:", err);
+    return {
+      level: "stable",
+      confidence: 0.1,
+      drivers: [],
+      drift: { direction: "stable", rate: 0 },
+      cluster: { cluster: null, confidence: 0 },
+    };
   }
 }
 
@@ -486,6 +948,16 @@ export default {
   enrichMessageWithEmotion,
   analyzeMessageSignals,
   getRecommendedTool,
+  detectEmotionalDrift,
+  detectPatternCluster,
+  forecastEmotionalDirection,
+  applyPhrasing,
+  analyzeDriftSnapshot,
+  enrichMessageWithIdentity,
+  computeIdentityTrajectory,
+  enrichMessageWithRelationship,
+  computeCrisisForecast,
+  mergeEmotionChannels,
   SYSTEM_STATES,
 };
 

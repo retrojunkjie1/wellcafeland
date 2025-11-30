@@ -28,9 +28,6 @@ const WelcomeScreen = ({ onAction }) => {
 
         {/* Welcome Message - Luxury typography */}
         <div className="space-y-6">
-          <h1 className="text-4xl font-light tracking-wide text-white">
-            Welcome to WellnessCafe
-          </h1>
           <p className="text-xl font-light text-white/80 tracking-wide leading-relaxed max-w-xl mx-auto">
             I'm here to walk with you. Tell me what's real for you right now, or choose a practice below.
           </p>

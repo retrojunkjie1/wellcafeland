@@ -273,4 +273,32 @@ body {
   .sidebar-transition {
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  /* Phase 27: Layout animations based on humanMode */
+  @keyframes soft-bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-2px);
+    }
+  }
+
+  @keyframes pulse-fast {
+    0%, 100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  @keyframes pulse-medium {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
 }

@@ -679,10 +679,12 @@ export function detectTriggerDomains(text) {
   // Sleep triggers
   const sleepKeywords = [
     "can't sleep", "insomnia", "tired", "exhausted", "sleep", "restless",
-    "waking up", "nightmares", "sleep deprived"
+    "waking up", "nightmares", "sleep deprived", "sleep disruption", "sleep disrupted",
+    "sleep problems", "sleep issues", "trouble sleeping", "can't fall asleep"
   ];
   if (sleepKeywords.some(kw => lowerText.includes(kw))) {
     mappedDomains.add("sleep_deprivation");
+    mappedDomains.add("sleep_disruption"); // Phase 23: Add sleep_disruption domain
   }
   
   // Anger/resentment

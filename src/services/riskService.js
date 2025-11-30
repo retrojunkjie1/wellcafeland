@@ -343,6 +343,27 @@ export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
     domains.push("isolation");
   }
 
+  // Phase 23: Trauma flashback + overwhelm → moderate
+  const emotionLabel = emotion?.label || "";
+  if ((triggers.includes("trauma_echoes") || triggers.includes("emotional_flashbacks")) && 
+      (triggers.includes("overwhelm") || emotionLabel === "overwhelmed")) {
+    reasons.push("trauma flashback with overwhelm");
+    domains.push("trauma_echoes");
+    domains.push("overwhelm");
+  }
+
+  // Phase 23: Relational collapse wording → moderate
+  const relationalCollapsePhrases = [
+    "relationship is over", "they're leaving", "everything is falling apart",
+    "relationship collapsing", "connection broken", "trust destroyed",
+    "relationship ended", "they don't want me", "they're done with me"
+  ];
+  const hasRelationalCollapse = relationalCollapsePhrases.some(phrase => lowerText.includes(phrase));
+  if (hasRelationalCollapse || (triggers.includes("relationship_conflict") && triggers.includes("abandonment_fear"))) {
+    reasons.push("relational collapse detected");
+    domains.push("relationship_conflict");
+  }
+
   // ============================================
   // HIGH RISK: Self-harm language, severe hopelessness, collapse states
   // ============================================
@@ -424,6 +445,13 @@ export function evaluateMessageRisk({ text, emotion, triggers = [] }) {
   } else if (emotion && emotion.intensity >= 0.7 && emotion.valence === "distressed") {
     riskLevel = "moderate";
   } else if (triggers.length >= 3) {
+    riskLevel = "moderate";
+  } else if ((triggers.includes("trauma_echoes") || triggers.includes("emotional_flashbacks")) && 
+             (triggers.includes("overwhelm") || emotionLabel === "overwhelmed")) {
+    // Phase 23: Trauma flashback + overwhelm → moderate
+    riskLevel = "moderate";
+  } else if (hasRelationalCollapse) {
+    // Phase 23: Relational collapse → moderate
     riskLevel = "moderate";
   }
 

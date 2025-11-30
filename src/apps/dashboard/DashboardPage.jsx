@@ -10,6 +10,7 @@ import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { guestStorage } from "@/utils/guestStorage";
 import { runPredictiveRecoveryEngineForClient } from "@/ai/predictive/predictiveRecoveryEngine";
 import { getRiskLevelColor } from "@/ai/predictive/predictiveConfig";
+import { useOSStore } from "@/stores/useOSStore";
 import MilestonesWidget from "@/components/dashboard/MilestonesWidget";
 import FavoritesWidget from "@/components/dashboard/FavoritesWidget";
 import NudgeStrip from "@/components/dashboard/NudgeStrip";
@@ -18,6 +19,15 @@ import WellnessSettings from "@/components/dashboard/WellnessSettings";
 import ProviderRecommendationsWidget from "@/components/dashboard/ProviderRecommendationsWidget";
 import FooterMinimal from "@/components/FooterMinimal";
 import PageHeader from "@/components/navigation/PageHeader";
+// New intelligence signal components
+import SignalHeader from "@/components/dashboard/SignalHeader";
+import EmotionStrip from "@/components/dashboard/EmotionStrip";
+import RiskStrip from "@/components/dashboard/RiskStrip";
+import TriggerStrip from "@/components/dashboard/TriggerStrip";
+import HumanModeStrip from "@/components/dashboard/HumanModeStrip";
+import FaceSignalStrip from "@/components/dashboard/FaceSignalStrip";
+import TrajectoryGraph from "@/components/dashboard/TrajectoryGraph";
+import QuickActions from "@/components/dashboard/QuickActions";
 
 const SUPPORT_COPY = {
   low: {
@@ -253,6 +263,41 @@ export default function DashboardPage() {
       handleViewChange("insights");
     }
   };
+
+  // Get intelligence signals from OS store
+  const messages = useOSStore((state) => state.messages || []);
+  
+  // Extract last message with emotion
+  const lastMessageWithEmotion = useMemo(() => {
+    return messages
+      .slice()
+      .reverse()
+      .find((msg) => msg.emotion) || null;
+  }, [messages]);
+
+  // Extract last face emotion
+  const lastFaceEmotion = useMemo(() => {
+    return messages
+      .slice()
+      .reverse()
+      .find((msg) => msg.emotion?.source?.includes("face"))?.emotion || null;
+  }, [messages]);
+
+  // Extract last risk
+  const lastRisk = useMemo(() => {
+    return messages
+      .slice()
+      .reverse()
+      .find((msg) => msg.risk)?.risk || null;
+  }, [messages]);
+
+  // Extract last humanMode
+  const lastHumanMode = useMemo(() => {
+    return messages
+      .slice()
+      .reverse()
+      .find((msg) => msg.humanMode)?.humanMode || null;
+  }, [messages]);
 
   const momentsView = (
     <div className="space-y-6">
@@ -630,6 +675,30 @@ export default function DashboardPage() {
           Insights
         </button>
       </div>
+
+      {/* Intelligence Signals Dashboard - New luxury layout */}
+      {activeView === "moments" && (
+        <div className="space-y-4">
+          <SignalHeader />
+          
+          <div className="grid gap-4 md:grid-cols-2">
+            <EmotionStrip lastEmotion={lastMessageWithEmotion?.emotion} />
+            <RiskStrip risk={lastRisk} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <TriggerStrip messages={messages} />
+            <HumanModeStrip humanMode={lastHumanMode} />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <FaceSignalStrip faceEmotion={lastFaceEmotion} />
+            <TrajectoryGraph messages={messages} />
+          </div>
+
+          <QuickActions />
+        </div>
+      )}
 
       {/* Personalization Widgets - Only show on moments view */}
       {activeView === "moments" && (

@@ -1,7 +1,9 @@
 // src/stores/useOSStore.js
 // Central OS-level store for 3-mode interface (Chat, Workspace, Explore)
+// Phase 25: Uses messageNormalizer for consistent message shapes
 
 import { create } from "zustand";
+import { normalizeMessage } from "@/core/system/messageNormalizer";
 
 const MODES = {
   CHAT: "chat",
@@ -146,21 +148,58 @@ export const useOSStore = create((set, get) => ({
       if (content.risk) {
         msg.risk = content.risk;
       }
+      // Phase 28: Preserve identity field
+      if (content.identity) {
+        msg.identity = content.identity;
+      }
+      // Phase 29: Preserve relationship field
+      if (content.relationship) {
+        msg.relationship = content.relationship;
+      }
+      // Phase 25: Preserve conversational mode (HMN)
+      if (content.humanMode) {
+        msg.humanMode = content.humanMode;
+      }
+      // Phase 26: Preserve tone profile (ATS)
+      if (content.toneProfile) {
+        msg.toneProfile = content.toneProfile;
+      }
+      // Phase 27: Preserve phrasing style (ARP)
+      if (content.phrasingStyle) {
+        msg.phrasingStyle = content.phrasingStyle;
+      }
+      // Phase 28: Preserve behavioral drift (BDE)
+      if (content.drift) {
+        msg.drift = content.drift;
+      }
       // Preserve suggestion for recommendation messages
       if (content.suggestion) {
         msg.suggestion = content.suggestion;
       }
+      // Phase 24: Preserve trajectory for emotional graph
+      if (content.trajectory) {
+        msg.trajectory = content.trajectory;
+      }
+      // Phase 30: Preserve crisis forecast
+      if (content.crisisForecast) {
+        msg.crisisForecast = content.crisisForecast;
+      }
     }
+    
+    // Phase 25: Normalize message before storing
+    const normalizedMsg = normalizeMessage(msg);
+    
     set((state) => {
-      const newMessages = [...state.messages, msg];
+      const newMessages = [...state.messages, normalizedMsg];
       const isUserMessage = role === "user";
       
       // Update chat with new messages and mark as having user messages if user sent something
+      // Phase 25: Ensure chat messages are normalized (full objects, not truncated)
       const updatedChats = state.chats.map((chat) => {
         if (chat.id === state.currentChatId) {
           return {
             ...chat,
-            messages: newMessages,
+            messages: newMessages, // Already normalized
             updatedAt: Date.now(),
             hasUserMessages: isUserMessage ? true : chat.hasUserMessages,
           };
@@ -185,7 +224,7 @@ export const useOSStore = create((set, get) => ({
         chats: validChats,
       };
     });
-    return msg;
+    return normalizedMsg;
   },
 
   // Workspace actions
@@ -290,6 +329,84 @@ export const useOSStore = create((set, get) => ({
   lastRiskEvent: null,
   setLastEmotion: (emotion) => set({ lastEmotion: emotion }),
   setLastRiskEvent: (risk) => set({ lastRiskEvent: risk }),
+
+  // Phase 30: Crisis Forecast Engine
+  lastCrisisForecast: null,
+  setLastCrisisForecast: (forecast) => set({ lastCrisisForecast: forecast }),
+
+  // Phase 24: Emotional Graph Engine - history buffer
+  emotionalHistory: [], // last N emotional snapshots for user messages
+
+  /**
+   * Append an emotional snapshot for a user message.
+   * snapshot shape:
+   * {
+   *   id,
+   *   timestamp,
+   *   label,
+   *   intensity,
+   *   valence,
+   *   triggers,
+   *   riskLevel
+   * }
+   */
+  appendEmotionalSnapshot: (snapshot) => set((state) => {
+    const maxHistory = 20;
+    const history = [...(state.emotionalHistory || []), snapshot];
+    if (history.length > maxHistory) {
+      history.shift();
+    }
+    return { emotionalHistory: history };
+  }),
+
+  // Phase 28: Identity fracture history
+  identityHistory: [], // array of identity snapshots
+  lastIdentitySnapshot: null,
+  setLastIdentitySnapshot: (snapshot) => set({ lastIdentitySnapshot: snapshot }),
+  appendIdentitySnapshot: (snapshot) =>
+    set((state) => {
+      const maxHistory = 20;
+      const history = [...(state.identityHistory || []), snapshot];
+      if (history.length > maxHistory) {
+        history.shift();
+      }
+      return { identityHistory: history, lastIdentitySnapshot: snapshot };
+    }),
+
+  // Phase 29: Relationship stress history
+  relationshipHistory: [],
+  lastRelationshipSnapshot: null,
+  setLastRelationshipSnapshot: (snapshot) =>
+    set({ lastRelationshipSnapshot: snapshot }),
+  appendRelationshipSnapshot: (snapshot) =>
+    set((state) => {
+      const maxHistory = 20;
+      const list = [...(state.relationshipHistory || []), snapshot];
+      if (list.length > maxHistory) {
+        list.shift();
+      }
+      return { relationshipHistory: list, lastRelationshipSnapshot: snapshot };
+    }),
+
+  // Phase 27: UI State Extension
+  uiState: {
+    currentVisualMode: "neutral",
+    lastHumanMode: null,
+    lastLayoutShift: Date.now(),
+  },
+  setUIVisualMode: (mode) => set((state) => ({
+    uiState: {
+      ...state.uiState,
+      currentVisualMode: mode,
+      lastLayoutShift: Date.now(),
+    },
+  })),
+  setLastHumanMode: (mode) => set((state) => ({
+    uiState: {
+      ...state.uiState,
+      lastHumanMode: mode,
+    },
+  })),
 }));
 
 export { MODES };

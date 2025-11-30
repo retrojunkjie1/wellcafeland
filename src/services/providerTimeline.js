@@ -272,6 +272,39 @@ export async function logRiskSnapshot({ userId, riskLevel, reasons, emotion }) {
 }
 
 /**
+ * Log identity snapshot for provider view (best-effort).
+ * Phase 28 — Identity Fracture Modeling (future-ready hook).
+ * @param {{ userId:string, identity:any }} payload
+ */
+export async function logIdentitySnapshot({ userId, identity }) {
+  try {
+    if (!userId || !identity) return;
+
+    // For now, just console log. Future: write to Firestore collection.
+    console.warn("[providerTimeline] identity snapshot:", {
+      userId,
+      identity,
+      timestamp: Date.now(),
+    });
+
+    // Optional Firestore wiring (wrap in try/catch and feature-detect if collections exist)
+    // if (db) {
+    //   try {
+    //     await addDoc(collection(db, "identity_snapshots"), {
+    //       userId,
+    //       identity,
+    //       createdAt: new Date(),
+    //     });
+    //   } catch (e) {
+    //     console.warn("[providerTimeline] Firestore identity logging failed:", e);
+    //   }
+    // }
+  } catch (err) {
+    console.warn("[providerTimeline] logIdentitySnapshot failed:", err);
+  }
+}
+
+/**
  * Get recent risk snapshots for provider or client.
  * Best-effort: returns [] on failure.
  */
