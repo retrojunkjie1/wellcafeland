@@ -13,6 +13,7 @@ import CinematicContainer from "@/components/tools/CinematicContainer";
 import ToolOrb from "@/components/tools/ToolOrb";
 import ToolPanel from "@/components/tools/ToolPanel";
 import MetricCard from "@/components/tools/MetricCard";
+import { ToolSessionFooter } from "@/components/tools/ToolSessionFooter";
 
 const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   const navigate = useNavigate();
@@ -323,6 +324,11 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Phase 43: Suggested next step after session */}
+            {!isActive && (
+              <ToolSessionFooter toolId="breathing" />
             )}
           </div>
         </div>

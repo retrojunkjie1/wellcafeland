@@ -1,6 +1,7 @@
 // src/components/dashboard/DashboardDetailsSheet.jsx
 
 import React from "react";
+import { GentleSuggestionsStrip } from "./GentleSuggestionsStrip";
 
 
 
@@ -518,7 +519,12 @@ const DashboardDetailsSheet = ({
 
 
 
-        <div className="space-y-3">{renderBody()}</div>
+        <div className="space-y-3">
+          {renderBody()}
+          
+          {/* Phase 43: Gentle Suggestions */}
+          {type === "quick" && <GentleSuggestionsStrip />}
+        </div>
 
       </div>
 
