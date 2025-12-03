@@ -24,6 +24,7 @@ const ProviderSchedulePage = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providerId, userId]);
 
   const loadData = async () => {

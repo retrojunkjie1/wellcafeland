@@ -130,22 +130,13 @@ export function harmonizeTheme(emotion, humanMode) {
  * @returns {Object}
  */
 export function getPriorityVisualState() {
-  try {
-    // This can be extended to read from a global store or context
-    // For now, return a safe default
-    return {
-      mode: "neutral",
-      urgency: "normal",
-      focus: "standard",
-    };
-  } catch (err) {
-    console.warn("[osAlignment] getPriorityVisualState failed:", err);
-    return {
-      mode: "neutral",
-      urgency: "normal",
-      focus: "standard",
-    };
-  }
+  // This can be extended to read from a global store or context
+  // For now, return a safe default
+  return {
+    mode: "neutral",
+    urgency: "normal",
+    focus: "standard",
+  };
 }
 
 /**
@@ -153,22 +144,13 @@ export function getPriorityVisualState() {
  * @returns {Object}
  */
 export function produceUIIntent() {
-  try {
-    // This can be extended to synthesize multiple signals
-    // For now, return a safe default
-    return {
-      intent: "support",
-      priority: "normal",
-      style: "default",
-    };
-  } catch (err) {
-    console.warn("[osAlignment] produceUIIntent failed:", err);
-    return {
-      intent: "support",
-      priority: "normal",
-      style: "default",
-    };
-  }
+  // This can be extended to synthesize multiple signals
+  // For now, return a safe default
+  return {
+    intent: "support",
+    priority: "normal",
+    style: "default",
+  };
 }
 
 export default {

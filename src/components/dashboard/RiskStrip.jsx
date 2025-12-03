@@ -1,80 +1,80 @@
 // src/components/dashboard/RiskStrip.jsx
-// Display risk level with reasons
+// Phase 33: Horizontal segmented risk bar with color gradients
 
 import React from "react";
 
 export default function RiskStrip({ risk }) {
-  if (!risk || !risk.riskLevel) {
+  if (!risk) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Risk Level</p>
-            <p className="text-sm text-white/60">No risk signals detected</p>
-          </div>
-        </div>
+      <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5">
+        <p className="text-xs text-white/50 uppercase tracking-wider mb-2">Risk Level</p>
+        <p className="text-sm text-white/60">No risk assessment available</p>
       </div>
     );
   }
 
-  const riskLevel = risk.riskLevel || "low";
-  const reasons = Array.isArray(risk.reasons) ? risk.reasons : [];
+  const riskLevel = risk.level || risk.riskLevel || "low";
+  const reasons = risk.reasons || risk.indicators || [];
 
   // Color gradients based on risk level
-  const riskConfig = {
-    high: {
-      gradient: "from-red-500/20 to-red-600/10",
-      border: "border-red-500/30",
-      text: "text-red-400",
-      badge: "bg-red-500/20 text-red-300 border-red-500/30",
-    },
-    moderate: {
-      gradient: "from-amber-500/20 to-amber-600/10",
-      border: "border-amber-500/30",
-      text: "text-amber-400",
-      badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    },
-    low: {
-      gradient: "from-teal-500/20 to-teal-600/10",
-      border: "border-teal-500/30",
-      text: "text-teal-400",
-      badge: "bg-teal-500/20 text-teal-300 border-teal-500/30",
-    },
-  };
+  const gradientClasses = {
+    low: "from-emerald-400/60 to-emerald-300/40",
+    moderate: "from-amber-400/60 to-amber-300/40",
+    high: "from-red-500/70 to-red-400/60",
+  }[riskLevel] || "from-emerald-400/60 to-emerald-300/40";
 
-  const config = riskConfig[riskLevel] || riskConfig.low;
+  const textColor = {
+    low: "text-emerald-300",
+    moderate: "text-amber-300",
+    high: "text-red-300",
+  }[riskLevel] || "text-emerald-300";
+
+  const label = riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1);
+
+  // Calculate bar width (0-100%)
+  const barWidth = {
+    low: 25,
+    moderate: 60,
+    high: 90,
+  }[riskLevel] || 25;
 
   return (
-    <div className={`rounded-xl border ${config.border} bg-gradient-to-br ${config.gradient} p-4 backdrop-blur-sm`}>
+    <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Risk Level</p>
-            <p className={`text-lg font-semibold ${config.text} capitalize`}>
-              {riskLevel}
-            </p>
-          </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-medium border ${config.badge}`}>
-            {riskLevel.toUpperCase()}
-          </span>
+          <p className="text-xs text-white/50 uppercase tracking-wider">Risk Level</p>
+          <p className={`text-sm font-semibold ${textColor} capitalize`}>
+            {label}
+          </p>
         </div>
+
+        {/* Horizontal bar */}
+        <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden">
+          <div
+            className={`h-full rounded-full bg-gradient-to-r ${gradientClasses} transition-all duration-500`}
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+
+        {/* Risk reasons pills */}
         {reasons.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs text-white/50 uppercase tracking-wider">Reasons</p>
-            <div className="flex flex-wrap gap-2">
-              {reasons.slice(0, 3).map((reason, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-1 rounded-lg bg-white/5 text-xs text-white/70 border border-white/10"
-                >
-                  {reason}
-                </span>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {reasons.slice(0, 4).map((reason, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-white/70"
+              >
+                {typeof reason === "string" ? reason : reason.label || reason}
+              </span>
+            ))}
+            {reasons.length > 4 && (
+              <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[10px] text-white/50">
+                +{reasons.length - 4}
+              </span>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
-

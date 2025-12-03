@@ -28,12 +28,14 @@ const ProviderMessagesPage = () => {
 
   useEffect(() => {
     loadClients();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providerId, userId]);
 
   useEffect(() => {
     if (selectedClientId) {
       loadMessages();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClientId, providerId, userId]);
 
   const loadClients = async () => {

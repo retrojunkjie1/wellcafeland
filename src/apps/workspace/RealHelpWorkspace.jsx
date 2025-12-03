@@ -10,13 +10,13 @@ import { listGrants } from "@/services/grantsService";
 import { listSupportPrograms } from "@/services/supportProgramsService";
 import { listCircles } from "@/services/circlesService";
 import { saveFavoriteResource } from "@/services/directoryService";
-import { useOSStore } from "@/stores/useOSStore";
 import PageHeader from "@/components/navigation/PageHeader";
+import { loadContentById } from "@/services/contentService";
+import { ContentViewer } from "@/components/content/ContentViewer";
 
 const RealHelpWorkspace = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { closeWorkspace } = useOSStore();
   
   const [activeTab, setActiveTab] = useState(searchParams.get("priority") || "housing");
   const [query, setQuery] = useState(searchParams.get("query") || "");
@@ -24,9 +24,14 @@ const RealHelpWorkspace = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [curatedResults, setCuratedResults] = useState([]);
+  const [startHereContent, setStartHereContent] = useState(null);
 
   useEffect(() => {
     loadData();
+    // Load "Start Here" content
+    loadContentById("assistance.realhelp.start").then((content) => {
+      setStartHereContent(content);
+    });
   }, [activeTab, query, region]);
 
   const loadData = async () => {
@@ -119,7 +124,7 @@ const RealHelpWorkspace = () => {
       <PageHeader
         title="Find Real Help"
         subtitle="Housing • Grants • Programs • Recovery Circles"
-        backTo="/chat"
+        showBack={false}
       />
 
       {/* Emergency Support Banner */}
@@ -134,6 +139,14 @@ const RealHelpWorkspace = () => {
 
       <div className="flex-1 overflow-y-auto">
         <div className="lux-shell py-6 space-y-6">
+          {/* Start Here Section */}
+          {startHereContent && (
+            <div className="lux-card p-4 sm:p-6 border border-amber-400/30 bg-amber-400/10">
+              <h2 className="text-base font-semibold text-white mb-3">Start Here</h2>
+              <ContentViewer title={null} body={startHereContent.body} />
+            </div>
+          )}
+
           {/* Disclaimer */}
           <div className="lux-card p-4 border border-white/10 bg-white/5">
             <p className="text-xs text-white/60">

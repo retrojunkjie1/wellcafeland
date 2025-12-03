@@ -27,6 +27,7 @@ const MilestonesPage = () => {
     document.title = "Milestones - WellnessCafe";
     trackPageView("milestones");
     loadMilestones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const loadMilestones = async () => {

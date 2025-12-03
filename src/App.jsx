@@ -11,6 +11,9 @@ import OSLayout from "./layouts/OSLayout";
 import HomePage from "./apps/core/HomePage";
 import ChatPage from "./apps/chat/ChatPage";
 import ExplorePage from "./apps/explore/ExplorePage";
+// Assistance Hub (real-world help)
+import AssistanceHubPage from "./apps/assistance/AssistanceHubPage";
+import CommandConsolePage from "./apps/command/CommandConsolePage";
 import WorkspacePage from "./apps/workspace/WorkspacePage";
 import RealHelpWorkspace from "./apps/workspace/RealHelpWorkspace";
 import GuidePage from "./apps/guide/GuidePage";
@@ -40,6 +43,10 @@ import ClientTimelinePage from "./apps/providers/ClientTimelinePage";
 import DashboardPage from "./apps/dashboard/DashboardPage";
 import ProfilePage from "./apps/profile/ProfilePage";
 import SupportHubPage from "./apps/support/SupportHubPage";
+import PreferencesPage from "./apps/settings/PreferencesPage";
+import WellnessSettingsPage from "./apps/settings/WellnessSettingsPage";
+import NotificationsSettingsPage from "./apps/settings/NotificationsSettingsPage";
+import PrivacySettingsPage from "./apps/settings/PrivacySettingsPage";
 import PrivacyPolicyPage from "./apps/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "./apps/legal/TermsOfServicePage";
 import CookieNoticePage from "./apps/legal/CookieNoticePage";
@@ -63,6 +70,7 @@ import AdminConsolePage from "./apps/dashboard/AdminConsolePage";
 import ThemeControlPanel from "./admin/ThemeControlPanel";
 import TemplatesManagerPage from "./apps/admin/TemplatesManagerPage";
 import OverseerConsolePage from "./apps/admin/OverseerConsolePage";
+import ContentStudioPage from "./apps/admin/ContentStudioPage";
 import AdminRoute from "./components/AdminRoute";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
@@ -92,8 +100,12 @@ const App = () => {
           {/* OS Routes */}
           <Route path="/" element={<ChatPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/explore" element={<ExplorePage />} />
           <Route path="/explore/:section" element={<ExplorePage />} />
+          {/* Assistance Hub - Real-world help directory */}
+          <Route path="/assistance" element={<AssistanceHubPage />} />
+          <Route path="/command" element={<CommandConsolePage />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
           <Route path="/workspace/real-help" element={<RealHelpWorkspace />} />
           <Route path="/directory" element={<DirectoryWorkspace />} />
@@ -128,6 +140,12 @@ const App = () => {
           <Route path="/cookies" element={<CookieNoticePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+
+          {/* User Settings Hub */}
+          <Route path="/settings/preferences" element={<PreferencesPage />} />
+          <Route path="/settings/wellness" element={<WellnessSettingsPage />} />
+          <Route path="/settings/notifications" element={<NotificationsSettingsPage />} />
+          <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
 
           {/* Provider Routes - Phase 15 */}
           <Route
@@ -220,31 +238,6 @@ const App = () => {
                   <ProvidersPage />
                 </RequireRole>
               </RequireAuth>
-            }
-          />
-          {/* Provider Routes - Updated Phase 11 */}
-          <Route
-            path="/provider"
-            element={
-              <RequireRole allowedRoles={["provider", "admin", "superadmin"]}>
-                <ProviderDashboardPage />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/provider/clients"
-            element={
-              <RequireRole allowedRoles={["provider", "admin", "superadmin"]}>
-                <ClientListPage />
-              </RequireRole>
-            }
-          />
-          <Route
-            path="/provider/client/:clientId"
-            element={
-              <RequireRole allowedRoles={["provider", "admin", "superadmin"]}>
-                <ClientDetailPage />
-              </RequireRole>
             }
           />
           <Route
@@ -372,6 +365,18 @@ const App = () => {
                 <RequireAdmin>
                   <AdminRoute>
                     <OverseerConsolePage />
+                  </AdminRoute>
+                </RequireAdmin>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/content"
+            element={
+              <RequireAuth>
+                <RequireAdmin>
+                  <AdminRoute>
+                    <ContentStudioPage />
                   </AdminRoute>
                 </RequireAdmin>
               </RequireAuth>

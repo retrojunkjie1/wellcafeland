@@ -23,6 +23,7 @@ const ClinicalNoteEditor = () => {
     if (noteId) {
       loadNote();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noteId]);
 
   const loadNote = async () => {

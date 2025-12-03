@@ -21,6 +21,7 @@ const CarePlanEditor = () => {
     if (planId) {
       loadPlan();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planId]);
 
   const loadPlan = async () => {

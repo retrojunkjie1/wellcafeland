@@ -19,6 +19,7 @@ const CircleDetailPage = () => {
 
   useEffect(() => {
     loadCircle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circleId, userId]);
 
   const loadCircle = async () => {

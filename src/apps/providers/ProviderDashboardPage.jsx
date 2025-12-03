@@ -43,6 +43,7 @@ const ProviderDashboardPage = () => {
     }
     loadRiskEvents();
     return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, isProvider, isAdmin, identityLoading, navigate]);
 
   const loadClients = async () => {

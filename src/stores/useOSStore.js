@@ -35,6 +35,27 @@ const saveChats = (chats) => {
   }
 };
 
+// Phase 34: Settings persistence helpers
+const SETTINGS_STORAGE_KEY = "wc-os-settings";
+
+const loadLocalSettings = () => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const saveLocalSettings = (settings) => {
+  try {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (err) {
+    console.warn("[useOSStore] Failed to persist settings:", err);
+  }
+};
+
 export const useOSStore = create((set, get) => ({
   // Current mode
   mode: MODES.CHAT,
@@ -407,7 +428,172 @@ export const useOSStore = create((set, get) => ({
       lastHumanMode: mode,
     },
   })),
+
+  // === Settings slice (Phase 34) ===
+  settings: {
+    // Appearance
+    themeMode: "deep-night",      // "deep-night" | "dawn" | "system"
+    interfaceDensity: "cozy",     // "cozy" | "compact"
+
+    // Wellness & intelligence
+    allowEmotionFromChat: true,
+    allowFaceSignals: false,
+    trajectoryTrackingEnabled: true,
+    recoveryMode: "standard",     // "gentle" | "standard" | "intensive"
+
+    // Notifications
+    notifications: {
+      emailEnabled: true,
+      pushEnabled: false,
+      dailyCheckIn: true,
+      milestoneAlerts: true,
+      providerMessages: true,
+      circleActivity: true,
+    },
+
+    // Privacy & safety
+    privacy: {
+      hideSensitiveText: false,
+      redactNamesInHistory: true,
+      dataRetention: "90d",       // "7d" | "30d" | "90d" | "forever"
+      requirePinForProviderView: false,
+    },
+  },
+
+  /**
+   * Hydrate settings from external source (Firestore or localStorage).
+   * Safe merge, never throws.
+   */
+  hydrateSettings: (incoming) =>
+    set((state) => {
+      if (!incoming || typeof incoming !== "object") return {};
+      const merged = {
+        ...state.settings,
+        ...incoming,
+        notifications: {
+          ...state.settings.notifications,
+          ...(incoming.notifications || {}),
+        },
+        privacy: {
+          ...state.settings.privacy,
+          ...(incoming.privacy || {}),
+        },
+      };
+      saveLocalSettings(merged);
+      return { settings: merged };
+    }),
+
+  // Appearance setters
+  setThemeMode: (themeMode) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        themeMode,
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  setInterfaceDensity: (density) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        interfaceDensity: density,
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  // Wellness / intelligence toggles
+  setAllowEmotionFromChat: (value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        allowEmotionFromChat: Boolean(value),
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  setAllowFaceSignals: (value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        allowFaceSignals: Boolean(value),
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  setTrajectoryTrackingEnabled: (value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        trajectoryTrackingEnabled: Boolean(value),
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  setRecoveryMode: (mode) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        recoveryMode: mode,
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  // Notifications
+  setNotificationSetting: (key, value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        notifications: {
+          ...state.settings.notifications,
+          [key]: value,
+        },
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
+  // Privacy
+  setPrivacySetting: (key, value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        privacy: {
+          ...state.settings.privacy,
+          [key]: value,
+        },
+      };
+      saveLocalSettings(settings);
+      return { settings };
+    }),
+
 }));
+
+// Phase 34: Initialize settings from localStorage on store creation
+const localSettings = loadLocalSettings();
+if (localSettings) {
+  useOSStore.setState((state) => {
+    const merged = {
+      ...state.settings,
+      ...localSettings,
+      notifications: {
+        ...state.settings.notifications,
+        ...(localSettings.notifications || {}),
+      },
+      privacy: {
+        ...state.settings.privacy,
+        ...(localSettings.privacy || {}),
+      },
+    };
+    return { settings: merged };
+  });
+}
 
 export { MODES };
 

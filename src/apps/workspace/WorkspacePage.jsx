@@ -51,13 +51,7 @@ const WorkspacePage = () => {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg mb-2">Workspace not found</p>
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="text-wcGold hover:text-amber-300"
-          >
-            Return to home
-          </button>
+          <p className="text-sm text-white/60">Use the HOME button in the top-left to return</p>
         </div>
       </div>
     </div>
@@ -166,22 +160,10 @@ const WorkspacePage = () => {
   return (
     <div className="flex h-screen flex-col bg-slate-950 animate-fade-in w-full max-w-screen-xl mx-auto overflow-hidden">
       {/* Header - Simple ChatGPT style with proper spacing for fixed home button */}
-      <div className="border-b border-white/10 bg-slate-950 px-4 sm:px-6 py-3 sm:py-4 md:py-5 flex-shrink-0 pt-12 sm:pt-14 md:pt-16">
+      <div className="border-b border-white/10 bg-slate-950 px-4 sm:px-6 py-3 sm:py-4 md:py-5 flex-shrink-0 pt-16 sm:pt-18 md:pt-20 pl-20 sm:pl-24">
         <div className="flex items-center justify-between gap-3 sm:gap-4 w-full">
-          {/* Left: Back button + Title */}
+          {/* Left: Title */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            {/* Back button */}
-            <button
-              type="button"
-              onClick={() => {
-                closeWorkspace();
-                navigate("/");
-              }}
-              className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white/70 hover:text-white hover:bg-white/10 transition min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
-              aria-label="Back"
-            >
-              ←
-            </button>
             {/* Title section */}
             <div className="flex-1 min-w-0">
               <h1 className="text-base sm:text-lg md:text-xl font-medium text-white truncate">
@@ -197,16 +179,15 @@ const WorkspacePage = () => {
               )}
             </div>
           </div>
-          {/* Right: Back to Chat button */}
+          {/* Right: Close workspace button (context-specific) */}
           <button
             type="button"
             onClick={() => {
               closeWorkspace();
-              navigate("/");
             }}
             className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-white/70 hover:text-white hover:bg-white/10 transition whitespace-nowrap min-h-[40px] sm:min-h-[44px] flex items-center justify-center"
           >
-            Back to Chat
+            Close
           </button>
         </div>
       </div>

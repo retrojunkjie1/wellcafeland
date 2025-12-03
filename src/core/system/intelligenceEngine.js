@@ -3,13 +3,12 @@
 // Phase 25: Aligned to use sub-engines (emotionEngine, riskEngine, patternEngine)
 
 import { ContextMemory } from "@/services/contextMemory";
-import { analyzeEmotionalState, analyzeMessageEmotion, detectTriggerDomains } from "@/services/emotionalAnalysis";
+import { analyzeEmotionalState } from "@/services/emotionalAnalysis";
 import { analyzeSpiritualState } from "@/services/spiritualAnalysis";
 import { forecastRecoveryRisk } from "@/services/recoveryForecast";
-import { evaluateMessageRisk } from "@/services/riskService";
 import { EMOTIONAL_STATES, TRIGGER_DOMAINS } from "@/ai/human/humanMap";
-import { analyzeIdentitySignals, buildIdentitySnapshot } from "@/ai/human/identityModel";
-import { analyzeRelationshipSignals, buildRelationshipSnapshot } from "@/ai/relationship/relationshipModel";
+import { analyzeIdentitySignals } from "@/ai/human/identityModel";
+import { analyzeRelationshipSignals } from "@/ai/relationship/relationshipModel";
 import { enrichMessageWithEmotionSafe } from "./emotionEngine";
 import { analyzeMessageSignalsSafe } from "./riskEngine";
 import { getPhrasingStyle, buildAssistantResponse } from "./phrasingEngine";

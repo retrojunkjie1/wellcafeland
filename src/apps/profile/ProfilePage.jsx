@@ -116,6 +116,21 @@ const ProfilePage = () => {
         </div>
       )}
 
+      {/* My Wellness Settings */}
+      <section className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+        <h2 className="text-sm sm:text-base font-medium text-white mb-1">
+          My Wellness Settings
+        </h2>
+        <p className="text-xs sm:text-sm text-white/60 mb-4">
+          How fast we move, how deep we go, and how spiritual or clinical you want your experience to feel.
+        </p>
+        {/* Settings controls can be wired later to store */}
+        <p className="text-xs text-white/50">
+          (Controls coming online as we wire the store values. For now, you can simply know this is the home of your
+          personal OS tuning.)
+        </p>
+      </section>
+
       {/* Preferences */}
       <div className="glass-panel p-6 space-y-4">
         <h2 className="text-xs uppercase tracking-[0.3em] text-white/50">
@@ -131,17 +146,23 @@ const ProfilePage = () => {
           <button
             type="button"
             onClick={toggleTheme}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+            className={`
+              relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all
+              ${theme === "dark"
+                ? "border-amber-400/40 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20"
+                : "border-white/20 bg-white/10 text-white hover:bg-white/20"
+              }
+            `}
           >
             {theme === "dark" ? (
               <>
-                <Sun className="h-4 w-4 inline mr-2" />
-                Light
+                <Moon className="h-4 w-4" />
+                <span>Dark</span>
               </>
             ) : (
               <>
-                <Moon className="h-4 w-4 inline mr-2" />
-                Dark
+                <Sun className="h-4 w-4" />
+                <span>Light</span>
               </>
             )}
           </button>

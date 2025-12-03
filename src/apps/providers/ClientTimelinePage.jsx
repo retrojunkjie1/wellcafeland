@@ -49,6 +49,7 @@ const ClientTimelinePage = () => {
     }
     loadSignals();
     return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, clientId, isProvider, isAdmin, identityLoading, navigate]);
 
   // Load emotional timeline events

@@ -36,7 +36,9 @@ export const AuthProvider = ({ children }) => {
     // If Firebase auth is not available, set loading to false immediately
     if (!auth) {
       console.warn("Firebase auth is disabled - running in offline mode");
-      setLoading(false);
+      setTimeout(() => {
+        setLoading(false);
+      }, 0);
       return;
     }
 

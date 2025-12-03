@@ -28,6 +28,7 @@ const ProviderSocialInsights = () => {
     }
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isProvider, isAdmin, providerId, userId, navigate]);
 
   const loadData = async () => {

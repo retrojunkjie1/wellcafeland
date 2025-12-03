@@ -5,7 +5,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Play, Pause, RotateCcw, Volume2, X } from "lucide-react";
 import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
-import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 
 const BREATHING_MODES = {
   "478": {

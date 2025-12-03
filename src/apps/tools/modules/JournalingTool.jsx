@@ -1,9 +1,9 @@
 // src/apps/tools/modules/JournalingTool.jsx
 // Journal with mode selection and Firestore/localStorage fallback
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { X, Save } from "lucide-react";
-import { collection, addDoc, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract";

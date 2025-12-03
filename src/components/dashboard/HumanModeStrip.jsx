@@ -1,76 +1,74 @@
 // src/components/dashboard/HumanModeStrip.jsx
-// Display current conversational mode
+// Phase 33: Human mode pill with context
 
 import React from "react";
 
-const MODE_CONFIG = {
-  humor: {
-    label: "Humor",
-    message: "You're in a relaxed conversational flow.",
-    color: "text-amber-400",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-  },
-  casual: {
-    label: "Casual",
-    message: "You're in a relaxed conversational flow.",
-    color: "text-emerald-400",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/20",
-  },
-  emotional_heavy: {
-    label: "Emotional",
-    message: "You're sharing something important—I'm here with you.",
-    color: "text-amber-400",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/20",
-  },
-  recovery_core: {
-    label: "Recovery",
-    message: "You're sharing something important—I'm here with you.",
-    color: "text-teal-400",
-    bg: "bg-teal-500/10",
-    border: "border-teal-500/20",
-  },
-  curiosity: {
-    label: "Curiosity",
-    message: "You're exploring and asking questions.",
-    color: "text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/20",
-  },
-  risk_sensitive: {
-    label: "Risk Sensitive",
-    message: "You're sharing something important—I'm here with you.",
-    color: "text-red-400",
-    bg: "bg-red-500/10",
-    border: "border-red-500/20",
-  },
-  neutral: {
-    label: "Neutral",
-    message: "You're in a balanced conversational state.",
-    color: "text-white/60",
-    bg: "bg-white/5",
-    border: "border-white/10",
-  },
-};
-
 export default function HumanModeStrip({ humanMode }) {
-  const mode = humanMode || "neutral";
-  const config = MODE_CONFIG[mode] || MODE_CONFIG.neutral;
+  if (!humanMode) {
+    return (
+      <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5">
+        <p className="text-xs text-white/50 uppercase tracking-wider mb-2">Conversation mode</p>
+        <p className="text-sm text-white/60">Standard mode</p>
+      </div>
+    );
+  }
+
+  const mode = typeof humanMode === "string" ? humanMode : humanMode.mode || humanMode;
+  
+  // Mode styling
+  const modeConfig = {
+    humor: {
+      bg: "bg-purple-500/20",
+      border: "border-purple-400/60",
+      text: "text-purple-200",
+      label: "Humor",
+      context: "Light-hearted, playful responses to ease tension.",
+    },
+    recovery_core: {
+      bg: "bg-red-500/20",
+      border: "border-red-400/60",
+      text: "text-red-200",
+      label: "Recovery Core",
+      context: "Focused on recovery principles and support.",
+    },
+    risk_sensitive: {
+      bg: "bg-amber-500/20",
+      border: "border-amber-400/60",
+      text: "text-amber-200",
+      label: "Risk Sensitive",
+      context: "Extra care and attention to safety signals.",
+    },
+    casual: {
+      bg: "bg-teal-500/20",
+      border: "border-teal-400/60",
+      text: "text-teal-200",
+      label: "Casual",
+      context: "Relaxed, conversational tone.",
+    },
+    entertainment: {
+      bg: "bg-sky-500/20",
+      border: "border-sky-400/60",
+      text: "text-sky-200",
+      label: "Entertainment",
+      context: "Engaging and enjoyable interactions.",
+    },
+  }[mode] || {
+    bg: "bg-white/5",
+    border: "border-white/20",
+    text: "text-white/70",
+    label: mode.charAt(0).toUpperCase() + mode.slice(1).replace(/_/g, " "),
+    context: "Standard conversation mode.",
+  };
 
   return (
-    <div className={`rounded-xl border ${config.border} ${config.bg} p-4 backdrop-blur-sm`}>
-      <div className="flex items-start gap-3">
-        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${config.color} border ${config.border} bg-white/5`}>
-          {config.label}
-        </div>
-        <div className="flex-1">
-          <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Conversational Mode</p>
-          <p className="text-sm text-white/70">{config.message}</p>
-        </div>
+    <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5">
+      <p className="text-xs text-white/50 uppercase tracking-wider mb-3">Conversation mode</p>
+      <div className={`inline-flex items-center px-3 py-1.5 rounded-full ${modeConfig.bg} border ${modeConfig.border} ${modeConfig.text} mb-2`}>
+        <span className="text-xs font-semibold">{modeConfig.label}</span>
       </div>
+      <p className="text-[11px] text-white/60 leading-relaxed">
+        {modeConfig.context}
+      </p>
     </div>
   );
 }
-

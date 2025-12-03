@@ -1,70 +1,101 @@
 // src/components/dashboard/EmotionStrip.jsx
-// Display last message emotion with intensity bar
+// Phase 33: Circular donut gauge style emotion display
 
 import React from "react";
 
 export default function EmotionStrip({ lastEmotion }) {
   if (!lastEmotion) {
     return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Emotion</p>
-            <p className="text-sm text-white/60">No emotion detected yet</p>
-          </div>
+      <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5 flex items-center gap-4 sm:gap-6">
+        <div className="flex-1">
+          <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Last emotional signal</p>
+          <p className="text-sm text-white/60">No emotion detected yet</p>
         </div>
       </div>
     );
   }
 
   const label = lastEmotion.label || "neutral";
-  const intensity = typeof lastEmotion.intensity === "number" ? lastEmotion.intensity : 0;
+  const intensity = typeof lastEmotion.intensity === "number" ? Math.max(0, Math.min(1, lastEmotion.intensity)) : 0;
   const valence = lastEmotion.valence || "neutral";
 
   // Color based on valence
-  const valenceColor = {
-    positive: "text-emerald-400",
-    negative: "text-amber-400",
-    neutral: "text-white/60",
-  }[valence] || "text-white/60";
+  const strokeColor = {
+    positive: "#10b981", // emerald-500
+    negative: "#f59e0b", // amber-500
+    neutral: "#6b7280", // gray-500
+  }[valence] || "#6b7280";
 
-  const barColor = {
-    positive: "bg-emerald-400/30",
-    negative: "bg-amber-400/30",
-    neutral: "bg-white/10",
-  }[valence] || "bg-white/10";
+  const textColor = {
+    positive: "text-emerald-300",
+    negative: "text-amber-300",
+    neutral: "text-white/70",
+  }[valence] || "text-white/70";
+
+  const valenceLabel = {
+    positive: "supportive",
+    negative: "distressed",
+    neutral: "neutral",
+  }[valence] || "neutral";
+
+  // SVG circle parameters
+  const size = 80;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (intensity * circumference);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Emotion</p>
-            <p className={`text-lg font-semibold ${valenceColor} capitalize`}>
+    <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5 flex items-center gap-4 sm:gap-6">
+      {/* Left: Circular gauge */}
+      <div className="flex-shrink-0 relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="transform -rotate-90">
+          {/* Background circle */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth={strokeWidth}
+          />
+          {/* Foreground circle (intensity) */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            className="transition-all duration-500"
+          />
+        </svg>
+        {/* Center label */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <p className={`text-xs font-semibold ${textColor} capitalize`} style={{ lineHeight: 1.2 }}>
               {label}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Valence</p>
-            <p className={`text-sm font-medium ${valenceColor} capitalize`}>
-              {valence}
-            </p>
-          </div>
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-white/50">
-            <span>Intensity</span>
-            <span>{Math.round(intensity * 100)}%</span>
-          </div>
-          <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-            <div
-              className={`h-full ${barColor} transition-all duration-300`}
-              style={{ width: `${intensity * 100}%` }}
-            />
-          </div>
-        </div>
+      </div>
+
+      {/* Right: Details */}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-white/50 uppercase tracking-wider mb-1">Last emotional signal</p>
+        <p className={`text-base font-semibold ${textColor} capitalize mb-1`}>
+          {label}
+        </p>
+        <p className="text-xs text-white/60 mb-2">
+          {Math.round(intensity * 100)}% intensity
+        </p>
+        <p className="text-[10px] text-white/50 capitalize">
+          {valenceLabel}
+        </p>
       </div>
     </div>
   );
 }
-

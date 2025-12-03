@@ -65,7 +65,7 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
     // Find most tense area (highest tension level)
     const tenseEntries = Object.entries(tensionLevels).filter(([_, level]) => level !== undefined);
     if (tenseEntries.length > 0) {
-      const [mostTenseId, maxTension] = tenseEntries.reduce((max, [id, level]) => 
+      const [mostTenseId] = tenseEntries.reduce((max, [id, level]) => 
         level > max[1] ? [id, level] : max, tenseEntries[0]
       );
       setMostTenseArea(mostTenseId);
@@ -74,7 +74,7 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
     // Find area that softened most (if we tracked before/after, for now just use lowest tension)
     const softEntries = Object.entries(tensionLevels).filter(([_, level]) => level !== undefined);
     if (softEntries.length > 0) {
-      const [mostSoftId, minTension] = softEntries.reduce((min, [id, level]) => 
+      const [mostSoftId] = softEntries.reduce((min, [id, level]) => 
         level < min[1] ? [id, level] : min, softEntries[0]
       );
       setMostSoftenedArea(mostSoftId);

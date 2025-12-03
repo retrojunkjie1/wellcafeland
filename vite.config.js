@@ -11,6 +11,9 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // ← explicitly bind to all interfaces for mobile access
+    port: 5173,      // ← default
+    strictPort: false, // ← won't break if port busy
     proxy: {
       '/aiSession': {
         // For local development: point to Firebase Functions emulator
@@ -35,7 +38,7 @@ export default defineConfig({
     // Suppress CSP warnings in dev (Vite HMR uses eval)
     // Note: This is development-only. Production builds don't use eval.
     headers: {
-      'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://localhost:*; object-src 'none'; base-uri 'self';"
+      'Content-Security-Policy': "script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:* https://localhost:* http://192.168.*:*; object-src 'none'; base-uri 'self';"
     },
   },
   build: {

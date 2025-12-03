@@ -1,56 +1,43 @@
 // src/components/dashboard/TriggerStrip.jsx
-// Display last 20 trigger domains as chips
+// Phase 33: Trigger chips display
 
 import React, { useMemo } from "react";
 
-export default function TriggerStrip({ messages }) {
+export default function TriggerStrip({ messages = [] }) {
+  // Extract all unique triggers from messages
   const triggers = useMemo(() => {
-    if (!Array.isArray(messages)) return [];
-    
-    const allTriggers = [];
+    const triggerSet = new Set();
     messages.forEach((msg) => {
       if (msg.triggers && Array.isArray(msg.triggers)) {
-        allTriggers.push(...msg.triggers);
+        msg.triggers.forEach((trigger) => {
+          if (typeof trigger === "string") {
+            triggerSet.add(trigger);
+          } else if (trigger?.label) {
+            triggerSet.add(trigger.label);
+          }
+        });
       }
     });
-    
-    // Get unique triggers, keep last 20
-    const uniqueTriggers = Array.from(new Set(allTriggers));
-    return uniqueTriggers.slice(-20);
+    return Array.from(triggerSet).slice(0, 8); // Limit to 8 most recent
   }, [messages]);
 
-  if (triggers.length === 0) {
-    return (
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">Trigger Domains</p>
-            <p className="text-sm text-white/60">No triggers detected yet</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-white/40 uppercase tracking-wider">Trigger Domains</p>
-          <span className="text-xs text-white/50">{triggers.length} detected</span>
-        </div>
+    <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-4 sm:p-5">
+      <p className="text-xs text-white/50 uppercase tracking-wider mb-3">Triggers</p>
+      {triggers.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {triggers.map((trigger, idx) => (
             <span
               key={idx}
-              className="px-3 py-1.5 rounded-full bg-amber-500/10 text-xs text-amber-300 border border-amber-500/20 capitalize"
+              className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-white/80"
             >
               {trigger}
             </span>
           ))}
         </div>
-      </div>
+      ) : (
+        <p className="text-sm text-white/60">No triggers detected yet.</p>
+      )}
     </div>
   );
 }
-

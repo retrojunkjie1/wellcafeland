@@ -1,88 +1,81 @@
 // src/components/dashboard/QuickActions.jsx
-// Quick action buttons for tools and directory
+// Phase 33: Quick action tiles
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useOSStore } from "@/stores/useOSStore";
-import { Wind, Anchor, BookOpen, Search } from "lucide-react";
+import { MessageCircle, Compass, BookOpen, Heart } from "lucide-react";
 
-export default function QuickActions() {
+const actions = [
+  {
+    id: "chat",
+    label: "Start Chat",
+    icon: MessageCircle,
+    path: "/chat",
+    color: "from-amber-400/20 to-amber-300/10",
+    borderColor: "border-amber-400/30",
+  },
+  {
+    id: "explore",
+    label: "Explore",
+    icon: Compass,
+    path: "/explore",
+    color: "from-teal-400/20 to-teal-300/10",
+    borderColor: "border-teal-400/30",
+  },
+  {
+    id: "tools",
+    label: "Tools",
+    icon: BookOpen,
+    path: "/tools",
+    color: "from-purple-400/20 to-purple-300/10",
+    borderColor: "border-purple-400/30",
+  },
+  {
+    id: "recovery",
+    label: "Recovery",
+    icon: Heart,
+    path: "/recovery",
+    color: "from-emerald-400/20 to-emerald-300/10",
+    borderColor: "border-emerald-400/30",
+  },
+];
+
+export default function QuickActions({ onOpenDetail }) {
   const navigate = useNavigate();
-  const { openWorkspace } = useOSStore();
 
-  const handleBreathing = () => {
-    openWorkspace("tool", "Breathing Tool", { toolId: "breathing" });
+  const handleActionClick = (action) => {
+    // Navigate to the action path
+    navigate(action.path);
+    // Optionally open detail sheet to explain tools
+    if (onOpenDetail) {
+      onOpenDetail("quick");
+    }
   };
-
-  const handleGrounding = () => {
-    openWorkspace("tool", "Grounding Tool", { toolId: "grounding" });
-  };
-
-  const handleJournaling = () => {
-    navigate("/guide");
-  };
-
-  const handleDirectory = () => {
-    openWorkspace("directory", "Directory", {});
-  };
-
-  const actions = [
-    {
-      label: "Breathing Tool",
-      icon: Wind,
-      onClick: handleBreathing,
-      color: "text-emerald-400",
-      bg: "bg-emerald-500/10",
-      border: "border-emerald-500/20",
-    },
-    {
-      label: "Grounding Tool",
-      icon: Anchor,
-      onClick: handleGrounding,
-      color: "text-teal-400",
-      bg: "bg-teal-500/10",
-      border: "border-teal-500/20",
-    },
-    {
-      label: "Journaling",
-      icon: BookOpen,
-      onClick: handleJournaling,
-      color: "text-amber-400",
-      bg: "bg-amber-500/10",
-      border: "border-amber-500/20",
-    },
-    {
-      label: "Explore Directory",
-      icon: Search,
-      onClick: handleDirectory,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/20",
-    },
-  ];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-      <div className="space-y-3">
-        <p className="text-xs text-white/40 uppercase tracking-wider">Quick Actions</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {actions.map((action, idx) => {
-            const Icon = action.icon;
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={action.onClick}
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg border ${action.border} ${action.bg} transition hover:bg-white/10 ${action.color}`}
-              >
-                <Icon className="h-5 w-5" />
-                <span className="text-xs font-medium text-white/70">{action.label}</span>
-              </button>
-            );
-          })}
-        </div>
+    <div className="rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md p-3 sm:p-4">
+      <p className="text-[10px] text-white/50 uppercase tracking-wider mb-2">Quick Actions</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.id}
+              type="button"
+              onClick={() => handleActionClick(action)}
+              className={`
+                flex flex-col items-center justify-center gap-1 p-2 rounded-xl
+                bg-gradient-to-br ${action.color}
+                border ${action.borderColor}
+                hover:opacity-80 transition-opacity
+              `}
+            >
+              <Icon className="h-6 w-6 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
+              <span className="text-[10px] text-white/80 font-medium">{action.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
-

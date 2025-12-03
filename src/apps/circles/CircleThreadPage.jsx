@@ -23,6 +23,7 @@ const CircleThreadPage = () => {
     // Refresh messages every 10 seconds
     const interval = setInterval(loadMessages, 10000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circleId, threadId]);
 
   useEffect(() => {

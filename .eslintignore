@@ -1,0 +1,20 @@
+# Legacy folders no longer part of OS
+src/Views/
+src/features/
+src/components/
+src/services/
+src/lib/
+src/debug.test.js
+src/App.test.js
+scripts/
+tests/
+
+# Build outputs
+dist/
+.vite/
+node_modules/
+
+# Config files
+*.config.js
+.eslintignore
+

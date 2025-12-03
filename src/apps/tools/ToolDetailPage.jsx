@@ -1,9 +1,12 @@
 // src/apps/tools/ToolDetailPage.jsx
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { trackPageView } from "../../services/telemetry";
 import { getToolById } from "./toolsRegistry";
+import { getContentRegistryEntry } from "@/content/contentRegistry";
+import { loadContentById } from "@/services/contentService";
+import { ContentViewer } from "@/components/content/ContentViewer";
 import BreathingTool from "./modules/BreathingTool";
 import GroundingTool from "./modules/GroundingTool";
 import JournalingTool from "./modules/JournalingTool";
@@ -25,19 +28,92 @@ const TOOL_COMPONENTS = {
 const ToolDetailPage = () => {
   const { toolId } = useParams();
   const navigate = useNavigate();
-  const tool = getToolById(toolId);
+  const decodedToolId = decodeURIComponent(toolId);
+  const tool = getToolById(decodedToolId);
+  const [content, setContent] = useState(null);
+  const [contentLoading, setContentLoading] = useState(false);
+
+  // Check if toolId is a content registry ID
+  const isContentId = getContentRegistryEntry(decodedToolId) !== null;
 
   useEffect(() => {
-    if (tool) {
+    if (isContentId) {
+      let cancelled = false;
+      const loadAsync = async () => {
+        setContentLoading(true);
+        const loaded = await loadContentById(decodedToolId);
+        if (!cancelled) {
+          setContent(loaded);
+          setContentLoading(false);
+          if (loaded) {
+            document.title = `${loaded.title} - WellnessCafe`;
+            trackPageView(`content_${decodedToolId}`);
+          }
+        }
+      };
+      loadAsync();
+      return () => { cancelled = true; };
+    } else if (tool) {
       document.title = `${tool.name} - WellnessCafe`;
-      trackPageView(`tool_${toolId}`);
+      trackPageView(`tool_${decodedToolId}`);
     }
-  }, [tool, toolId]);
+  }, [decodedToolId, isContentId, tool]);
+
+  // Render content if it's a content ID
+  if (isContentId) {
+    if (contentLoading) {
+      return (
+        <div className="flex h-full items-center justify-center text-white/80">
+          Loading...
+        </div>
+      );
+    }
+    if (!content) {
+      return (
+        <div className="flex h-full items-center justify-center text-white/80">
+          Content not found.
+        </div>
+      );
+    }
+    return (
+      <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 backdrop-blur-sm lg:items-start">
+        <div className="hidden max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-slate-950/95 p-8 text-white shadow-gold-ring lg:block">
+          <button
+            type="button"
+            onClick={() => navigate("/tools")}
+            className="mb-6 text-xs text-white/50 hover:text-white"
+          >
+            ← Back to tools
+          </button>
+          <ContentViewer title={content.title} body={content.body} />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 w-full lg:hidden">
+          <div
+            className="absolute inset-0"
+            onClick={() => navigate("/tools")}
+            aria-hidden
+          />
+          <div className="relative z-10 max-h-[90vh] rounded-t-3xl bg-slate-950/95 px-4 py-6 text-white shadow-gold-ring">
+            <div className="mx-auto h-full max-w-2xl overflow-y-auto space-y-4">
+              <button
+                type="button"
+                onClick={() => navigate("/tools")}
+                className="text-xs text-white/50 hover:text-white"
+              >
+                Close
+              </button>
+              <ContentViewer title={content.title} body={content.body} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!tool) {
     return (
       <div className="flex h-full items-center justify-center text-white/80">
-        This ritual hasn’t been written yet.
+        This ritual hasn't been written yet.
       </div>
     );
   }

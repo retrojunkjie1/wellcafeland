@@ -9,6 +9,8 @@ import {
   getStreakStats,
 } from "../../services/sessionHistory";
 import PageHeader from "@/components/navigation/PageHeader";
+import { listContentSummaries } from "@/services/contentService";
+import { CONTENT_SECTIONS } from "@/content/contentRegistry";
 
 const RecoveryPage = () => {
   const navigate = useNavigate();
@@ -18,6 +20,8 @@ const RecoveryPage = () => {
     longestStreak: 0,
     lastSessionAt: null,
   });
+  const [recoveryContent, setRecoveryContent] = useState([]);
+  const [educationContent, setEducationContent] = useState([]);
 
   useEffect(() => {
     document.title = "Recovery - WellnessCafe";
@@ -27,6 +31,14 @@ const RecoveryPage = () => {
     setTimeout(() => {
       setLastSession(getLastSession());
       setStreak(getStreakStats());
+    }, 0);
+
+    // Load content summaries
+    const recoverySummaries = listContentSummaries(CONTENT_SECTIONS.RECOVERY);
+    const educationSummaries = listContentSummaries(CONTENT_SECTIONS.EDUCATION);
+    setTimeout(() => {
+      setRecoveryContent(recoverySummaries);
+      setEducationContent(educationSummaries);
     }, 0);
   }, []);
 
@@ -267,6 +279,72 @@ const RecoveryPage = () => {
             </div>
           </div>
         </section>
+
+        {/* Recovery Modules Section */}
+        {recoveryContent.length > 0 && (
+          <section className="lux-card p-4 sm:p-5">
+            <h2 className="text-base font-medium mb-4">Recovery Modules</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {recoveryContent.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                  className="text-left rounded-xl bg-card/50 border border-border p-3 hover:bg-muted transition"
+                >
+                  <div className="text-sm font-medium text-foreground">
+                    {item.title}
+                  </div>
+                  {item.tags?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {item.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Education Modules Section */}
+        {educationContent.length > 0 && (
+          <section className="lux-card p-4 sm:p-5">
+            <h2 className="text-base font-medium mb-4">Education Modules</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {educationContent.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                  className="text-left rounded-xl bg-card/50 border border-border p-3 hover:bg-muted transition"
+                >
+                  <div className="text-sm font-medium text-foreground">
+                    {item.title}
+                  </div>
+                  {item.tags?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {item.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

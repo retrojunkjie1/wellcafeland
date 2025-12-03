@@ -166,7 +166,6 @@ export function computeMessageDrift(messages) {
       .map((m) => (typeof m.humanMode === "string" ? m.humanMode : ""))
       .filter((m) => m.length > 0);
     const lightModes = humanModes.filter((m) => ["humor", "casual", "entertainment", "politics"].includes(m)).length;
-    const heavyModes = humanModes.filter((m) => ["emotional_heavy", "recovery_core", "risk_sensitive"].includes(m)).length;
     const totalModes = humanModes.length;
     const avoidance = totalModes > 0 ? Math.min(1, Math.max(0, lightModes / totalModes)) : 0;
 

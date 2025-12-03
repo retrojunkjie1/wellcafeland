@@ -17,6 +17,7 @@ const CircleWorkspace = () => {
 
   useEffect(() => {
     loadCircle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circleId]);
 
   const loadCircle = async () => {

@@ -11,7 +11,6 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 const VoiceJournal = ({ onComplete, onCancel }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [audioBlob, setAudioBlob] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [summary, setSummary] = useState("");
   const [emotionalState, setEmotionalState] = useState(null);
@@ -54,7 +53,6 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
         handleProcessJournal(blob);
       };

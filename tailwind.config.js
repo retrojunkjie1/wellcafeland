@@ -24,6 +24,12 @@ module.exports = {
         destructiveForeground: "hsl(var(--destructive-foreground))",
         ring: "hsl(var(--ring))",
         wcGold: "#d4af37",
+        wc: {
+          deep: "#050509",
+          gold: "#f5d580",
+          goldStrong: "#ffd76a",
+          glass: "rgba(255,255,255,0.05)",
+        },
       },
       fontFamily: {
         sans: ["'Space Grotesk'", "Inter", "system-ui", "sans-serif"],
@@ -31,12 +37,15 @@ module.exports = {
       boxShadow: {
         glow: "0 20px 60px rgba(5, 5, 20, 0.55)",
         "gold-ring": "0 10px 40px rgba(212, 175, 55, 0.2)",
+        "wc-glass": "0 0 40px rgba(0,0,0,0.45)",
+        "wc-soft": "0 0 24px rgba(0,0,0,0.35)",
       },
       borderRadius: {
         lg: "var(--radius-lg)",
         md: "var(--radius-md)",
         sm: "var(--radius-sm)",
         xl: "1.5rem",
+        xl2: "1.25rem",
       },
       backdropBlur: {
         xs: "2px",

@@ -159,7 +159,6 @@ function analyzeFrame(canvas, ctx) {
     );
 
     // Compute eye openness (brightness variation in eye region)
-    let eyeBrightnessSum = 0;
     let eyePixelCount = 0;
     let eyeMinBrightness = 255;
     let eyeMaxBrightness = 0;
@@ -167,14 +166,12 @@ function analyzeFrame(canvas, ctx) {
     for (let y = eyeStartY; y < eyeEndY; y++) {
       for (let x = eyeStartX; x < eyeEndX; x++) {
         const brightness = getPixelBrightness(data, canvas.width, x, y);
-        eyeBrightnessSum += brightness;
         eyeMinBrightness = Math.min(eyeMinBrightness, brightness);
         eyeMaxBrightness = Math.max(eyeMaxBrightness, brightness);
         eyePixelCount++;
       }
     }
 
-    const eyeAvgBrightness = eyePixelCount > 0 ? eyeBrightnessSum / eyePixelCount : 128;
     const eyeOpenness = eyePixelCount > 0
       ? Math.min(1, (eyeMaxBrightness - eyeMinBrightness) / 100) // Higher variation = more open
       : 0.5;
@@ -240,7 +237,6 @@ function featuresToEmotion(frameFeatures) {
   const avgEyeOpenness = frameFeatures.reduce((sum, f) => sum + (f.eyeOpenness || 0.5), 0) / frameFeatures.length;
   const avgMouthCurvature = frameFeatures.reduce((sum, f) => sum + (f.mouthCurvature || 0.5), 0) / frameFeatures.length;
   const avgBrightness = frameFeatures.reduce((sum, f) => sum + (f.avgBrightness || 128), 0) / frameFeatures.length;
-  const avgContrast = frameFeatures.reduce((sum, f) => sum + (f.contrast || 50), 0) / frameFeatures.length;
 
   // Overall movement detection (frame-to-frame variation)
   const movement = frameFeatures.length > 1
