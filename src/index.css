@@ -316,4 +316,27 @@ body {
       opacity: 0.6;
     }
   }
+
+  /* Phase 37: Tool Sessions animations */
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes float-slow {
+    0%, 100% {
+      transform: translate(0, 0);
+      opacity: 0.3;
+    }
+    50% {
+      transform: translate(10px, -20px);
+      opacity: 0.5;
+    }
+  }
 }

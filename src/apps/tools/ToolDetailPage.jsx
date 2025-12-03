@@ -1,232 +1,229 @@
 // src/apps/tools/ToolDetailPage.jsx
+// Phase 37: Tool Sessions Activation Layer
+// Upgraded detail page to use session layout + views
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { trackPageView } from "../../services/telemetry";
-import { getToolById } from "./toolsRegistry";
+import { ContentViewer } from "@/components/content/ContentViewer";
 import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
-import { ContentViewer } from "@/components/content/ContentViewer";
-import BreathingTool from "./modules/BreathingToolCinematic";
-import GroundingTool from "./modules/GroundingTool";
-import JournalingTool from "./modules/JournalingTool";
-import UrgeSurfingTool from "./modules/UrgeSurfingTool";
-import BodyScanTool from "./modules/BodyScanTool";
-import SelfSurgeonTool from "./modules/SelfSurgeonTool";
-import EducationModule from "./modules/EducationModule";
-
-const TOOL_COMPONENTS = {
-  breathing: BreathingTool,
-  grounding: GroundingTool,
-  journaling: JournalingTool,
-  "urge-surfing": UrgeSurfingTool,
-  "body-scan": BodyScanTool,
-  "self-surgeon": SelfSurgeonTool,
-  education: EducationModule,
-};
+import { ToolsRegistry } from "@/engines/tools/ToolsRegistry";
+import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
+import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
+import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
+import { PanicResetSessionView } from "@/components/tools/PanicResetSessionView";
 
 const ToolDetailPage = () => {
   const { toolId } = useParams();
   const navigate = useNavigate();
-  const decodedToolId = decodeURIComponent(toolId);
-  const tool = getToolById(decodedToolId);
+
+  const decodedId = useMemo(() => {
+    try {
+      return decodeURIComponent(toolId ?? "");
+    } catch {
+      return toolId ?? "";
+    }
+  }, [toolId]);
+
+  const [toolMeta, setToolMeta] = useState(null);
   const [content, setContent] = useState(null);
   const [contentLoading, setContentLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [cycles, setCycles] = useState(0);
+  const [sessionSeconds, setSessionSeconds] = useState(0);
+  const [coherence, setCoherence] = useState(0);
 
-  // Check if toolId is a content registry ID
-  const isContentId = getContentRegistryEntry(decodedToolId) !== null;
-
+  // session timer
   useEffect(() => {
-    if (isContentId) {
-      let cancelled = false;
-      const loadAsync = async () => {
-        setContentLoading(true);
-        const loaded = await loadContentById(decodedToolId);
-        if (!cancelled) {
-          setContent(loaded);
-          setContentLoading(false);
-          if (loaded) {
-            document.title = `${loaded.title} - WellnessCafe`;
-            trackPageView(`content_${decodedToolId}`);
-          }
-        }
-      };
-      loadAsync();
-      return () => { cancelled = true; };
-    } else if (tool) {
-      document.title = `${tool.name} - WellnessCafe`;
-      trackPageView(`tool_${decodedToolId}`);
-    }
-  }, [decodedToolId, isContentId, tool]);
+    if (!isSessionActive) return;
+    const id = setInterval(() => {
+      setSessionSeconds((prev) => prev + 1);
+      // Light coherence growth
+      setCoherence((prev) => Math.min(100, prev + 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isSessionActive]);
 
-  // Render content if it's a content ID
-  if (isContentId) {
-    if (contentLoading) {
-      return (
-        <div className="flex h-full items-center justify-center text-white/80">
-          Loading...
-        </div>
-      );
+  // load tool metadata from registry
+  useEffect(() => {
+    const meta = ToolsRegistry?.find((t) => t.id === decodedId);
+    if (meta) setToolMeta(meta);
+  }, [decodedId]);
+
+  // load content if this ID refers to markdown / education content
+  useEffect(() => {
+    let cancelled = false;
+
+    const entry = getContentRegistryEntry(decodedId);
+    if (!entry) return;
+
+    setContentLoading(true);
+    loadContentById(decodedId)
+      .then((loaded) => {
+        if (cancelled) return;
+        setContent(loaded);
+      })
+      .finally(() => {
+        if (!cancelled) setContentLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [decodedId]);
+
+  const isSessionTool = !!toolMeta?.sessionType;
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleStartSession = () => {
+    setIsSessionActive(true);
+    setSessionSeconds(0);
+    setCycles(0);
+    setCoherence(0);
+    // Phase 37: hook SoundscapeEngine here later
+  };
+
+  const handleEndSession = () => {
+    setIsSessionActive(false);
+    // Phase 37: stop soundscape if integrated
+  };
+
+  const metrics = [
+    { label: "Time", value: formatTime(sessionSeconds) },
+    { label: "Cycles", value: cycles },
+    {
+      label: "Coherence",
+      value: isSessionActive ? `${coherence}%` : "—",
+    },
+    {
+      label: "Calm Score",
+      value: isSessionActive ? `${Math.min(100, Math.round(sessionSeconds * 1.5))}%` : "—",
+    },
+  ];
+
+  const renderSessionView = () => {
+    if (!toolMeta?.sessionType) return null;
+
+    switch (toolMeta.sessionType) {
+      case "breathing":
+        return (
+          <BreathingSessionView
+            isActive={isSessionActive}
+            onCycleComplete={() => setCycles((prev) => prev + 1)}
+          />
+        );
+      case "grounding":
+        return <GroundingSessionView activeIndex={0} />;
+      case "panic":
+        return <PanicResetSessionView />;
+      default:
+        return null;
     }
-    if (!content) {
-      return (
-        <div className="flex h-full items-center justify-center text-white/80">
-          Content not found.
-        </div>
-      );
-    }
+  };
+
+  // If no session metadata is found, but content exists → fallback to markdown view
+  if (!isSessionTool && content) {
     return (
-      <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 backdrop-blur-sm lg:items-start">
-        <div className="hidden max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-slate-950/95 p-8 text-white shadow-gold-ring lg:block">
+      <div className="mx-auto max-w-3xl px-4 py-6">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-4 text-xs font-medium text-amber-300 hover:text-amber-200"
+        >
+          ← Back
+        </button>
+        <ContentViewer title={content.title} body={content.body} />
+      </div>
+    );
+  }
+
+  // If neither session nor content found
+  if (!toolMeta && !content) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300">
+          This tool could not be found.{" "}
           <button
             type="button"
             onClick={() => navigate("/tools")}
-            className="mb-6 text-xs text-white/50 hover:text-white"
+            className="text-amber-300 underline-offset-2 hover:underline"
           >
-            ← Back to tools
+            Return to Tools
           </button>
-          <ContentViewer title={content.title} body={content.body} />
-        </div>
-        <div className="absolute inset-x-0 bottom-0 w-full lg:hidden">
-          <div
-            className="absolute inset-0"
-            onClick={() => navigate("/tools")}
-            aria-hidden
-          />
-          <div className="relative z-10 max-h-[90vh] rounded-t-3xl bg-slate-950/95 px-4 py-6 text-white shadow-gold-ring">
-            <div className="mx-auto h-full max-w-2xl overflow-y-auto space-y-4">
-              <button
-                type="button"
-                onClick={() => navigate("/tools")}
-                className="text-xs text-white/50 hover:text-white"
-              >
-                Close
-              </button>
-              <ContentViewer title={content.title} body={content.body} />
-            </div>
-          </div>
         </div>
       </div>
     );
   }
 
-  if (!tool) {
+  // Session-based tool view
+  if (toolMeta?.sessionType) {
     return (
-      <div className="flex h-full items-center justify-center text-white/80">
-        This ritual hasn't been written yet.
-      </div>
-    );
-  }
-
-  const ToolComponent = TOOL_COMPONENTS[toolId];
-
-  if (!ToolComponent) {
-    return (
-      <div className="flex h-full items-center justify-center text-white/80">
-        This module is still being composed.
-      </div>
-    );
-  }
-
-  // Cinematic tools (breathing, etc.) render full-screen with their own container
-  const cinematicTools = ['breathing'];
-  const isCinematic = cinematicTools.includes(toolId);
-
-  if (isCinematic) {
-    return (
-      <ToolComponent
-        tool={tool}
-        onComplete={(result) => {
-          console.log("Tool completed:", result);
-          navigate("/tools");
-        }}
-        onCancel={() => {
-          navigate("/tools");
-        }}
-      />
-    );
-  }
-
-  // Legacy tools use modal wrapper
-  return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 backdrop-blur-sm lg:items-start">
-      <div className="hidden max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-slate-950/95 p-8 text-white shadow-gold-ring lg:block">
-        <button
-          type="button"
-          onClick={() => navigate("/tools")}
-          className="mb-6 text-xs text-white/50 hover:text-white"
-        >
-          ← Back to tools
-        </button>
-        <header className="space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">{tool.icon}</span>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-white/50">
-                {tool.category}
-              </p>
-              <h1 className="text-2xl font-light text-white">{tool.name}</h1>
-            </div>
-          </div>
-          <p className="text-sm text-white/70">{tool.description}</p>
-        </header>
-        <div className="mt-6">
-          <ToolComponent
-            onComplete={(result) => {
-              console.log("Tool completed:", result);
-            }}
-            onCancel={() => {
-              navigate("/tools");
-            }}
-            initialContext={{}}
-            isEmbedded={false}
-          />
-        </div>
-      </div>
-
-      <div className="absolute inset-x-0 bottom-0 w-full lg:hidden">
-        <div
-          className="absolute inset-0"
-          onClick={() => navigate("/tools")}
-          aria-hidden
-        />
-        <div className="relative z-10 max-h-[90vh] rounded-t-3xl bg-slate-950/95 px-4 py-6 text-white shadow-gold-ring">
-          <div className="mx-auto h-full max-w-2xl overflow-y-auto space-y-4">
-            <button
-              type="button"
-              onClick={() => navigate("/tools")}
-              className="text-xs text-white/50 hover:text-white"
-            >
-              Close
-            </button>
-            <header className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{tool.icon}</span>
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">
-                    {tool.category}
-                  </p>
-                  <h1 className="text-xl font-light">{tool.name}</h1>
-                </div>
-              </div>
-              <p className="text-sm text-white/70">{tool.description}</p>
-            </header>
-            <ToolComponent
-              onComplete={(result) => {
-                console.log("Tool completed:", result);
+      <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+        {/* subtle background particles */}
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <div
+              key={i}
+              className="absolute h-1 w-1 rounded-full bg-amber-300/30"
+              style={{
+                left: `${(i * 37) % 100}%`,
+                top: `${(i * 53) % 100}%`,
+                animation: `float-slow ${10 + (i % 6)}s ease-in-out infinite`,
+                animationDelay: `${i * 0.3}s`,
               }}
-              onCancel={() => {
-                navigate("/tools");
-              }}
-              initialContext={{}}
-              isEmbedded={false}
             />
-          </div>
+          ))}
         </div>
+
+        {/* back button */}
+        <div className="relative z-10 mb-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-xs font-medium text-amber-200/80 hover:text-amber-100"
+          >
+            ← Back
+          </button>
+        </div>
+
+        <ToolSessionLayout
+          tool={toolMeta}
+          darkMode={darkMode}
+          isActive={isSessionActive}
+          onStart={handleStartSession}
+          onEnd={handleEndSession}
+          onClose={() => navigate("/tools")}
+          metrics={metrics}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => setSoundEnabled((v) => !v)}
+          onToggleTheme={() => setDarkMode((v) => !v)}
+        >
+          {renderSessionView()}
+        </ToolSessionLayout>
       </div>
+    );
+  }
+
+  // Fallback content view if only markdown defined
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-6">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="mb-4 text-xs font-medium text-amber-300 hover:text-amber-200"
+      >
+        ← Back
+      </button>
+      <ContentViewer title={content?.title} body={content?.body} />
     </div>
   );
 };
 
 export default ToolDetailPage;
-
