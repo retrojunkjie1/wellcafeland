@@ -24,7 +24,7 @@ import RecoveryPage from "./apps/recovery/RecoveryPage";
 import MilestonesPage from "./apps/milestones/MilestonesPage";
 import AgentsPage from "./apps/agents/AgentsPage";
 
-import ToolsPage from "./apps/tools/ToolsPage";
+import ToolsPage from "./apps/tools/ToolsPageCinematic";
 import ToolDetailPage from "./apps/tools/ToolDetailPage";
 import VoiceJournal from "./apps/tools/VoiceJournal";
 import VoiceCheckIn from "./apps/tools/VoiceCheckIn";
