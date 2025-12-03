@@ -7,7 +7,7 @@ import { getToolById } from "./toolsRegistry";
 import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
 import { ContentViewer } from "@/components/content/ContentViewer";
-import BreathingTool from "./modules/BreathingTool";
+import BreathingTool from "./modules/BreathingToolCinematic";
 import GroundingTool from "./modules/GroundingTool";
 import JournalingTool from "./modules/JournalingTool";
 import UrgeSurfingTool from "./modules/UrgeSurfingTool";
