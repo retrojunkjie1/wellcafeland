@@ -3,7 +3,8 @@
 // Phase 36B: Fully Integrated Experience
 
 import React, { useState, useEffect, useRef } from "react";
-import { Wind, Heart, Timer } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Wind, Heart, Timer, ArrowLeft, X } from "lucide-react";
 import { OrbAnimationController, OrbThemes } from "@/engines/tools/OrbEngine";
 import { getSoundscapeEngine } from "@/engines/tools/SoundscapeEngine";
 import { getVoiceEngine } from "@/apps/tools/engine/VoiceEngine";
@@ -14,6 +15,8 @@ import ToolPanel from "@/components/tools/ToolPanel";
 import MetricCard from "@/components/tools/MetricCard";
 
 const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
+  const navigate = useNavigate();
+  
   // State
   const [isActive, setIsActive] = useState(false);
   const [breathCount, setBreathCount] = useState(0);
@@ -201,31 +204,64 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Handle back navigation
+  const handleBack = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      navigate('/tools');
+    }
+  };
+
   return (
     <CinematicContainer theme={tool?.theme || "calm"}>
       <div className="min-h-screen flex flex-col">
         {/* Header - Fixed */}
         <div className="px-4 py-4 border-b border-white/10 backdrop-blur-sm bg-slate-950/80">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {tool?.icon && <tool.icon className="h-5 w-5 text-amber-400" />}
-              <div>
-                <h1 className="text-white font-light text-lg">
-                  {tool?.name || "Breathing Tool"}
-                </h1>
-                <p className="text-white/50 text-xs">
-                  {tool?.category}
-                </p>
+            {/* Back button + Title */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleBack}
+                className="
+                  flex items-center gap-2
+                  text-white/60 hover:text-amber-400
+                  transition-colors duration-200
+                  group
+                "
+              >
+                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                <span className="text-sm font-medium hidden sm:inline">Back to Tools</span>
+              </button>
+              
+              <div className="h-5 w-[1px] bg-white/10 hidden sm:block" />
+              
+              <div className="flex items-center gap-3">
+                {tool?.icon && <tool.icon className="h-5 w-5 text-amber-400" />}
+                <div>
+                  <h1 className="text-white font-light text-base sm:text-lg">
+                    {tool?.name || "Breathing Tool"}
+                  </h1>
+                  <p className="text-white/50 text-xs hidden sm:block">
+                    {tool?.category}
+                  </p>
+                </div>
               </div>
             </div>
-            {onCancel && (
-              <button
-                onClick={onCancel}
-                className="text-white/60 hover:text-white text-sm transition"
-              >
-                Close
-              </button>
-            )}
+
+            {/* Close button (mobile) */}
+            <button
+              onClick={handleBack}
+              className="
+                sm:hidden
+                p-2 rounded-lg
+                text-white/60 hover:text-white
+                hover:bg-white/10
+                transition-all duration-200
+              "
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
