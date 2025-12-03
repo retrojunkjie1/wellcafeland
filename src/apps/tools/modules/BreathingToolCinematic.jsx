@@ -35,10 +35,12 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   useEffect(() => {
     // Initialize breath pattern (4-7-8 breathing)
     const pattern = tool?.breathPattern || { inhale: 4, hold: 7, exhale: 8, pause: 0 };
-    const theme = OrbThemes[tool?.theme?.toUpperCase()] || OrbThemes.CALM;
+    const themeKey = tool?.theme?.toUpperCase() || 'CALM';
+    const theme = OrbThemes[themeKey] || OrbThemes.CALM;
 
     // Create orb controller
     const orb = new OrbAnimationController(pattern, theme);
+    orbControllerRef.current = orb;
     orb.setCallbacks({
       onPhaseChange: (phase) => {
         // Speak guidance
@@ -58,8 +60,6 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
         }
       },
     });
-
-    orbControllerRef.current = orb;
 
     // Get audio engines
     soundscapeRef.current = getSoundscapeEngine();

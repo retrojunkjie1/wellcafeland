@@ -107,7 +107,7 @@ export function calculateOrbScale(phase, progress) {
  * Get orb instruction text for current phase
  */
 export function getOrbInstruction(phase, pattern) {
-  const { inhale = 4, hold = 4, exhale = 4 } = pattern;
+  const { inhale = 4, hold = 4, exhale = 4, pause = 0 } = pattern || {};
 
   switch (phase) {
     case OrbStates.INHALE:
@@ -117,9 +117,11 @@ export function getOrbInstruction(phase, pattern) {
     case OrbStates.EXHALE:
       return `Breathe Out • ${exhale}s`;
     case OrbStates.PAUSE:
-      return 'Pause • Rest';
+      return pause > 0 ? `Pause • ${pause}s` : 'Rest';
+    case OrbStates.IDLE:
+      return 'Begin when ready';
     default:
-      return 'Begin';
+      return 'Begin when ready';
   }
 }
 
@@ -251,13 +253,13 @@ export class OrbAnimationController {
 
   getState() {
     return {
-      phase: this.currentPhase,
-      progress: this.phaseProgress,
-      cycleCount: this.cycleCount,
-      isAnimating: this.isAnimating,
-      theme: this.theme,
-      scale: calculateOrbScale(this.currentPhase, this.phaseProgress),
-      instruction: getOrbInstruction(this.currentPhase, this.pattern),
+      phase: this.currentPhase || OrbStates.IDLE,
+      progress: this.phaseProgress || 0,
+      cycleCount: this.cycleCount || 0,
+      isAnimating: this.isAnimating || false,
+      theme: this.theme || OrbThemes.CALM,
+      scale: calculateOrbScale(this.currentPhase || OrbStates.IDLE, this.phaseProgress || 0),
+      instruction: getOrbInstruction(this.currentPhase || OrbStates.IDLE, this.pattern || { inhale: 4, hold: 7, exhale: 8, pause: 0 }),
     };
   }
 }

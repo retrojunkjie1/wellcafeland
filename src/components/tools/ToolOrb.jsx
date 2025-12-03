@@ -7,19 +7,26 @@ import React, { useEffect, useState } from "react";
 const ToolOrb = ({ controller, theme = "calm" }) => {
   const [state, setState] = useState({
     scale: 1,
-    instruction: "Begin",
+    instruction: "Begin when ready",
     phase: "idle",
   });
 
   useEffect(() => {
-    if (!controller) return;
+    if (!controller) {
+      setState({
+        scale: 1,
+        instruction: "Begin when ready",
+        phase: "idle",
+      });
+      return;
+    }
 
     const interval = setInterval(() => {
       const orbState = controller.getState();
       setState({
-        scale: orbState.scale,
-        instruction: orbState.instruction,
-        phase: orbState.phase,
+        scale: orbState.scale || 1,
+        instruction: orbState.instruction || "Begin when ready",
+        phase: orbState.phase || "idle",
       });
     }, 50);
 
@@ -103,11 +110,11 @@ const ToolOrb = ({ controller, theme = "calm" }) => {
 
       {/* Instruction text */}
       <div className="mt-8 text-center">
-        <p className="text-white/90 text-lg font-light tracking-wide">
-          {state.instruction}
+        <p className="text-white/90 text-xl font-light tracking-wide">
+          {state.instruction || "Begin when ready"}
         </p>
         <p className="text-white/50 text-sm mt-1 capitalize">
-          {state.phase === "idle" ? "Ready to begin" : state.phase}
+          {state.phase === "idle" ? "Ready to begin" : state.phase || ""}
         </p>
       </div>
 
