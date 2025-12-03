@@ -21,6 +21,7 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   const [isActive, setIsActive] = useState(false);
   const [breathCount, setBreathCount] = useState(0);
   const [sessionTime, setSessionTime] = useState(0);
+  const [coherenceScore, setCoherenceScore] = useState(0);
   const [soundscapeVolume, setSoundscapeVolume] = useState(0.5);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
 
@@ -52,11 +53,13 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
         if (phase === 'exhale' && metricsRef.current) {
           metricsRef.current.recordBreath(phase);
           setBreathCount(prev => prev + 1);
+          setCoherenceScore(metricsRef.current.getMetrics().coherenceScore);
         }
       },
-      onCycleComplete: (count) => {
+      onCycleComplete: () => {
         if (metricsRef.current) {
           metricsRef.current.recordCycle();
+          setCoherenceScore(metricsRef.current.getMetrics().coherenceScore);
         }
       },
     });
@@ -291,7 +294,7 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
                 />
                 <MetricCard
                   label="Coherence"
-                  value={metricsRef.current?.getMetrics().coherenceScore || 0}
+                  value={coherenceScore}
                   unit="%"
                   icon={Heart}
                   theme={tool?.theme || "calm"}

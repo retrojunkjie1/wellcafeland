@@ -27,7 +27,6 @@ const ToolDetailPage = () => {
 
   const [toolMeta, setToolMeta] = useState(null);
   const [content, setContent] = useState(null);
-  const [contentLoading, setContentLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -47,10 +46,13 @@ const ToolDetailPage = () => {
   }, [isSessionActive]);
 
   // load tool metadata from registry
-  useEffect(() => {
-    const meta = ToolsRegistry?.find((t) => t.id === decodedId);
-    if (meta) setToolMeta(meta);
+  const loadedToolMeta = useMemo(() => {
+    return ToolsRegistry?.find((t) => t.id === decodedId) || null;
   }, [decodedId]);
+
+  useEffect(() => {
+    setToolMeta(loadedToolMeta);
+  }, [loadedToolMeta]);
 
   // load content if this ID refers to markdown / education content
   useEffect(() => {
@@ -59,15 +61,14 @@ const ToolDetailPage = () => {
     const entry = getContentRegistryEntry(decodedId);
     if (!entry) return;
 
-    setContentLoading(true);
-    loadContentById(decodedId)
-      .then((loaded) => {
-        if (cancelled) return;
+    const loadAsync = async () => {
+      const loaded = await loadContentById(decodedId);
+      if (!cancelled) {
         setContent(loaded);
-      })
-      .finally(() => {
-        if (!cancelled) setContentLoading(false);
-      });
+      }
+    };
+
+    loadAsync();
 
     return () => {
       cancelled = true;
