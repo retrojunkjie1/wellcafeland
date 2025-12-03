@@ -68,7 +68,7 @@ export function useContentTopic(topicId) {
     };
   }, [topicId]);
 
-  const markReflectionComplete = (promptIndex) => {
+  const markReflectionComplete = (_promptIndex) => {
     updateContentEngagementStats('anonymous', {
       reflectionCompleted: true,
     });
@@ -92,7 +92,7 @@ export function useContentTopic(topicId) {
  */
 export function useContentProgress(contentId) {
   const [progress, setProgress] = useState(0);
-  const [startTime] = useState(Date.now());
+  const [startTime] = useState(() => Date.now());
 
   const updateProgress = (percentComplete) => {
     setProgress(percentComplete);
