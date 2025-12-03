@@ -128,6 +128,26 @@ const ToolDetailPage = () => {
     );
   }
 
+  // Cinematic tools (breathing, etc.) render full-screen with their own container
+  const cinematicTools = ['breathing'];
+  const isCinematic = cinematicTools.includes(toolId);
+
+  if (isCinematic) {
+    return (
+      <ToolComponent
+        tool={tool}
+        onComplete={(result) => {
+          console.log("Tool completed:", result);
+          navigate("/tools");
+        }}
+        onCancel={() => {
+          navigate("/tools");
+        }}
+      />
+    );
+  }
+
+  // Legacy tools use modal wrapper
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/40 backdrop-blur-sm lg:items-start">
       <div className="hidden max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-slate-950/95 p-8 text-white shadow-gold-ring lg:block">
@@ -154,7 +174,6 @@ const ToolDetailPage = () => {
           <ToolComponent
             onComplete={(result) => {
               console.log("Tool completed:", result);
-              // Could navigate back or show completion message
             }}
             onCancel={() => {
               navigate("/tools");
