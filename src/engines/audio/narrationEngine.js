@@ -2,8 +2,6 @@
 // Simple browser-based narration using SpeechSynthesis
 // Phase 39: Intelligent Audio Narration Engine
 
-let currentUtterance = null;
-
 export function isNarrationSupported() {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }
@@ -35,14 +33,12 @@ export function speakText(text, { rate = 0.9, pitch = 1, volume = 1 } = {}) {
     utterance.voice = preferredVoice;
   }
 
-  currentUtterance = utterance;
   window.speechSynthesis.speak(utterance);
 }
 
 export function stopNarration() {
   if (!isNarrationSupported()) return;
   window.speechSynthesis.cancel();
-  currentUtterance = null;
 }
 
 export function toggleNarration(text, options) {

@@ -102,8 +102,8 @@ export class ReflectionEngine {
       });
 
       return entry;
-    } catch (error) {
-      console.error('[ReflectionEngine] Save failed:', error);
+    } catch (_error) {
+      console.error('[ReflectionEngine] Save failed:', _error);
       return null;
     }
   }
@@ -114,7 +114,7 @@ export class ReflectionEngine {
   loadReflections() {
     try {
       return JSON.parse(localStorage.getItem(this.storageKey) || '[]');
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -123,10 +123,10 @@ export class ReflectionEngine {
    * Get reflection for today
    */
   getTodayReflection(type = ReflectionTypes.MORNING) {
-    const today = new Date().toISOString().split('T')[0];
+    const todayDate = new Date().toISOString().split('T')[0];
     const reflections = this.loadReflections();
     
-    return reflections.find(r => r.date === today && r.type === type);
+    return reflections.find(r => r.date === todayDate && r.type === type);
   }
 
   /**
@@ -144,7 +144,6 @@ export class ReflectionEngine {
     const dates = [...new Set(reflections.map(r => r.date))].sort().reverse();
 
     let streak = 0;
-    const today = new Date().toISOString().split('T')[0];
 
     for (let i = 0; i < dates.length; i++) {
       const date = dates[i];

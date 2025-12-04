@@ -45,12 +45,6 @@ export const NarrationVoiceProfiles = {
   },
 };
 
-/**
- * Get voice profile by ID
- */
-export function getVoiceProfile(profileId) {
-  return Object.values(NarrationVoiceProfiles).find(p => p.id === profileId) || NarrationVoiceProfiles.CALM;
-}
 
 /**
  * Get recommended voice profile for content

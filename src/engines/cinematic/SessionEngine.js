@@ -135,7 +135,7 @@ export class SessionEngineV3 {
     this.sessionEnd = Date.now();
     this.updateAllMetrics();
     
-    const summary = this.getSessionSummary();
+    const _summary = this.getSessionSummary();
 
     this.logEvent('session_end', {
       duration: this.metrics.sessionTime,
@@ -144,7 +144,7 @@ export class SessionEngineV3 {
       calmScore: this.metrics.calmScore,
     });
 
-    return summary;
+    return _summary;
   }
 
   recordBreath(phaseType = 'exhale') {
@@ -291,13 +291,13 @@ export class SessionEngineV3 {
       this.emitToSignalsFusion(summary);
 
       return { success: true, sessionId: this.sessionId };
-    } catch (error) {
-      console.error('[SessionEngine] Save failed:', error);
-      return { success: false, error: error.message };
+    } catch (err) {
+      console.error('[SessionEngine] Save failed');
+      return { success: false, error: String(err) };
     }
   }
 
-  emitToSignalsFusion(summary) {
+  emitToSignalsFusion(_summary) {
     try {
       // Emit events for OS-level signal processing
       window.dispatchEvent(new CustomEvent('tool_session_complete', {
@@ -311,8 +311,8 @@ export class SessionEngineV3 {
           groundingCompletionRate: this.metrics.completionRate,
         }
       }));
-    } catch (error) {
-      console.warn('[SessionEngine] SignalsFusion emit failed:', error);
+    } catch (_error) {
+      console.warn('[SessionEngine] SignalsFusion emit failed:', _error);
     }
   }
 
@@ -331,7 +331,7 @@ export class SessionEngineV3 {
       const storageKey = `wc-sessions-${toolId}`;
       const sessions = JSON.parse(localStorage.getItem(storageKey) || '[]');
       return sessions.slice(-limit).reverse();
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }

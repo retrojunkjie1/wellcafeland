@@ -86,7 +86,7 @@ export function calculateOrbScale(phase, progress, coherence = 50) {
  * Get phase instruction with emotional intelligence
  */
 export function getOrbInstruction(phase, pattern, moodType = 'calm') {
-  const { inhale = 4, hold = 4, exhale = 4, pause = 0 } = pattern || {};
+  const { inhale = 4, hold = 4, exhale = 4 } = pattern || {};
 
   const instructions = {
     calm: {
@@ -304,7 +304,7 @@ export function generateDepthShader(palette) {
 /**
  * Generate pulse ring keyframes
  */
-export function generatePulseRings(duration) {
+export function generatePulseRings(_duration) {
   return `
     @keyframes pulseRing {
       0% {

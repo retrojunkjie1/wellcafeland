@@ -2,7 +2,7 @@
 // Intelligent Audio Narration Engine for Content
 // Phase 39: Intelligent Audio Narration Engine
 
-import { getVoiceProfile, getRecommendedVoiceProfile } from './voiceProfiles';
+import { getRecommendedVoiceProfile } from './voiceProfiles';
 import { logEvent } from '@/services/telemetry';
 
 /**
@@ -141,6 +141,16 @@ export class NarrationEngine {
     }
 
     this.speakNextChunk();
+  }
+
+  toggle() {
+    if (this.isPlaying) {
+      this.pause();
+    } else if (this.isPaused) {
+      this.resume();
+    } else {
+      this.start();
+    }
   }
 
   speakNextChunk() {

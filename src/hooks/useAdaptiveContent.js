@@ -2,7 +2,7 @@
 // React hook for emotion-adaptive content
 // Phase 40: Emotion-Adaptive Content Engine
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   detectEmotionalState, 
   getAdaptiveRecommendations,
@@ -23,14 +23,18 @@ export function useAdaptiveContent(userState = {}) {
   const [safetyRec, setSafetyRec] = useState(null);
 
   useEffect(() => {
-    const detected = detectEmotionalState(userState);
-    setEmotionalState(detected);
+    const analyzeState = () => {
+      const detected = detectEmotionalState(userState);
+      setEmotionalState(detected);
 
-    const recs = getAdaptiveRecommendations(userState);
-    setRecommendations(recs);
+      const recs = getAdaptiveRecommendations(userState);
+      setRecommendations(recs);
 
-    const safety = getSafetyRecommendation(detected);
-    setSafetyRec(safety);
+      const safety = getSafetyRecommendation(detected);
+      setSafetyRec(safety);
+    };
+
+    analyzeState();
   }, [userState]);
 
   const filterTopics = (topics) => {

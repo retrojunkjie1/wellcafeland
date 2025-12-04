@@ -3,7 +3,7 @@
 // Phase 38: Full Intelligent Cinematic Content Engine
 
 import { loadContentById, listContentSummaries } from "@/services/contentService";
-import { CONTENT_TOPICS, getContentTopicById, getRelatedTools, getReflectionPrompts } from "./contentTopicsRegistry";
+import { CONTENT_TOPICS, getContentTopicById, getRelatedTools, getReflectionPrompts, contentTopicsRegistry } from "./contentTopicsRegistry";
 import { logEvent } from "@/services/telemetry";
 
 /**

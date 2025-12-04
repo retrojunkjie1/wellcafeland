@@ -58,15 +58,15 @@ export function useContentTopic(topicId) {
       
       // Track reading time on unmount
       if (readStartTime) {
-        const duration = Math.floor((Date.now() - readStartTime) / 1000);
-        trackContentRead(topicId, duration, 100);
+        const _duration = Math.floor((Date.now() - readStartTime) / 1000);
+        trackContentRead(topicId, _duration, 100);
         
         updateContentEngagementStats('anonymous', {
-          readTime: duration,
+          readTime: _duration,
         });
       }
     };
-  }, [topicId]);
+  }, [topicId, readStartTime]);
 
   const markReflectionComplete = (_promptIndex) => {
     updateContentEngagementStats('anonymous', {
@@ -92,13 +92,13 @@ export function useContentTopic(topicId) {
  */
 export function useContentProgress(contentId) {
   const [progress, setProgress] = useState(0);
-  const [startTime] = useState(() => Date.now());
+  const startTimeRef = useState(() => Date.now())[0];
 
   const updateProgress = (percentComplete) => {
     setProgress(percentComplete);
     
     if (percentComplete >= 90) {
-      const duration = Math.floor((Date.now() - startTime) / 1000);
+      const duration = Math.floor((Date.now() - startTimeRef) / 1000);
       trackContentRead(contentId, duration, percentComplete);
     }
   };

@@ -58,20 +58,6 @@ export function useNarration(contentId, content) {
     }
   };
 
-  const pause = () => {
-    if (engineRef.current) {
-      engineRef.current.pause();
-      setIsPaused(true);
-    }
-  };
-
-  const resume = () => {
-    if (engineRef.current) {
-      engineRef.current.resume();
-      setIsPaused(false);
-    }
-  };
-
   const stop = () => {
     if (engineRef.current) {
       engineRef.current.stop();
@@ -99,14 +85,19 @@ export function useNarration(contentId, content) {
     }
   };
 
+  const toggle = () => {
+    if (engineRef.current) {
+      engineRef.current.toggle();
+    }
+  };
+
   return {
     isPlaying,
     isPaused,
     progress,
     error,
     start,
-    pause,
-    resume,
+    toggle,
     stop,
     skipForward,
     skipBackward,

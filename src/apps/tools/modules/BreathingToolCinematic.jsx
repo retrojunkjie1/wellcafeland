@@ -273,10 +273,12 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
             {/* Breathing Orb */}
-            <ToolOrb 
-              controller={orbControllerRef.current} 
-              theme={tool?.theme || "calm"} 
-            />
+            {orbControllerRef.current && (
+              <ToolOrb 
+                controller={orbControllerRef.current} 
+                theme={tool?.theme || "calm"} 
+              />
+            )}
 
             {/* Metrics */}
             {isActive && (

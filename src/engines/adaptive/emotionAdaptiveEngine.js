@@ -2,7 +2,7 @@
 // Emotion-Adaptive Content Engine - Intelligent Content Modulation
 // Phase 40: Emotion-Adaptive Content Engine
 
-import { getContentTopicById, getRecommendedTopics } from '@/engines/content/contentEngine';
+import { getRecommendedTopics } from '@/engines/content/contentEngine';
 import { logEvent } from '@/services/telemetry';
 
 /**
