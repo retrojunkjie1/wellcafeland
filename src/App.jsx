@@ -1,16 +1,18 @@
 // src/App.jsx
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 
 import {useThemeEngine} from "./hooks/useThemeEngine";
+import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 
 import OSLayout from "./layouts/OSLayout";
 
 import HomePage from "./apps/core/HomePage";
 import ChatPage from "./apps/chat/ChatPage";
-import ExplorePage from "./apps/explore/ExplorePage";
+import LivingGuidePage from "./apps/living/LivingGuidePage";
+import SequencePage from "./apps/sequences/SequencePage";
 // Assistance Hub (real-world help)
 import AssistanceHubPage from "./apps/assistance/AssistanceHubPage";
 import CommandConsolePage from "./apps/command/CommandConsolePage";
@@ -71,6 +73,7 @@ import ThemeControlPanel from "./admin/ThemeControlPanel";
 import TemplatesManagerPage from "./apps/admin/TemplatesManagerPage";
 import OverseerConsolePage from "./apps/admin/OverseerConsolePage";
 import ContentStudioPage from "./apps/admin/ContentStudioPage";
+import SeedDataPage from "./apps/admin/SeedDataPage";
 import AdminRoute from "./components/AdminRoute";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
@@ -89,6 +92,11 @@ const App = () => {
   // Initialize theme engine globally - this controls <html> theme classes
   useThemeEngine();
 
+  // Initialize memory system (PHASE 44)
+  useEffect(() => {
+    bootstrapMemory();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -101,8 +109,8 @@ const App = () => {
           <Route path="/" element={<ChatPage />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/home" element={<HomePage />} />
-          <Route path="/explore" element={<ExplorePage />} />
-          <Route path="/explore/:section" element={<ExplorePage />} />
+          <Route path="/explore" element={<LivingGuidePage />} />
+          <Route path="/sequence/:id" element={<SequencePage />} />
           {/* Assistance Hub - Real-world help directory */}
           <Route path="/assistance" element={<AssistanceHubPage />} />
           <Route path="/command" element={<CommandConsolePage />} />
@@ -377,6 +385,18 @@ const App = () => {
                 <RequireAdmin>
                   <AdminRoute>
                     <ContentStudioPage />
+                  </AdminRoute>
+                </RequireAdmin>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/seed"
+            element={
+              <RequireAuth>
+                <RequireAdmin>
+                  <AdminRoute>
+                    <SeedDataPage />
                   </AdminRoute>
                 </RequireAdmin>
               </RequireAuth>

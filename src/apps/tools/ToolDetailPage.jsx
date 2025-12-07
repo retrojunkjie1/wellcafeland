@@ -1,5 +1,6 @@
 // src/apps/tools/ToolDetailPage.jsx
 // Phase 37: Tool Sessions Activation Layer
+// Phase 44: Topic Memory Integration
 // Upgraded detail page to use session layout + views
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -12,6 +13,10 @@ import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
 import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
 import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
 import { PanicResetSessionView } from "@/components/tools/PanicResetSessionView";
+import { useTopicMemory } from "@/hooks/useTopicMemory";
+import { getRecoveryBasicsContent, RECOVERY_BASICS_TOPICS } from "@/engines/education/recoveryBasicsEngine";
+import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView";
+import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
 
 const ToolDetailPage = () => {
   const { toolId } = useParams();
@@ -27,6 +32,8 @@ const ToolDetailPage = () => {
 
   const [toolMeta, setToolMeta] = useState(null);
   const [content, setContent] = useState(null);
+  const [recoveryBasicsContent, setRecoveryBasicsContent] = useState(null);
+  const [learningTopicId, setLearningTopicId] = useState(null); // Phase 45: Learning paths
   const [darkMode, setDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -54,10 +61,49 @@ const ToolDetailPage = () => {
     setToolMeta(loadedToolMeta);
   }, [loadedToolMeta]);
 
-  // load content if this ID refers to markdown / education content
+  // Phase 45: Check if this is a learning path topic
   useEffect(() => {
-    let cancelled = false;
+    // Map content registry IDs to learning topic IDs
+    const topicMapping = {
+      // Phase 45: Learning Paths topics
+      "recovery.shame-and-recovery": "shame-and-recovery",
+      "recovery.cravings-and-urges": "cravings-and-urges",
+      "recovery.nervous-system-regulation": "nervous-system-regulation",
+      "recovery.trauma-and-recovery": "trauma-and-recovery",
+      "recovery.sleep-and-recovery": "sleep-and-recovery",
+      "recovery.boundaries-in-recovery": "boundaries-in-recovery",
+      "recovery.grief-and-loss": "grief-and-loss",
+      "recovery.self-compassion": "self-compassion",
+      // Legacy mappings (for backward compatibility)
+      "recovery.cravings.intro": "cravings-and-urges",
+      "education.shame.basics": "shame-and-recovery",
+    };
 
+    const mappedTopicId = topicMapping[decodedId];
+    
+    // Phase 45: Check if this maps to a learning path topic
+    if (mappedTopicId && getTopic(mappedTopicId)) {
+      setLearningTopicId(mappedTopicId);
+      setRecoveryBasicsContent(null); // Clear old recovery basics
+      setContent(null); // Don't load markdown
+      return;
+    }
+    
+    // Phase 44: Fallback to old recovery basics engine for backward compatibility
+    if (mappedTopicId && RECOVERY_BASICS_TOPICS.includes(mappedTopicId)) {
+      const basicsContent = getRecoveryBasicsContent(mappedTopicId);
+      setRecoveryBasicsContent(basicsContent);
+      setLearningTopicId(null);
+      setContent(null);
+      return;
+    }
+    
+    // Reset learning paths if not a match
+    setLearningTopicId(null);
+    setRecoveryBasicsContent(null);
+
+    // Otherwise, load markdown content as before
+    let cancelled = false;
     const entry = getContentRegistryEntry(decodedId);
     if (!entry) return;
 
@@ -74,6 +120,16 @@ const ToolDetailPage = () => {
       cancelled = true;
     };
   }, [decodedId]);
+
+  // Phase 44: Track topic memory for content (not interactive tools)
+  const contentEntry = useMemo(() => {
+    return getContentRegistryEntry(decodedId);
+  }, [decodedId]);
+
+  useTopicMemory(
+    contentEntry ? decodedId : null,
+    contentEntry?.section || null
+  );
 
   const isSessionTool = !!toolMeta?.sessionType;
 
@@ -129,6 +185,58 @@ const ToolDetailPage = () => {
     }
   };
 
+  // Phase 46: Interactive Journey (luxury multi-layer learning OS)
+  if (!isSessionTool && learningTopicId) {
+    return (
+      <InteractiveJourneyView topicId={learningTopicId} />
+    );
+  }
+
+  // Phase 44: Recovery Basics content (deep, trauma-informed) - fallback for old system
+  if (!isSessionTool && recoveryBasicsContent) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-6 space-y-8">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mb-4 text-xs font-medium text-amber-300 hover:text-amber-200 transition"
+        >
+          ← Back
+        </button>
+
+        {/* Title */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-light tracking-tight text-white">
+            {recoveryBasicsContent.title}
+          </h1>
+        </div>
+
+        {/* Understanding Section */}
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-white">Understanding</h2>
+          <div className="prose prose-invert max-w-none">
+            <div className="text-sm sm:text-base text-white/85 leading-relaxed whitespace-pre-line">
+              {recoveryBasicsContent.understanding}
+            </div>
+          </div>
+        </div>
+
+        {/* Reflection Section */}
+        <div className="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-400/[0.08] to-amber-500/[0.04] p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+            <h2 className="text-lg font-semibold text-amber-200">Reflection</h2>
+          </div>
+          <div className="prose prose-invert max-w-none">
+            <div className="text-sm sm:text-base text-amber-100/90 leading-relaxed whitespace-pre-line italic">
+              {recoveryBasicsContent.reflection}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // If no session metadata is found, but content exists → fallback to markdown view
   if (!isSessionTool && content) {
     return (
@@ -146,7 +254,7 @@ const ToolDetailPage = () => {
   }
 
   // If neither session nor content found
-  if (!toolMeta && !content) {
+  if (!toolMeta && !content && !recoveryBasicsContent && !learningTopicId) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300">

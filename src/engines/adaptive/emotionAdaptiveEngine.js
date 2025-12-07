@@ -3,7 +3,7 @@
 // Phase 40: Emotion-Adaptive Content Engine
 
 import { getRecommendedTopics } from '@/engines/content/contentEngine';
-import { logEvent } from '@/services/telemetry';
+import { trackEvent } from '@/services/telemetry';
 
 /**
  * Emotional state categories for content adaptation
@@ -145,11 +145,12 @@ export function getAdaptiveRecommendations(userState = {}) {
 
   const filter = SafetyFilters[emotionalState];
 
-  logEvent('adaptive_recommendations', {
+  trackEvent({
+    kind: 'adaptive_recommendations',
     emotionalState,
     recommendedTopics: recommendations,
     recommendedTools: filter?.recommendTools || [],
-  });
+  }).catch(() => {}); // Non-blocking
 
   return {
     topics: recommendations,

@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Home, Compass, LifeBuoy, Activity, User } from "lucide-react";
 import LogoWC from "@/assets/LogoWC.png";
 import { useUserSettings } from "@/hooks/useUserSettings";
+import { useSessionMemory } from "@/hooks/useSessionMemory";
 
 const TABS = [
   {
@@ -41,6 +42,7 @@ const OSLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   useUserSettings(); // Phase 34: hydrate & persist settings
+  useSessionMemory(); // Phase 44: remember route visits
 
   const isActivePath = (tabPath) => {
     if (!tabPath) return false;

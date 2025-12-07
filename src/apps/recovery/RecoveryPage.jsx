@@ -1,8 +1,9 @@
 // src/apps/recovery/RecoveryPage.jsx
+// Phase 44: Topic memory integration
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trophy } from "lucide-react";
+import { Trophy, Clock } from "lucide-react";
 import { trackPageView, trackAction } from "../../services/telemetry";
 import {
   getLastSession,
@@ -11,6 +12,7 @@ import {
 import PageHeader from "@/components/navigation/PageHeader";
 import { listContentSummaries } from "@/services/contentService";
 import { CONTENT_SECTIONS } from "@/content/contentRegistry";
+import { getLastTopic } from "@/engines/memory/contentMemoryEngine";
 
 const RecoveryPage = () => {
   const navigate = useNavigate();
@@ -22,6 +24,9 @@ const RecoveryPage = () => {
   });
   const [recoveryContent, setRecoveryContent] = useState([]);
   const [educationContent, setEducationContent] = useState([]);
+  
+  // Phase 44: Get last viewed topic
+  const lastTopic = getLastTopic();
 
   useEffect(() => {
     document.title = "Recovery - WellnessCafe";
@@ -283,32 +288,54 @@ const RecoveryPage = () => {
         {/* Recovery Modules Section */}
         {recoveryContent.length > 0 && (
           <section className="lux-card p-4 sm:p-5">
-            <h2 className="text-base font-medium mb-4">Recovery Modules</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-medium">Recovery Modules</h2>
+              {lastTopic && lastTopic.type === "recovery" && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Last: {formatTopicTitle(lastTopic.id, recoveryContent)}</span>
+                </div>
+              )}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {recoveryContent.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
-                  className="text-left rounded-xl bg-card/50 border border-border p-3 hover:bg-muted transition"
-                >
-                  <div className="text-sm font-medium text-foreground">
-                    {item.title}
-                  </div>
-                  {item.tags?.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {item.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
-                        >
-                          {tag}
+              {recoveryContent.map((item) => {
+                const isLastViewed = lastTopic?.id === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                    className={`text-left rounded-xl bg-card/50 border p-3 hover:bg-muted transition ${
+                      isLastViewed 
+                        ? "border-amber-400/40 bg-amber-400/5 ring-1 ring-amber-400/20" 
+                        : "border-border"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-medium text-foreground">
+                        {item.title}
+                      </div>
+                      {isLastViewed && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                          Recent
                         </span>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </button>
-              ))}
+                    {item.tags?.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {item.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}
@@ -316,32 +343,54 @@ const RecoveryPage = () => {
         {/* Education Modules Section */}
         {educationContent.length > 0 && (
           <section className="lux-card p-4 sm:p-5">
-            <h2 className="text-base font-medium mb-4">Education Modules</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-medium">Education Modules</h2>
+              {lastTopic && lastTopic.type === "education" && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Last: {formatTopicTitle(lastTopic.id, educationContent)}</span>
+                </div>
+              )}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {educationContent.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
-                  className="text-left rounded-xl bg-card/50 border border-border p-3 hover:bg-muted transition"
-                >
-                  <div className="text-sm font-medium text-foreground">
-                    {item.title}
-                  </div>
-                  {item.tags?.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {item.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
-                        >
-                          {tag}
+              {educationContent.map((item) => {
+                const isLastViewed = lastTopic?.id === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                    className={`text-left rounded-xl bg-card/50 border p-3 hover:bg-muted transition ${
+                      isLastViewed 
+                        ? "border-amber-400/40 bg-amber-400/5 ring-1 ring-amber-400/20" 
+                        : "border-border"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-sm font-medium text-foreground">
+                        {item.title}
+                      </div>
+                      {isLastViewed && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                          Recent
                         </span>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </button>
-              ))}
+                    {item.tags?.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {item.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}
@@ -349,5 +398,17 @@ const RecoveryPage = () => {
     </div>
   );
 };
+
+// Helper function to format topic title
+function formatTopicTitle(topicId, contentList) {
+  const topic = contentList.find(item => item.id === topicId);
+  if (!topic) return topicId;
+  
+  // Shorten long titles
+  if (topic.title.length > 25) {
+    return topic.title.slice(0, 22) + "...";
+  }
+  return topic.title;
+}
 
 export default RecoveryPage;

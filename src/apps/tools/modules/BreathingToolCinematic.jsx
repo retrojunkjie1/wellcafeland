@@ -1,6 +1,7 @@
 // src/apps/tools/modules/BreathingToolCinematic.jsx
 // Cinematic Breathing Tool with Orb Animation
 // Phase 36B: Fully Integrated Experience
+// Phase 44: Memory Integration
 
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,9 +15,15 @@ import ToolOrb from "@/components/tools/ToolOrb";
 import ToolPanel from "@/components/tools/ToolPanel";
 import MetricCard from "@/components/tools/MetricCard";
 import { ToolSessionFooter } from "@/components/tools/ToolSessionFooter";
+import { useToolMemory } from "@/hooks/useToolMemory";
 
 const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   const navigate = useNavigate();
+  
+  // Phase 44: Memory integration
+  const TOOL_ID = tool?.id || "breathing-cinematic";
+  const { startSession, updateSession, endSession, lastToolSession } = 
+    useToolMemory(TOOL_ID);
   
   // State
   const [isActive, setIsActive] = useState(false);
@@ -53,14 +60,28 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
         // Record breath
         if (phase === 'exhale' && metricsRef.current) {
           metricsRef.current.recordBreath(phase);
-          setBreathCount(prev => prev + 1);
-          setCoherenceScore(metricsRef.current.getMetrics().coherenceScore);
+          const newBreathCount = breathCount + 1;
+          setBreathCount(newBreathCount);
+          const newCoherence = metricsRef.current.getMetrics().coherenceScore;
+          setCoherenceScore(newCoherence);
+          
+          // Phase 44: Update memory with metrics
+          updateSession({
+            cycles: newBreathCount,
+            coherenceScore: newCoherence,
+          });
         }
       },
       onCycleComplete: () => {
         if (metricsRef.current) {
           metricsRef.current.recordCycle();
-          setCoherenceScore(metricsRef.current.getMetrics().coherenceScore);
+          const newCoherence = metricsRef.current.getMetrics().coherenceScore;
+          setCoherenceScore(newCoherence);
+          
+          // Phase 44: Update memory
+          updateSession({
+            coherenceScore: newCoherence,
+          });
         }
       },
     });
@@ -110,6 +131,14 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
     setIsActive(true);
     setBreathCount(0);
     setSessionTime(0);
+
+    // Phase 44: Start memory session
+    const breathPattern = tool?.breathPattern || { inhale: 4, hold: 7, exhale: 8, pause: 0 };
+    startSession({
+      mode: tool?.mode || "guided",
+      pattern: breathPattern,
+      theme: tool?.theme || "calm",
+    });
 
     // Initialize audio
     if (soundscapeRef.current) {
@@ -172,6 +201,15 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
     if (metricsRef.current) {
       const summary = metricsRef.current.endSession();
       await metricsRef.current.saveSession();
+
+      // Phase 44: End memory session
+      endSession({
+        completed: true,
+        finalCycles: breathCount,
+        finalCoherence: coherenceScore,
+        duration: sessionTime,
+        endedBy: "user",
+      });
 
       // Call completion callback if provided
       if (onComplete) {
@@ -247,7 +285,9 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
                     {tool?.name || "Breathing Tool"}
                   </h1>
                   <p className="text-white/50 text-xs hidden sm:block">
-                    {tool?.category}
+                    {tool?.category} {lastToolSession && !lastToolSession.endedAt && (
+                      <span className="ml-2 text-amber-300">• Session in progress</span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -272,6 +312,44 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
         {/* Main Content - Scrollable */}
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+            {/* Phase 44: Resume Session Banner */}
+            {lastToolSession && !lastToolSession.endedAt && !isActive && (
+              <div className="rounded-xl border border-amber-400/30 bg-gradient-to-r from-amber-400/10 to-amber-500/5 p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-amber-400/20 flex items-center justify-center">
+                    <Timer className="h-6 w-6 text-amber-300" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      Continue Your Session
+                    </h3>
+                    <div className="space-y-1 text-sm text-white/70 mb-4">
+                      <p>
+                        <strong className="text-white">Duration:</strong>{" "}
+                        {Math.floor((lastToolSession.durationSec || 0) / 60)} minutes
+                      </p>
+                      <p>
+                        <strong className="text-white">Cycles:</strong>{" "}
+                        {lastToolSession.metrics?.cycles || 0} breaths
+                      </p>
+                      {lastToolSession.metrics?.coherenceScore && (
+                        <p>
+                          <strong className="text-white">Coherence:</strong>{" "}
+                          {(lastToolSession.metrics.coherenceScore * 100).toFixed(0)}%
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleBegin}
+                      className="px-4 py-2 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-200 hover:bg-amber-400/30 transition font-medium text-sm"
+                    >
+                      Resume Session
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Breathing Orb */}
             {orbControllerRef.current && (
               <ToolOrb 

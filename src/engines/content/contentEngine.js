@@ -4,7 +4,7 @@
 
 import { loadContentById, listContentSummaries } from "@/services/contentService";
 import { CONTENT_TOPICS, getContentTopicById, getRelatedTools, getReflectionPrompts, contentTopicsRegistry } from "./contentTopicsRegistry";
-import { logEvent } from "@/services/telemetry";
+import { trackEvent } from "@/services/telemetry";
 
 /**
  * Content generation mode (static or ai)
@@ -259,11 +259,12 @@ export async function loadTopicContent(topicId) {
     const loadedContent = contentResults.filter(c => c !== null);
 
     // Track topic view
-    logEvent('content_topic_view', {
+    trackEvent({
+      kind: 'content_topic_view',
       topicId: topic.id,
       topicName: topic.name,
       contentCount: loadedContent.length,
-    });
+    }).catch(() => {}); // Non-blocking
 
     return {
       ...topic,
@@ -370,12 +371,13 @@ export function getRecommendedTopics(userState = {}) {
  * @param {number} completion - Completion percentage (0-100)
  */
 export function trackContentRead(contentId, duration, completion) {
-  logEvent('content_read', {
+  trackEvent({
+    kind: 'content_read',
     contentId,
     durationSeconds: duration,
     completionPercentage: completion,
     timestamp: Date.now(),
-  });
+  }).catch(() => {}); // Non-blocking
 }
 
 /**
@@ -385,12 +387,13 @@ export function trackContentRead(contentId, duration, completion) {
  * @param {boolean} responded - Whether user responded
  */
 export function trackReflectionPrompt(topicId, prompt, responded = false) {
-  logEvent('reflection_prompt', {
+  trackEvent({
+    kind: 'reflection_prompt',
     topicId,
     prompt,
     responded,
     timestamp: Date.now(),
-  });
+  }).catch(() => {}); // Non-blocking
 }
 
 /**

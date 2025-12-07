@@ -36,7 +36,58 @@ export const contentRegistry = {
     file: "tools/grounding-54321.md",
   },
 
-  // RECOVERY
+  // RECOVERY - Phase 45: Learning Paths (7-tile dynamic system)
+  "recovery.shame-and-recovery": {
+    id: "recovery.shame-and-recovery",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Shame and Recovery",
+    tags: ["shame", "recovery", "learning-path"],
+    // Content loaded from learningPathsEngine, not a file
+  },
+  "recovery.cravings-and-urges": {
+    id: "recovery.cravings-and-urges",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Cravings and Urges",
+    tags: ["cravings", "urges", "learning-path"],
+  },
+  "recovery.nervous-system-regulation": {
+    id: "recovery.nervous-system-regulation",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Nervous System Regulation",
+    tags: ["nervous-system", "regulation", "trauma", "learning-path"],
+  },
+  "recovery.trauma-and-recovery": {
+    id: "recovery.trauma-and-recovery",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Trauma and Recovery",
+    tags: ["trauma", "recovery", "learning-path"],
+  },
+  "recovery.sleep-and-recovery": {
+    id: "recovery.sleep-and-recovery",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Sleep and Recovery",
+    tags: ["sleep", "recovery", "learning-path"],
+  },
+  "recovery.boundaries-in-recovery": {
+    id: "recovery.boundaries-in-recovery",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Boundaries in Recovery",
+    tags: ["boundaries", "recovery", "learning-path"],
+  },
+  "recovery.grief-and-loss": {
+    id: "recovery.grief-and-loss",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Grief and Loss",
+    tags: ["grief", "loss", "recovery", "learning-path"],
+  },
+  "recovery.self-compassion": {
+    id: "recovery.self-compassion",
+    section: CONTENT_SECTIONS.RECOVERY,
+    title: "Self-Compassion",
+    tags: ["self-compassion", "recovery", "learning-path"],
+  },
+
+  // Legacy entries (for backward compatibility)
   "recovery.cravings.intro": {
     id: "recovery.cravings.intro",
     section: CONTENT_SECTIONS.RECOVERY,
