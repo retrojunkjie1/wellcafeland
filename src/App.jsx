@@ -72,6 +72,7 @@ import AdminConsolePage from "./apps/dashboard/AdminConsolePage";
 import ThemeControlPanel from "./admin/ThemeControlPanel";
 import TemplatesManagerPage from "./apps/admin/TemplatesManagerPage";
 import OverseerConsolePage from "./apps/admin/OverseerConsolePage";
+import { OverseerConsoleUltra } from "./apps/overseer/OverseerConsoleUltra";
 import ContentStudioPage from "./apps/admin/ContentStudioPage";
 import SeedDataPage from "./apps/admin/SeedDataPage";
 import AdminRoute from "./components/AdminRoute";
@@ -373,6 +374,18 @@ const App = () => {
                 <RequireAdmin>
                   <AdminRoute>
                     <OverseerConsolePage />
+                  </AdminRoute>
+                </RequireAdmin>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/overseer-ultra"
+            element={
+              <RequireAuth>
+                <RequireAdmin>
+                  <AdminRoute>
+                    <OverseerConsoleUltra />
                   </AdminRoute>
                 </RequireAdmin>
               </RequireAuth>

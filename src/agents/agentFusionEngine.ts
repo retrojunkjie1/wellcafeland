@@ -91,7 +91,7 @@ function buildMessages(
     messages.push({
       from: 'healer',
       channel: 'ui_hint',
-      text: 'Let's try a short grounding moment together—nothing heavy, just a few safe, steadying steps.',
+      text: "Let's try a short grounding moment together—nothing heavy, just a few safe, steadying steps.",
     });
   }
 
