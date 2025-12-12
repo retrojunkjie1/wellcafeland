@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { LifeBuoy, Home, Wallet, Hospital, MapPin, PhoneCall, Search } from "lucide-react";
 
 const CARDS = [
@@ -74,6 +74,13 @@ const AssistanceHubPage = () => {
               When life outside the app is loud, this is where WellnessCafe rolls up its sleeves.
             </p>
           </div>
+          {/* Phase 70: Link to AssistancePage */}
+          <Link
+            to="/assistance/request"
+            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs text-white/80 hover:bg-white/10 transition"
+          >
+            Request Help
+          </Link>
         </div>
 
         {/* Cards */}

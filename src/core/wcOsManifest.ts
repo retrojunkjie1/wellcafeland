@@ -57,6 +57,12 @@ export interface IkukuLuxuryStandard {
   cinematicSpacing: boolean;
 }
 
+export interface ToolsBridgeConfig {
+  version: '1.0';
+  enabled: boolean;
+  description: string;
+}
+
 export interface WcOsManifest {
   phases: {
     min: number;
@@ -69,6 +75,7 @@ export interface WcOsManifest {
   intelligentContent: IntelligentContentConfig;
   traumaInformed: TraumaInformedRules;
   ikukuLuxury: IkukuLuxuryStandard;
+  toolsBridge: ToolsBridgeConfig;
 }
 
 /**
@@ -83,8 +90,8 @@ export interface WcOsManifest {
 export const wcOsManifest: WcOsManifest = {
   phases: {
     min: 1,
-    max: 50,
-    currentPhase: 56, // Overseer Console Ultra - Mission Control Edition
+    max: 59,
+    currentPhase: 59, // Tools Bridge Integration Layer
   },
   livingGuide: {
     version: 'v3',
@@ -128,6 +135,11 @@ export const wcOsManifest: WcOsManifest = {
     },
     useGlassmorphism: true,
     cinematicSpacing: true,
+  },
+  toolsBridge: {
+    enabled: true,
+    version: '1.0',
+    description: 'Connects Healer Toolkit + Ritual Engine tools to Explore UI',
   },
 };
 

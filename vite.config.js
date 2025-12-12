@@ -45,8 +45,17 @@ export default defineConfig({
     // In production, we can use stricter CSP
     rollupOptions: {
       output: {
-        // Ensure proper chunking to avoid eval
-        manualChunks: undefined,
+        // Phase 61: Manual chunking for performance optimization
+        // Split heavy dependencies into separate chunks for better caching and faster initial load
+        manualChunks: {
+          'framer-motion': ['framer-motion'],
+          'luxury-ui': [
+            './src/components/layout/AmbientOrbs',
+            './src/components/explore/CategoryChips',
+            './src/components/explore/ToolCard',
+            './src/theme/luxuryTheme',
+          ],
+        },
       },
     },
   },

@@ -109,6 +109,15 @@ const ProviderClientsPage = () => {
         title="My Clients"
         subtitle="Assigned clients and their status"
       />
+      {/* Phase 70: Link to ClientListPage */}
+      <div className="lux-shell px-4 pt-4">
+        <Link
+          to="/provider/clients/list"
+          className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs text-white/80 hover:bg-white/10 transition"
+        >
+          View Full Client List
+        </Link>
+      </div>
       <div className="lux-shell py-10">
         {loading ? (
           <div className="flex items-center justify-center p-12">

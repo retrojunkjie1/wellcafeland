@@ -9,6 +9,7 @@ import { ContentViewer } from "@/components/content/ContentViewer";
 import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
 import { ToolsRegistry } from "@/engines/tools/ToolsRegistry";
+import { getToolById } from "@/tools/toolResolver";
 import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
 import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
 import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
@@ -52,8 +53,21 @@ const ToolDetailPage = () => {
     return () => clearInterval(id);
   }, [isSessionActive]);
 
-  // load tool metadata from registry
+  // load tool metadata from registry or toolResolver (Phase 59B)
   const loadedToolMeta = useMemo(() => {
+    // First try toolResolver (includes Healer Toolkit tools)
+    const resolvedTool = getToolById(decodedId);
+    if (resolvedTool) {
+      // Map DailyPracticeTool format to toolMeta format if needed
+      return {
+        id: resolvedTool.id,
+        name: resolvedTool.title,
+        description: resolvedTool.summary,
+        category: resolvedTool.category,
+        sessionType: null, // Healer tools don't have sessionType yet
+      };
+    }
+    // Fallback to ToolsRegistry for legacy tools
     return ToolsRegistry?.find((t) => t.id === decodedId) || null;
   }, [decodedId]);
 

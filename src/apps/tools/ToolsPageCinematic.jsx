@@ -1,19 +1,61 @@
 // src/apps/tools/ToolsPageCinematic.jsx
 // Cinematic Wellness Tools Page - Phase 36B
+// Phase 59: Tools Bridge Integration
+// Phase 60 Ultra: Luxury Interface System V2
 // Hybrid luxury aesthetic with glassmorphism and ambient animations
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { trackPageView } from "@/services/telemetry";
 import { ToolsRegistry, getAllCategories, getToolsByCategory } from "@/engines/tools/ToolsRegistry";
+import { dailyPracticeTools, getDailyPracticeToolsByCategory, getDailyPracticeCategories, getCategoryCount } from "@/tools/toolsBridge";
 import CinematicContainer from "@/components/tools/CinematicContainer";
 import { listContentSummaries } from "@/services/contentService";
 import { CONTENT_SECTIONS } from "@/content/contentRegistry";
+import { motion } from "framer-motion";
+import { AmbientOrbs } from "@/components/layout/AmbientOrbs";
+import { CategoryChips } from "@/components/explore/CategoryChips";
+import { ToolCard } from "@/components/explore/ToolCard";
+import { allTools } from "@/tools/toolResolver";
 
 const ToolsPageCinematic = () => {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const categories = useMemo(() => getAllCategories(), []);
+  const [selectedCategory, setSelectedCategory] = useState("All Tools");
+  
+  // Phase 59: Get categories from both ToolsRegistry and DailyPracticeTools
+  const registryCategories = useMemo(() => getAllCategories(), []);
+  const practiceCategories = useMemo(() => getDailyPracticeCategories(), []);
+  
+  // Merge categories, but only include categories that have tools
+  const categories = useMemo(() => {
+    // Get all tools to check which categories have content
+    const allPracticeTools = dailyPracticeTools;
+    const practiceCategorySet = new Set(allPracticeTools.map(t => t.category));
+    
+    // Filter registry categories to only include those with tools
+    const registryWithTools = registryCategories.filter(cat => {
+      const registryTools = getToolsByCategory(cat.id);
+      // Check if this category has tools in registry OR in practice tools
+      const hasRegistryTools = registryTools.length > 0;
+      const hasPracticeTools = practiceCategorySet.has(cat.label);
+      return hasRegistryTools || hasPracticeTools;
+    });
+    
+    // Add practice categories that aren't already in registry and have tools
+    const additionalCategories = practiceCategories
+      .filter(cat => cat !== 'All Tools')
+      .filter(cat => {
+        // Only include if it has tools
+        return practiceCategorySet.has(cat);
+      })
+      .map(cat => ({
+        id: cat.toLowerCase().replace(/\s+/g, '-'),
+        label: cat
+      }))
+      .filter(cat => !registryWithTools.some(rc => rc.id === cat.id));
+    
+    return [...registryWithTools, ...additionalCategories];
+  }, [registryCategories, practiceCategories]);
   
   // Load content summaries once on mount
   const toolContent = useMemo(() => {
@@ -25,20 +67,70 @@ const ToolsPageCinematic = () => {
     trackPageView("tools-cinematic");
   }, []);
 
-  const filteredTools = useMemo(
-    () => getToolsByCategory(selectedCategory),
-    [selectedCategory]
-  );
+  // Phase 59: Combine ToolsRegistry tools with DailyPracticeTools
+  const filteredTools = useMemo(() => {
+    const registryTools = getToolsByCategory(selectedCategory);
+    
+    // Map daily practice tools to registry format for display
+    const formatPracticeTool = (tool) => ({
+      id: tool.id,
+      name: tool.title,
+      description: tool.summary,
+      category: tool.category,
+      duration: `${Math.round(tool.steps.reduce((sum, s) => sum + (s.suggestedDurationSeconds || 30), 0) / 60)} min`,
+      intensity: "low", // Default for healer tools
+      icon: () => null, // No icon for now
+    });
+    
+    // If "all", include all daily practice tools
+    if (selectedCategory === "all") {
+      const practiceToolsFormatted = dailyPracticeTools.map(formatPracticeTool);
+      return [...registryTools, ...practiceToolsFormatted];
+    }
+    
+    // For specific categories, match by mapped category name
+    // Find the category label from registry categories
+    const selectedCategoryLabel = categories.find(c => c.id === selectedCategory)?.label;
+    
+    // Get daily practice tools by mapped category name
+    const practiceTools = selectedCategoryLabel 
+      ? getDailyPracticeToolsByCategory(selectedCategoryLabel)
+      : [];
+    
+    const practiceToolsFormatted = practiceTools.map(formatPracticeTool);
+    
+    return [...registryTools, ...practiceToolsFormatted];
+  }, [selectedCategory, categories]);
 
-  const intensityColors = {
-    low: "text-emerald-400 border-emerald-400/30 bg-emerald-400/10",
-    medium: "text-amber-400 border-amber-400/30 bg-amber-400/10",
-    high: "text-red-400 border-red-400/30 bg-red-400/10",
-  };
+
+  // Get available categories - valid CategoryKey values
+  const validCategories = ['All Tools', 'Breathing', 'Grounding', 'Reflection', 'Urge Management', 'Somatic', 'Emergency', 'Emotional', 'Sleep'];
+  
+  const availableCategories = useMemo(() => {
+    const categorySet = new Set(['All Tools']);
+    allTools.forEach(tool => {
+      if (tool.category && tool.category !== 'All Tools') {
+        // Only add if it's a valid CategoryKey
+        if (validCategories.includes(tool.category)) {
+          categorySet.add(tool.category);
+        }
+      }
+    });
+    return Array.from(categorySet);
+  }, []);
+
+  // Filter tools by selected category
+  const toolsForCategory = useMemo(() => {
+    if (selectedCategory === 'All Tools') return allTools;
+    return allTools.filter((t) => t.category === selectedCategory);
+  }, [selectedCategory]);
 
   return (
     <CinematicContainer theme="calm">
-      <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {/* Phase 60 Ultra: Ambient Orbs Background */}
+      <AmbientOrbs density="low" />
+      
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <header className="text-center space-y-4 pt-8">
           <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80 font-medium">
@@ -51,87 +143,43 @@ const ToolsPageCinematic = () => {
             Breathwork, grounding, journaling, micro-rituals, and nervous-system
             resets designed for recovery in motion.
           </p>
+          {/* Phase 70: Link to classic ToolsPage */}
+          <Link
+            to="/tools/classic"
+            className="text-xs uppercase tracking-[0.22em] text-white/60 hover:text-amber-200 transition"
+          >
+            Classic Tools View
+          </Link>
         </header>
 
-        {/* Category filters */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`
-                px-4 py-2 rounded-full text-sm font-medium
-                transition-all duration-300
-                ${
-                  selectedCategory === category.id
-                    ? "bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/30"
-                    : "bg-white/[0.08] text-white/70 hover:bg-white/[0.12] border border-white/10"
-                }
-              `}
-            >
-              {category.label}
-            </button>
-          ))}
-        </div>
+        {/* Phase 60 Ultra: Luxury Category Chips */}
+        <CategoryChips
+          categories={availableCategories}
+          selected={selectedCategory}
+          onSelect={setSelectedCategory}
+        />
 
-        {/* Tools grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredTools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <button
-                key={tool.id}
-                onClick={() => navigate(`/tools/${tool.id}`)}
-                className="
-                  group relative
-                  bg-white/[0.08] backdrop-blur-xl
-                  border border-white/[0.12]
-                  rounded-2xl p-6
-                  hover:bg-white/[0.12] hover:border-amber-400/30
-                  transition-all duration-300
-                  text-left
-                  shadow-lg shadow-black/20
-                  hover:shadow-amber-500/20
-                "
-              >
-                {/* Icon */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-amber-400/20 to-teal-400/20 border border-amber-400/20">
-                    <Icon className="h-6 w-6 text-amber-400" />
-                  </div>
-                  {/* Intensity badge */}
-                  <span className={`
-                    px-2 py-1 rounded-full text-[10px] uppercase tracking-wider font-medium
-                    border ${intensityColors[tool.intensity]}
-                  `}>
-                    {tool.intensity}
-                  </span>
-                </div>
+        {/* Phase 60 Ultra: Luxury Tool Cards Grid */}
+        {toolsForCategory.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl border border-white/10 bg-white/5 px-4 py-8 text-center text-sm text-white/60 backdrop-blur-md"
+          >
+            No tools are registered in this category yet. This simply means
+            this area of the OS is still being stocked, not that anything is
+            wrong with you.
+          </motion.div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {toolsForCategory.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} />
+            ))}
+          </div>
+        )}
 
-                {/* Content */}
-                <h3 className="text-white font-light text-lg mb-2 group-hover:text-amber-200 transition-colors">
-                  {tool.name}
-                </h3>
-                <p className="text-white/60 text-sm mb-4 leading-relaxed">
-                  {tool.description}
-                </p>
-
-                {/* Metadata */}
-                <div className="flex items-center gap-4 text-xs text-white/40">
-                  <span>{tool.category}</span>
-                  <span>•</span>
-                  <span>{tool.duration}</span>
-                </div>
-
-                {/* Hover glow */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-amber-400/0 via-transparent to-teal-400/0 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none" />
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Empty state */}
-        {filteredTools.length === 0 && (
+        {/* Legacy empty state - keeping for backward compatibility */}
+        {toolsForCategory.length === 0 && filteredTools.length === 0 && (
           <div className="
             bg-white/[0.05] backdrop-blur-sm
             border border-white/10

@@ -39,9 +39,11 @@ function parseFrontmatter(raw) {
 /**
  * Load raw content by registry ID using Vite's import.meta.glob.
  * Only Phase 34: file-based, no Firestore writes.
+ * Phase 61: Updated to new Vite glob syntax (query: '?raw', import: 'default')
  */
 const contentFiles = import.meta.glob("../content/**/*.md", {
-  as: "raw",
+  query: '?raw',
+  import: 'default',
 });
 
 /**

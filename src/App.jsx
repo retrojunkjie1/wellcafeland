@@ -1,6 +1,6 @@
 // src/App.jsx
 
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense, lazy } from "react";
 
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 
@@ -12,9 +12,13 @@ import OSLayout from "./layouts/OSLayout";
 import HomePage from "./apps/core/HomePage";
 import ChatPage from "./apps/chat/ChatPage";
 import LivingGuidePage from "./apps/living/LivingGuidePage";
+// Phase 70: Route LivingGuidePageV3
+import { LivingGuidePageV3 } from "./apps/living/LivingGuidePageV3";
 import SequencePage from "./apps/sequences/SequencePage";
 // Assistance Hub (real-world help)
 import AssistanceHubPage from "./apps/assistance/AssistanceHubPage";
+// Phase 70: Route unrouted pages
+import AssistancePage from "./apps/assistance/AssistancePage";
 import CommandConsolePage from "./apps/command/CommandConsolePage";
 import WorkspacePage from "./apps/workspace/WorkspacePage";
 import RealHelpWorkspace from "./apps/workspace/RealHelpWorkspace";
@@ -27,7 +31,15 @@ import MilestonesPage from "./apps/milestones/MilestonesPage";
 import AgentsPage from "./apps/agents/AgentsPage";
 
 import ToolsPage from "./apps/tools/ToolsPageCinematic";
-import ToolDetailPage from "./apps/tools/ToolDetailPage";
+// Phase 70: Route classic ToolsPage
+import ToolsPageClassic from "./apps/tools/ToolsPage";
+// Phase 61: Lazy-load luxury pages for better initial load performance
+const ToolDetailPage = lazy(() => import("./apps/tools/ToolDetailPage"));
+const ExplorePage = lazy(() => 
+  import("./apps/explore/ExplorePage").then(module => ({ 
+    default: module.ExplorePage 
+  }))
+);
 import VoiceJournal from "./apps/tools/VoiceJournal";
 import VoiceCheckIn from "./apps/tools/VoiceCheckIn";
 
@@ -100,20 +112,29 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Preview - Standalone page, no layout */}
-        <Route path="/preview/:token" element={<SessionPreviewPage />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
-        
-        <Route element={<OSLayout />}>
-          {/* OS Routes */}
-          <Route path="/" element={<ChatPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/explore" element={<LivingGuidePage />} />
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center bg-black text-white text-sm">
+            Loading wellness tools…
+          </div>
+        }
+      >
+        <Routes>
+          {/* Preview - Standalone page, no layout */}
+          <Route path="/preview/:token" element={<SessionPreviewPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          
+          <Route element={<OSLayout />}>
+            {/* OS Routes */}
+            <Route path="/" element={<ChatPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/explore" element={<ExplorePage />} />
           <Route path="/sequence/:id" element={<SequencePage />} />
           {/* Assistance Hub - Real-world help directory */}
           <Route path="/assistance" element={<AssistanceHubPage />} />
+          {/* Phase 70: Route unrouted AssistancePage */}
+          <Route path="/assistance/request" element={<AssistancePage />} />
           <Route path="/command" element={<CommandConsolePage />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
           <Route path="/workspace/real-help" element={<RealHelpWorkspace />} />
@@ -121,6 +142,8 @@ const App = () => {
           <Route path="/directory/:domain" element={<DirectoryWorkspace />} />
           <Route path="/directory/:domain/:id" element={<DirectoryDetailWorkspace />} />
           <Route path="/guide" element={<GuidePage />} />
+          {/* Phase 70: Route LivingGuidePageV3 */}
+          <Route path="/living/v3" element={<LivingGuidePageV3 />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
@@ -130,6 +153,8 @@ const App = () => {
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/tools" element={<ToolsPage />} />
+          {/* Phase 70: Route classic ToolsPage */}
+          <Route path="/tools/classic" element={<ToolsPageClassic />} />
           <Route path="/tools/:toolId" element={<ToolDetailPage />} />
           <Route path="/tools/voice-journal" element={<VoiceJournal />} />
           <Route path="/tools/voice-checkin" element={<VoiceCheckIn />} />
@@ -178,6 +203,15 @@ const App = () => {
             element={
               <RequireRole allowedRoles={["provider", "admin"]}>
                 <ProviderClientsPage />
+              </RequireRole>
+            }
+          />
+          {/* Phase 70: Route ClientListPage */}
+          <Route
+            path="/provider/clients/list"
+            element={
+              <RequireRole allowedRoles={["provider", "admin"]}>
+                <ClientListPage />
               </RequireRole>
             }
           />
@@ -417,8 +451,9 @@ const App = () => {
           />
         </Route>
 
-        <Route path="*" element={<UnauthorizedPage />} />
-      </Routes>
+          <Route path="*" element={<UnauthorizedPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

@@ -1,7 +1,9 @@
 // Phase 46 — Living Guide Experience
+// Phase 57 Ultra — Healer Toolkit Integration
 // Luxury, cinematic, intelligent guidance interface
 
 import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { Circle, Heart, Shield, Brain, Activity, Waves, Sparkles } from "lucide-react";
 import DailyRitualCard from "@/components/living/DailyRitualCard";
 import ModuleCarousel from "@/components/living/ModuleCarousel";
@@ -11,6 +13,8 @@ import { getDailyReflection } from "@/engines/reflection/dailyReflectionEngine";
 import { getAdaptiveRecommendations } from "@/engines/adaptive/emotionAdaptiveEngine";
 import { useMemoryStore } from "@/store/memoryStore";
 import { getLastSession } from "@/services/sessionHistory";
+import { useEmotionalTelemetry } from "@/hooks/useEmotionalTelemetry";
+import { QuickGroundingButton } from "@/components/healer/QuickGroundingButton";
 
 const modules = [
   {
@@ -63,6 +67,10 @@ export default function LivingGuidePage() {
   const [ritualOpen, setRitualOpen] = useState(false);
   const lastToolSession = useMemoryStore((state) => state.lastToolSession);
   const lastSession = getLastSession();
+  
+  // Phase 57 Ultra: Healer Toolkit integration
+  const { latestSnapshot, risk } = useEmotionalTelemetry();
+  const canOfferHealerSupport = latestSnapshot && risk;
 
   // Get daily ritual with sequence key
   const ritual = useMemo(() => {
@@ -197,11 +205,46 @@ export default function LivingGuidePage() {
         {/* Daily Ritual Card */}
         <DailyRitualCard ritual={ritual} onBegin={() => setRitualOpen(true)} />
 
+        {/* Phase 57 Ultra: Healer Toolkit Support Section */}
+        {canOfferHealerSupport && (
+          <section className="rounded-3xl border border-white/10 bg-gradient-to-b from-white/5 via-white/[0.03] to-black/40 p-6 backdrop-blur-md">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  When things feel heavy, this section offers options that move at the speed of your nervous system, not at the speed of pressure.
+                </p>
+              </div>
+              <QuickGroundingButton 
+                snapshot={latestSnapshot} 
+                risk={risk} 
+              />
+            </div>
+          </section>
+        )}
+
+        {!canOfferHealerSupport && (
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md">
+            <p className="text-xs text-white/50 leading-relaxed">
+              Once you complete a quick emotional check-in, we&apos;ll suggest one or two gentle support options here.
+            </p>
+          </section>
+        )}
+
         {/* Module Horizon */}
         <ModuleCarousel modules={modules} />
 
         {/* Whisper Recommendation */}
         <WhisperSuggestion suggestion={suggestion} />
+
+        {/* Phase 70: Link to LivingGuidePageV3 */}
+        <div className="pt-8 text-center">
+          <Link
+            to="/living/v3"
+            className="text-xs uppercase tracking-[0.22em] text-amber-200 hover:text-amber-100 transition"
+          >
+            Open Living Guide V3
+          </Link>
+        </div>
 
         {/* Cinematic Footer */}
         <footer className="pt-12 pb-8 text-center">

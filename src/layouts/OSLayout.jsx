@@ -4,6 +4,9 @@ import { Home, Compass, LifeBuoy, Activity, User } from "lucide-react";
 import LogoWC from "@/assets/LogoWC.png";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useSessionMemory } from "@/hooks/useSessionMemory";
+// Phase 70: Universal Navigation System
+import { NavigationProvider } from "@/navigation/NavigationContext";
+import { OSPageChrome } from "@/components/nav/OSPageChrome";
 
 const TABS = [
   {
@@ -127,16 +130,19 @@ const OSLayout = () => {
             <span className="text-xs text-amber-200/90">Living Guide Online</span>
           </div>
           <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] sm:text-xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-white/70">Anonymous</span>
+          <div className="flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] sm:text-xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+            <span className="text-white/70 whitespace-nowrap">Anonymous</span>
           </div>
         </div>
       </header>
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        <Outlet />
+        <NavigationProvider>
+          <OSPageChrome />
+          <Outlet />
+        </NavigationProvider>
       </main>
 
       {/* Bottom Navigation */}
