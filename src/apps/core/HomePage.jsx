@@ -89,25 +89,6 @@ const HomePage = () => {
         </button>
       </section>
 
-      {/* Guest Mode Notice */}
-      {identity.mode === "guest" && (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
-          <p className="text-sm text-white/70 mb-3">
-            You don't need an account to use WellnessCafe.
-          </p>
-          <p className="text-sm text-white/60 mb-4">
-            To save your journey across devices, you can create one anytime.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/signup")}
-            className="rounded-full border border-wcGold/50 bg-wcGold/10 px-6 py-2 text-sm font-medium text-wcGold transition hover:bg-wcGold/20"
-          >
-            Create a free account
-          </button>
-        </div>
-      )}
-
       {/* Quick Links */}
       <section className="flex flex-wrap gap-3 justify-center">
         <button

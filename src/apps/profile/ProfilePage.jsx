@@ -5,15 +5,13 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
-import { useThemeEngine } from "../../hooks/useThemeEngine";
-import { Moon, Sun, LogOut, User, Mail, Sparkles } from "lucide-react";
+import { getTheme, setTheme } from "@/theme/themeStore";
+import { Moon, Sun, LogOut, User, Mail } from "lucide-react";
 import { trackPageView } from "../../services/telemetry";
-import PageHeader from "@/components/navigation/PageHeader";
 
 const ProfilePage = () => {
   const { user, isAuthenticated, logout, role } = useAuth();
   const identity = useSessionIdentity();
-  const { theme, toggleTheme } = useThemeEngine();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,57 +19,18 @@ const ProfilePage = () => {
     trackPageView("profile");
   }, []);
 
-  const handleCreateAccount = () => {
-    navigate("/signup");
-  };
-
   const handleLogout = async () => {
     await logout();
     navigate("/");
   };
 
-  return (
-    <div className="space-y-8">
-      <PageHeader 
-        title="Profile" 
-        subtitle="Manage your account and preferences"
-      />
-      {/* Header */}
-      <header className="space-y-2">
-        <h1 className="text-3xl font-light tracking-wide text-white">Profile</h1>
-        <p className="text-sm text-white/60">
-          Manage your account and preferences
-        </p>
-      </header>
+  const current = getTheme();
+  const toggleTheme = () => {
+    setTheme(current === "dark" ? "light" : "dark");
+  };
 
-      {/* Guest Mode Notice */}
-      {identity.mode === "guest" && (
-        <div className="glass-panel border-wcGold/30 bg-wcGold/5 p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-wcGold/20 p-2">
-              <Sparkles className="h-5 w-5 text-wcGold" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-medium text-white mb-2">
-                You're using WellnessCafe in guest mode
-              </h3>
-              <p className="text-sm text-white/70 mb-4">
-                Your progress is saved locally in this session. When you close the tab, this data will be lost.
-              </p>
-              <p className="text-sm text-white/70 mb-6">
-                Create a free account to save your journey across devices and never lose your progress.
-              </p>
-              <button
-                type="button"
-                onClick={handleCreateAccount}
-                className="rounded-full bg-wcGold px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-amber-400"
-              >
-                Create a free account to save your journey
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  return (
+    <section className="space-y-6">
 
       {/* Account Information */}
       {identity.mode === "account" && isAuthenticated && (
@@ -140,7 +99,7 @@ const ProfilePage = () => {
           <div>
             <p className="text-sm font-medium text-white">Theme</p>
             <p className="text-xs text-white/60">
-              {theme === "dark" ? "Dark mode" : "Light mode"}
+              {current === "dark" ? "Dark mode" : "Light mode"}
             </p>
           </div>
           <button
@@ -148,13 +107,13 @@ const ProfilePage = () => {
             onClick={toggleTheme}
             className={`
               relative inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all
-              ${theme === "dark"
+              ${current === "dark"
                 ? "border-amber-400/40 bg-amber-400/10 text-amber-200 hover:bg-amber-400/20"
                 : "border-white/20 bg-white/10 text-white hover:bg-white/20"
               }
             `}
           >
-            {theme === "dark" ? (
+            {current === "dark" ? (
               <>
                 <Moon className="h-4 w-4" />
                 <span>Dark</span>
@@ -182,7 +141,7 @@ const ProfilePage = () => {
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

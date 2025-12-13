@@ -215,20 +215,6 @@ const GuidePage = () => {
             </button>
           </div>
 
-          {/* Guest Mode Notice */}
-          {identity.mode === "guest" && (
-            <div className="rounded-xl border border-wcGold/30 bg-wcGold/5 px-4 py-2 text-xs text-white/70">
-              <span>You're in guest mode. </span>
-              <button
-                type="button"
-                onClick={() => navigate("/signup")}
-                className="font-medium text-wcGold underline hover:text-amber-300"
-              >
-                Create an account
-              </button>
-              <span> to save your conversations.</span>
-            </div>
-          )}
         </div>
       </div>
     </div>

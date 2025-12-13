@@ -1,6 +1,35 @@
 // src/services/multimodalClient.js
 // Frontend client for multimodal wellness engine (OpenAI chat, TTS, STT)
 
+// Phase 61B: Endpoint resolution helpers
+function resolveFunctionsBaseUrl() {
+  const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
+  if (env && typeof env === "string" && env.trim()) return env.trim();
+
+  const isLocalhost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  if (isLocalhost) {
+    const projectId = "wellnesscafelanding";
+    const region = "us-central1";
+    return `http://localhost:5001/${projectId}/${region}`;
+  }
+
+  return "https://us-central1-wellnesscafelanding.cloudfunctions.net";
+}
+
+function buildEndpoint(path) {
+  const base = resolveFunctionsBaseUrl();
+  return `${base.replace(/\/+$/, "")}/${String(path).replace(/^\/+/, "")}`;
+}
+
+const ENDPOINTS = {
+  chat: () => buildEndpoint("/multimodalChat"),
+  tts: () => buildEndpoint("/multimodalTts"),
+  stt: () => buildEndpoint("/multimodalStt"),
+};
+
 /**
  * Unified Guide Engine - High-intelligence, emotionally-aware, multimodal guide
  * Trained for wellness, addiction recovery, spiritual stability, and trauma-informed dialogue
@@ -54,8 +83,11 @@ export async function guideEngine(query, options = {}) {
       // Silently fail - use defaults
     }
     
-    const functionUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-    const endpoint = `${functionUrl}/multimodalChat`;
+    const endpoint = ENDPOINTS.chat();
+    
+    // Debug: Log resolved endpoint
+    console.log("[guideEngine] Resolved endpoint:", endpoint);
+    console.log("[guideEngine] VITE_FIREBASE_FUNCTIONS_URL:", import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set, using default)");
     
     // Adjust mode based on preferences
     let adjustedMode = mode;
@@ -171,17 +203,34 @@ export async function guideEngine(query, options = {}) {
       signal: AbortSignal.timeout(30000),
     });
 
+    // Debug: Log response status and headers
+    console.log("[guideEngine] Response status:", res.status, res.statusText);
+    console.log("[guideEngine] Response headers:", Object.fromEntries(res.headers.entries()));
+
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("[guideEngine] Error:", errorText);
+      const safe = errorText?.slice(0, 400) || "Unknown error";
       return {
         ok: false,
-        error: "I couldn't reach the wellness engine right now. Please try again in a moment.",
+        status: res.status,
+        error: `Server error (${res.status}). ${safe}`,
       };
     }
 
-    const data = await res.json().catch(() => null);
+    const data = await res.json().catch((parseErr) => {
+      console.error("[guideEngine] Failed to parse JSON response:", parseErr);
+      return null;
+    });
+    
+    // Debug: Log response body (trimmed to 300 chars)
+    if (data) {
+      const dataStr = JSON.stringify(data);
+      const trimmedData = dataStr.length > 300 ? dataStr.substring(0, 300) + "..." : dataStr;
+      console.log("[guideEngine] Response body (trimmed):", trimmedData);
+    }
+    
     if (!data) {
+      console.error("[guideEngine] No data in response. Status:", res.status);
       return {
         ok: false,
         error: "Invalid response from server. Please try again.",
@@ -235,10 +284,29 @@ export async function guideEngine(query, options = {}) {
       },
     };
   } catch (err) {
-    console.error("[guideEngine] Request failed:", err);
+    // Debug: Comprehensive error logging
+    const endpoint = ENDPOINTS.chat();
+    
+    console.error("[guideEngine] Request failed:", {
+      error: err,
+      message: err.message,
+      name: err.name,
+      stack: err.stack,
+      endpoint: endpoint,
+      envVar: import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set)",
+    });
+    
     const isNetworkError = err.message?.includes("Failed to fetch") || 
                           err.message?.includes("NetworkError") ||
-                          err.name === "AbortError";
+                          err.name === "AbortError" ||
+                          err.name === "TypeError";
+    
+    // Additional debug for CORS issues
+    if (err.message?.includes("Failed to fetch") || err.message?.includes("CORS")) {
+      console.error("[guideEngine] CORS/Network issue detected. Endpoint:", endpoint);
+      console.error("[guideEngine] Check if endpoint allows origin:", window.location.origin);
+    }
+    
     return {
       ok: false,
       error: isNetworkError
@@ -262,8 +330,7 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
     };
   }
 
-  const functionUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-  const endpoint = `${functionUrl}/multimodalChat`;
+  const endpoint = ENDPOINTS.chat();
 
   try {
     const res = await fetch(endpoint, {
@@ -281,11 +348,12 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("[sendChatMultimodal] Error:", errorText);
+      const safe = errorText?.slice(0, 400) || "Unknown error";
       return {
         ok: false,
         type: "text",
-        text: "I couldn't reach the wellness engine right now. Please try again in a moment.",
+        status: res.status,
+        text: `Server error (${res.status}). ${safe}`,
       };
     }
 
@@ -344,8 +412,7 @@ export async function speakText(text, options = {}) {
   }
 
   try {
-    const functionUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-    const res = await fetch(`${functionUrl}/multimodalTts`, {
+    const res = await fetch(ENDPOINTS.tts(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -359,8 +426,12 @@ export async function speakText(text, options = {}) {
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("TTS error:", errorText);
-      return { ok: false, error: "Could not generate audio" };
+      const safe = errorText?.slice(0, 400) || "Unknown error";
+      return { 
+        ok: false, 
+        status: res.status,
+        error: `Server error (${res.status}). ${safe}` 
+      };
     }
 
     const data = await res.json();
@@ -423,8 +494,7 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
       audioData = audio;
     }
 
-    const functionUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-    const res = await fetch(`${functionUrl}/multimodalStt`, {
+    const res = await fetch(ENDPOINTS.stt(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -438,10 +508,11 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
-      console.error("STT error:", errorText);
+      const safe = errorText?.slice(0, 400) || "Unknown error";
       return {
         ok: false,
-        error: "Could not transcribe audio",
+        status: res.status,
+        error: `Server error (${res.status}). ${safe}`,
       };
     }
 
@@ -490,8 +561,7 @@ export async function callWellnessChat({ messages, mode = "default" }) {
   const userPrompt = lastMessage?.content || "Help me with a short, gentle recovery reflection.";
 
   try {
-    const functionUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-    const endpoint = `${functionUrl}/multimodalChat`;
+    const endpoint = ENDPOINTS.chat();
     
     try {
       const res = await fetch(endpoint, {

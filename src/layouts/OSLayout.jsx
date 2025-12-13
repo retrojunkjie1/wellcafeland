@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Home, Compass, LifeBuoy, Activity, User } from "lucide-react";
 import LogoWC from "@/assets/LogoWC.png";
@@ -7,6 +7,14 @@ import { useSessionMemory } from "@/hooks/useSessionMemory";
 // Phase 70: Universal Navigation System
 import { NavigationProvider } from "@/navigation/NavigationContext";
 import { OSPageChrome } from "@/components/nav/OSPageChrome";
+// Phase 61B: Feature flags
+import { featureFlags } from "@/config/featureFlags";
+// Navigation history tracking
+import { navPush } from "@/navigation/navHistory";
+import BackButton from "@/components/navigation/BackButton";
+// Auth context for guest mode detection
+import { useAuth } from "@/context/AuthContext";
+import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 
 const TABS = [
   {
@@ -44,8 +52,21 @@ const TABS = [
 const OSLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const identity = useSessionIdentity();
   useUserSettings(); // Phase 34: hydrate & persist settings
   useSessionMemory(); // Phase 44: remember route visits
+
+  // Track navigation history
+  useEffect(() => {
+    navPush(location.pathname);
+  }, [location.pathname]);
+
+  // Live session state (default to false)
+  const isLiveSessionActive = false;
+
+  // Guest mode detection
+  const isGuest = !user && identity.mode === "guest";
 
   const isActivePath = (tabPath) => {
     if (!tabPath) return false;
@@ -92,48 +113,64 @@ const OSLayout = () => {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-white">
+      {/* Global Guest Mode Banner */}
+      {isGuest && (
+        <div className="bg-yellow-500/10 text-yellow-600 text-sm px-4 py-2 border-b border-yellow-500/20">
+          You're using WellnessCafe in guest mode. Progress is not saved.
+        </div>
+      )}
+
       {/* Top App Bar */}
-      <header className="flex items-center justify-between border-b border-white/10 bg-slate-950/90 px-4 py-2 sm:px-6 sm:py-3 backdrop-blur">
-        {/* Left: Logo/Home */}
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2"
-        >
-          {LogoWC ? (
-            <img
-              src={LogoWC}
-              alt="WellnessCafe"
-              className="h-8 w-8 rounded-full border border-amber-400/40 bg-black/40 object-contain"
-            />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-400/40 bg-black/40 text-xs font-semibold tracking-[0.12em]">
-              WC
+      <header className="flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/90 px-4 py-2 sm:px-6 sm:py-3 backdrop-blur">
+        {/* Left: Back Button + Logo/Home */}
+        <div className="flex items-center gap-3 min-w-0">
+          <BackButton className="shrink-0" />
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 shrink-0"
+          >
+            {LogoWC ? (
+              <img
+                src={LogoWC}
+                alt="WellnessCafe"
+                className="h-8 w-8 rounded-full border border-amber-400/40 bg-black/40 object-contain"
+              />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full border border-amber-400/40 bg-black/40 text-xs font-semibold tracking-[0.12em]">
+                WC
+              </div>
+            )}
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-xs font-medium uppercase tracking-[0.18em] text-amber-300">
+                WellnessCafe OS
+              </span>
+              <span className="text-[11px] text-white/60">
+                Luxury recovery operating system
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Right: User identity + emotion + live indicator */}
+        <div className="flex items-center gap-3 shrink-0">
+          {featureFlags.showAnonymousBadge && (
+            <div className="flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] sm:text-xs shrink-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+              <span className="text-white/70 whitespace-nowrap">Anonymous</span>
             </div>
           )}
-          <div className="hidden sm:flex flex-col text-left">
-            <span className="text-xs font-medium uppercase tracking-[0.18em] text-amber-300">
-              WellnessCafe OS
-            </span>
-            <span className="text-[11px] text-white/60">
-              Luxury recovery operating system
-            </span>
-          </div>
-        </button>
-
-        {/* Right: current mode stub (can be wired later) */}
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:flex flex-col items-end">
-            <span className="text-[11px] uppercase tracking-[0.16em] text-white/50">
-              LIVE SESSION
-            </span>
-            <span className="text-xs text-amber-200/90">Living Guide Online</span>
-          </div>
-          <div className="h-8 w-[1px] bg-white/10 hidden sm:block" />
-          <div className="flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] sm:text-xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-            <span className="text-white/70 whitespace-nowrap">Anonymous</span>
-          </div>
+          {isLiveSessionActive && (
+            <>
+              <div className="hidden sm:flex flex-col items-end shrink-0">
+                <span className="text-[11px] uppercase tracking-[0.16em] text-white/50">
+                  LIVE SESSION
+                </span>
+                <span className="text-xs text-amber-200/90">Living Guide Online</span>
+              </div>
+              <div className="h-8 w-[1px] bg-white/10 hidden sm:block shrink-0" />
+            </>
+          )}
         </div>
       </header>
 
