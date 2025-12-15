@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { getTheme, setTheme } from "@/theme/themeStore";
-import { Moon, Sun, LogOut, User, Mail } from "lucide-react";
+import { Moon, Sun, LogOut, User, Mail, Sparkles } from "lucide-react";
 import { trackPageView } from "../../services/telemetry";
 
 const ProfilePage = () => {
@@ -76,7 +76,7 @@ const ProfilePage = () => {
       )}
 
       {/* My Wellness Settings */}
-      <section className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6">
+      <section className="mt-6 glass-panel p-4 sm:p-6">
         <h2 className="text-sm sm:text-base font-medium text-white mb-1">
           My Wellness Settings
         </h2>

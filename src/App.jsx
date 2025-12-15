@@ -2,9 +2,8 @@
 
 import React, { useEffect, Suspense, lazy } from "react";
 
-import {BrowserRouter, Routes, Route} from "react-router-dom";
+import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
 
-import {useThemeEngine} from "./hooks/useThemeEngine";
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 
 import OSLayout from "./layouts/OSLayout";
@@ -102,9 +101,6 @@ import DirectMessagePage from "./apps/social/DirectMessagePage";
 import ConnectionsPage from "./apps/social/ConnectionsPage";
 
 const App = () => {
-  // Initialize theme engine globally - this controls <html> theme classes
-  useThemeEngine();
-
   // Initialize memory system (PHASE 44)
   useEffect(() => {
     bootstrapMemory();
@@ -142,8 +138,9 @@ const App = () => {
           <Route path="/directory/:domain" element={<DirectoryWorkspace />} />
           <Route path="/directory/:domain/:id" element={<DirectoryDetailWorkspace />} />
           <Route path="/guide" element={<GuidePage />} />
-          {/* Phase 70: Route LivingGuidePageV3 */}
-          <Route path="/living/v3" element={<LivingGuidePageV3 />} />
+          {/* Phase A1: Canonical /living route */}
+          <Route path="/living" element={<LivingGuidePageV3 />} />
+          <Route path="/living/v3" element={<Navigate to="/living" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
@@ -272,42 +269,25 @@ const App = () => {
             }
           />
 
-          {/* Provider/Admin Routes - Hidden from public nav, accessible via direct URL */}
+          {/* Phase A1: Redirect /providers/* to canonical /provider/* */}
           <Route
             path="/providers"
-            element={
-              <RequireAuth>
-                <RequireRole allowedRoles={["provider", "admin", "superadmin"]}>
-                  <ProvidersPage />
-                </RequireRole>
-              </RequireAuth>
-            }
+            element={<Navigate to="/provider" replace />}
           />
+          <Route
+            path="/providers/dashboard"
+            element={<Navigate to="/provider/dashboard" replace />}
+          />
+          <Route
+            path="/providers/clients/:clientId"
+            element={<Navigate to="/provider/clients/:clientId" replace />}
+          />
+          {/* Phase A1: Ensure timeline is under /provider, not /providers */}
           <Route
             path="/provider/clients/:clientId/timeline"
             element={
               <RequireAuth>
                 <ClientTimelinePage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/providers/dashboard"
-            element={
-              <RequireAuth>
-                <RequireRole allowedRoles={["provider", "admin", "superadmin"]}>
-                  <ProviderDashboardPage />
-                </RequireRole>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/providers/clients/:clientId"
-            element={
-              <RequireAuth>
-                <RequireRole allowedRoles={["provider", "admin", "superadmin"]}>
-                  <ClientDetailPage />
-                </RequireRole>
               </RequireAuth>
             }
           />

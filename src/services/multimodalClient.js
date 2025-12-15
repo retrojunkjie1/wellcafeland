@@ -34,6 +34,18 @@ const ENDPOINTS = {
  * Unified Guide Engine - High-intelligence, emotionally-aware, multimodal guide
  * Trained for wellness, addiction recovery, spiritual stability, and trauma-informed dialogue
  * 
+ * CANONICAL AI ENTRY POINT: All primary conversational AI flows use this function.
+ * Endpoint: /multimodalChat
+ * 
+ * Agent Intent Mapping (modes → agent personalities):
+ * - "default" → Living Guide (primary conversational companion)
+ * - "breathing" → Breathwork Healer (focused breathwork guidance)
+ * - "grounding" → Grounding Healer (sensory grounding support)
+ * - "education" → Oracle (reflective, educational content)
+ * - "self_surgeon" → Guided self-inquiry (deep introspection)
+ * 
+ * NOTE: Mode names are internal only. Never display raw mode values in UI.
+ * 
  * @param {string} query - User's text query
  * @param {Object} options - Configuration options
  * @param {Array} options.messages - Message history array of {role, content}
@@ -318,6 +330,13 @@ export async function guideEngine(query, options = {}) {
 
 /**
  * Send chat with multimodal support
+ * 
+ * CANONICAL AI ENTRY POINT: Primary function for multimodal chat interactions.
+ * Endpoint: /multimodalChat
+ * 
+ * Use this for chat flows that need audio/video support.
+ * For simple text conversations, use guideEngine() instead.
+ * 
  * @param {Object} params - { messages: Array<{role, content}>, metadata?: Object, mode?: string }
  * @returns {Promise<{ok: boolean, type: string, text?: string, audioUrl?: string, videoUrl?: string, raw?: Object}>}
  */
@@ -554,7 +573,14 @@ function base64ToBlob(base64, mimeType) {
 }
 
 /**
- * @deprecated Use guideEngine() instead
+ * @deprecated LEGACY - Use guideEngine() or sendChatMultimodal() instead
+ * 
+ * This function is kept for backward compatibility but should NOT be used for new features.
+ * It falls back to /aiSession (legacy endpoint) which is restricted to:
+ * - Session templates (admin tools)
+ * - Older tool integrations
+ * 
+ * Legacy AI – restricted scope. Not a personality, just a utility.
  */
 export async function callWellnessChat({ messages, mode = "default" }) {
   const lastMessage = messages[messages.length - 1];

@@ -1,5 +1,6 @@
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { withFrom } from "@/navigation/linkState";
 import { LifeBuoy, Home, Wallet, Hospital, MapPin, PhoneCall, Search } from "lucide-react";
 
 const CARDS = [
@@ -55,6 +56,7 @@ const CARDS = [
 
 const AssistanceHubPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="flex h-full flex-col bg-slate-950">
@@ -74,9 +76,10 @@ const AssistanceHubPage = () => {
               When life outside the app is loud, this is where WellnessCafe rolls up its sleeves.
             </p>
           </div>
-          {/* Phase 70: Link to AssistancePage */}
+          {/* Phase A1: Link to AssistancePage with from state */}
           <Link
             to="/assistance/request"
+            {...withFrom(location)}
             className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs text-white/80 hover:bg-white/10 transition"
           >
             Request Help
@@ -93,7 +96,7 @@ const AssistanceHubPage = () => {
                 type="button"
                 onClick={() => {
                   if (card.action === "navigate" && card.to) {
-                    navigate(card.to);
+                    navigate(card.to, withFrom(location));
                   }
                 }}
                 className="flex h-full flex-col items-start rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/95 p-4 text-left shadow-sm transition hover:border-amber-300/40 hover:shadow-[0_0_30px_-12px_rgba(251,191,36,0.4)]"

@@ -125,7 +125,8 @@ class ApiClient {
     })
   }
 
-  // AI Media endpoints
+  // Legacy AI endpoints – restricted scope: Session/media management only
+  // NOT for primary conversational AI (use guideEngine() or sendChatMultimodal() instead)
   async getMedia() {
     return this.request('/aiMedia')
   }

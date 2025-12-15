@@ -15,7 +15,7 @@ const PROMPTS = [
   "Talk me off the ledge",
 ];
 
-const sendToAI = async (text, setThinking, addAssistant, setError) => {
+const sendToLivingGuide = async (text, setThinking, addLivingGuideMessage, setError) => {
   try {
     setThinking(true);
     setError(null);
@@ -27,16 +27,16 @@ const sendToAI = async (text, setThinking, addAssistant, setError) => {
     if (!result.ok) {
       const errorMsg = result.error || "I reached for our higher counsel but the line was faint. Try again in a few breaths.";
       setError("The guide is quiet for a moment. Try again shortly.");
-      addAssistant(errorMsg);
+      addLivingGuideMessage(errorMsg);
       return;
     }
 
     const reply = result.content || "I'm here. Let's take this one breath at a time.";
-    addAssistant(reply);
+    addLivingGuideMessage(reply);
   } catch (err) {
-    console.error("AI request failed:", err);
+    console.error("Living Guide request failed:", err);
     setError("Network error. Please try again.");
-    addAssistant(
+    addLivingGuideMessage(
       "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment."
     );
   } finally {
@@ -72,7 +72,7 @@ const GuidePage = () => {
     const lastMsg = messages[messages.length - 1];
     if (lastMsg && lastMsg.role === "user" && lastMsg.id !== lastSentIdRef.current) {
       lastSentIdRef.current = lastMsg.id;
-      sendToAI(lastMsg.content, setThinking, addAssistantMessage, setError);
+      sendToLivingGuide(lastMsg.content, setThinking, addAssistantMessage, setError);
       
       // Save to guest storage if in guest mode
       if (identity.mode === "guest") {
@@ -89,7 +89,7 @@ const GuidePage = () => {
     if (!text) return;
     addUserMessage(text);
     setInput("");
-    await sendToAI(text, setThinking, addAssistantMessage, setError);
+    await sendToLivingGuide(text, setThinking, addAssistantMessage, setError);
     
     // Save to guest storage if in guest mode
     if (identity.mode === "guest") {
@@ -102,7 +102,7 @@ const GuidePage = () => {
 
   const handleSuggestion = async (prompt) => {
     addUserMessage(prompt);
-    await sendToAI(prompt, setThinking, addAssistantMessage, setError);
+    await sendToLivingGuide(prompt, setThinking, addAssistantMessage, setError);
     
     if (identity.mode === "guest") {
       guestStorage.addGuideMessage({
@@ -128,8 +128,8 @@ const GuidePage = () => {
             <MessageCircle className="h-5 w-5 text-wcGold" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white">Your Wellness Guide</h1>
-            <p className="text-xs text-white/60">Living AI · Present With You</p>
+            <h1 className="text-sm font-semibold text-white">Living Guide</h1>
+            <p className="text-xs text-white/60">Present with you</p>
           </div>
         </div>
         <button

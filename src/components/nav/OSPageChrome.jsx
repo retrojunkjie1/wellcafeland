@@ -1,32 +1,59 @@
 // src/components/nav/OSPageChrome.jsx
-// Phase 70: Universal Navigation System - Global Page Chrome
+// Phase A1: Canonical Navigation Chrome
 
 import React from "react";
-import { useLocation } from "react-router-dom";
-import { BackButton } from "./BackButton";
-import { Breadcrumbs } from "./Breadcrumbs";
-import { getRouteMeta, ROOT_ROUTES } from "../../navigation/routeMeta";
+import { useLocation, Link } from "react-router-dom";
+import { useSmartNav } from "../../navigation/useSmartNav";
+import { isRootRoute } from "../../navigation/navConfig";
 
 export function OSPageChrome() {
   const location = useLocation();
-  const meta = getRouteMeta(location.pathname);
+  const { canGoBack, back, crumbs, title } = useSmartNav();
 
-  if (ROOT_ROUTES.includes(location.pathname)) return null;
+  // Hide chrome for root routes
+  if (isRootRoute(location.pathname)) return null;
 
-  // Minimal chrome if desired
-  const title = meta?.title || "WellnessCafe";
+  // Hide chrome for editor routes (they have their own chrome)
+  const hideChrome = location.pathname.includes("/notes/") || location.pathname.includes("/care-plan/");
+  if (hideChrome) return null;
+
+  // Don't show chrome if no title
+  if (!title) return null;
 
   return (
-    <div className="sticky top-0 z-40 border-b border-white/10 bg-black/55 backdrop-blur-md">
+    <div className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-md glass-panel">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          <BackButton />
-          <div className="text-right">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-white/50">Location</p>
+          {canGoBack && (
+            <button
+              type="button"
+              onClick={back}
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 active:scale-[0.99] transition"
+            >
+              <span className="text-sm">←</span>
+              <span className="uppercase tracking-[0.22em]">Back</span>
+            </button>
+          )}
+          <div className="text-right flex-1">
             <h1 className="text-sm md:text-base font-semibold text-white">{title}</h1>
           </div>
         </div>
-        <Breadcrumbs />
+        {crumbs.length > 0 && (
+          <nav className="flex items-center gap-2 text-[11px] text-white/55">
+            {crumbs.map((crumb, idx) => (
+              <React.Fragment key={crumb.to}>
+                {idx > 0 && <span className="text-white/25">›</span>}
+                {idx === crumbs.length - 1 ? (
+                  <span className="text-white/70">{crumb.label}</span>
+                ) : (
+                  <Link className="hover:text-amber-200 transition" to={crumb.to}>
+                    {crumb.label}
+                  </Link>
+                )}
+              </React.Fragment>
+            ))}
+          </nav>
+        )}
       </div>
     </div>
   );

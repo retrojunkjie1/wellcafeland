@@ -11,7 +11,8 @@ import { OSPageChrome } from "@/components/nav/OSPageChrome";
 import { featureFlags } from "@/config/featureFlags";
 // Navigation history tracking
 import { navPush } from "@/navigation/navHistory";
-import BackButton from "@/components/navigation/BackButton";
+// Phase A1: Canonical navigation
+import { isRootRoute } from "@/navigation/navConfig";
 // Auth context for guest mode detection
 import { useAuth } from "@/context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
@@ -115,16 +116,15 @@ const OSLayout = () => {
     <div className="flex h-screen flex-col bg-slate-950 text-white">
       {/* Global Guest Mode Banner */}
       {isGuest && (
-        <div className="bg-yellow-500/10 text-yellow-600 text-sm px-4 py-2 border-b border-yellow-500/20">
-          You're using WellnessCafe in guest mode. Progress is not saved.
+        <div className="bg-yellow-500/10 text-yellow-600 text-xs px-4 py-1.5 border-b border-yellow-500/20">
+          Guest mode • Progress not saved
         </div>
       )}
 
       {/* Top App Bar */}
-      <header className="flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/90 px-4 py-2 sm:px-6 sm:py-3 backdrop-blur">
-        {/* Left: Back Button + Logo/Home */}
+      <header className="flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/90 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3">
+        {/* Left: Logo/Home */}
         <div className="flex items-center gap-3 min-w-0">
-          <BackButton className="shrink-0" />
           <button
             type="button"
             onClick={() => navigate("/")}
@@ -153,20 +153,26 @@ const OSLayout = () => {
         </div>
 
         {/* Right: User identity + emotion + live indicator */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {featureFlags.showEmotionTelemetry && (
+            <div className="flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] shrink-0">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400/80 flex-shrink-0" />
+              <span className="text-white/70 whitespace-nowrap truncate max-w-[80px]">Emotion</span>
+            </div>
+          )}
           {featureFlags.showAnonymousBadge && (
-            <div className="flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] sm:text-xs shrink-0">
+            <div className="flex items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] sm:text-xs shrink-0">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
               <span className="text-white/70 whitespace-nowrap">Anonymous</span>
             </div>
           )}
-          {isLiveSessionActive && (
+          {featureFlags.showLiveSessionStatus && isLiveSessionActive && (
             <>
-              <div className="hidden sm:flex flex-col items-end shrink-0">
-                <span className="text-[11px] uppercase tracking-[0.16em] text-white/50">
+              <div className="hidden sm:flex flex-col items-end shrink-0 min-w-0">
+                <span className="text-[11px] uppercase tracking-[0.16em] text-white/50 truncate">
                   LIVE SESSION
                 </span>
-                <span className="text-xs text-amber-200/90">Living Guide Online</span>
+                <span className="text-xs text-amber-200/90 truncate">Living Guide Online</span>
               </div>
               <div className="h-8 w-[1px] bg-white/10 hidden sm:block shrink-0" />
             </>

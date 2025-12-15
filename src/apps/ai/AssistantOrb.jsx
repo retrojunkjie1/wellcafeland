@@ -78,7 +78,7 @@ const AssistantOrb = () => {
         type="button"
         onClick={handleOpenConsole}
         className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 shadow-lg hover:bg-amber-400 transition-colors"
-        aria-label="Open your Wellness guide"
+        aria-label="Open Living Guide"
       >
         {isThinking ? (
           <div className="h-5 w-5 animate-ping rounded-full bg-black/60" />

@@ -14,9 +14,11 @@ const SessionsTemplatesPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load templates from /aiSession on mount
+  // Legacy AI – restricted scope: Session templates only
+  // This uses /aiSession (legacy endpoint) for admin template management
+  // NOT for primary conversational AI (that uses /multimodalChat via guideEngine)
   useEffect(() => {
-    document.title = "AI Sessions & Templates - WellnessCafe";
+    document.title = "Session Templates - WellnessCafe";
     trackPageView("sessions_templates");
     fetchTemplates();
   }, []);
@@ -30,6 +32,7 @@ const SessionsTemplatesPage = () => {
       }
       setError(null);
 
+      // Legacy AI endpoint – restricted to template management only
       const response = await apiFetch("/aiSession", {
         method: "POST",
         body: {

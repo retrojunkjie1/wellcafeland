@@ -2,7 +2,8 @@
 // Recovery circles listing page
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { withFrom } from "@/navigation/linkState";
 import { Users, Heart, Sparkles, Calendar } from "lucide-react";
 import { listCircles, joinCircle, getUserCircles } from "@/services/circlesService";
 import PageHeader from "@/components/navigation/PageHeader";
@@ -39,7 +40,7 @@ const CirclesPage = () => {
       const result = await joinCircle(circleId);
       if (result.ok) {
         await loadCircles(); // Reload to update membership
-        navigate(`/circles/${circleId}`);
+        navigate(`/circles/${circleId}`, withFrom(location));
       }
     } catch (err) {
       console.error("Failed to join circle:", err);
@@ -109,7 +110,7 @@ const CirclesPage = () => {
 
                   {isMember ? (
                     <button
-                      onClick={() => navigate(`/circles/${circle.id}`)}
+                      onClick={() => navigate(`/circles/${circle.id}`, withFrom(location))}
                       className="w-full px-4 py-2 rounded-lg border border-wcGold/30 bg-wcGold/10 text-wcGold hover:bg-wcGold/20 transition text-sm"
                     >
                       Open Circle

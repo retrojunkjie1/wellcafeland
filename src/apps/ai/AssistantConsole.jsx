@@ -12,7 +12,7 @@ const PROMPTS = [
   "Talk me off the ledge",
 ];
 
-const sendToAI = async (text, setThinking, addAssistant, setError) => {
+const sendToLivingGuide = async (text, setThinking, addLivingGuideMessage, setError) => {
   try {
     setThinking(true);
     setError(null);
@@ -24,29 +24,29 @@ const sendToAI = async (text, setThinking, addAssistant, setError) => {
     if (!result.ok) {
       const errorMsg = result.error || "I reached for our higher counsel but the line was faint. Try again in a few breaths.";
       setError("The guide is quiet for a moment. Try again shortly.");
-      addAssistant(errorMsg);
+      addLivingGuideMessage(errorMsg);
       return;
     }
 
     const reply = result.content || "I'm here. Let's take this one breath at a time.";
-    addAssistant(reply);
+    addLivingGuideMessage(reply);
   } catch (err) {
-    console.error("AI request failed:", err);
+    console.error("Living Guide request failed:", err);
     
     // More specific error handling
     if (err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")) {
       setError("Network connection failed. Please check your internet connection.");
-      addAssistant(
+      addLivingGuideMessage(
         "I couldn't reach the wider network, but I'm still right here with you. Please check your connection and try again."
       );
     } else if (err.message?.includes("timeout") || err.name === "TimeoutError") {
       setError("The request took too long. Please try again.");
-      addAssistant(
+      addLivingGuideMessage(
         "The connection timed out. I'm still here with you. Try again when you're ready."
       );
     } else {
       setError("Network error. Please try again.");
-      addAssistant(
+      addLivingGuideMessage(
         "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment."
       );
     }
@@ -77,7 +77,7 @@ const AssistantConsole = () => {
     const lastMsg = messages[messages.length - 1];
     if (lastMsg && lastMsg.role === "user" && lastMsg.id !== lastSentIdRef.current) {
       lastSentIdRef.current = lastMsg.id;
-      sendToAI(lastMsg.content, setThinking, addAssistantMessage, setError);
+      sendToLivingGuide(lastMsg.content, setThinking, addAssistantMessage, setError);
     }
   }, [isConsoleOpen, isThinking, messages, addAssistantMessage, setThinking, setError]);
 
@@ -86,12 +86,12 @@ const AssistantConsole = () => {
     if (!text) return;
     addUserMessage(text);
     setInput("");
-    await sendToAI(text, setThinking, addAssistantMessage, setError);
+    await sendToLivingGuide(text, setThinking, addAssistantMessage, setError);
   };
 
   const handleSuggestion = async (prompt) => {
     addUserMessage(prompt);
-    await sendToAI(prompt, setThinking, addAssistantMessage, setError);
+    await sendToLivingGuide(prompt, setThinking, addAssistantMessage, setError);
   };
 
   const handleKeyDown = async (event) => {
@@ -115,7 +115,7 @@ const AssistantConsole = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
             <div className="flex items-center gap-3">
               <MessageCircle className="h-5 w-5 text-wcGold" />
-              <span className="text-sm text-white/80">Wellness Guide</span>
+              <span className="text-sm text-white/80">Living Guide</span>
             </div>
             <span className="text-sm text-white/50">Click to chat</span>
           </div>
@@ -127,7 +127,7 @@ const AssistantConsole = () => {
             <div className="flex items-center justify-between px-6 py-3 border-b border-white/5">
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-wcGold" />
-                <span className="text-base font-medium text-white">Wellness Guide</span>
+                <span className="text-base font-medium text-white">Living Guide</span>
               </div>
               <button
                 type="button"

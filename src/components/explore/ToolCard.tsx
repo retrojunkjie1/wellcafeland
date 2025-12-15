@@ -1,10 +1,11 @@
 // src/components/explore/ToolCard.tsx
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import type { DailyPracticeTool } from '../../tools/toolsTypes';
 import { luxuryRadii, luxuryShadows, luxuryGradients } from '../../theme/luxuryTheme';
+import { withFrom } from '../../navigation/linkState';
 
 interface ToolCardProps {
   tool: DailyPracticeTool;
@@ -14,6 +15,7 @@ interface ToolCardProps {
 const categoryLabel = (cat: string) => cat || 'Practice';
 
 export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'grid' }) => {
+  const location = useLocation();
   const firstStep = tool.steps[0];
 
   return (
@@ -26,6 +28,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'grid' }) =>
     >
       <Link
         to={`/tools/${tool.id}`}
+        {...withFrom(location)}
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/80 rounded-[1.75rem]"
       >
         <motion.div

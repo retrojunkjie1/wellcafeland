@@ -5,7 +5,8 @@
 // Hybrid luxury aesthetic with glassmorphism and ambient animations
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { withFrom } from "@/navigation/linkState";
 import { trackPageView } from "@/services/telemetry";
 import { ToolsRegistry, getAllCategories, getToolsByCategory } from "@/engines/tools/ToolsRegistry";
 import { dailyPracticeTools, getDailyPracticeToolsByCategory, getDailyPracticeCategories, getCategoryCount } from "@/tools/toolsBridge";
@@ -210,7 +211,7 @@ const ToolsPageCinematic = () => {
               {toolContent.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                  onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`, withFrom(location))}
                   className="
                     text-left rounded-xl
                     bg-white/[0.05] border border-white/10

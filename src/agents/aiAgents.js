@@ -3,6 +3,8 @@
 // High-level helpers so the frontend can ask for specific "voices"
 // The heavy logic still lives in aiBrain.js on Firebase.
 
+// Legacy AI – restricted scope: Agent utilities only
+// This endpoint is used for agent orchestration, not primary conversational AI
 const SESSION_ENDPOINT = "/aiSession";
 
 /**

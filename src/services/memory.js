@@ -1,6 +1,8 @@
 // src/services/memory.js
 
-// Thin front-end helper that talks to aiSession, which then talks to Pinecone.
+// Legacy AI – restricted scope: Memory service only
+// Thin front-end helper that talks to aiSession (legacy endpoint), which then talks to Pinecone.
+// NOT for primary conversational AI (use guideEngine() or sendChatMultimodal() instead)
 
 const MEMORY_ENDPOINT = "/aiSession";
 
