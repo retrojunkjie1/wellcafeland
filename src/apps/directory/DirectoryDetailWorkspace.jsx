@@ -2,7 +2,8 @@
 // Directory item detail view
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { withFrom } from "@/navigation/linkState";
 import { MapPin, Phone, Mail, ExternalLink, Heart, FileText, ArrowLeft } from "lucide-react";
 import { getDirectoryItem, saveFavoriteResource, saveResourcePlan } from "@/services/directoryService";
 
@@ -112,7 +113,10 @@ const DirectoryDetailWorkspace = () => {
           <p className="text-sm text-white/60 mb-4">Resource not found</p>
           <button
             type="button"
-            onClick={() => navigate(`/directory/${domain}`)}
+            onClick={() => {
+              const from = location.state?.from || `/directory/${routeDomain}`;
+              navigate(withFrom(`/directory/${routeDomain}`, { pathname: from }));
+            }}
             className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 transition"
           >
             Back to Directory
@@ -128,7 +132,10 @@ const DirectoryDetailWorkspace = () => {
       <div className="border-b border-white/10 bg-slate-950 px-6 py-4">
           <button
             type="button"
-            onClick={() => navigate(`/directory/${routeDomain}`)}
+            onClick={() => {
+              const from = location.state?.from || `/directory/${routeDomain}`;
+              navigate(withFrom(`/directory/${routeDomain}`, { pathname: from }));
+            }}
             className="flex items-center gap-2 text-sm text-white/70 hover:text-white mb-3 transition"
           >
             <ArrowLeft className="h-4 w-4" />

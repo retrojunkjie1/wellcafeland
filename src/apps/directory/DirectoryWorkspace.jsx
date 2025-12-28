@@ -2,7 +2,8 @@
 // Global Directory workspace - ChatGPT style, minimal
 
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { withFrom } from "@/navigation/linkState";
 import { Search, MapPin, Tag, ExternalLink, Heart, FileText, Loader2 } from "lucide-react";
 import { searchResources } from "@/services/resourceSearch";
 import { saveFavoriteResource } from "@/services/directoryService";
@@ -56,6 +57,7 @@ const DOMAIN_CONFIG = {
 const DirectoryWorkspace = () => {
   const { domain } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   // Map domain names to backend domain format
   const domainMap = {
     housing: "housing",
@@ -393,7 +395,7 @@ const DirectoryWorkspace = () => {
               <div
                 key={item.id || item.url}
                 className="w-full rounded-lg border border-white/10 bg-white/5 p-3 sm:p-4 hover:bg-white/10 transition cursor-pointer break-words"
-                onClick={() => navigate(`/directory/${domain}/${encodeURIComponent(item.id || item.url)}`)}
+                onClick={() => navigate(withFrom(`/directory/${domain}/${encodeURIComponent(item.id || item.url)}`, location))}
               >
                 <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0 w-full sm:w-auto">

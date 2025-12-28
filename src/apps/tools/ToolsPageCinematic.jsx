@@ -18,6 +18,7 @@ import { AmbientOrbs } from "@/components/layout/AmbientOrbs";
 import { CategoryChips } from "@/components/explore/CategoryChips";
 import { ToolCard } from "@/components/explore/ToolCard";
 import { allTools } from "@/tools/toolResolver";
+import { featureFlags } from "@/config/featureFlags";
 
 const ToolsPageCinematic = () => {
   const navigate = useNavigate();

@@ -1,6 +1,3 @@
-// src/components/nav/OSPageChrome.jsx
-// Phase A1: Canonical Navigation Chrome
-
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { useSmartNav } from "../../navigation/useSmartNav";
@@ -10,21 +7,25 @@ export function OSPageChrome() {
   const location = useLocation();
   const { canGoBack, back, crumbs, title } = useSmartNav();
 
-  // Hide chrome for root routes
+  // Hide chrome for root routes only
   if (isRootRoute(location.pathname)) return null;
 
   // Hide chrome for editor routes (they have their own chrome)
-  const hideChrome = location.pathname.includes("/notes/") || location.pathname.includes("/care-plan/");
+  const hideChrome =
+    location.pathname.includes("/notes/") || location.pathname.includes("/care-plan/");
   if (hideChrome) return null;
 
-  // Don't show chrome if no title
+  // IMPORTANT C1 FIX:
+  // Do NOT hide chrome for /tools/:toolId — users need a consistent back affordance.
+  // Immersive sessions can still add a floating back button, but global chrome should not vanish.
+
   if (!title) return null;
 
   return (
-    <div className="sticky top-0 z-40 border-b border-white/10 bg-black/60 backdrop-blur-md glass-panel">
+    <div className="sticky top-0 z-40 border-b border-white/10 bg-black/45 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          {canGoBack && (
+          {canGoBack ? (
             <button
               type="button"
               onClick={back}
@@ -33,11 +34,15 @@ export function OSPageChrome() {
               <span className="text-sm">←</span>
               <span className="uppercase tracking-[0.22em]">Back</span>
             </button>
+          ) : (
+            <div />
           )}
-          <div className="text-right flex-1">
-            <h1 className="text-sm md:text-base font-semibold text-white">{title}</h1>
+
+          <div className="text-right flex-1 min-w-0">
+            <h1 className="text-sm md:text-base font-semibold text-white truncate">{title}</h1>
           </div>
         </div>
+
         {crumbs.length > 0 && (
           <nav className="flex items-center gap-2 text-[11px] text-white/55">
             {crumbs.map((crumb, idx) => (
@@ -58,4 +63,3 @@ export function OSPageChrome() {
     </div>
   );
 }
-

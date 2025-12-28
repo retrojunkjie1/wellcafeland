@@ -210,14 +210,7 @@ const ToolDetailPage = () => {
   if (!isSessionTool && recoveryBasicsContent) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6 space-y-8">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-4 text-xs font-medium text-amber-300 hover:text-amber-200 transition"
-        >
-          ← Back
-        </button>
-
+        {/* C1: Back button handled by OSPageChrome - no duplicate */}
         {/* Title */}
         <div className="space-y-2">
           <h1 className="text-3xl font-light tracking-tight text-white">
@@ -255,13 +248,7 @@ const ToolDetailPage = () => {
   if (!isSessionTool && content) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-4 text-xs font-medium text-amber-300 hover:text-amber-200"
-        >
-          ← Back
-        </button>
+        {/* C1: Back button handled by OSPageChrome - no duplicate */}
         <ContentViewer title={content.title} body={content.body} />
       </div>
     );
@@ -305,17 +292,6 @@ const ToolDetailPage = () => {
           ))}
         </div>
 
-        {/* back button */}
-        <div className="relative z-10 mb-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="text-xs font-medium text-amber-200/80 hover:text-amber-100"
-          >
-            ← Back
-          </button>
-        </div>
-
         <ToolSessionLayout
           tool={toolMeta}
           darkMode={darkMode}
@@ -337,13 +313,7 @@ const ToolDetailPage = () => {
   // Fallback content view if only markdown defined
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="mb-4 text-xs font-medium text-amber-300 hover:text-amber-200"
-      >
-        ← Back
-      </button>
+      {/* C1: Back button handled by OSPageChrome - no duplicate */}
       <ContentViewer title={content?.title} body={content?.body} />
     </div>
   );

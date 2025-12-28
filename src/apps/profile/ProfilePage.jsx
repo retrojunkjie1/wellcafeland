@@ -1,7 +1,7 @@
 // src/apps/profile/ProfilePage.jsx
 // Profile page with guest mode support
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
@@ -24,9 +24,23 @@ const ProfilePage = () => {
     navigate("/");
   };
 
-  const current = getTheme();
+  const [current, setCurrent] = useState(getTheme());
+
+  // Watch for theme changes (e.g., from other tabs or external changes)
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "wc_theme") {
+        setCurrent(getTheme());
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const toggleTheme = () => {
-    setTheme(current === "dark" ? "light" : "dark");
+    const next = current === "dark" ? "light" : "dark";
+    setTheme(next);
+    setCurrent(next); // Update local state immediately
   };
 
   return (
