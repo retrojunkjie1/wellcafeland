@@ -1,6 +1,12 @@
 // src/apps/providers/ProvidersPage.jsx
 // Provider Directory - Categories and provider listings
 
+// PHASE I: Provider Onboarding
+// - Provider registration flow
+// - Provider profile creation and verification
+// - Provider dashboard and tools
+// - Provider-client matching and communication
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {

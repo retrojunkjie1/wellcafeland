@@ -6,11 +6,13 @@ import React, { useMemo } from "react";
 export default function TrajectoryGraph({ messages = [] }) {
   // Extract emotional history from messages
   const emotionalHistory = useMemo(() => {
+    if (!Array.isArray(messages)) return [];
     const history = [];
     messages.forEach((msg) => {
-      if (msg.emotion && typeof msg.emotion.intensity === "number") {
+      if (msg && msg.emotion && typeof msg.emotion.intensity === "number") {
+        const intensity = Math.max(0, Math.min(1, Number(msg.emotion.intensity)));
         history.push({
-          intensity: msg.emotion.intensity,
+          intensity,
           timestamp: msg.timestamp || msg.createdAt || Date.now(),
         });
       }

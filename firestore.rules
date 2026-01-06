@@ -106,7 +106,29 @@ service cloud.firestore {
     // --- SYSTEM SETTINGS (flags, thresholds) ---
     match /system_settings/{docId} {
       // Only admin/superadmin can read and write
-      allow read, write: if hasAnyRole(['admin', 'superadmin']);
+      allow read, write: if hasAnyRole(['admin', 'superadmin']) || 
+        (signedIn() && request.auth.token.admin == true);
+    }
+
+    // --- FEATURE FLAGS ---
+    match /feature_flags/{docId} {
+      // Only admin can read and write
+      allow read, write: if hasAnyRole(['admin', 'superadmin']) || 
+        (signedIn() && request.auth.token.admin == true);
+    }
+
+    // --- TOOLS REGISTRY ---
+    match /tools_registry/{docId} {
+      // Only admin can read and write
+      allow read, write: if hasAnyRole(['admin', 'superadmin']) || 
+        (signedIn() && request.auth.token.admin == true);
+    }
+
+    // --- ROLES COLLECTION (admin role management) ---
+    match /roles/{uid} {
+      // Only admin can read and write
+      allow read, write: if hasAnyRole(['admin', 'superadmin']) || 
+        (signedIn() && request.auth.token.admin == true);
     }
 
     // --- SESSION TEMPLATES (MIR, Men's Group, Spiritual Concepts, etc.) ---
@@ -199,6 +221,91 @@ service cloud.firestore {
     match /agentExecutions/{executionId} {
       allow create: if true; // Allow anonymous for backward compatibility
       allow read, update, delete: if hasAnyRole(['admin', 'superadmin']);
+    }
+
+    // --- ADMIN COLLECTIONS ---
+    match /admin/{docId} {
+      allow read, write: if signedIn() && request.auth.token.admin == true;
+    }
+    match /admin/{collection}/{docId} {
+      allow read, write: if signedIn() && request.auth.token.admin == true;
+    }
+
+    // --- GOD-EYE SUPREME: SYSTEM SETTINGS ---
+    match /system_settings/{docId} {
+      allow read: if signedIn() && request.auth.token.admin == true;
+      allow write: if false; // Only via Functions
+    }
+
+    // --- GOD-EYE SUPREME: OVERRIDES ---
+    match /overrides/{docId} {
+      allow read: if signedIn() && request.auth.token.admin == true;
+      allow write: if false; // Only via Functions
+    }
+    match /overrides/history/{docId} {
+      allow read: if signedIn() && request.auth.token.admin == true;
+      allow write: if false; // Only via Functions
+    }
+
+    // --- GOD-EYE SUPREME: TELEMETRY (client can write own) ---
+    match /telemetry_events/{docId} {
+      // Clients can create events for themselves
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      // Clients can read their own
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      // Admins can read all
+      allow list, get: if signedIn() && request.auth.token.admin == true;
+      // No updates/deletes
+      allow update, delete: if false;
+    }
+
+    // --- GOD-EYE SUPREME: USER RUNTIME (client can update own) ---
+    match /user_runtime/{uid} {
+      // Client can update their own runtime
+      allow read, write: if signedIn() && request.auth.uid == uid;
+      // Admins can read all
+      allow list, get: if signedIn() && request.auth.token.admin == true;
+    }
+
+    // --- GOD-EYE SUPREME: RISK FORECAST (admin read only) ---
+    match /risk_forecast/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || request.auth.token.admin == true);
+      allow write: if false; // Only via Functions
+    }
+
+    // --- GOD-EYE SUPREME: INCIDENTS (admin only) ---
+    match /incidents/{collection}/{docId} {
+      allow read, write: if signedIn() && request.auth.token.admin == true;
+    }
+
+    // --- GOD-EYE SUPREME: ADMIN ACTIONS (audit log) ---
+    match /admin_actions/{docId} {
+      // Admins can create pending actions
+      allow create: if signedIn() && request.auth.token.admin == true && 
+                       request.resource.data.createdByUid == request.auth.uid;
+      // Admins can read all
+      allow read: if signedIn() && request.auth.token.admin == true;
+      // Updates only via Functions (status changes)
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // --- REAL HELP PROVIDERS (recovery resources) ---
+    match /realHelpProviders/{docId} {
+      // Public read allowed
+      allow read: if true;
+      // Write restricted to admin only
+      allow create, update: if signedIn() && request.auth.token.admin == true;
+      allow delete: if signedIn() && request.auth.token.admin == true;
+      // internalNotes field never exposed to non-admins (enforced in queries)
+    }
+
+    // --- RESOURCE INDEX (live ingestion from FindTreatment.gov) ---
+    match /resourceIndex/{docId} {
+      // Public read allowed (verified + unverified)
+      allow read: if true;
+      // Write only via Functions (no direct client writes)
+      allow write: if false;
     }
 
     // --- DEFAULT DENY ---

@@ -3,6 +3,7 @@
 import React, { useEffect, Suspense, lazy } from "react";
 
 import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
+import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 
@@ -90,6 +91,9 @@ import AdminRoute from "./components/AdminRoute";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
 import UnauthorizedPage from "./components/routing/UnauthorizedPage";
+import { AdminGuard } from "./admin/AdminGuard";
+import { AdminShell } from "./admin/AdminShell";
+import { AdminPage } from "./admin/AdminPage";
 
 // Phase 13: Social & Circles imports
 import CirclesPage from "./apps/circles/CirclesPage";
@@ -115,6 +119,7 @@ const App = () => {
           </div>
         }
       >
+        <RouteTracker />
         <Routes>
           {/* Preview - Standalone page, no layout */}
           <Route path="/preview/:token" element={<SessionPreviewPage />} />
@@ -334,7 +339,7 @@ const App = () => {
 
           {/* Admin/Superadmin Routes - Hidden from public nav, accessible via direct URL */}
           <Route
-            path="/admin"
+            path="/admin/console"
             element={
               <RequireAuth>
                 <RequireAdmin>
@@ -429,6 +434,10 @@ const App = () => {
               </RequireAuth>
             }
           />
+
+          {/* Phase I: God-Eye Admin Dashboard - Parameterized routes must come LAST */}
+          <Route path="/admin/:section" element={<AdminPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
 
           <Route path="*" element={<UnauthorizedPage />} />

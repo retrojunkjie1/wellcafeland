@@ -294,27 +294,66 @@ export const useOSStore = create((set, get) => ({
   },
 
   // Tool injection (only when verbally requested in chat)
-  injectToolIntoChat: (toolType, toolConfig) => {
-    const toolMessage = {
-      id: `tool-${Date.now()}`,
-      role: "tool",
-      type: toolType,
-      config: toolConfig,
-      timestamp: Date.now(),
-    };
-    set((state) => {
-      const newMessages = [...state.messages, toolMessage];
-      const updatedChats = state.chats.map((chat) =>
-        chat.id === state.currentChatId
-          ? { ...chat, messages: newMessages, updatedAt: Date.now() }
-          : chat
-      );
-      return {
-        messages: newMessages,
-        chats: updatedChats,
+  // TRUTH-GATE: Returns tool message only if tool actually opens successfully
+  injectToolIntoChat: async (toolType, toolConfig) => {
+    // Validate tool exists in registry
+    try {
+      const { validateToolId, getToolRoute } = await import("@/utils/toolRouter");
+      
+      if (!validateToolId(toolType)) {
+        console.error("[useOSStore] Attempted to inject invalid tool:", toolType);
+        // Truth-Gate: Return null - tool doesn't exist
+        return null;
+      }
+
+      const route = getToolRoute(toolType);
+      if (!route) {
+        console.error("[useOSStore] No route found for tool:", toolType);
+        return null;
+      }
+
+      // Create tool message
+      const toolMessage = {
+        id: `tool-${Date.now()}`,
+        role: "tool",
+        type: toolType,
+        config: toolConfig,
+        timestamp: Date.now(),
       };
-    });
-    return toolMessage;
+      
+      // Update state first
+      set((state) => {
+        const newMessages = [...state.messages, toolMessage];
+        const updatedChats = state.chats.map((chat) =>
+          chat.id === state.currentChatId
+            ? { ...chat, messages: newMessages, updatedAt: Date.now() }
+            : chat
+        );
+        return {
+          messages: newMessages,
+          chats: updatedChats,
+        };
+      });
+      
+      // Navigate to tool route (use navigate if available, fallback to location)
+      try {
+        // Try using React Router navigate if available
+        const { useNavigate } = await import("react-router-dom");
+        // Note: This won't work here as we're not in a component context
+        // Fallback to window.location
+        window.location.href = route;
+      } catch {
+        // Fallback: direct navigation
+        window.location.href = route;
+      }
+      
+      // Return tool message to confirm successful opening
+      return toolMessage;
+    } catch (err) {
+      console.error("[useOSStore] Tool injection error:", err);
+      // Truth-Gate: Return null on error - tool didn't open
+      return null;
+    }
   },
 
   setSystemState: (state) => {

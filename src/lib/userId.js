@@ -1,5 +1,7 @@
 // src/lib/userId.js
 
+import { safeUUID } from "../utils/uuid";
+
 /**
  * Get or create an anonymous user ID for this device.
  * This ID is:
@@ -16,7 +18,7 @@ export function getAnonymousUserId() {
     let id = localStorage.getItem(KEY);
     if (!id) {
       // Generate a new anonymous ID
-      id = "anon_" + crypto.randomUUID();
+      id = "anon_" + safeUUID();
       localStorage.setItem(KEY, id);
     }
     return id;

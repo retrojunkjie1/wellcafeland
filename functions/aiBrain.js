@@ -275,18 +275,33 @@ async function handleSession(req, res) {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Content-Type", "application/json"); // ALWAYS return JSON
 
   if (req.method === "OPTIONS") {
     return res.status(204).send("");
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ 
+      ok: false,
+      error: { code: "METHOD_NOT_ALLOWED", message: "Method not allowed" },
+      correlationId: req.body?.correlationId || "unknown",
+    });
   }
 
   try {
     const body = typeof req.body === "string" ? safeJsonParse(req.body, {}) : req.body || {};
     const userId = body.userId || "unknown";
+    const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Structured logging
+    console.log("[aiSession]", {
+      correlationId,
+      userId,
+      mode: body.mode || "default",
+      toolIntent: body.mode || body.metadata?.toolIntent || null,
+      schemaVersion: body.schemaVersion || "legacy",
+    });
 
     const mode = body.mode || "session";
     
@@ -326,11 +341,91 @@ async function handleSession(req, res) {
 
     // (Future) MODE: template_detail, admin_list, admin_save can be added here
 
+    // TOOL ROUTING: Handle tool-specific modes
+    const toolModes = ["breathing", "grounding", "self_surgeon", "urge-surfing", "journaling", "body-scan", "meditation", "education"];
+    if (toolModes.includes(mode)) {
+      // Normalize mode to tool ID (handle self_surgeon → self-surgeon)
+      const toolIdMap = {
+        "self_surgeon": "self-surgeon",
+        "urge-surfing": "urge-surfing",
+        "body-scan": "body-scan",
+      };
+      const toolId = toolIdMap[mode] || mode;
+      
+      const prompt =
+        body.prompt ||
+        body.message ||
+        body.text ||
+        (body.messages && body.messages.length > 0 && body.messages[body.messages.length - 1]?.content) ||
+        "Help me with a short, gentle recovery reflection.";
+
+      const context = body.context || "";
+
+      try {
+        const result = await runSimpleChat(prompt, context);
+        
+        // Validate tool exists in registry (server-side truth-gate)
+        const validTools = ["breathing", "grounding", "body-scan", "journaling", "self-surgeon", "urge-surfing", "meditation", "education"];
+        const normalizedToolId = toolIdMap[toolId] || toolId;
+        const toolExists = validTools.includes(normalizedToolId);
+        
+        // STANDARDIZED RESPONSE SCHEMA
+        const response = {
+          ok: true,
+          correlationId,
+          message: {
+            id: `msg_${Date.now()}`,
+            role: "assistant",
+            text: result.reply || result.content || "I'm here. Let's take this one breath at a time.",
+            meta: result.meta || {},
+          },
+          // Only include tool if it exists (Truth-Gate)
+          tool: toolExists ? {
+            name: normalizedToolId,
+            action: "open",
+            params: {},
+          } : null,
+        };
+        
+        console.log("[aiSession] Tool-mode response", {
+          correlationId,
+          toolRequested: toolId,
+          toolExists,
+          toolIncluded: !!response.tool,
+        });
+        
+        return res.status(200).json(response);
+      } catch (chatErr) {
+        console.error("[aiSession] Tool-mode chat error:", {
+          correlationId,
+          error: chatErr.message,
+          stack: chatErr.stack,
+        });
+        
+        // Return safe response WITHOUT tool (circuit-breaker: don't route to broken tool)
+        return res.status(500).json({
+          ok: false,
+          correlationId,
+          error: {
+            code: "CHAT_ERROR",
+            message: "Failed to generate response",
+          },
+          message: {
+            id: `msg_${Date.now()}`,
+            role: "assistant",
+            text: "I'm having trouble right now. Please try again in a moment.",
+          },
+          // NO tool on error (Truth-Gate: don't promise tool if we failed)
+        });
+      }
+    }
+
     // DEFAULT: simple chat / generic AI reply (backwards compatible)
     const prompt =
       body.prompt ||
       body.message ||
       body.text ||
+      (body.messages && body.messages.length > 0 && body.messages[body.messages.length - 1]?.content) ||
       "Help me with a short, gentle recovery reflection.";
 
     const context = body.context || "";
@@ -338,24 +433,61 @@ async function handleSession(req, res) {
     try {
       const result = await runSimpleChat(prompt, context);
       
-      // Ensure we return a consistent format
+      // STANDARDIZED RESPONSE SCHEMA (default chat mode)
       return res.status(200).json({
-        reply: result.reply || result.content || "I'm here. Let's take this one breath at a time.",
-        ...result, // Include any other fields for backwards compatibility
+        ok: true,
+        correlationId,
+        message: {
+          id: `msg_${Date.now()}`,
+          role: "assistant",
+          text: result.reply || result.content || "I'm here. Let's take this one breath at a time.",
+          meta: result.meta || {},
+        },
+        tool: null, // No tool in default chat mode
       });
     } catch (chatErr) {
-      console.error("Simple chat error:", chatErr);
+      console.error("[aiSession] Simple chat error:", {
+        correlationId,
+        error: chatErr.message,
+        stack: chatErr.stack,
+      });
+      
       return res.status(500).json({
-        error: "Chat error",
-        message: chatErr.message || "Failed to generate response",
-        reply: "I'm having trouble right now. Please try again in a moment.",
+        ok: false,
+        correlationId,
+        error: {
+          code: "CHAT_ERROR",
+          message: chatErr.message || "Failed to generate response",
+        },
+        message: {
+          id: `msg_${Date.now()}`,
+          role: "assistant",
+          text: "I'm having trouble right now. Please try again in a moment.",
+        },
+        tool: null,
       });
     }
   } catch (err) {
-    console.error("aiSession error:", err);
+    console.error("[aiSession] Top-level error:", {
+      correlationId: req.body?.correlationId || "unknown",
+      error: err.message,
+      stack: err.stack,
+    });
+    
+    // ALWAYS return JSON, never HTML or undefined
     return res.status(500).json({
-      error: "AI session error",
-      message: err.message || "Unknown error",
+      ok: false,
+      correlationId: req.body?.correlationId || "unknown",
+      error: {
+        code: "INTERNAL_ERROR",
+        message: err.message || "Unknown error",
+      },
+      message: {
+        id: `msg_${Date.now()}`,
+        role: "assistant",
+        text: "I'm having trouble right now. Please try again in a moment.",
+      },
+      tool: null,
     });
   }
 }

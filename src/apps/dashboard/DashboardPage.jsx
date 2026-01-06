@@ -139,7 +139,7 @@ const DashboardPage = () => {
 
   return (
 
-    <div className="mx-auto flex h-full max-w-5xl flex-col px-4 pb-6 pt-4 sm:px-6 lg:px-0">
+    <div className="mx-auto w-full max-w-5xl flex flex-col px-4 pb-6 pt-4 sm:px-6 lg:px-0 overflow-x-hidden">
 
       {/* Top header with user/session info */}
 
@@ -155,7 +155,7 @@ const DashboardPage = () => {
 
       <div className="mb-4 flex items-center justify-between gap-3">
 
-        <div className="inline-flex rounded-full bg-white/5 p-1 text-xs font-medium text-slate-300 backdrop-blur-sm">
+        <div className="flex flex-wrap rounded-full bg-white/5 p-1 text-xs font-medium text-slate-300 backdrop-blur-sm gap-1">
 
           <button
 
@@ -163,7 +163,7 @@ const DashboardPage = () => {
 
             onClick={() => setActiveView("moments")}
 
-            className={`rounded-full px-3 py-1 transition ${
+            className={`rounded-full px-4 py-2 transition whitespace-nowrap ${
 
               activeView === "moments"
 
@@ -185,7 +185,7 @@ const DashboardPage = () => {
 
             onClick={() => setActiveView("insights")}
 
-            className={`rounded-full px-3 py-1 transition ${
+            className={`rounded-full px-4 py-2 transition whitespace-nowrap ${
 
               activeView === "insights"
 
@@ -207,7 +207,7 @@ const DashboardPage = () => {
 
             onClick={() => setActiveView("signals")}
 
-            className={`rounded-full px-3 py-1 transition ${
+            className={`rounded-full px-4 py-2 transition whitespace-nowrap ${
 
               activeView === "signals"
 
@@ -231,7 +231,7 @@ const DashboardPage = () => {
 
       {activeView === "moments" && (
 
-        <div className="flex-1 space-y-4 overflow-y-auto pb-24">
+        <div className="flex-1 space-y-4 overflow-visible">
 
           <div className="rounded-3xl bg-white/5 px-4 py-4 text-sm text-slate-200 shadow-lg shadow-black/40 backdrop-blur-md">
 
@@ -261,7 +261,7 @@ const DashboardPage = () => {
 
       {activeView === "insights" && (
 
-        <div className="flex-1 space-y-4 overflow-y-auto pb-24">
+        <div className="flex-1 space-y-4 overflow-visible">
 
           <div className="rounded-3xl bg-white/5 px-4 py-4 text-sm text-slate-200 shadow-lg shadow-black/40 backdrop-blur-md">
 
@@ -291,7 +291,7 @@ const DashboardPage = () => {
 
       {activeView === "signals" && (
 
-        <div className="flex-1 space-y-4 overflow-y-auto pb-24">
+        <div className="flex-1 space-y-4 overflow-visible">
 
           {/* Emotion + Risk */}
 

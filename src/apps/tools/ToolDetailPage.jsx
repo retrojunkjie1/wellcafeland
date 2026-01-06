@@ -54,6 +54,7 @@ const ToolDetailPage = () => {
   }, [isSessionActive]);
 
   // load tool metadata from registry or toolResolver (Phase 59B)
+  // Breathing tool MUST always render (offline-safe, no dependencies)
   const loadedToolMeta = useMemo(() => {
     // First try toolResolver (includes Healer Toolkit tools)
     const resolvedTool = getToolById(decodedId);
@@ -64,11 +65,34 @@ const ToolDetailPage = () => {
         name: resolvedTool.title,
         description: resolvedTool.summary,
         category: resolvedTool.category,
-        sessionType: null, // Healer tools don't have sessionType yet
+        sessionType: resolvedTool.id === "breathing" ? "breathing" : null, // Ensure breathing has sessionType
       };
     }
     // Fallback to ToolsRegistry for legacy tools
-    return ToolsRegistry?.find((t) => t.id === decodedId) || null;
+    const registryTool = ToolsRegistry?.find((t) => t.id === decodedId) || null;
+    if (registryTool) {
+      // Map tool IDs to sessionType for breathing and grounding tools
+      // Breathing tool MUST have sessionType for rendering
+      const sessionTypeMap = {
+        breathing: "breathing",
+        grounding: "grounding",
+      };
+      return {
+        ...registryTool,
+        sessionType: sessionTypeMap[registryTool.id] || (registryTool.id === "breathing" ? "breathing" : null),
+      };
+    }
+    // Fallback: If tool ID is "breathing" but not found, create minimal meta to ensure it renders
+    if (decodedId === "breathing") {
+      return {
+        id: "breathing",
+        name: "Breathing Exercises",
+        description: "4-7-8, Box, and Coherent breathing to calm your nervous system.",
+        category: "body-breath",
+        sessionType: "breathing", // Critical: must have sessionType to render
+      };
+    }
+    return null;
   }, [decodedId]);
 
   useEffect(() => {
@@ -180,9 +204,32 @@ const ToolDetailPage = () => {
   ];
 
   const renderSessionView = () => {
-    if (!toolMeta?.sessionType) return null;
+    // Phase 4: Breathing tool MUST always render (offline-safe, no dependencies)
+    // Ensure breathing tools always get sessionType
+    let sessionType = toolMeta?.sessionType;
+    if (!sessionType) {
+      // Map by category first
+      if (toolMeta?.category === "breathing") {
+        sessionType = "breathing";
+      } else if (decodedId === "breathing" || decodedId?.includes("breathing")) {
+        sessionType = "breathing";
+      }
+    }
+    // Guard: Always render breathing tool even if metadata is incomplete
+    if (!sessionType && (decodedId === "breathing" || decodedId?.includes("breathing"))) {
+      // Force breathing type if ID matches
+      return (
+        <BreathingSessionView
+          isActive={isSessionActive}
+          onCycleComplete={() => setCycles((prev) => prev + 1)}
+          pattern={[4, 0, 6, 0]}
+          voiceEnabled={false}
+        />
+      );
+    }
+    if (!sessionType) return null;
 
-    switch (toolMeta.sessionType) {
+    switch (sessionType) {
       case "breathing":
         return (
           <BreathingSessionView
@@ -244,8 +291,48 @@ const ToolDetailPage = () => {
     );
   }
 
-  // If no session metadata is found, but content exists → fallback to markdown view
+  // If no session metadata is found, but content exists → check if it's breathing content
+  // For breathing content, show interactive orb + voice guide option
   if (!isSessionTool && content) {
+    const isBreathingContent = decodedId === "breathing" || 
+                                 decodedId === "tool.breathing.basic1" ||
+                                 decodedId?.includes("breathing") ||
+                                 content.title?.toLowerCase().includes("breathing") ||
+                                 content.tags?.includes("breathing");
+    
+    if (isBreathingContent) {
+      // Show interactive breathing view with orb and voice guide
+      return (
+        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+          <ToolSessionLayout
+            tool={{
+              id: "breathing",
+              name: content.title || "Breathing Reset",
+              description: content.body?.split("\n")[0] || "Calm your nervous system",
+              sessionType: "breathing",
+            }}
+            darkMode={darkMode}
+            isActive={isSessionActive}
+            onStart={handleStartSession}
+            onEnd={handleEndSession}
+            onClose={() => navigate("/tools")}
+            metrics={metrics}
+            soundEnabled={soundEnabled}
+            onToggleSound={() => setSoundEnabled((v) => !v)}
+            onToggleTheme={() => setDarkMode((v) => !v)}
+          >
+            <BreathingSessionView
+              isActive={isSessionActive}
+              onCycleComplete={() => setCycles((prev) => prev + 1)}
+              pattern={[4, 0, 6, 0]} // 4-6 breathing: inhale 4, exhale 6, no holds
+              voiceEnabled={soundEnabled} // Use soundEnabled state for voice guide
+            />
+          </ToolSessionLayout>
+        </div>
+      );
+    }
+    
+    // Non-breathing content: standard markdown view
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
         {/* C1: Back button handled by OSPageChrome - no duplicate */}

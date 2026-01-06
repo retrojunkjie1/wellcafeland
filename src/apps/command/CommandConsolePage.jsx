@@ -1,8 +1,9 @@
 // src/apps/command/CommandConsolePage.jsx
 // Command Console - All available WellnessCafe OS commands
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAdminGate } from "@/hooks/useAdminGate";
 import {
   MessageCircle,
   Search,
@@ -14,13 +15,26 @@ import {
   Settings,
   HelpCircle,
   Sparkles,
+  Eye,
 } from "lucide-react";
 
 const CommandConsolePage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { loading: adminLoading, isAdmin } = useAdminGate();
 
-  const OS_COMMANDS = [
+  // Handle admin commands
+  useEffect(() => {
+    const command = searchQuery.toLowerCase().trim();
+    if (command === "godseye" || command === "overseer") {
+      if (isAdmin) {
+        navigate("/admin/overseer");
+      }
+    }
+  }, [searchQuery, isAdmin, navigate]);
+
+  // Build commands list (add admin commands if user is admin)
+  const baseCommands = [
     {
       category: "Communication",
       commands: [
@@ -117,6 +131,25 @@ const CommandConsolePage = () => {
       ],
     },
   ];
+
+  // Add admin commands if user is admin
+  const OS_COMMANDS = !adminLoading && isAdmin
+    ? [
+        ...baseCommands,
+        {
+          category: "Admin",
+          commands: [
+            {
+              id: "godseye",
+              label: "God's Eye — Overseer",
+              description: "Access the Overseer Console (Admin only)",
+              icon: Eye,
+              action: () => navigate("/admin/overseer"),
+            },
+          ],
+        },
+      ]
+    : baseCommands;
 
   const filteredCommands = OS_COMMANDS.map((category) => ({
     ...category,

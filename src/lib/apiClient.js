@@ -183,6 +183,16 @@ class ApiClient {
       method: 'DELETE',
     })
   }
+
+  // PHASE J: Monetization Endpoints
+  // - Subscription management (create, update, cancel)
+  // - Payment processing integration
+  // - Usage-based billing and limits
+  // - Premium feature access control
+  // async getSubscription() { ... }
+  // async createSubscription(planId) { ... }
+  // async updateSubscription(subscriptionId, data) { ... }
+  // async cancelSubscription(subscriptionId) { ... }
 }
 
 export const apiClient = new ApiClient()

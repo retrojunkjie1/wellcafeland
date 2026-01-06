@@ -1,20 +1,11 @@
 // src/firebase.js
 // Firebase initialization and exports
+// Centralized config from src/config/firebaseConfig.js
 
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
-// Firebase configuration
-// These should be set via environment variables or Firebase SDK auto-config
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "wellnesscafelanding",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
-};
+import { firebaseConfig } from "./config/firebaseConfig";
 
 // Initialize Firebase
 let app;
@@ -22,9 +13,12 @@ try {
   app = initializeApp(firebaseConfig);
 } catch (error) {
   console.error("Firebase initialization error:", error);
-  // Re-throw if Firebase is required
   throw error;
 }
+
+// Initialize App Check (safe, production-only)
+import { initAppCheck } from "./firebase/appCheck";
+initAppCheck(app);
 
 // Initialize Firebase services
 export const auth = getAuth(app);

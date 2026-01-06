@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useOSStore } from "@/stores/useOSStore";
 import { useAIStore } from "@/apps/ai/useAIStore";
+import { useAdminTelemetry } from "@/hooks/useAdminTelemetry";
 import MessageBubble from "./MessageBubble";
 import ToolBlock from "./ToolBlock";
 import WelcomeScreen from "./WelcomeScreen";
@@ -14,7 +15,7 @@ import DirectoryResultBlock from "./DirectoryResultBlock";
 import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
-import { sendChatMultimodal } from "@/services/multimodalClient";
+// Removed: using aiClient instead
 import { determineGuideResponse } from "@/services/decisionEngine";
 import {
   enrichMessageWithEmotion,
@@ -101,16 +102,33 @@ function detectDirectoryQuery(text) {
     return { domain: "real_help", query: text, priority };
   }
 
+  // Food queries
+  if (
+    lowerText.includes("need food") ||
+    lowerText.includes("i need food") ||
+    lowerText.includes("hungry") ||
+    lowerText.includes("food bank") ||
+    lowerText.includes("need groceries") ||
+    lowerText.includes("can't afford food") ||
+    lowerText.includes("food assistance") ||
+    lowerText.includes("meal")
+  ) {
+    return { domain: "food", query: text, priority: "food" };
+  }
+
   // Housing queries
   if (
     lowerText.includes("housing") ||
+    lowerText.includes("need housing") ||
+    lowerText.includes("i need housing") ||
     lowerText.includes("sober living") ||
     lowerText.includes("halfway house") ||
     lowerText.includes("transitional housing") ||
     lowerText.includes("emergency housing") ||
-    lowerText.includes("going to be homeless")
+    lowerText.includes("going to be homeless") ||
+    lowerText.includes("homeless")
   ) {
-    return { domain: "housing", query: text };
+    return { domain: "housing", query: text, priority: "housing" };
   }
 
   // Grants queries
@@ -167,9 +185,59 @@ const ChatPanel = () => {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
+  // Phase 1: isOffline state - derived from navigator.onLine, reactive but non-blocking
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== "undefined" ? !navigator.onLine : false
+  );
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  // PHASE H: Chat state preservation
+  const lastUnsentMessageRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const lastUserMessageRef = useRef(null);
+  // Connection state machine: idle → sending → awaiting_response → resolved → error
+  const connectionStateRef = useRef("idle");
+  const lastErrorMessageRef = useRef(null);
+  const offlineMessageQueueRef = useRef([]); // Message queue for offline sends
+  
+  // Hard reset fallback: Reset conversation state only (not auth/identity)
+  const resetConversationState = React.useCallback(() => {
+    connectionStateRef.current = "idle";
+    lastErrorMessageRef.current = null;
+    lastUnsentMessageRef.current = null;
+    offlineMessageQueueRef.current = []; // Clear offline queue on reset
+    if (abortControllerRef.current) {
+      try {
+        abortControllerRef.current.abort();
+      } catch {}
+      abortControllerRef.current = null;
+    }
+    setIsSending(false);
+    setThinking(false);
+    // Clear error messages from conversation (keep user messages)
+    const store = useOSStore.getState();
+    if (store.messages && Array.isArray(store.messages)) {
+      const filtered = store.messages.filter(m => 
+        !(m.type === "assistant_text" && 
+          (m.text?.includes("Still here with you") || 
+           m.text?.includes("Connection lost") ||
+           m.content?.includes("Still here with you")))
+      );
+      if (filtered.length !== store.messages.length) {
+        store.setMessages(filtered);
+      }
+    }
+  }, []);
+  // Defensive: Wrap telemetry hook to prevent crashes if it fails
+  let logEvent = () => {}; // Safe default
+  try {
+    const telemetry = useAdminTelemetry();
+    logEvent = telemetry?.logEvent || (() => {});
+  } catch (err) {
+    console.warn("[ChatPanel] AdminTelemetry hook failed:", err);
+    // Continue without telemetry
+  }
 
   const hasStarted = messages.length > 1; // More than just welcome message
 
@@ -181,23 +249,36 @@ const ChatPanel = () => {
     return "Good evening";
   }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+  // Chat transport: sendToAI - must be stable function, defined before any usage
+  const sendToAI = React.useCallback(async function sendToAIFn(text) {
+    // Phase 2: Guard against empty sends - prevent chat loop
+    if (!text || typeof text !== "string" || !text.trim() || text.trim().length === 0) {
+      console.warn("[ChatPanel] sendToAI called with invalid or empty text");
+      return;
     }
-  }, [input]);
 
-      const sendToAI = async (text) => {
-        setIsSending(true);
-        setThinking(true);
+    // Guard: Prevent duplicate sends
+    if (connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
+      console.warn("[ChatPanel] sendToAI called while already sending, ignoring");
+      return;
+    }
 
-        try {
-          // Phase 14: Crisis detection before processing
+    try {
+      // Preserve last unsent message
+      lastUnsentMessageRef.current = text;
+      lastUserMessageRef.current = text;
+
+      // Update connection state
+      connectionStateRef.current = "sending";
+      setIsSending(true);
+      setThinking(true);
+      lastErrorMessageRef.current = null;
+
+      // Create AbortController for this request
+      abortControllerRef.current = new AbortController();
+
+      try {
+        // Phase 14: Crisis detection before processing
           const { detectRiskPhrases } = await import("@/services/emotionSensor");
           const isCrisis = detectRiskPhrases(text);
           
@@ -283,271 +364,482 @@ const ChatPanel = () => {
             console.warn("[ChatPanel] Failed to compute tone profile for send:", err);
           }
 
-          // Call backend via sendChatMultimodal
-          const res = await sendChatMultimodal({
-            messages: messageHistory,
-            mode,
-            metadata: {
-              ...(decision ? {
-                emotion: decision.emotion,
-                spirit: decision.spirit,
-                forecast: decision.forecast,
-              } : {}),
-              humanMode: currentHumanMode,
-              toneProfile: currentToneProfile,
-              phrasingStyle: currentPhrasingStyle,
-            },
-          });
+        // Update state: sending → awaiting_response
+        connectionStateRef.current = "awaiting_response";
 
-          if (!res.ok) {
-            // If network fails but user requested a tool directly, open it anyway
-            if (directToolRequest) {
+        // Call backend via robust AI client
+        const { callAI } = await import("@/services/aiClient");
+        const res = await callAI("aiSession", {
+          messages: messageHistory,
+          mode,
+          metadata: {
+            ...(decision ? {
+              emotion: decision.emotion,
+              spirit: decision.spirit,
+              forecast: decision.forecast,
+            } : {}),
+            humanMode: currentHumanMode,
+            toneProfile: currentToneProfile,
+            phrasingStyle: currentPhrasingStyle,
+          },
+        }, abortControllerRef.current);
+
+        // Update state: awaiting_response → resolved/error
+        // Only update state if we actually got a response (not aborted/timeout)
+        if (res && typeof res === 'object') {
+          if (res.ok) {
+            connectionStateRef.current = "resolved";
+          } else {
+            connectionStateRef.current = "error";
+          }
+        }
+
+        // Log error for telemetry if failed
+        if (!res.ok) {
+          logEvent({
+            chat_disconnect_reason: res.status === 0 ? "network_error" : "server_error",
+            device_type: /iPad|iPhone|iPod/.test(navigator.userAgent) ? "ios" : 
+                         /Android/.test(navigator.userAgent) ? "android" : "desktop",
+            visibility_state: document.hidden ? "hidden" : "visible",
+          });
+        }
+
+        if (!res.ok) {
+          // Cleanup AbortController
+          abortControllerRef.current = null;
+          connectionStateRef.current = "error";
+
+          // TRUTH-GATE: If network fails but user requested a tool directly, only promise if tool actually opens
+          if (directToolRequest) {
+            const { validateToolId } = await import("@/utils/toolRouter");
+            if (validateToolId(directToolRequest)) {
+              // Attempt to open tool first
+              const toolMessage = await injectToolIntoChat(directToolRequest, {});
+              
+              // TRUTH-GATE: Only promise tool opening if it actually opened
+              if (toolMessage) {
+                addMessage("assistant", {
+                  type: "system",
+                  content: `I'm having trouble connecting right now, but I can still help. I've opened the ${TOOL_NAMES[directToolRequest] || directToolRequest} tool for you.`,
+                });
+              } else {
+                // Tool failed to open - don't promise it
+                addMessage("assistant", {
+                  type: "assistant_text",
+                  text: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
+                  content: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
+                  timestamp: Date.now(),
+                });
+              }
+            } else {
+              // Tool not available - show safe fallback
               addMessage("assistant", {
-                type: "system",
-                content: `I'm having trouble connecting right now, but I can still help. Let me open the ${TOOL_NAMES[directToolRequest] || directToolRequest} tool for you.`,
+                type: "assistant_text",
+                text: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
+                content: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
+                timestamp: Date.now(),
               });
-              setTimeout(() => {
-                injectToolIntoChat(directToolRequest, {});
-              }, 500);
-              setIsSending(false);
-              setThinking(false);
-              return;
             }
-            
-            // Otherwise show error message
-            addMessage("assistant", {
-              type: "assistant_text",
-              text: res.text || res.error || "I'm having trouble connecting right now. Please try again in a moment.",
-              content: res.text || res.error || "I'm having trouble connecting right now. Please try again in a moment.",
-              timestamp: Date.now(),
-            });
+            connectionStateRef.current = "idle";
             setIsSending(false);
             setThinking(false);
             return;
           }
-
-          // Handle response based on type
-          // Phase 27: Optionally post-process assistant responses with phrasing
-          let processedText = res.text || "";
-          try {
-            if (currentPhrasingStyle && processedText) {
-              processedText = buildAssistantResponse(processedText, currentPhrasingStyle);
-            }
-          } catch (err) {
-            console.warn("[ChatPanel] Failed to apply phrasing to response:", err);
-          }
-
-          if (res.type === "audio" && res.audioUrl) {
+          
+          // Queue message if offline, otherwise show error
+          const isActuallyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+          if (isActuallyOffline) {
+            // Queue message for retry when online
+            offlineMessageQueueRef.current.push(text);
             addMessage("assistant", {
-              type: "assistant_audio",
-              text: processedText,
-              content: processedText,
-              audioUrl: res.audioUrl,
-              timestamp: Date.now(),
-            });
-          } else if (res.type === "video" && res.videoUrl) {
-            addMessage("assistant", {
-              type: "assistant_video",
-              text: processedText,
-              content: processedText,
-              videoUrl: res.videoUrl,
+              type: "assistant_text",
+              text: "Connection lost. Your message will be sent when you're back online. Tap Retry to send now.",
+              content: "Connection lost. Your message will be sent when you're back online.",
               timestamp: Date.now(),
             });
           } else {
-            // Text response
+          // Guard: Only show error message once per failure (debounce duplicates)
+          const errorMessage = res.error || "Connection hiccup. I'm still here.";
+          if (lastErrorMessageRef.current !== errorMessage) {
+            lastErrorMessageRef.current = errorMessage;
             addMessage("assistant", {
               type: "assistant_text",
-              text: processedText,
-              content: processedText,
+              text: errorMessage,
+              content: errorMessage,
+              timestamp: Date.now(),
+              // Add action buttons for error recovery
+              actions: [
+                { label: "Retry", action: "retry" },
+                { label: "Continue offline", action: "offline" },
+                { label: "Open tools", action: "open_tools" },
+              ],
+            });
+          }
+          }
+          connectionStateRef.current = "idle";
+          setIsSending(false);
+          setThinking(false);
+          return;
+        }
+
+        // Success: Clear error message ref
+        lastErrorMessageRef.current = null;
+
+        // Clear last message on success
+        lastUnsentMessageRef.current = null;
+        abortControllerRef.current = null;
+        connectionStateRef.current = "idle";
+
+        // Handle response - always text from aiClient
+        // Phase 27: Optionally post-process assistant responses with phrasing
+        let processedText = res.text || "";
+        try {
+          if (currentPhrasingStyle && processedText) {
+            processedText = buildAssistantResponse(processedText, currentPhrasingStyle);
+          }
+        } catch (err) {
+          console.warn("[ChatPanel] Failed to apply phrasing to response:", err);
+        }
+
+        // Text response from robust AI client
+        addMessage("assistant", {
+          type: "assistant_text",
+          text: processedText,
+          content: processedText,
+          timestamp: Date.now(),
+        });
+
+        // TRUTH-GATE: Only promise tool opening if we can actually execute it
+        // Priority 1: Backend tool object (explicit signal from server)
+        let toolToInject = null;
+        let toolFromServer = false;
+        
+        if (res.tool && res.tool.name) {
+          const backendToolId = res.tool.name;
+          // Server already validated tool exists (truth-gate on server side)
+          const { validateToolId } = await import("@/utils/toolRouter");
+          if (validateToolId(backendToolId)) {
+            toolToInject = backendToolId;
+            toolFromServer = true; // Mark as server-validated
+          } else {
+            console.warn("[ChatPanel] Server suggested invalid tool:", backendToolId);
+            // Circuit-breaker: Suppress tool-offer language
+          }
+        }
+        
+        // Priority 2: Backend toolRoute (legacy support)
+        if (!toolToInject && (res.meta?.toolRoute || res.meta?.toolId)) {
+          const backendToolId = res.meta.toolRoute || res.meta.toolId;
+          const { validateToolId } = await import("@/utils/toolRouter");
+          if (validateToolId(backendToolId)) {
+            toolToInject = backendToolId;
+            toolFromServer = true;
+          }
+        }
+
+        // Priority 3: Decision engine recommendation (only if server didn't suggest)
+        if (!toolToInject) {
+          const intervention = decision?.forecast?.recommendedIntervention;
+          if (intervention) {
+            const { normalizeModeToToolId, validateToolId } = await import("@/utils/toolRouter");
+            const normalizedToolId = normalizeModeToToolId(intervention);
+            if (normalizedToolId && validateToolId(normalizedToolId)) {
+              toolToInject = normalizedToolId;
+            }
+          }
+        }
+
+        // TRUTH-GATE: Only inject and promise if tool is validated AND we can open it
+        if (toolToInject) {
+          const { validateToolId } = await import("@/utils/toolRouter");
+          if (validateToolId(toolToInject)) {
+            // Attempt tool injection (async - will return null if fails)
+            setTimeout(async () => {
+              const toolMessage = await injectToolIntoChat(toolToInject, {});
+              
+              // TRUTH-GATE: Only add "I've opened" message if tool actually opened
+              if (toolMessage) {
+                // Tool opened successfully - confirm to user
+                addMessage("assistant", {
+                  type: "system",
+                  content: `I've opened the ${TOOL_NAMES[toolToInject] || toolToInject} tool for you. Take your time, I'm here.`,
+                });
+              } else {
+                // Tool failed to open - don't promise it, just show supportive text
+                console.warn("[ChatPanel] Tool injection failed:", toolToInject);
+                // Don't add false promise message
+              }
+            }, 500);
+          } else {
+            // Circuit-breaker: Tool not available, suppress tool-offer language
+            console.warn("[ChatPanel] Tool injection blocked: invalid tool ID", toolToInject);
+          }
+        }
+
+          // Phase 14: Voice intent detection (reuse lowerText from above)
+        if (
+          lowerText.includes("i want to talk it out") ||
+          lowerText.includes("can i speak instead") ||
+          lowerText.includes("i want voice support") ||
+          lowerText.includes("i want to talk") ||
+          lowerText.includes("let me speak")
+        ) {
+          setTimeout(() => {
+            addMessage("assistant", {
+              type: "system",
+              content: "Opening voice session workspace...",
+            });
+            openWorkspace("voice-session", "Voice Session", {});
+          }, 500);
+          return;
+        }
+
+        // Phase 14: Video request detection
+        if (
+          lowerText.includes("show me") ||
+          lowerText.includes("demonstrate") ||
+          lowerText.includes("visual") ||
+          lowerText.includes("exercise") ||
+          lowerText.includes("yoga") ||
+          lowerText.includes("stretch")
+        ) {
+          // Will be handled by guideEngine response
+        }
+
+        // Phase 13: Social routing shortcuts
+        if (lowerText.includes("join a group") || lowerText.includes("find a group") || lowerText.includes("recovery group")) {
+          setTimeout(() => {
+            addMessage("assistant", {
+              type: "system",
+              content: "Opening Circles for you...",
+            });
+            navigate("/circles");
+          }, 500);
+          return;
+        }
+
+        if (lowerText.includes("talk to someone") || lowerText.includes("find someone to talk to")) {
+          setTimeout(() => {
+            addMessage("assistant", {
+              type: "system",
+              content: "Opening Connections...",
+            });
+            navigate("/connections/friends");
+          }, 500);
+          return;
+        }
+
+        if (lowerText.includes("find an accountability partner") || lowerText.includes("accountability partner")) {
+          setTimeout(() => {
+            addMessage("assistant", {
+              type: "system",
+              content: "Opening Trusted Partners...",
+            });
+            navigate("/connections/trusted");
+          }, 500);
+          return;
+        }
+
+        if (lowerText.includes("community") || lowerText.includes("social feed") || lowerText.includes("see what others are sharing")) {
+          setTimeout(() => {
+            addMessage("assistant", {
+              type: "system",
+              content: "Opening Social Feed...",
+            });
+            navigate("/social/feed");
+          }, 500);
+          return;
+        }
+
+        // Check for real help queries (Phase 12)
+        // Enhanced detection for food/housing queries
+        const directoryQueries = detectDirectoryQuery(text);
+        if (directoryQueries) {
+          // Determine priority/category from query
+          let priority = directoryQueries.priority || "programs";
+          let category = null;
+          
+          const lowerText = text.toLowerCase();
+          
+          // Map to Real Help categories
+          if (lowerText.includes("food") || lowerText.includes("hungry") || lowerText.includes("meal") || 
+              lowerText.includes("food bank") || lowerText.includes("groceries")) {
+            priority = "food";
+            category = "food";
+          } else if (lowerText.includes("housing") || lowerText.includes("place to stay") || 
+                     lowerText.includes("sober living") || lowerText.includes("shelter") ||
+                     lowerText.includes("homeless")) {
+            priority = "housing";
+            category = "housing";
+          } else if (lowerText.includes("funding") || lowerText.includes("grant") || 
+                     lowerText.includes("financial help") || lowerText.includes("money")) {
+            priority = "funding";
+            category = "grants";
+          } else if (lowerText.includes("treatment") || lowerText.includes("detox") || 
+                     lowerText.includes("rehab") || lowerText.includes("recovery program")) {
+            priority = "programs";
+            category = "treatment";
+          }
+          
+          // TRUTH-GATE: Navigate to Real Help with pre-filled search
+          // Only show "opening" message if navigation actually happens
+          setTimeout(() => {
+            try {
+              const targetUrl = `/workspace/real-help?priority=${priority}${category ? `&category=${category}` : ""}${directoryQueries.query ? `&query=${encodeURIComponent(directoryQueries.query)}` : ""}`;
+              navigate(targetUrl);
+              
+              // Only add message after navigation succeeds
+              addMessage("assistant", {
+                type: "system",
+                content: "I've opened Real Help for you. Here you can find verified resources.",
+              });
+            } catch (navErr) {
+              // Navigation failed - don't promise it
+              console.warn("[ChatPanel] Navigation to Real Help failed:", navErr);
+              addMessage("assistant", {
+                type: "assistant_text",
+                text: "I can help you find resources. You can navigate to the Real Help section from the sidebar.",
+                content: "I can help you find resources. You can navigate to the Real Help section from the sidebar.",
+                timestamp: Date.now(),
+              });
+            }
+          }, 300);
+          return;
+        }
+
+        // Check for directory search queries
+        if (directoryQueries) {
+          setTimeout(async () => {
+            try {
+              // Use searchResources (Firebase Function + fallback)
+              const searchResponse = await searchResources({
+                query: directoryQueries.query,
+                domain: directoryQueries.domain,
+              });
+              
+              if (searchResponse.ok && searchResponse.results && searchResponse.results.length > 0) {
+                // Add assistant message first
+                addMessage("assistant", "I found a few resources that might help. Here are some options:");
+                
+                // Add directory results block
+                const directoryMessage = {
+                  id: `directory-${Date.now()}`,
+                  role: "directory",
+                  type: "directory_results",
+                  domain: directoryQueries.domain,
+                  query: directoryQueries.query,
+                  results: searchResponse.results,
+                  timestamp: Date.now(),
+                };
+                addMessage("directory", JSON.stringify(directoryMessage));
+                
+                // Offer to open full directory
+                addMessage("assistant", {
+                  type: "system",
+                  content: `Would you like to open the full ${directoryQueries.domain} directory to see more results?`,
+                });
+              } else {
+                // If no results, suggest opening the directory workspace
+                const errorMsg = searchResponse.error || "No results found";
+                addMessage("assistant", `I couldn't find specific results for "${directoryQueries.query}". ${errorMsg.includes("too many") ? "The search service is busy. " : ""}Would you like me to open the full directory so you can search more broadly?`);
+              }
+            } catch (err) {
+              console.error("Directory search failed:", err);
+              addMessage("assistant", "I had trouble searching the directory. Please try opening it directly from the sidebar.");
+            }
+          }, 500);
+        }
+      } catch (innerErr) {
+        console.error("[ChatPanel] Inner sendToAI error:", innerErr);
+        connectionStateRef.current = "error";
+        // Cleanup on inner error
+        if (abortControllerRef.current) {
+          try {
+            abortControllerRef.current.abort();
+          } catch {}
+          abortControllerRef.current = null;
+        }
+        // TRUTH-GATE: If network fails but user requested a tool directly, only promise if tool actually opens
+        if (directToolRequest) {
+          const { validateToolId } = await import("@/utils/toolRouter");
+          if (validateToolId(directToolRequest)) {
+            // Attempt to open tool first
+            const toolMessage = await injectToolIntoChat(directToolRequest, {});
+            
+            // TRUTH-GATE: Only promise tool opening if it actually opened
+            if (toolMessage) {
+              addMessage("assistant", {
+                type: "system",
+                content: `I'm having trouble connecting right now, but I can still help. I've opened the ${TOOL_NAMES[directToolRequest] || directToolRequest} tool for you.`,
+              });
+            } else {
+              // Tool failed to open - don't promise it
+              addMessage("assistant", {
+                type: "assistant_text",
+                text: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
+                content: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
+                timestamp: Date.now(),
+              });
+            }
+          } else {
+            // Tool not available - show safe fallback
+            addMessage("assistant", {
+              type: "assistant_text",
+              text: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
+              content: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
               timestamp: Date.now(),
             });
           }
-
-      // Use decision engine's recommended intervention for tool injection
-      let toolToInject = null;
-      const intervention = decision?.forecast?.recommendedIntervention;
-      
-      if (intervention === "breathing") {
-        toolToInject = "breathing";
-      } else if (intervention === "grounding") {
-        toolToInject = "grounding";
-      } else if (intervention === "urge-surfing") {
-        toolToInject = "urge-surfing";
-      } else {
-        // Fallback to keyword detection if no intervention recommended
-        const toolKeywords = {
-          breathing: ["breathe", "breathing", "breath"],
-          grounding: ["ground", "grounding", "54321", "5-4-3-2-1"],
-          journaling: ["journal", "write", "reflect"],
-        };
-        
-        const responseText = res.text || "";
-        for (const [tool, keywords] of Object.entries(toolKeywords)) {
-          if (keywords.some((kw) => responseText.toLowerCase().includes(kw))) {
-            toolToInject = tool;
-            break;
-          }
+          connectionStateRef.current = "idle";
+          setIsSending(false);
+          setThinking(false);
+          return;
         }
-      }
-
-      // Only inject tool if decision engine recommends it or AI suggests it verbally
-      if (toolToInject) {
-        setTimeout(() => {
-          // Add system message that tool is being opened
-          addMessage("assistant", {
-            type: "system",
-            content: `I've opened the ${TOOL_NAMES[toolToInject] || toolToInject} tool for you. Take your time, I'm here.`,
-          });
-          injectToolIntoChat(toolToInject, {});
-        }, 500);
-      }
-
-      // Phase 14: Voice intent detection (reuse lowerText from above)
-      if (
-        lowerText.includes("i want to talk it out") ||
-        lowerText.includes("can i speak instead") ||
-        lowerText.includes("i want voice support") ||
-        lowerText.includes("i want to talk") ||
-        lowerText.includes("let me speak")
-      ) {
-        setTimeout(() => {
-          addMessage("assistant", {
-            type: "system",
-            content: "Opening voice session workspace...",
-          });
-          openWorkspace("voice-session", "Voice Session", {});
-        }, 500);
-        return;
-      }
-
-      // Phase 14: Video request detection
-      if (
-        lowerText.includes("show me") ||
-        lowerText.includes("demonstrate") ||
-        lowerText.includes("visual") ||
-        lowerText.includes("exercise") ||
-        lowerText.includes("yoga") ||
-        lowerText.includes("stretch")
-      ) {
-        // Will be handled by guideEngine response
-      }
-
-      // Phase 13: Social routing shortcuts
-      if (lowerText.includes("join a group") || lowerText.includes("find a group") || lowerText.includes("recovery group")) {
-        setTimeout(() => {
-          addMessage("assistant", {
-            type: "system",
-            content: "Opening Circles for you...",
-          });
-          navigate("/circles");
-        }, 500);
-        return;
-      }
-
-      if (lowerText.includes("talk to someone") || lowerText.includes("find someone to talk to")) {
-        setTimeout(() => {
-          addMessage("assistant", {
-            type: "system",
-            content: "Opening Connections...",
-          });
-          navigate("/connections/friends");
-        }, 500);
-        return;
-      }
-
-      if (lowerText.includes("find an accountability partner") || lowerText.includes("accountability partner")) {
-        setTimeout(() => {
-          addMessage("assistant", {
-            type: "system",
-            content: "Opening Trusted Partners...",
-          });
-          navigate("/connections/trusted");
-        }, 500);
-        return;
-      }
-
-      if (lowerText.includes("community") || lowerText.includes("social feed") || lowerText.includes("see what others are sharing")) {
-        setTimeout(() => {
-          addMessage("assistant", {
-            type: "system",
-            content: "Opening Social Feed...",
-          });
-          navigate("/social/feed");
-        }, 500);
-        return;
-      }
-
-      // Check for real help queries (Phase 12)
-      const directoryQueries = detectDirectoryQuery(text);
-      if (directoryQueries && directoryQueries.domain === "real_help") {
-        // Open Real Help workspace
-        setTimeout(() => {
-          addMessage("assistant", {
-            type: "system",
-            content: "Opening Real Help tools for your situation...",
-          });
-          navigate(`/workspace/real-help?priority=${directoryQueries.priority || "programs"}&query=${encodeURIComponent(directoryQueries.query || "")}`);
-        }, 500);
-        return;
-      }
-
-      // Check for directory search queries
-      if (directoryQueries) {
-        setTimeout(async () => {
-          try {
-            // Use searchResources (Firebase Function + fallback)
-            const searchResponse = await searchResources({
-              query: directoryQueries.query,
-              domain: directoryQueries.domain,
-            });
-            
-            if (searchResponse.ok && searchResponse.results && searchResponse.results.length > 0) {
-              // Add assistant message first
-              addMessage("assistant", "I found a few resources that might help. Here are some options:");
-              
-              // Add directory results block
-              const directoryMessage = {
-                id: `directory-${Date.now()}`,
-                role: "directory",
-                type: "directory_results",
-                domain: directoryQueries.domain,
-                query: directoryQueries.query,
-                results: searchResponse.results,
-                timestamp: Date.now(),
-              };
-              addMessage("directory", JSON.stringify(directoryMessage));
-              
-              // Offer to open full directory
-              addMessage("assistant", {
-                type: "system",
-                content: `Would you like to open the full ${directoryQueries.domain} directory to see more results?`,
-              });
-            } else {
-              // If no results, suggest opening the directory workspace
-              const errorMsg = searchResponse.error || "No results found";
-              addMessage("assistant", `I couldn't find specific results for "${directoryQueries.query}". ${errorMsg.includes("too many") ? "The search service is busy. " : ""}Would you like me to open the full directory so you can search more broadly?`);
-            }
-          } catch (err) {
-            console.error("Directory search failed:", err);
-            addMessage("assistant", "I had trouble searching the directory. Please try opening it directly from the sidebar.");
-          }
-        }, 500);
+        throw innerErr; // Re-throw to outer catch
       }
     } catch (err) {
-      console.error("AI request failed:", err);
-      const errorMsg =
-        "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment.";
-      addMessage("assistant", {
-        type: "assistant_text",
-        text: errorMsg,
-        content: errorMsg,
-        timestamp: Date.now(),
-      });
+      console.error("[ChatPanel] sendToAI error:", err);
+      connectionStateRef.current = "error";
+      // Cleanup AbortController on any error
+      if (abortControllerRef.current) {
+        try {
+          abortControllerRef.current.abort();
+        } catch {}
+        abortControllerRef.current = null;
+      }
+
+      // Guard: Only show error message once per failure - prevent loop
+      const isActuallyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+      const errorMessage = isActuallyOffline 
+        ? "Connection lost. Reconnecting..."
+        : "Still here with you. Tap send to continue.";
+      
+      // Only add message if this is a new error or different message
+      if (lastErrorMessageRef.current !== errorMessage) {
+        lastErrorMessageRef.current = errorMessage;
+        addMessage("assistant", {
+          type: "assistant_text",
+          text: errorMessage,
+          content: errorMessage,
+          timestamp: Date.now(),
+        });
+      }
+      
+      // Log error for telemetry (non-blocking)
+      try {
+        logEvent({
+          chat_disconnect_reason: "error",
+          device_type: /iPad|iPhone|iPod/.test(navigator.userAgent) ? "ios" : 
+                       /Android/.test(navigator.userAgent) ? "android" : "desktop",
+          visibility_state: document.hidden ? "hidden" : "visible",
+        });
+      } catch {}
     } finally {
+      connectionStateRef.current = "idle";
       setIsSending(false);
       setThinking(false);
     }
-  };
+  }, [messages, addMessage, injectToolIntoChat, setThinking, logEvent, openWorkspace, navigate]);
 
   const handleVoiceInputComplete = (audioBlob) => {
     // Phase 14: Open voice session workspace when mic is held
@@ -562,7 +854,12 @@ const ChatPanel = () => {
 
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || isSending) return;
+    // Guard: Prevent duplicate sends using connection state
+    if (!text || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
+      return;
+    }
+
+    // PHASE H: Restore last unsent message if needed (already in input via state)
 
     // Phase 17: Enrich message with emotion before storing
     const userMessage = {
@@ -1253,6 +1550,31 @@ const ChatPanel = () => {
         </div>
       )}
 
+      {/* Offline/Reconnecting Status */}
+      {(isOffline || offlineMessageQueueRef.current.length > 0) && (
+        <div className="border-t border-amber-400/30 bg-amber-400/10 px-4 sm:px-6 py-2 flex items-center justify-between">
+          <span className="text-xs text-amber-200">
+            {isOffline 
+              ? "Offline. Messages will be sent when you're back online."
+              : `${offlineMessageQueueRef.current.length} message${offlineMessageQueueRef.current.length !== 1 ? 's' : ''} queued.`}
+          </span>
+          {offlineMessageQueueRef.current.length > 0 && !isOffline && (
+            <button
+              type="button"
+              onClick={() => {
+                const queued = offlineMessageQueueRef.current.shift();
+                if (queued && connectionStateRef.current === "idle") {
+                  sendToAI(queued);
+                }
+              }}
+              className="text-xs px-3 py-1 rounded border border-amber-400/30 bg-amber-400/20 text-amber-200 hover:bg-amber-400/30 transition"
+            >
+              Retry
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Input Bar - ChatGPT style */}
       <div className="border-t border-white/10 bg-slate-950 sticky bottom-0 z-10 pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 py-3 sm:py-4">
@@ -1266,7 +1588,7 @@ const ChatPanel = () => {
                 placeholder="Ask anything"
                 rows={1}
                 className="w-full resize-none rounded-2xl border border-white/20 bg-white/5 px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none transition-colors"
-                disabled={isSending}
+                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
               />
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -1274,7 +1596,7 @@ const ChatPanel = () => {
               <button
                 type="button"
                 onClick={() => setFaceScanPromptOpen(true)}
-                disabled={isSending}
+                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
                 className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Read my expression"
                 aria-label="Read my expression"
@@ -1299,7 +1621,7 @@ const ChatPanel = () => {
                   // User can edit before sending, or it will auto-send if onSend is provided
                 }}
                 onSend={(transcribedText) => {
-                  if (transcribedText.trim() && !isSending) {
+                  if (transcribedText.trim() && !isSending && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
                     addMessage("user", transcribedText);
                     sendToAI(transcribedText);
                   }
@@ -1308,12 +1630,12 @@ const ChatPanel = () => {
                   // Phase 14: Open voice session workspace when mic is held
                   handleVoiceInputComplete(audioBlob);
                 }}
-                disabled={isSending}
+                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
               />
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={!input.trim() || isSending}
+                disabled={!input.trim() || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
                 className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (

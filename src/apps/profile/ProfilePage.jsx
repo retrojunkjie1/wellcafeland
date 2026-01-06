@@ -5,14 +5,16 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
+import { useAdminClaim } from "@/hooks/useAdminClaim";
 import { getTheme, setTheme } from "@/theme/themeStore";
-import { Moon, Sun, LogOut, User, Mail, Sparkles } from "lucide-react";
+import { Moon, Sun, LogOut, User, Mail, Sparkles, Eye } from "lucide-react";
 import { trackPageView } from "../../services/telemetry";
 
 const ProfilePage = () => {
   const { user, isAuthenticated, logout, role } = useAuth();
   const identity = useSessionIdentity();
   const navigate = useNavigate();
+  const { adminReady, isAdmin } = useAdminClaim();
 
   useEffect(() => {
     document.title = "Profile - WellnessCafe";
@@ -152,6 +154,24 @@ const ProfilePage = () => {
           >
             <LogOut className="h-4 w-4 inline mr-2" />
             Sign Out
+          </button>
+        </div>
+      )}
+
+      {/* GodEye Console — Admin Access */}
+      {adminReady && isAdmin && (
+        <div className="mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 glass-panel">
+          <div className="mb-2">
+            <h3 className="text-sm font-semibold text-white">God-Eye Dashboard</h3>
+            <p className="text-xs text-white/60">Backend visibility and control</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/admin")}
+            className="w-full rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-sm font-medium text-amber-200 hover:bg-amber-400/20 transition"
+          >
+            <Eye className="h-4 w-4 inline mr-2" />
+            God-Eye Dashboard
           </button>
         </div>
       )}

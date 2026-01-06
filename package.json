@@ -7,13 +7,18 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy:check": "node scripts/check-deploy.js",
+    "deploy": "npm run predeploy:check && firebase deploy --only hosting",
+    "grant:admin": "node scripts/grantAdmin.cjs",
+    "grant:admin:aleggi": "node scripts/grantAdmin.cjs aleggi007@gmail.com"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.554.0",
     "react": "^19.2.0",

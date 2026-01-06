@@ -1,6 +1,6 @@
 {
   "projects": {
-    "default": "wellnesscafe-os",
+    "default": "wellnesscafelanding",
     "wcprod": "wellnesscafelanding",
     "wcos": "wellnesscafe-os"
   },

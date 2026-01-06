@@ -6,7 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { trackAction } from "../../../services/telemetry";
 import { useOSStore } from "@/stores/useOSStore";
 
-const ToolCard = ({ tool }) => {
+const ToolCard = ({ tool, variant = "list" }) => {
   const navigate = useNavigate();
   const { injectToolIntoChat, setMode, MODES } = useOSStore();
 
@@ -40,40 +40,82 @@ const ToolCard = ({ tool }) => {
     "sleep-winddown": "Sleep & Wind-down",
   };
 
+  // Truncate description to 1-2 lines
+  const truncatedDescription = tool.description?.length > 100 
+    ? tool.description.substring(0, 100) + "..."
+    : tool.description;
+
+  // List variant: compact row
+  if (variant === "list") {
+    return (
+      <button
+        type="button"
+        onClick={handleOpenInWorkspace}
+        className="glass-panel w-full flex items-center gap-3 px-3 py-2.5 transition hover:border-white/20 hover:bg-white/8 text-left group"
+      >
+        <div className="text-lg text-white/60 flex-shrink-0 group-hover:text-white/80 transition">{tool.icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 mb-0.5">
+            <h3 className="text-sm font-medium text-white truncate">{tool.name}</h3>
+            <span className="text-[9px] uppercase tracking-wider text-white/35 flex-shrink-0">
+              {tool.intensity || "LOW"}
+            </span>
+          </div>
+          <p className="text-xs text-white/55 leading-relaxed line-clamp-1">
+            {truncatedDescription}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[10px] text-white/40">{categoryLabels[tool.category] || tool.category}</span>
+          {tool.duration && (
+            <span className="text-[10px] text-white/40">• {tool.duration}</span>
+          )}
+        </div>
+      </button>
+    );
+  }
+
+  // Card variant: for featured/recommended tools only
   return (
-    <div className="glass-panel flex h-full flex-col gap-4 p-5 transition hover:border-white/20 hover:bg-white/8">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="text-2xl text-white">{tool.icon}</div>
-          <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/50 mb-1">
+    <div className="glass-panel flex min-h-[80px] flex-col gap-2 p-3 transition hover:border-white/20 hover:bg-white/8">
+      <div className="flex items-start gap-2.5 flex-1">
+        <div className="text-xl text-white/80 flex-shrink-0 mt-0.5">{tool.icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 mb-0.5">
+            <h3 className="text-sm font-medium text-white truncate">{tool.name}</h3>
+            <span className="text-[10px] uppercase tracking-wider text-white/40 flex-shrink-0">
+              {tool.intensity || "LOW"}
+            </span>
+          </div>
+          <p className="text-xs text-white/60 leading-relaxed line-clamp-2 mb-1">
+            {truncatedDescription}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-[10px] uppercase tracking-wider text-white/40">
               {categoryLabels[tool.category] || tool.category}
             </p>
-            <h3 className="text-lg font-medium text-white mb-1">{tool.name}</h3>
             {tool.duration && (
-              <p className="text-xs text-white/50">~{tool.duration}</p>
+              <span className="text-[10px] text-white/40">• {tool.duration}</span>
             )}
           </div>
         </div>
       </div>
       
-      <p className="text-sm text-white/70 leading-relaxed">{tool.description}</p>
-      
-      <div className="mt-auto flex items-center justify-between gap-3 pt-2 border-t border-white/5">
+      <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-white/5">
         <button
           type="button"
           onClick={handleOpenInChat}
-          className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white transition"
+          className="flex items-center gap-1.5 rounded border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/60 hover:bg-white/10 hover:text-white transition"
         >
-          <MessageCircle className="h-3.5 w-3.5" />
-          Open in chat
+          <MessageCircle className="h-3 w-3" />
+          Chat
         </button>
         <button
           type="button"
           onClick={handleOpenInWorkspace}
-          className="rounded-lg bg-white/10 px-4 py-1.5 text-xs font-medium text-white hover:bg-white/20 transition"
+          className="rounded bg-white/10 px-3 py-1 text-[11px] font-medium text-white hover:bg-white/20 transition"
         >
-          Open workspace
+          Open
         </button>
       </div>
     </div>

@@ -199,6 +199,48 @@ async function callFunctionSearch({ query, domain, region, category }) {
  * 2) If that fails, fallback to client-side RapidAPI
  */
 export async function searchResources({ query, domain, region, category }) {
+  // Combine verified providers with live search results (Phase 4)
+  try {
+    const { searchProviders } = await import("./providerService");
+    const verifiedProviders = await searchProviders({ query, category: domain, regionKey: region });
+    
+    // Call live resource search function (real FindTreatment.gov integration)
+    let liveResults = [];
+    try {
+      const functionsUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
+      const response = await fetch(`${functionsUrl}/searchLiveResources`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          query, 
+          location: region, 
+          category: domain,
+          state: region, // Pass state for filtering
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Results are already normalized with verification status from backend
+        liveResults = data.results || [];
+      } else {
+        // Graceful fallback: use verified providers only
+        console.warn("Live resource search failed, using verified providers only:", response.status);
+      }
+    } catch (err) {
+      // Graceful fallback: use verified providers only
+      console.warn("Live resource search failed, using verified providers only:", err);
+    }
+
+    // Return combined: verified first, then live results
+    return {
+      ok: true,
+      results: [...verifiedProviders, ...liveResults],
+    };
+  } catch (err) {
+    console.warn("Provider search failed, falling back to legacy search:", err);
+  }
+
+  // Legacy search fallback
   if (!query || !query.trim()) {
     return {
       ok: false,
@@ -443,7 +485,7 @@ export async function searchResources({ query, domain, region, category }) {
       const result = {
         ok: false,
         results: [],
-        error: "External search is unavailable right now. You can still talk with your guide and we'll help you think through options.",
+        error: "External search is currently disabled. You can still talk with your guide and we'll help you think through options. To enable external search, contact your administrator.",
         query: normalizedQuery,
       };
       

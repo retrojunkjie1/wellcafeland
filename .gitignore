@@ -48,7 +48,9 @@ Thumbs.db
 *.key
 *.cert
 secrets/
-.secrets
+.secrets/
+*.privatekey.json
+serviceAccount*.json
 
 # Firebase
 .firebase/

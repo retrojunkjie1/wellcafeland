@@ -7,7 +7,7 @@ import { GentleSuggestionsStrip } from "./GentleSuggestionsStrip";
 
 const basePanelClass =
 
-  "fixed inset-x-0 bottom-0 z-40 mx-auto max-w-xl rounded-t-3xl border border-white/10 bg-slate-900/95 px-4 pb-6 pt-4 shadow-[0_-18px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-transform";
+  "fixed inset-x-0 bottom-0 z-30 mx-auto max-w-xl rounded-t-3xl border border-white/10 bg-slate-900/95 px-4 pb-6 pt-4 shadow-[0_-18px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-transform";
 
 
 
@@ -473,7 +473,7 @@ const DashboardDetailsSheet = ({
 
   return (
 
-    <div className="fixed inset-0 z-30 flex items-end justify-center">
+    <div className="fixed inset-0 z-30 flex items-end justify-center pointer-events-none">
 
       {/* Backdrop */}
 
@@ -483,7 +483,7 @@ const DashboardDetailsSheet = ({
 
         onClick={onClose}
 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto"
 
       />
 
@@ -491,7 +491,7 @@ const DashboardDetailsSheet = ({
 
       {/* Sheet */}
 
-      <div className={basePanelClass}>
+      <div className={`${basePanelClass} pointer-events-auto`}>
 
         <div className="mb-3 flex items-center justify-between">
 

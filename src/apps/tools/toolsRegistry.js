@@ -118,8 +118,13 @@ const ALL_TOOLS = [
 
 /**
  * Public-facing tools (only fully functional ones)
+ * Breathing tool MUST always be available (offline-safe, no dependencies)
  */
-export const TOOLS = ALL_TOOLS.filter((tool) => tool.public !== false);
+export const TOOLS = ALL_TOOLS.filter((tool) => {
+  // Breathing tool is always public (offline-safe, no AI/network required)
+  if (tool.id === "breathing") return true;
+  return tool.public !== false;
+});
 
 /**
  * All tools (including hidden ones) - for admin/internal use

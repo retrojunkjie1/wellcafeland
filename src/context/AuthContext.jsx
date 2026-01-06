@@ -58,8 +58,18 @@ export const AuthProvider = ({ children }) => {
     if (!firebaseUser || !db) return;
 
     try {
+      // Get latest token claims
+      let adminClaim = false;
+      try {
+        const tokenResult = await getIdTokenResult(firebaseUser, true);
+        adminClaim = !!tokenResult?.claims?.admin;
+      } catch {
+        // Fallback to role check
+      }
+
       const userRef = doc(db, "users", firebaseUser.uid);
       const userDoc = await getDoc(userRef);
+      const now = new Date();
 
       if (!userDoc.exists()) {
         // Create new user document
@@ -68,26 +78,50 @@ export const AuthProvider = ({ children }) => {
           email: firebaseUser.email,
           displayName: firebaseUser.displayName || null,
           role: userRole,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          isAdmin: adminClaim || userRole === "admin",
+          createdAt: now,
+          updatedAt: now,
+          lastSignInAt: now,
         });
+        
+        // Log user creation
+        try {
+          const { logTelemetry } = await import("@/telemetry/telemetry");
+          logTelemetry("user_created", {
+            level: "info",
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role: userRole,
+            admin: adminClaim,
+          });
+        } catch {
+          // Telemetry not critical
+        }
       } else {
-        // Update existing document (sync role if needed)
+        // Update existing document (sync role and admin status)
         const existingData = userDoc.data();
-        if (existingData.role !== userRole) {
+        const needsUpdate = 
+          existingData.role !== userRole || 
+          existingData.isAdmin !== adminClaim ||
+          !existingData.lastSignInAt;
+        
+        if (needsUpdate) {
           await setDoc(
             userRef,
             {
               ...existingData,
+              email: firebaseUser.email, // Sync email in case it changed
               role: userRole,
-              updatedAt: new Date(),
+              isAdmin: adminClaim || userRole === "admin",
+              updatedAt: now,
+              lastSignInAt: now,
             },
             { merge: true }
           );
         }
       }
     } catch (err) {
-      console.error("Error ensuring user document:", err);
+      console.error("[AuthContext] Error ensuring user document:", err);
     }
   };
 
@@ -98,8 +132,57 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
+    // GOD-EYE V2: Track auth state changes
+    let previousUser = null;
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Track auth state change
+      try {
+        const { trackAuthStateChange } = await import("@/telemetry/telemetry");
+        const state = firebaseUser ? "signed_in" : "signed_out";
+        trackAuthStateChange(state, {
+          uid: firebaseUser?.uid || null,
+          email: firebaseUser?.email || null,
+          previousUid: previousUser?.uid || null,
+        });
+      } catch {
+        // Telemetry not critical
+      }
+      previousUser = firebaseUser;
+      
       if (firebaseUser) {
+        // Force refresh ID token to get latest claims
+        try {
+          const tokenResult = await getIdTokenResult(firebaseUser, true);
+          const claims = tokenResult?.claims || {};
+          const isAdminClaim = !!claims.admin;
+          
+          // Log decoded claims for debugging
+          console.log("[AuthContext] User authenticated:", {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            admin: isAdminClaim,
+            claims: Object.keys(claims),
+          });
+          
+          // Log telemetry for admin access
+          if (isAdminClaim) {
+            try {
+              const { logTelemetry } = await import("@/telemetry/telemetry");
+              logTelemetry("admin_access", {
+                level: "info",
+                action: "auth_state_change",
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+              });
+            } catch {
+              // Telemetry not critical
+            }
+          }
+        } catch (tokenError) {
+          console.error("[AuthContext] Failed to refresh token:", tokenError);
+        }
+        
         setUser(firebaseUser);
         const userRole = await fetchUserRole(firebaseUser);
         setRole(userRole);

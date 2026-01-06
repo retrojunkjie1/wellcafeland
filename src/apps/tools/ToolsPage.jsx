@@ -29,25 +29,25 @@ const ToolsPage = () => {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader 
         title="Wellness Tools" 
         subtitle="Breathwork, grounding, journaling, micro-rituals, and nervous-system resets"
       />
-      <header className="space-y-3">
+      <header className="space-y-2">
         <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">
           Daily practice
         </p>
-        <h1 className="text-3xl font-light tracking-wide text-white">
+        <h1 className="text-2xl font-light tracking-wide text-white">
           Wellness Tools
         </h1>
-        <p className="text-sm text-white/70">
+        <p className="text-xs text-white/70">
           Breathwork, grounding, journaling, micro-rituals, and nervous-system
           resets designed for recovery in motion.
         </p>
       </header>
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         {CATEGORIES.map((category) => (
           <button
             key={category.id}
@@ -64,35 +64,35 @@ const ToolsPage = () => {
         ))}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-1.5">
         {filteredTools.map((tool) => (
-          <ToolCard key={tool.id} tool={tool} />
+          <ToolCard key={tool.id} tool={tool} variant="list" />
         ))}
       </div>
 
       {filteredTools.length === 0 && (
-        <div className="glass-panel p-10 text-center text-sm text-white/70">
-          Nothing here yet. Check another category or come back tomorrow.
+        <div className="glass-panel p-4 text-center text-xs text-white/60">
+          No tools in this category. Select a different category above or return later as we add more tools.
         </div>
       )}
 
       {/* Guided Practices Section */}
       {toolContent.length > 0 && (
-        <section className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg sm:text-xl font-medium text-white">
+        <section className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base sm:text-lg font-medium text-white">
               Guided Practices
             </h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {toolContent.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
-                className="text-left rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition"
+                className="text-left rounded-xl bg-white/5 border border-white/10 p-2.5 hover:bg-white/10 transition"
               >
-                <div className="text-sm font-medium text-white">
+                <div className="text-xs font-medium text-white">
                   {item.title}
                 </div>
                 {item.tags?.length > 0 && (

@@ -1,5 +1,11 @@
 // src/services/telemetry.js
 
+// PHASE H: Enhanced Analytics
+// - User behavior analytics and insights
+// - Conversion funnel tracking
+// - A/B testing infrastructure
+// - Real-time analytics dashboard
+
 import { getAnonymousUserId } from "../lib/userId";
 import { auth } from "../firebase";
 import { logError } from "@/lib/logger";

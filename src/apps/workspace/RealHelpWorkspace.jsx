@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Home, DollarSign, Briefcase, Users, AlertCircle, ExternalLink, Heart, MapPin, PhoneCall } from "lucide-react";
+import { Home, DollarSign, Briefcase, Users, AlertCircle, ExternalLink, Heart, MapPin, PhoneCall, CheckCircle } from "lucide-react";
 import { rememberWorkspace } from "@/engines/memory/workspaceMemoryEngine";
 import { searchResources } from "@/services/resourceSearch";
 import { listHousingProviders } from "@/services/housingService";
@@ -14,6 +14,7 @@ import { saveFavoriteResource } from "@/services/directoryService";
 import PageHeader from "@/components/navigation/PageHeader";
 import { loadContentById } from "@/services/contentService";
 import { ContentViewer } from "@/components/content/ContentViewer";
+import { VerifiedDestinations } from "@/components/realhelp/VerifiedDestinations";
 
 const RealHelpWorkspace = () => {
   const [searchParams] = useSearchParams();
@@ -26,6 +27,7 @@ const RealHelpWorkspace = () => {
   const [results, setResults] = useState([]);
   const [curatedResults, setCuratedResults] = useState([]);
   const [startHereContent, setStartHereContent] = useState(null);
+  const [searchResponse, setSearchResponse] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -75,9 +77,15 @@ const RealHelpWorkspace = () => {
           query: query.trim(),
           domain,
           region: region || undefined,
+          category: activeTab,
         });
 
+        // Store search response metadata (for counts display)
+        setSearchResponse(searchResult);
+
         if (searchResult.ok && searchResult.results) {
+          // Split verified vs external for display (already merged by searchResources)
+          // Results are already in order: verified first, external second
           setResults(searchResult.results);
         } else {
           setResults([]);
@@ -210,6 +218,16 @@ const RealHelpWorkspace = () => {
             </div>
           </div>
 
+          {/* Verified Destinations Module */}
+          <VerifiedDestinations
+            category={activeTab === "housing" ? "housing" : activeTab === "funding" ? "funding" : activeTab === "programs" ? "treatment" : "circles"}
+            regionKey={region || undefined}
+            onSelectProvider={(provider) => {
+              // Navigate to provider detail or show in existing card layout
+              setQuery(provider.name);
+            }}
+          />
+
           {/* Tabs */}
           <div className="flex gap-2 border-b border-white/10 pb-px overflow-x-auto">
             {tabs.map((tab) => {
@@ -277,7 +295,7 @@ const RealHelpWorkspace = () => {
             <>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-white/60">
-                  Found <span className="font-medium text-white">{allResults.length}</span> resource{allResults.length !== 1 ? 's' : ''}
+                  Found <span className="font-medium text-white border border-black shadow-[0px_4px_12px_0px_rgba(0,0,0,0.15)]">{allResults.length}</span> resource{allResults.length !== 1 ? 's' : ''}
                 </p>
               </div>
               
@@ -291,9 +309,25 @@ const RealHelpWorkspace = () => {
                       <h3 className="text-base font-medium text-white line-clamp-2 flex-1 pr-2">
                         {item.name || item.title}
                       </h3>
-                      {item.curated && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-wcGold/20 text-wcGold border border-wcGold/30 whitespace-nowrap">
+                      {(item.curated || item.verification?.status === "verified") && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-wcGold/20 text-wcGold border border-wcGold/30 whitespace-nowrap flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
                           Verified
+                          {item.verification?.verifiedAt && (
+                            <span className="text-wcGold/70 text-[10px]">
+                              {new Date(item.verification.verifiedAt.toDate?.() || item.verification.verifiedAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                      {/* External/Unverified Badge - Only show if not verified */}
+                      {!(item.curated || item.verification?.status === "verified") && 
+                       (item.verification?.status === "external" || 
+                        item.verification?.status === "unverified" || 
+                        item._external ||
+                        item.verification?.source === "findtreatment.gov") && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 whitespace-nowrap">
+                          External
                         </span>
                       )}
                     </div>
@@ -328,17 +362,28 @@ const RealHelpWorkspace = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2 pt-3 border-t border-white/10">
-                      {item.website && (
-                        <a
-                          href={item.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-wcGold/10 hover:border-wcGold/30 transition text-xs font-medium"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span>Visit Site</span>
-                        </a>
-                      )}
+                          {item.phone && (
+                            <a
+                              href={`tel:${item.phone}`}
+                              onClick={() => handleProviderCall(item)}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-wcGold/10 hover:border-wcGold/30 transition text-xs font-medium"
+                            >
+                              <PhoneCall className="h-3.5 w-3.5" />
+                              <span>Call</span>
+                            </a>
+                          )}
+                          {item.website && (
+                            <a
+                              href={item.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => handleProviderWebsiteClick(item)}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-wcGold/10 hover:border-wcGold/30 transition text-xs font-medium"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>Visit Site</span>
+                            </a>
+                          )}
                       <button
                         onClick={() => handleOpenDetail(item)}
                         className="flex items-center px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-xs font-medium"
