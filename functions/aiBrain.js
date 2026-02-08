@@ -268,6 +268,34 @@ async function generateSession(payload = {}) {
 }
 
 /**
+ * Format session object as readable text
+ */
+function formatSessionAsText(session) {
+  let text = "";
+  
+  if (session.title) {
+    text += `${session.title}\n\n`;
+  }
+  
+  if (session.summary) {
+    text += `${session.summary}\n\n`;
+  }
+  
+  if (session.steps && Array.isArray(session.steps)) {
+    session.steps.forEach((step, idx) => {
+      if (step.title) {
+        text += `${idx + 1}. ${step.title}\n`;
+      }
+      if (step.body) {
+        text += `${step.body}\n\n`;
+      }
+    });
+  }
+  
+  return text.trim() || "Session generated successfully.";
+}
+
+/**
  * Main HTTP handler for /aiSession
  */
 async function handleSession(req, res) {
@@ -275,7 +303,7 @@ async function handleSession(req, res) {
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.set("Content-Type", "application/json"); // ALWAYS return JSON
+  res.set("Content-Type", "application/json"); // ALWAYS return JSON (standardized)
 
   if (req.method === "OPTIONS") {
     return res.status(204).send("");
@@ -330,8 +358,78 @@ async function handleSession(req, res) {
 
     // MODE: generate_session → build a custom flow
     if (mode === "generate_session") {
-      const session = await generateSession({ ...body, userId });
-      return res.status(200).json({ session });
+      const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Validate payload
+      const supportType = body.supportType || body.category || "Grounding";
+      const feel = body.tone || body.feel || "calm, steady, non-judgmental";
+      const duration = Number(body.minutes || body.durationMinutes || 10) || 10;
+      const notes = body.note || body.notes || body.context || "";
+      
+      // Structured logging
+      console.log("[generate_session]", {
+        correlationId,
+        userId,
+        supportType,
+        feel,
+        duration,
+        hasNotes: !!notes,
+      });
+      
+      try {
+        const session = await generateSession({ 
+          supportType,
+          tone: feel,
+          minutes: duration,
+          note: notes,
+          userId,
+        });
+        
+        // Format session content as text for message.text
+        const sessionText = formatSessionAsText(session);
+        
+        // STANDARDIZED RESPONSE SCHEMA
+        return res.status(200).json({
+          ok: true,
+          correlationId,
+          message: {
+            id: `msg_${Date.now()}`,
+            role: "assistant",
+            text: sessionText,
+            meta: {
+              sessionId: session.id,
+              title: session.title,
+              durationMinutes: session.durationMinutes,
+              category: session.category,
+            },
+          },
+          tool: null,
+          // Also include session object for backward compatibility
+          session,
+        });
+      } catch (err) {
+        console.error("[generate_session] Error:", {
+          correlationId,
+          error: err.message,
+          stack: err.stack,
+        });
+        
+        // Return safe response WITHOUT session (circuit-breaker)
+        return res.status(500).json({
+          ok: false,
+          correlationId,
+          error: {
+            code: "SESSION_GENERATION_ERROR",
+            message: err.message || "Failed to generate session",
+          },
+          message: {
+            id: `msg_${Date.now()}`,
+            role: "assistant",
+            text: "I'm having trouble building your session right now. Please try again in a moment.",
+          },
+          tool: null,
+        });
+      }
     }
 
     // MODE: agent → run specific AI agent (Seer, Oracle, Overseer, Sentinel)
