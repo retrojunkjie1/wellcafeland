@@ -103,8 +103,9 @@ exports.globalResourceSearch = onRequest(
       });
     }
 
+    const startTime = Date.now();
     try {
-      const { query, domain, region, category } = req.body;
+      const { query, domain, region, category, limit: reqLimit, pageToken } = req.body;
 
       if (!query || !query.trim()) {
         return res.status(400).json({
@@ -112,6 +113,9 @@ exports.globalResourceSearch = onRequest(
           error: "Query is required",
         });
       }
+
+      const limit = Math.min(Math.max(parseInt(reqLimit, 10) || 20, 1), 50);
+      const offset = Math.max(parseInt(pageToken, 10) || 0, 0);
 
       // Normalize the search query
       const normalizedQuery = normalizeSearchQuery(query, domain || "", region || "", category || "");
@@ -123,12 +127,15 @@ exports.globalResourceSearch = onRequest(
         domain,
         region,
         category,
+        limit,
+        offset,
       });
 
+      const requestLimit = Math.min(offset + limit, 50);
       const response = await axios.get(RAPIDAPI_URL, {
         params: {
           q: normalizedQuery,
-          limit: 10,
+          limit: requestLimit,
         },
         headers: {
           "x-rapidapi-key": RAPIDAPI_KEY,
@@ -175,10 +182,19 @@ exports.globalResourceSearch = onRequest(
       logger.info("[globalResourceSearch] Raw results length:", rawResults.length);
       const normalizedResults = normalizeResults(rawResults);
 
+      // Slice for offset (RapidAPI may not support offset; apply client-side)
+      const sliced = normalizedResults.slice(offset, offset + limit);
+      const nextPageToken = normalizedResults.length >= offset + limit ? String(offset + limit) : null;
+
       return res.json({
         ok: true,
-        results: normalizedResults,
-        query: normalizedQuery, // Return the actual query that was searched
+        results: sliced,
+        query: normalizedQuery,
+        nextPageToken,
+        meta: {
+          sourceCount: sliced.length,
+          tookMs: Date.now() - startTime,
+        },
       });
     } catch (err) {
       logger.error("[globalResourceSearch] Error:", {
