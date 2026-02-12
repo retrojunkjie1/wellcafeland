@@ -1,6 +1,8 @@
 // src/services/multimodalClient.js
 // Frontend client for multimodal wellness engine (OpenAI chat, TTS, STT)
 
+import { isDebugEnabled, logDebug } from "@/lib/debug";
+
 // Phase 61B: Endpoint resolution helpers
 function resolveFunctionsBaseUrl() {
   const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
@@ -102,10 +104,11 @@ export async function guideEngine(query, options = {}) {
     }
     
     const endpoint = ENDPOINTS.chat();
-    
-    // Debug: Log resolved endpoint
-    console.log("[guideEngine] Resolved endpoint:", endpoint);
-    console.log("[guideEngine] VITE_FIREBASE_FUNCTIONS_URL:", import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set, using default)");
+    logDebug("Chat", {
+      endpoint,
+      functionsBaseUrl: resolveFunctionsBaseUrl(),
+      envSet: !!import.meta.env.VITE_FIREBASE_FUNCTIONS_URL,
+    });
     
     // Adjust mode based on preferences
     let adjustedMode = mode;
@@ -240,9 +243,9 @@ export async function guideEngine(query, options = {}) {
       throw fetchErr;
     }
 
-    // Debug: Log response status and headers
-    console.log("[guideEngine] Response status:", res.status, res.statusText);
-    console.log("[guideEngine] Response headers:", Object.fromEntries(res.headers.entries()));
+    if (isDebugEnabled()) {
+      logDebug("Chat", { responseStatus: res.status, statusText: res.statusText });
+    }
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
@@ -259,11 +262,8 @@ export async function guideEngine(query, options = {}) {
       return null;
     });
     
-    // Debug: Log response body (trimmed to 300 chars)
-    if (data) {
-      const dataStr = JSON.stringify(data);
-      const trimmedData = dataStr.length > 300 ? dataStr.substring(0, 300) + "..." : dataStr;
-      console.log("[guideEngine] Response body (trimmed):", trimmedData);
+    if (isDebugEnabled() && data) {
+      logDebug("Chat", { hasContent: !!data.content, hasAudio: !!data.audio, hasVideo: !!data.video });
     }
     
     if (!data) {
@@ -321,28 +321,18 @@ export async function guideEngine(query, options = {}) {
       },
     };
   } catch (err) {
-    // Debug: Comprehensive error logging
     const endpoint = ENDPOINTS.chat();
-    
-    console.error("[guideEngine] Request failed:", {
-      error: err,
-      message: err.message,
-      name: err.name,
-      stack: err.stack,
-      endpoint: endpoint,
-      envVar: import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set)",
+    logDebug("Chat", {
+      error: err.message,
+      errorName: err.name,
+      endpoint,
+      origin: typeof window !== "undefined" ? window.location.origin : null,
     });
     
     const isNetworkError = err.message?.includes("Failed to fetch") || 
                           err.message?.includes("NetworkError") ||
                           err.name === "AbortError" ||
                           err.name === "TypeError";
-    
-    // Additional debug for CORS issues
-    if (err.message?.includes("Failed to fetch") || err.message?.includes("CORS")) {
-      console.error("[guideEngine] CORS/Network issue detected. Endpoint:", endpoint);
-      console.error("[guideEngine] Check if endpoint allows origin:", window.location.origin);
-    }
     
     // PHASE H: Soft messaging
     return {
@@ -681,7 +671,9 @@ export async function speakText(text, options = {}) {
   }
 
   try {
-    const res = await fetch(ENDPOINTS.tts(), {
+    const ttsEndpoint = ENDPOINTS.tts();
+    logDebug("TTS", { endpoint: ttsEndpoint, functionsBaseUrl: resolveFunctionsBaseUrl() });
+    const res = await fetch(ttsEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -726,7 +718,7 @@ export async function speakText(text, options = {}) {
 
     return { ok: false, error: "No audio data received" };
   } catch (err) {
-    console.error("TTS request failed:", err);
+    logDebug("TTS", { error: err.message, endpoint: ENDPOINTS.tts() });
     const isNetworkError = err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
     return {
       ok: false,
@@ -768,10 +760,12 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
     }
 
     // Safari-compatible timeout
+    const sttEndpoint = ENDPOINTS.stt();
+    logDebug("STT", { endpoint: sttEndpoint, functionsBaseUrl: resolveFunctionsBaseUrl() });
     const sttController = new AbortController();
     const sttTimeoutId = setTimeout(() => sttController.abort(), 30000);
     
-    const res = await fetch(ENDPOINTS.stt(), {
+    const res = await fetch(sttEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -808,7 +802,7 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
       text: data.text || "",
     };
   } catch (err) {
-    console.error("STT request failed:", err);
+    logDebug("STT", { error: err.message, endpoint: ENDPOINTS.stt() });
     const isNetworkError = err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
     return {
       ok: false,

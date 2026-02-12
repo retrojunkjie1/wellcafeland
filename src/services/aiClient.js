@@ -2,6 +2,7 @@
 // Robust AI network client with retries, timeout, offline detection
 
 import { getCorrelationId } from "@/utils/correlation";
+import { logDebug } from "@/lib/debug";
 
 /**
  * @typedef {Object} AIClientResult
@@ -108,6 +109,13 @@ export async function callAI(endpoint, body = {}, abortController = null) {
   };
   const actualEndpoint = endpointMap[endpoint] || endpoint;
   const url = `${BASE_URL.replace(/\/+$/, "")}/${actualEndpoint}`;
+  
+  logDebug("Chat", {
+    projectId: "wellnesscafelanding",
+    functionsBaseUrl: BASE_URL,
+    chatEndpoint: url,
+    actualEndpoint,
+  });
   
   // Structured logging
   logRequest("log", correlationId, {
@@ -346,11 +354,15 @@ export async function callAI(endpoint, body = {}, abortController = null) {
     }
   }
 
-  // All retries exhausted or non-retryable error
+  // All retries exhausted or non-retryable error — user-safe copy only (no raw stack traces)
   const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
-  const errorMsg = isOffline 
+  const isAborted = lastError?.name === "AbortError";
+  const isNetwork = lastError?.message?.includes("Failed to fetch") || lastError?.message?.includes("NetworkError");
+  const errorMsg = isOffline
     ? "Offline. Please check your connection."
-    : lastError?.message || "Request failed. Please try again.";
+    : isAborted || isNetwork
+      ? "Still here with you. Tap send to continue."
+      : "Connection hiccup. I'm still here.";
 
   return {
     ok: false,

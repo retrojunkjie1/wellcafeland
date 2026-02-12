@@ -18,6 +18,7 @@ import { useTopicMemory } from "@/hooks/useTopicMemory";
 import { getRecoveryBasicsContent, RECOVERY_BASICS_TOPICS } from "@/engines/education/recoveryBasicsEngine";
 import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView";
 import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
+import { logDebug } from "@/lib/debug";
 
 const ToolDetailPage = () => {
   const { toolId } = useParams();
@@ -97,7 +98,14 @@ const ToolDetailPage = () => {
 
   useEffect(() => {
     setToolMeta(loadedToolMeta);
-  }, [loadedToolMeta]);
+    if (loadedToolMeta) {
+      logDebug("Tool", {
+        toolId: loadedToolMeta.id,
+        sessionType: loadedToolMeta.sessionType,
+        decodedId,
+      });
+    }
+  }, [loadedToolMeta, decodedId]);
 
   // Phase 45: Check if this is a learning path topic
   useEffect(() => {

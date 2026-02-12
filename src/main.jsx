@@ -9,7 +9,8 @@ import { initTheme } from "@/theme/themeStore";
 import { validateEnv, EnvErrorScreen } from "./config/envGuard.jsx";
 import { initTelemetry } from "@/telemetry/telemetry";
 import { auth, db } from "@/firebase";
-import { initOverrideEngine } from "@/config/overrideEngine";
+import { initCoreOrchestrator } from "@/core/orchestrator";
+import { logDebug } from "@/lib/debug";
 
 // Boot sequence: UI shell mounts FIRST, services initialize LAST
 // Any failure after UI mounts must NOT crash the app
@@ -46,16 +47,12 @@ if (envValidation.blocking && !envValidation.valid && import.meta.env.PROD) {
   console.error("[Startup] Environment validation failed in production");
 }
 
-// Log Firebase configuration (dev only)
-if (import.meta.env.DEV) {
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || "wellnesscafelanding";
-  const functionsURL = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "not configured";
-  console.log("[Startup] Firebase Configuration:", {
-    projectId,
-    functionsURL,
-    env: import.meta.env.MODE,
-  });
-}
+// Debug: When wc_debug=1, log non-sensitive config (no secrets, tokens, PII)
+logDebug("Startup", {
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "wellnesscafelanding",
+  functionsBaseUrl: import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set)",
+  env: import.meta.env.MODE,
+});
 
 // Check required env vars (non-blocking)
 if (!import.meta.env.VITE_FIREBASE_FUNCTIONS_URL) {
@@ -69,10 +66,10 @@ try {
   console.warn("[Startup] Telemetry initialization failed (non-blocking):", err);
 }
 
-// Initialize override engine (must not throw)
+// Initialize core orchestrator: safety, policy, intelligence (must not throw)
 try {
-  initOverrideEngine();
+  initCoreOrchestrator();
 } catch (err) {
-  console.warn("[Startup] Override engine initialization failed (non-blocking):", err);
+  console.warn("[Startup] Core orchestrator initialization failed (non-blocking):", err);
 }
 
