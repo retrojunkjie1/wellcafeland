@@ -50,6 +50,7 @@ import IntelligencePulse from "../hud/IntelligencePulse";
 // Phase 31: Face Signal Engine
 import { getFaceEmotionSnapshot } from "@/core/system/faceSignal";
 import FaceScanPrompt from "./FaceScanPrompt";
+import { logDebug } from "@/lib/debug";
 
 const TOOL_NAMES = {
   breathing: "Breathing Exercise",
@@ -1042,12 +1043,13 @@ const ChatPanel = () => {
     try {
       const store = useOSStore.getState();
       if (store.appendRelationshipSnapshot && enrichedMessage.relationship) {
+        const { buildRelationshipSnapshot } = await import("@/ai/relationship/relationshipModel");
         const snapshot = buildRelationshipSnapshot(enrichedMessage);
         store.appendRelationshipSnapshot(snapshot);
         store.setLastRelationshipSnapshot(snapshot);
       }
     } catch (err) {
-      console.warn("[ChatPanel] Failed to append relationship snapshot:", err);
+      logDebug("ChatPanel", { warn: "relationship_snapshot_failed", msg: err?.message });
     }
     
     // Phase 30: Crisis Forecast Engine - compute short-horizon crisis level
@@ -1327,12 +1329,13 @@ const ChatPanel = () => {
             try {
               const store = useOSStore.getState();
               if (store.appendRelationshipSnapshot && enrichedMessage.relationship) {
+                const { buildRelationshipSnapshot } = await import("@/ai/relationship/relationshipModel");
                 const snapshot = buildRelationshipSnapshot(enrichedMessage);
                 store.appendRelationshipSnapshot(snapshot);
                 store.setLastRelationshipSnapshot(snapshot);
               }
             } catch (err) {
-              console.warn("[ChatPanel] Failed to append relationship snapshot (welcome):", err);
+              logDebug("ChatPanel", { warn: "relationship_snapshot_failed", msg: err?.message });
             }
             
             // Phase 30: Crisis Forecast Engine - compute for quick-start actions too

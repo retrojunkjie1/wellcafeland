@@ -8,6 +8,9 @@ const COLLECTION = "user_settings";
  * Fetch user settings document from Firestore.
  * Returns null if not found or on error.
  */
+const isPermissionsError = (err) =>
+  err?.message?.includes("Missing or insufficient permissions");
+
 export async function getUserSettings(userId) {
   if (!userId) return null;
   try {
@@ -16,6 +19,9 @@ export async function getUserSettings(userId) {
     if (!snap.exists()) return null;
     return snap.data() || null;
   } catch (err) {
+    if (isPermissionsError(err)) {
+      return null;
+    }
     console.warn("[userSettingsService] getUserSettings failed:", err);
     return null;
   }
@@ -38,6 +44,7 @@ export async function updateUserSettings(userId, partialSettings) {
       { merge: true }
     );
   } catch (err) {
+    if (isPermissionsError(err)) return;
     console.warn("[userSettingsService] updateUserSettings failed:", err);
   }
 }

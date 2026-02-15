@@ -3,7 +3,7 @@
 // Chat UI entry found at: src/components/os/ChatPanel.jsx (used by src/apps/chat/ChatPage.jsx)
 
 import { getCorrelationId } from "@/utils/correlation";
-import { logDebug } from "@/lib/debug";
+import { logDebug, isDebugEnabled } from "@/lib/debug";
 import { updateChatDiagnostics } from "@/lib/chatDiagnostics";
 
 /**
@@ -208,45 +208,51 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         timeoutId = null;
       }
 
-      // Log response metadata
+      // Single read: body stream consumed once
+      const responseText = await response.text().catch(() => "");
+
+      // DEV + wc_debug: verbose error output (no secrets)
+      if (import.meta.env.DEV && isDebugEnabled()) {
+        logDebug("AIClient", {
+          url,
+          status: response.status,
+          responsePreview: (responseText || "").slice(0, 300),
+        });
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+
       logRequest("log", correlationId, {
         action: "response_received",
         status: response.status,
         statusText: response.statusText,
-        contentType: response.headers.get("content-type"),
+        contentType,
       });
 
       if (!response.ok) {
-        const contentType = response.headers.get("content-type") || "";
         let errorText = "Unknown error";
-        
-        if (contentType.includes("application/json")) {
+        if (contentType.includes("application/json") && responseText) {
           try {
-            const errorData = await response.json();
+            const errorData = JSON.parse(responseText);
             errorText = errorData.error || errorData.message || JSON.stringify(errorData).slice(0, 200);
           } catch {
-            errorText = await response.text().catch(() => "Unknown error");
+            errorText = responseText.slice(0, 400);
           }
-        } else {
-          // Might be HTML error page (Firebase Functions error)
-          errorText = await response.text().catch(() => "Unknown error");
-          if (errorText.includes("<html") || errorText.includes("<!DOCTYPE")) {
-            errorText = "Server returned HTML error page (check function deployment)";
-          }
-          errorText = errorText.slice(0, 400);
+        } else if (responseText) {
+          errorText = responseText.includes("<html") || responseText.includes("<!DOCTYPE")
+            ? "Server returned HTML error page (check function deployment)"
+            : responseText.slice(0, 400);
         }
-        
         const safe = errorText?.slice(0, 400) || "Unknown error";
-        
+
         logRequest("error", correlationId, {
           action: "response_error",
           status: response.status,
           error: safe,
           contentType,
         });
-        
-        // Don't retry on 4xx errors (except 408, 429)
-        if (response.status >= 400 && response.status < 500 && 
+
+        if (response.status >= 400 && response.status < 500 &&
             response.status !== 408 && response.status !== 429) {
           return {
             ok: false,
@@ -260,14 +266,11 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         if (attemptCount < MAX_RETRIES) continue;
       }
 
-      // Validate response is JSON
-      const contentType = response.headers.get("content-type") || "";
       if (!contentType.includes("application/json")) {
-        const text = await response.text().catch(() => "Non-JSON response");
         logRequest("error", correlationId, {
           action: "invalid_response_type",
           contentType,
-          responsePreview: text.slice(0, 200),
+          responsePreview: (responseText || "").slice(0, 200),
         });
         return {
           ok: false,
@@ -277,14 +280,22 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         };
       }
 
-      const data = await response.json().catch((parseErr) => {
+      let data = null;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseErr) {
         logRequest("error", correlationId, {
           action: "json_parse_error",
           error: parseErr.message,
         });
-        return null;
-      });
-      
+        return {
+          ok: false,
+          error: "Connection hiccup. I'm still here.",
+          status: response.status,
+          correlationId,
+        };
+      }
+
       if (!data) {
         logRequest("error", correlationId, {
           action: "empty_response",
