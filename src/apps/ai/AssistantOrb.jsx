@@ -1,12 +1,14 @@
 // src/apps/ai/AssistantOrb.jsx
 
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { isDebugEnabled } from "@/lib/debug";
 import { useAIStore } from "./useAIStore";
 import { getLastSession } from "../../services/sessionHistory";
 
 const AssistantOrb = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   // Defensive: Ensure useAIStore doesn't crash orb if store fails
   // Orb must NOT depend on chat success or tool session state
   let toggleConsole = () => {};
@@ -134,6 +136,19 @@ const AssistantOrb = () => {
           <span className="text-xl">💬</span>
         )}
       </button>
+
+      {/* wc_debug: orb state overlay (dev only) */}
+      {isDebugEnabled() && import.meta.env.DEV && (
+        <div
+          className="fixed z-[9997] rounded bg-black/80 px-2 py-1 text-[10px] font-mono text-amber-300 pointer-events-none"
+          style={{
+            bottom: "calc(180px + env(safe-area-inset-bottom))",
+            right: "calc(16px + env(safe-area-inset-right))",
+          }}
+        >
+          orb: open={String(location.pathname.startsWith("/chat"))} thinking={String(debouncedIsThinking)}
+        </div>
+      )}
     </>
   );
 };

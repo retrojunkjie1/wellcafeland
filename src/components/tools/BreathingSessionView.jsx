@@ -362,7 +362,7 @@ export const BreathingSessionView = ({
             )}
           </button>
           {voiceGuideEnabled && !getDiagnostics().voiceSupported && (
-            <p className="text-xs text-amber-200/70">Voice unavailable on this device. Tap to retry.</p>
+            <p className="text-xs text-amber-200/70">Voice guide unavailable on this device.</p>
           )}
           {voiceGuideEnabled && getDiagnostics().voiceSupported && getDiagnostics().lastError && (
             <p className="text-xs text-amber-200/70">Voice had a hiccup. Tap the button to retry.</p>

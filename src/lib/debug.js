@@ -8,7 +8,8 @@ const DEBUG_KEY = "wc_debug";
 export function isDebugEnabled() {
   if (typeof window === "undefined") return false;
   try {
-    return window.localStorage?.getItem(DEBUG_KEY) === "1";
+    if (window.localStorage?.getItem(DEBUG_KEY) === "1") return true;
+    return new URLSearchParams(window.location.search).get("wc_debug") === "1";
   } catch {
     return false;
   }

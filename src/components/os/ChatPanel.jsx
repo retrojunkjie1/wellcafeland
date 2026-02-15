@@ -2,6 +2,7 @@
 // Clean ChatGPT-style chat panel (no stacking)
 
 import React, { useEffect, useRef, useState } from "react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useNavigate } from "react-router-dom";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useOSStore } from "@/stores/useOSStore";
@@ -182,16 +183,16 @@ const ChatPanel = () => {
   const { messages, addMessage, injectToolIntoChat, openWorkspace } = useOSStore();
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
+  const { isOnline } = useOnlineStatus();
+  const isOffline = !isOnline;
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
-  // Phase 1: isOffline state - derived from navigator.onLine, reactive but non-blocking
-  const [isOffline, setIsOffline] = useState(
-    typeof navigator !== "undefined" ? !navigator.onLine : false
-  );
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
+  const [offlineQueueLength, setOfflineQueueLength] = useState(0);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const isSendingRef = useRef(false);
   // PHASE H: Chat state preservation
   const lastUnsentMessageRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -206,13 +207,16 @@ const ChatPanel = () => {
     connectionStateRef.current = "idle";
     lastErrorMessageRef.current = null;
     lastUnsentMessageRef.current = null;
-    offlineMessageQueueRef.current = []; // Clear offline queue on reset
+    offlineMessageQueueRef.current = [];
+    setOfflineQueueLength(0);
+    isSendingRef.current = false;
     if (abortControllerRef.current) {
       try {
         abortControllerRef.current.abort();
       } catch {}
       abortControllerRef.current = null;
     }
+    isSendingRef.current = false;
     setIsSending(false);
     setThinking(false);
     // Clear error messages from conversation (keep user messages)
@@ -257,11 +261,12 @@ const ChatPanel = () => {
       return;
     }
 
-    // Guard: Prevent duplicate sends
-    if (connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
+    // Guard: Prevent duplicate/concurrent sends (never auto-resend on ok:false)
+    if (isSendingRef.current || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
       console.warn("[ChatPanel] sendToAI called while already sending, ignoring");
       return;
     }
+    isSendingRef.current = true;
 
     try {
       // Preserve last unsent message
@@ -441,6 +446,7 @@ const ChatPanel = () => {
               });
             }
             connectionStateRef.current = "idle";
+            isSendingRef.current = false;
             setIsSending(false);
             setThinking(false);
             return;
@@ -449,8 +455,8 @@ const ChatPanel = () => {
           // Queue message if offline, otherwise show error
           const isActuallyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
           if (isActuallyOffline) {
-            // Queue message for retry when online
             offlineMessageQueueRef.current.push(text);
+            setOfflineQueueLength((n) => n + 1);
             addMessage("assistant", {
               type: "assistant_text",
               text: "Connection lost. Your message will be sent when you're back online. Tap Retry to send now.",
@@ -459,7 +465,7 @@ const ChatPanel = () => {
             });
           } else {
           // Guard: Only show error message once per failure (debounce duplicates)
-          const errorMessage = res.error || "Connection hiccup. I'm still here.";
+          const errorMessage = res.error || "Still here with you. Tap send to continue.";
           if (lastErrorMessageRef.current !== errorMessage) {
             lastErrorMessageRef.current = errorMessage;
             addMessage("assistant", {
@@ -477,6 +483,7 @@ const ChatPanel = () => {
           }
           }
           connectionStateRef.current = "idle";
+          isSendingRef.current = false;
           setIsSending(false);
           setThinking(false);
           return;
@@ -791,6 +798,7 @@ const ChatPanel = () => {
             });
           }
           connectionStateRef.current = "idle";
+          isSendingRef.current = false;
           setIsSending(false);
           setThinking(false);
           return;
@@ -836,6 +844,7 @@ const ChatPanel = () => {
       } catch {}
     } finally {
       connectionStateRef.current = "idle";
+      isSendingRef.current = false;
       setIsSending(false);
       setThinking(false);
     }
@@ -856,6 +865,14 @@ const ChatPanel = () => {
     const text = input.trim();
     // Guard: Prevent duplicate sends using connection state
     if (!text || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
+      return;
+    }
+
+    // Offline: queue message, no auto-send
+    if (isOffline) {
+      offlineMessageQueueRef.current.push(text);
+      setOfflineQueueLength((n) => n + 1);
+      setInput("");
       return;
     }
 
@@ -1550,20 +1567,23 @@ const ChatPanel = () => {
         </div>
       )}
 
-      {/* Offline/Reconnecting Status */}
-      {(isOffline || offlineMessageQueueRef.current.length > 0) && (
+      {/* Offline/Reconnecting Status - no layout change */}
+      {(isOffline || offlineQueueLength > 0) && (
         <div className="border-t border-amber-400/30 bg-amber-400/10 px-4 sm:px-6 py-2 flex items-center justify-between">
           <span className="text-xs text-amber-200">
             {isOffline 
-              ? "Offline. Messages will be sent when you're back online."
-              : `${offlineMessageQueueRef.current.length} message${offlineMessageQueueRef.current.length !== 1 ? 's' : ''} queued.`}
+              ? "Offline"
+              : offlineQueueLength > 0 
+                ? "Back online. Tap send to continue."
+                : ""}
           </span>
-          {offlineMessageQueueRef.current.length > 0 && !isOffline && (
+          {offlineQueueLength > 0 && !isOffline && (
             <button
               type="button"
               onClick={() => {
                 const queued = offlineMessageQueueRef.current.shift();
-                if (queued && connectionStateRef.current === "idle") {
+                if (queued && connectionStateRef.current === "idle" && !isSendingRef.current) {
+                  setOfflineQueueLength((n) => Math.max(0, n - 1));
                   sendToAI(queued);
                 }
               }}

@@ -67,9 +67,11 @@ try {
 }
 
 // Initialize core orchestrator: safety, policy, intelligence (must not throw)
-try {
-  initCoreOrchestrator();
-} catch (err) {
-  console.warn("[Startup] Core orchestrator initialization failed (non-blocking):", err);
-}
+setTimeout(() => {
+  try {
+    initCoreOrchestrator();
+  } catch (err) {
+    console.warn("[Startup] Core orchestrator initialization failed (non-blocking):", err);
+  }
+}, 0);
 

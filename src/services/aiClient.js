@@ -1,8 +1,10 @@
 // src/services/aiClient.js
 // Robust AI network client with retries, timeout, offline detection
+// Chat UI entry found at: src/components/os/ChatPanel.jsx (used by src/apps/chat/ChatPage.jsx)
 
 import { getCorrelationId } from "@/utils/correlation";
 import { logDebug } from "@/lib/debug";
+import { updateChatDiagnostics } from "@/lib/chatDiagnostics";
 
 /**
  * @typedef {Object} AIClientResult
@@ -42,26 +44,27 @@ function logRequest(level, correlationId, data) {
   }
 }
 
-// Resolve base URL (dev/prod)
+// Resolve base URL (dev/prod) — supports LAN/mobile via hostname in DEV
 function resolveBaseURL() {
   const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
   if (env && typeof env === "string" && env.trim()) {
     return env.trim();
   }
 
-  const isLocalhost =
-    import.meta.env.DEV &&
-    (window.location.hostname === "localhost" ||
-     window.location.hostname === "127.0.0.1");
-
-  if (isLocalhost) {
-    return `http://localhost:5001/wellnesscafelanding/us-central1`;
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    const host = window.location.hostname;
+    return `http://${host}:5001/wellnesscafelanding/us-central1`;
   }
 
   return "https://us-central1-wellnesscafelanding.cloudfunctions.net";
 }
 
 const BASE_URL = resolveBaseURL();
+
+if (import.meta.env.DEV && typeof window !== "undefined") {
+  logDebug("AIClient", { BASE_URL, hostname: window.location.hostname });
+}
+
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE = 1000;
 const MAX_BACKOFF = 30000;
@@ -145,6 +148,7 @@ export async function callAI(endpoint, body = {}, abortController = null) {
 
   let attemptCount = 0;
   let lastError = null;
+  let timeoutId = null;
 
   // Check offline before retry
   while (attemptCount < MAX_RETRIES) {
@@ -170,7 +174,7 @@ export async function callAI(endpoint, body = {}, abortController = null) {
     try {
       // Create timeout controller
       const timeoutController = new AbortController();
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         timeoutController.abort();
       }, TIMEOUT_MS);
 
@@ -199,7 +203,10 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         signal: combinedSignal,
       });
 
-      clearTimeout(timeoutId);
+      if (timeoutId != null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
 
       // Log response metadata
       logRequest("log", correlationId, {
@@ -334,11 +341,26 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         hasTool: !!result.tool,
         toolName: result.tool?.name || null,
       });
-      
+
+      try {
+        const toolRoute = result.tool?.name || result.meta?.toolRoute || null;
+        updateChatDiagnostics({
+          status: "ok",
+          correlationId: responseCorrelationId,
+          toolRoute: toolRoute || null,
+          error: null,
+        });
+      } catch {
+        /* non-blocking */
+      }
+
       return result;
 
     } catch (err) {
-      clearTimeout(timeoutId);
+      if (timeoutId != null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
       lastError = err;
 
       const isNetworkError = err.message?.includes("Failed to fetch") || 
@@ -364,10 +386,45 @@ export async function callAI(endpoint, body = {}, abortController = null) {
       ? "Still here with you. Tap send to continue."
       : "Connection hiccup. I'm still here.";
 
+  try {
+    updateChatDiagnostics({
+      status: "error",
+      correlationId,
+      toolRoute: null,
+      error: errorMsg,
+    });
+  } catch {
+    /* non-blocking */
+  }
+
   return {
     ok: false,
     error: errorMsg,
     status: 0,
+  };
+}
+
+/**
+ * Runtime check: resolved Functions base URL + reason (for diagnostics)
+ * @returns {{ url: string, reason: string, mode: string }}
+ */
+export function getResolvedFunctionsBaseUrl() {
+  const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
+  if (env && typeof env === "string" && env.trim()) {
+    return { url: env.trim(), reason: "env", mode: import.meta.env.MODE };
+  }
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    const host = window.location.hostname;
+    return {
+      url: `http://${host}:5001/wellnesscafelanding/us-central1`,
+      reason: "dev_lan",
+      mode: "development",
+    };
+  }
+  return {
+    url: "https://us-central1-wellnesscafelanding.cloudfunctions.net",
+    reason: "production",
+    mode: import.meta.env.MODE,
   };
 }
 

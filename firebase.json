@@ -3,6 +3,12 @@
     "source": "functions",
     "runtime": "nodejs20"
   },
+  "emulators": {
+    "functions": { "host": "0.0.0.0", "port": 5001 },
+    "firestore": { "host": "0.0.0.0", "port": 8080 },
+    "auth": { "host": "0.0.0.0", "port": 9099 },
+    "ui": { "enabled": true }
+  },
   "hosting": {
     "public": "dist",
     "ignore": [
