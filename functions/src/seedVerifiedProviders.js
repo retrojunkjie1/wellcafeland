@@ -71,7 +71,7 @@ async function seedVerifiedProviders(data, context) {
     const seedData = loadSeedData();
     console.log(`[Seed] Loading ${seedData.length} verified providers...`);
 
-    const batch = db.batch();
+    let batch = db.batch();
     const colRef = db.collection("realHelpProviders");
     let count = 0;
     let skipped = 0;
@@ -123,6 +123,7 @@ async function seedVerifiedProviders(data, context) {
 
       if (count >= 500) {
         await batch.commit();
+        batch = db.batch();
         count = 0;
       }
     }

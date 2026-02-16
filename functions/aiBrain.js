@@ -390,6 +390,12 @@ async function handleSession(req, res) {
         error: "AI temporarily unavailable.",
         code: "MODEL_NOT_AVAILABLE",
         correlationId,
+        message: {
+          id: `msg_${Date.now()}`,
+          role: "assistant",
+          text: "AI temporarily unavailable. Please try again in a moment.",
+        },
+        tool: null,
       });
     }
 
@@ -477,6 +483,12 @@ async function handleSession(req, res) {
             error: "AI temporarily unavailable.",
             code: "MODEL_NOT_AVAILABLE",
             correlationId,
+            message: {
+              id: `msg_${Date.now()}`,
+              role: "assistant",
+              text: "AI temporarily unavailable. Please try again in a moment.",
+            },
+            tool: null,
           });
         }
         console.error("[generate_session] Error:", {
@@ -571,6 +583,12 @@ async function handleSession(req, res) {
             error: "AI temporarily unavailable.",
             code: "MODEL_NOT_AVAILABLE",
             correlationId,
+            message: {
+              id: `msg_${Date.now()}`,
+              role: "assistant",
+              text: "AI temporarily unavailable. Please try again in a moment.",
+            },
+            tool: null,
           });
         }
         console.error("[aiSession] Tool-mode chat error:", {
@@ -629,6 +647,12 @@ async function handleSession(req, res) {
           error: "AI temporarily unavailable.",
           code: "MODEL_NOT_AVAILABLE",
           correlationId,
+          message: {
+            id: `msg_${Date.now()}`,
+            role: "assistant",
+            text: "AI temporarily unavailable. Please try again in a moment.",
+          },
+          tool: null,
         });
       }
       console.error("[aiSession] Simple chat error:", {
@@ -660,6 +684,12 @@ async function handleSession(req, res) {
         error: "AI temporarily unavailable.",
         code: "MODEL_NOT_AVAILABLE",
         correlationId: topCorrelationId,
+        message: {
+          id: `msg_${Date.now()}`,
+          role: "assistant",
+          text: "AI temporarily unavailable. Please try again in a moment.",
+        },
+        tool: null,
       });
     }
     console.error("[aiSession] Top-level error:", {

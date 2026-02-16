@@ -869,8 +869,15 @@ const ChatPanel = () => {
       return;
     }
 
-    // Offline: queue message, no auto-send
+    // Offline: show message in chat, queue for later, no auto-send
     if (isOffline) {
+      const offlineUserMessage = normalizeMessage({
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        content: text,
+        role: "user",
+        timestamp: Date.now(),
+      });
+      addMessage("user", offlineUserMessage);
       offlineMessageQueueRef.current.push(text);
       setOfflineQueueLength((n) => n + 1);
       setInput("");

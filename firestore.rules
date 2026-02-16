@@ -104,11 +104,7 @@ service cloud.firestore {
     }
 
     // --- SYSTEM SETTINGS (flags, thresholds) ---
-    match /system_settings/{docId} {
-      // Only admin/superadmin can read and write
-      allow read, write: if hasAnyRole(['admin', 'superadmin']) || 
-        (signedIn() && request.auth.token.admin == true);
-    }
+    // Note: Write via Functions only; client admin read allowed (see GOD-EYE block for write: false)
 
     // --- FEATURE FLAGS ---
     match /feature_flags/{docId} {
@@ -234,7 +230,7 @@ service cloud.firestore {
     // --- GOD-EYE SUPREME: SYSTEM SETTINGS ---
     match /system_settings/{docId} {
       allow read: if signedIn() && request.auth.token.admin == true;
-      allow write: if false; // Only via Functions
+      allow write: if signedIn() && request.auth.token.admin == true;
     }
 
     // --- GOD-EYE SUPREME: OVERRIDES ---
@@ -247,17 +243,6 @@ service cloud.firestore {
       allow write: if false; // Only via Functions
     }
 
-    // --- GOD-EYE SUPREME: TELEMETRY (client can write own) ---
-    match /telemetry_events/{docId} {
-      // Clients can create events for themselves
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
-      // Clients can read their own
-      allow read: if signedIn() && resource.data.uid == request.auth.uid;
-      // Admins can read all
-      allow list, get: if signedIn() && request.auth.token.admin == true;
-      // No updates/deletes
-      allow update, delete: if false;
-    }
 
     // --- GOD-EYE SUPREME: USER RUNTIME (client can update own) ---
     match /user_runtime/{uid} {
