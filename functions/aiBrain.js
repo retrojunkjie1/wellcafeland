@@ -10,8 +10,37 @@ const db = admin.firestore();
 
 const FIREWORKS_API_KEY = process.env.FIREWORKS_API_KEY;
 
-const FIREWORKS_MODEL_SESSION =
-  process.env.FIREWORKS_MODEL_SESSION || "deepseek-v3p1";
+const FIREWORKS_MODEL =
+  process.env.FIREWORKS_MODEL ||
+  process.env.FIREWORKS_MODEL_SESSION ||
+  "deepseek-v3p1";
+const FIREWORKS_MODEL_FALLBACK =
+  process.env.FIREWORKS_MODEL_FALLBACK || null;
+
+function getResolvedModel() {
+  const model = (FIREWORKS_MODEL || "").trim();
+  if (model) return model;
+  const fallback = (FIREWORKS_MODEL_FALLBACK || "").trim();
+  if (fallback) return fallback;
+  return null;
+}
+
+function isModelNotAvailableError(res, text) {
+  if (res.status !== 404) return false;
+  const lower = (text || "").toLowerCase();
+  return (
+    lower.includes("model not found") ||
+    lower.includes("inaccessible") ||
+    lower.includes("not deployed")
+  );
+}
+
+function ModelNotAvailableError(correlationId) {
+  const err = new Error("AI temporarily unavailable.");
+  err.code = "MODEL_NOT_AVAILABLE";
+  err.correlationId = correlationId;
+  return err;
+}
 
 /**
  * Small helper: safe JSON parse
@@ -27,9 +56,13 @@ function safeJsonParse(str, fallback = null) {
 /**
  * Call Fireworks chat endpoint and ask for JSON back
  */
-async function callFireworksJSON(systemMessage, userMessage) {
+async function callFireworksJSON(systemMessage, userMessage, correlationId = "") {
   if (!FIREWORKS_API_KEY) {
     throw new Error("FIREWORKS_API_KEY is not set");
+  }
+  const model = getResolvedModel();
+  if (!model) {
+    throw ModelNotAvailableError(correlationId);
   }
 
   const res = await fetch(
@@ -41,7 +74,7 @@ async function callFireworksJSON(systemMessage, userMessage) {
         Authorization: `Bearer ${FIREWORKS_API_KEY}`,
       },
       body: JSON.stringify({
-        model: FIREWORKS_MODEL_SESSION,
+        model,
         temperature: 0.35,
         max_tokens: 900,
         response_format: { type: "json_object" },
@@ -55,6 +88,13 @@ async function callFireworksJSON(systemMessage, userMessage) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    if (isModelNotAvailableError(res, text)) {
+      console.error("[callFireworksJSON] Model not available", {
+        correlationId,
+        status: res.status,
+      });
+      throw ModelNotAvailableError(correlationId);
+    }
     throw new Error(`Fireworks error ${res.status}: ${text}`);
   }
 
@@ -70,7 +110,12 @@ async function callFireworksJSON(systemMessage, userMessage) {
 /**
  * Basic chat mode for backwards compatibility
  */
-async function runSimpleChat(prompt, context = "") {
+async function runSimpleChat(prompt, context = "", correlationId = "") {
+  const model = getResolvedModel();
+  if (!model) {
+    throw ModelNotAvailableError(correlationId);
+  }
+
   const systemMessage =
     "You are WellnessCafe OS. Speak like a calm, grounded recovery guide. " +
     "Use simple language. No technical jargon. Short paragraphs.";
@@ -88,7 +133,7 @@ async function runSimpleChat(prompt, context = "") {
         Authorization: `Bearer ${FIREWORKS_API_KEY}`,
       },
       body: JSON.stringify({
-        model: FIREWORKS_MODEL_SESSION,
+        model,
         temperature: 0.45,
         max_tokens: 700,
         messages: [
@@ -101,6 +146,13 @@ async function runSimpleChat(prompt, context = "") {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    if (isModelNotAvailableError(res, text)) {
+      console.error("[runSimpleChat] Model not available", {
+        correlationId,
+        status: res.status,
+      });
+      throw ModelNotAvailableError(correlationId);
+    }
     throw new Error(`Fireworks chat error ${res.status}: ${text}`);
   }
 
@@ -231,7 +283,8 @@ async function generateSession(payload = {}) {
     `Time available: ~${minutes} minutes\n` +
     `Extra context from user:\n${note}`;
 
-  const raw = await callFireworksJSON(systemMessage, userMessage);
+  const correlationId = payload.correlationId || "";
+  const raw = await callFireworksJSON(systemMessage, userMessage, correlationId);
 
   const userId = payload.userId || "unknown";
   
@@ -322,14 +375,23 @@ async function handleSession(req, res) {
     const userId = body.userId || "unknown";
     const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     
-    // Structured logging
+    const model = getResolvedModel();
     console.log("[aiSession]", {
       correlationId,
+      model: model || "(none)",
       userId,
       mode: body.mode || "default",
       toolIntent: body.mode || body.metadata?.toolIntent || null,
       schemaVersion: body.schemaVersion || "legacy",
     });
+    if (!model) {
+      return res.status(503).json({
+        ok: false,
+        error: "AI temporarily unavailable.",
+        code: "MODEL_NOT_AVAILABLE",
+        correlationId,
+      });
+    }
 
     const mode = body.mode || "session";
     
@@ -377,12 +439,13 @@ async function handleSession(req, res) {
       });
       
       try {
-        const session = await generateSession({ 
+        const session = await generateSession({
           supportType,
           tone: feel,
           minutes: duration,
           note: notes,
           userId,
+          correlationId,
         });
         
         // Format session content as text for message.text
@@ -408,12 +471,20 @@ async function handleSession(req, res) {
           session,
         });
       } catch (err) {
+        if (err.code === "MODEL_NOT_AVAILABLE") {
+          return res.status(503).json({
+            ok: false,
+            error: "AI temporarily unavailable.",
+            code: "MODEL_NOT_AVAILABLE",
+            correlationId,
+          });
+        }
         console.error("[generate_session] Error:", {
           correlationId,
           error: err.message,
           stack: err.stack,
         });
-        
+
         // Return safe response WITHOUT session (circuit-breaker)
         return res.status(500).json({
           ok: false,
@@ -460,8 +531,8 @@ async function handleSession(req, res) {
       const context = body.context || "";
 
       try {
-        const result = await runSimpleChat(prompt, context);
-        
+        const result = await runSimpleChat(prompt, context, correlationId);
+
         // Validate tool exists in registry (server-side truth-gate)
         const validTools = ["breathing", "grounding", "body-scan", "journaling", "self-surgeon", "urge-surfing", "meditation", "education"];
         const normalizedToolId = toolIdMap[toolId] || toolId;
@@ -494,12 +565,20 @@ async function handleSession(req, res) {
         
         return res.status(200).json(response);
       } catch (chatErr) {
+        if (chatErr.code === "MODEL_NOT_AVAILABLE") {
+          return res.status(503).json({
+            ok: false,
+            error: "AI temporarily unavailable.",
+            code: "MODEL_NOT_AVAILABLE",
+            correlationId,
+          });
+        }
         console.error("[aiSession] Tool-mode chat error:", {
           correlationId,
           error: chatErr.message,
           stack: chatErr.stack,
         });
-        
+
         // Return safe response WITHOUT tool (circuit-breaker: don't route to broken tool)
         return res.status(500).json({
           ok: false,
@@ -529,8 +608,8 @@ async function handleSession(req, res) {
     const context = body.context || "";
 
     try {
-      const result = await runSimpleChat(prompt, context);
-      
+      const result = await runSimpleChat(prompt, context, correlationId);
+
       // STANDARDIZED RESPONSE SCHEMA (default chat mode)
       return res.status(200).json({
         ok: true,
@@ -544,12 +623,20 @@ async function handleSession(req, res) {
         tool: null, // No tool in default chat mode
       });
     } catch (chatErr) {
+      if (chatErr.code === "MODEL_NOT_AVAILABLE") {
+        return res.status(503).json({
+          ok: false,
+          error: "AI temporarily unavailable.",
+          code: "MODEL_NOT_AVAILABLE",
+          correlationId,
+        });
+      }
       console.error("[aiSession] Simple chat error:", {
         correlationId,
         error: chatErr.message,
         stack: chatErr.stack,
       });
-      
+
       return res.status(500).json({
         ok: false,
         correlationId,
@@ -566,16 +653,25 @@ async function handleSession(req, res) {
       });
     }
   } catch (err) {
+    const topCorrelationId = req.body?.correlationId || "unknown";
+    if (err.code === "MODEL_NOT_AVAILABLE") {
+      return res.status(503).json({
+        ok: false,
+        error: "AI temporarily unavailable.",
+        code: "MODEL_NOT_AVAILABLE",
+        correlationId: topCorrelationId,
+      });
+    }
     console.error("[aiSession] Top-level error:", {
-      correlationId: req.body?.correlationId || "unknown",
+      correlationId: topCorrelationId,
       error: err.message,
       stack: err.stack,
     });
-    
+
     // ALWAYS return JSON, never HTML or undefined
     return res.status(500).json({
       ok: false,
-      correlationId: req.body?.correlationId || "unknown",
+      correlationId: topCorrelationId,
       error: {
         code: "INTERNAL_ERROR",
         message: err.message || "Unknown error",
@@ -649,9 +745,10 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
   }
 
   const fullUserPrompt = context ? `${context}${userPrompt}` : userPrompt;
+  const correlationId = body.correlationId || "";
 
   try {
-    const result = await callFireworksJSON(systemPrompt, fullUserPrompt);
+    const result = await callFireworksJSON(systemPrompt, fullUserPrompt, correlationId);
 
     // Store agent execution in Firestore
     try {
@@ -673,6 +770,15 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
       result: result,
     });
   } catch (err) {
+    if (err.code === "MODEL_NOT_AVAILABLE") {
+      return res.status(503).json({
+        agent,
+        success: false,
+        error: "AI temporarily unavailable.",
+        code: "MODEL_NOT_AVAILABLE",
+        correlationId: body.correlationId || "",
+      });
+    }
     console.error(`Agent ${agent} execution error:`, err);
 
     // Store failed execution
