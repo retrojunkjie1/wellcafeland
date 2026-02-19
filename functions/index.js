@@ -443,12 +443,12 @@ exports.adminUpdateSystemSettings = functions.https.onCall(async (data, context)
 // Set user role (admin claim)
 exports.setUserRole = functions.https.onCall(async (data, context) => {
   await requireAdmin(context);
-  const { uid, admin } = data;
-  if (!uid || typeof admin !== "boolean") {
+  const { uid, admin: adminClaim } = data;
+  if (!uid || typeof adminClaim !== "boolean") {
     throw new functions.https.HttpsError("invalid-argument", "uid and admin (boolean) required");
   }
   const userRecord = await admin.auth().getUser(uid);
-  const mergedClaims = { ...(userRecord.customClaims || {}), admin };
+  const mergedClaims = { ...(userRecord.customClaims || {}), admin: adminClaim };
   await admin.auth().setCustomUserClaims(uid, mergedClaims);
   
   // Log telemetry
@@ -460,7 +460,7 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
     metadata: {
       action: "setUserRole",
       uid,
-      admin,
+      admin: adminClaim,
       executedBy: context.auth.uid,
     },
   });

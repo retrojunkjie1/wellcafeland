@@ -1,6 +1,8 @@
 // functions/aiBrain.js
+// Fireworks AI provider called from: functions/aiBrain.js (callFireworksJSON, runSimpleChat, generateSession, handleAgent)
 
 const admin = require("firebase-admin");
+const functions = require("firebase-functions");
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -8,21 +10,49 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-const FIREWORKS_API_KEY = process.env.FIREWORKS_API_KEY;
+const MODEL_PREFIX = "accounts/fireworks/models/";
+const DEFAULT_MODEL_CHAT = "accounts/fireworks/models/llama-v3-70b-instruct";
+const DEFAULT_MODEL_REASONING = "accounts/fireworks/models/deepseek-r1";
 
-const FIREWORKS_MODEL =
-  process.env.FIREWORKS_MODEL ||
-  process.env.FIREWORKS_MODEL_SESSION ||
-  "deepseek-v3p1";
-const FIREWORKS_MODEL_FALLBACK =
-  process.env.FIREWORKS_MODEL_FALLBACK || null;
+function getResolvedApiKey() {
+  const fromEnv = (process.env.FIREWORKS_API_KEY || "").trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const fw = functions.config().fireworks || {};
+    return (fw.api_key || fw.key || "").trim();
+  } catch (e) {
+    return "";
+  }
+}
 
-function getResolvedModel() {
-  const model = (FIREWORKS_MODEL || "").trim();
-  if (model) return model;
-  const fallback = (FIREWORKS_MODEL_FALLBACK || "").trim();
-  if (fallback) return fallback;
-  return null;
+function getResolvedModelChat() {
+  const fromEnv = (process.env.FIREWORKS_MODEL_CHAT || "").trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const fw = functions.config().fireworks || {};
+    const fromConfig = (fw.model_chat || "").trim();
+    if (fromConfig) return fromConfig;
+  } catch (e) {}
+  return DEFAULT_MODEL_CHAT;
+}
+
+function getResolvedModelReasoning() {
+  const fromEnv = (process.env.FIREWORKS_MODEL_REASONING || "").trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const fw = functions.config().fireworks || {};
+    const fromConfig = (fw.model_reasoning || "").trim();
+    if (fromConfig) return fromConfig;
+  } catch (e) {}
+  return DEFAULT_MODEL_REASONING;
+}
+
+function resolveModelForRequest(reqBody) {
+  const hint = reqBody?.metadata?.modelHint || reqBody?.metadata?.routing?.modelHint;
+  const mode = (reqBody?.mode || "").toString();
+  if (hint === "reasoning") return getResolvedModelReasoning();
+  if (mode.includes("triage") || mode.includes("reason") || mode === "crisis") return getResolvedModelReasoning();
+  return getResolvedModelChat();
 }
 
 function isModelNotAvailableError(res, text) {
@@ -56,49 +86,53 @@ function safeJsonParse(str, fallback = null) {
 /**
  * Call Fireworks chat endpoint and ask for JSON back
  */
-async function callFireworksJSON(systemMessage, userMessage, correlationId = "") {
-  if (!FIREWORKS_API_KEY) {
-    throw new Error("FIREWORKS_API_KEY is not set");
+async function callFireworksJSON(systemMessage, userMessage, correlationId = "", opts = {}) {
+  const apiKey = getResolvedApiKey();
+  if (!apiKey || apiKey === "FIREWORKS_API_KEY_HERE") {
+    throw new Error("AI provider not configured");
   }
-  const model = getResolvedModel();
-  if (!model) {
-    throw ModelNotAvailableError(correlationId);
+  let model = opts.model || getResolvedModelChat();
+  const fallbackModel = opts.fallbackModel || null;
+
+  async function doFetch(m) {
+    const res = await fetch(
+      "https://api.fireworks.ai/inference/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: m,
+          temperature: 0.35,
+          max_tokens: 900,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: systemMessage },
+            { role: "user", content: userMessage },
+          ],
+        }),
+      }
+    );
+    return { res, text: await res.text().catch(() => "") };
   }
 
-  const res = await fetch(
-    "https://api.fireworks.ai/inference/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${FIREWORKS_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.35,
-        max_tokens: 900,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: userMessage },
-        ],
-      }),
-    }
-  );
+  let { res, text } = await doFetch(model);
+  if (!res.ok && isModelNotAvailableError(res, text) && fallbackModel && model !== fallbackModel) {
+    console.warn("[callFireworksJSON] 404 on reasoning model, retrying with chat model", { correlationId, model, fallbackModel });
+    ({ res, text } = await doFetch(fallbackModel));
+  }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
     if (isModelNotAvailableError(res, text)) {
-      console.error("[callFireworksJSON] Model not available", {
-        correlationId,
-        status: res.status,
-      });
+      console.error("[callFireworksJSON] Model not available", { correlationId, status: res.status });
       throw ModelNotAvailableError(correlationId);
     }
     throw new Error(`Fireworks error ${res.status}: ${text}`);
   }
 
-  const data = await res.json();
+  const data = JSON.parse(text || "{}");
   const content =
     data.choices?.[0]?.message?.content ??
     data.choices?.[0]?.message?.[0]?.content ??
@@ -110,11 +144,13 @@ async function callFireworksJSON(systemMessage, userMessage, correlationId = "")
 /**
  * Basic chat mode for backwards compatibility
  */
-async function runSimpleChat(prompt, context = "", correlationId = "") {
-  const model = getResolvedModel();
-  if (!model) {
-    throw ModelNotAvailableError(correlationId);
+async function runSimpleChat(prompt, context = "", correlationId = "", opts = {}) {
+  const apiKey = getResolvedApiKey();
+  if (!apiKey || apiKey === "FIREWORKS_API_KEY_HERE") {
+    throw new Error("AI provider not configured");
   }
+  let model = opts.model || getResolvedModelChat();
+  const fallbackModel = opts.fallbackModel || null;
 
   const systemMessage =
     "You are WellnessCafe OS. Speak like a calm, grounded recovery guide. " +
@@ -124,39 +160,44 @@ async function runSimpleChat(prompt, context = "", correlationId = "") {
     ? `Context:\n${context}\n\nUser:\n${prompt}`
     : prompt;
 
-  const res = await fetch(
-    "https://api.fireworks.ai/inference/v1/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${FIREWORKS_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.45,
-        max_tokens: 700,
-        messages: [
-          { role: "system", content: systemMessage },
-          { role: "user", content: userMessage },
-        ],
-      }),
-    }
-  );
+  async function doFetch(m) {
+    const res = await fetch(
+      "https://api.fireworks.ai/inference/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: m,
+          temperature: 0.45,
+          max_tokens: 700,
+          messages: [
+            { role: "system", content: systemMessage },
+            { role: "user", content: userMessage },
+          ],
+        }),
+      }
+    );
+    return { res, text: await res.text().catch(() => "") };
+  }
+
+  let { res, text } = await doFetch(model);
+  if (!res.ok && isModelNotAvailableError(res, text) && fallbackModel && model !== fallbackModel) {
+    console.warn("[runSimpleChat] 404 on reasoning model, retrying with chat model", { correlationId, model, fallbackModel });
+    ({ res, text } = await doFetch(fallbackModel));
+  }
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
     if (isModelNotAvailableError(res, text)) {
-      console.error("[runSimpleChat] Model not available", {
-        correlationId,
-        status: res.status,
-      });
+      console.error("[runSimpleChat] Model not available", { correlationId, status: res.status });
       throw ModelNotAvailableError(correlationId);
     }
     throw new Error(`Fireworks chat error ${res.status}: ${text}`);
   }
 
-  const data = await res.json();
+  const data = JSON.parse(text || "{}");
   const content = data.choices?.[0]?.message?.content || "";
 
   return { reply: content.trim() };
@@ -284,7 +325,9 @@ async function generateSession(payload = {}) {
     `Extra context from user:\n${note}`;
 
   const correlationId = payload.correlationId || "";
-  const raw = await callFireworksJSON(systemMessage, userMessage, correlationId);
+  const model = payload.model || getResolvedModelChat();
+  const fallbackModel = payload.fallbackModel || null;
+  const raw = await callFireworksJSON(systemMessage, userMessage, correlationId, { model, fallbackModel });
 
   const userId = payload.userId || "unknown";
   
@@ -374,30 +417,37 @@ async function handleSession(req, res) {
     const body = typeof req.body === "string" ? safeJsonParse(req.body, {}) : req.body || {};
     const userId = body.userId || "unknown";
     const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    
-    const model = getResolvedModel();
-    console.log("[aiSession]", {
-      correlationId,
-      model: model || "(none)",
-      userId,
-      mode: body.mode || "default",
-      toolIntent: body.mode || body.metadata?.toolIntent || null,
-      schemaVersion: body.schemaVersion || "legacy",
-    });
-    if (!model) {
-      return res.status(503).json({
+
+    const apiKey = getResolvedApiKey();
+    if (!apiKey || apiKey === "FIREWORKS_API_KEY_HERE") {
+      console.error("[aiSession] AI provider not configured: FIREWORKS_API_KEY missing or placeholder");
+      return res.status(500).json({
         ok: false,
-        error: "AI temporarily unavailable.",
-        code: "MODEL_NOT_AVAILABLE",
+        error: { code: "AI_PROVIDER_NOT_CONFIGURED", message: "AI provider not configured" },
         correlationId,
-        message: {
-          id: `msg_${Date.now()}`,
-          role: "assistant",
-          text: "AI temporarily unavailable. Please try again in a moment.",
-        },
-        tool: null,
       });
     }
+
+    const resolvedModel = resolveModelForRequest(body);
+    if (process.env.NODE_ENV !== "production") {
+      const chatModel = getResolvedModelChat();
+      const reasoningModel = getResolvedModelReasoning();
+      console.log("[aiSession] model_route", { chatModel, reasoningModel, selected: resolvedModel });
+    }
+    if (!resolvedModel || !resolvedModel.startsWith(MODEL_PREFIX)) {
+      return res.status(500).json({
+        ok: false,
+        error: { code: "INVALID_MODEL_ID", message: "Invalid Fireworks model id" },
+        correlationId,
+      });
+    }
+
+    const chatModel = getResolvedModelChat();
+    const reasoningModel = getResolvedModelReasoning();
+    const opts = {
+      model: resolvedModel,
+      fallbackModel: resolvedModel === reasoningModel ? chatModel : null,
+    };
 
     const mode = body.mode || "session";
     
@@ -452,6 +502,8 @@ async function handleSession(req, res) {
           note: notes,
           userId,
           correlationId,
+          model: resolvedModel,
+          fallbackModel: resolvedModel === reasoningModel ? chatModel : null,
         });
         
         // Format session content as text for message.text
@@ -480,8 +532,7 @@ async function handleSession(req, res) {
         if (err.code === "MODEL_NOT_AVAILABLE") {
           return res.status(503).json({
             ok: false,
-            error: "AI temporarily unavailable.",
-            code: "MODEL_NOT_AVAILABLE",
+            error: { code: "MODEL_NOT_AVAILABLE", message: "AI model not available. Check provider configuration." },
             correlationId,
             message: {
               id: `msg_${Date.now()}`,
@@ -517,7 +568,7 @@ async function handleSession(req, res) {
 
     // MODE: agent → run specific AI agent (Seer, Oracle, Overseer, Sentinel)
     if (mode === "agent") {
-      return await handleAgent(req, res, { ...body, userId });
+      return await handleAgent(req, res, { ...body, userId, resolvedModel, chatModel, reasoningModel });
     }
 
     // (Future) MODE: template_detail, admin_list, admin_save can be added here
@@ -543,7 +594,7 @@ async function handleSession(req, res) {
       const context = body.context || "";
 
       try {
-        const result = await runSimpleChat(prompt, context, correlationId);
+        const result = await runSimpleChat(prompt, context, correlationId, opts);
 
         // Validate tool exists in registry (server-side truth-gate)
         const validTools = ["breathing", "grounding", "body-scan", "journaling", "self-surgeon", "urge-surfing", "meditation", "education"];
@@ -580,8 +631,7 @@ async function handleSession(req, res) {
         if (chatErr.code === "MODEL_NOT_AVAILABLE") {
           return res.status(503).json({
             ok: false,
-            error: "AI temporarily unavailable.",
-            code: "MODEL_NOT_AVAILABLE",
+            error: { code: "MODEL_NOT_AVAILABLE", message: "AI model not available. Check provider configuration." },
             correlationId,
             message: {
               id: `msg_${Date.now()}`,
@@ -626,7 +676,7 @@ async function handleSession(req, res) {
     const context = body.context || "";
 
     try {
-      const result = await runSimpleChat(prompt, context, correlationId);
+      const result = await runSimpleChat(prompt, context, correlationId, opts);
 
       // STANDARDIZED RESPONSE SCHEMA (default chat mode)
       return res.status(200).json({
@@ -644,8 +694,7 @@ async function handleSession(req, res) {
       if (chatErr.code === "MODEL_NOT_AVAILABLE") {
         return res.status(503).json({
           ok: false,
-          error: "AI temporarily unavailable.",
-          code: "MODEL_NOT_AVAILABLE",
+          error: { code: "MODEL_NOT_AVAILABLE", message: "AI model not available. Check provider configuration." },
           correlationId,
           message: {
             id: `msg_${Date.now()}`,
@@ -677,12 +726,19 @@ async function handleSession(req, res) {
       });
     }
   } catch (err) {
-    const topCorrelationId = req.body?.correlationId || "unknown";
+    const topCorrelationId = (req.body && req.body.correlationId) || "unknown";
+    if (err.message === "AI provider not configured") {
+      console.error("[aiSession] AI provider not configured");
+      return res.status(500).json({
+        ok: false,
+        error: { code: "AI_PROVIDER_NOT_CONFIGURED", message: "AI provider not configured" },
+        correlationId: topCorrelationId,
+      });
+    }
     if (err.code === "MODEL_NOT_AVAILABLE") {
       return res.status(503).json({
         ok: false,
-        error: "AI temporarily unavailable.",
-        code: "MODEL_NOT_AVAILABLE",
+        error: { code: "MODEL_NOT_AVAILABLE", message: "AI model not available. Check provider configuration." },
         correlationId: topCorrelationId,
         message: {
           id: `msg_${Date.now()}`,
@@ -776,9 +832,13 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
 
   const fullUserPrompt = context ? `${context}${userPrompt}` : userPrompt;
   const correlationId = body.correlationId || "";
+  const model = body.resolvedModel || resolveModelForRequest(body);
+  const chatModel = body.chatModel || getResolvedModelChat();
+  const reasoningModel = body.reasoningModel || getResolvedModelReasoning();
+  const opts = { model, fallbackModel: model === reasoningModel ? chatModel : null };
 
   try {
-    const result = await callFireworksJSON(systemPrompt, fullUserPrompt, correlationId);
+    const result = await callFireworksJSON(systemPrompt, fullUserPrompt, correlationId, opts);
 
     // Store agent execution in Firestore
     try {
@@ -804,8 +864,7 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
       return res.status(503).json({
         agent,
         success: false,
-        error: "AI temporarily unavailable.",
-        code: "MODEL_NOT_AVAILABLE",
+        error: { code: "MODEL_NOT_AVAILABLE", message: "AI model not available. Check provider configuration." },
         correlationId: body.correlationId || "",
       });
     }
@@ -827,7 +886,7 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
     return res.status(500).json({
       agent,
       success: false,
-      error: err.message || "Agent execution failed",
+      error: { code: "AGENT_ERROR", message: err.message || "Agent execution failed" },
     });
   }
 }
