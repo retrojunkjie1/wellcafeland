@@ -5,7 +5,12 @@
  * Generate a correlation ID for request tracing
  */
 export function generateCorrelationId() {
-  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  try {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+  } catch (_) {}
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
 /**
