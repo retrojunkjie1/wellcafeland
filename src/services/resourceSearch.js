@@ -5,11 +5,7 @@
 
 import { globalWebSearch } from "./searchService";
 import { logError, logInfo, logWarn } from "@/services/logService";
-
-// Prefer explicit URL in production, but allow override via env for local/dev
-const FUNCTION_URL =
-  import.meta.env.VITE_FIREBASE_FUNCTIONS_URL ||
-  "https://us-central1-wellnesscafelanding.cloudfunctions.net";
+import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 
 // Request deduplication cache
 const requestCache = new Map();
@@ -118,7 +114,7 @@ function mapResultsToDirectory(results, domain) {
  * Call the Firebase Function for global resource search
  */
 async function callFunctionSearch({ query, domain, region, category }) {
-  const endpoint = `${FUNCTION_URL}/globalResourceSearch`;
+  const endpoint = `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s
 
@@ -207,8 +203,8 @@ export async function searchResources({ query, domain, region, category }) {
     // Call live resource search function (real FindTreatment.gov integration)
     let liveResults = [];
     try {
-      const functionsUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-      const response = await fetch(`${functionsUrl}/searchLiveResources`, {
+      const functionsUrl = resolveFunctionsBaseUrl();
+      const response = await fetch(`${functionsUrl.replace(/\/+$/, "")}/searchLiveResources`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

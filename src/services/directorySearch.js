@@ -2,15 +2,16 @@
  * src/services/directorySearch.js
  * Single source of truth for Find Help / RealHelp directory search
  * Calls /globalResourceSearch (v2). Supports pagination, verified-first, no scraping.
+ * Falls back to curated resources when API is unavailable.
  */
 
 import { logDebug } from "@/lib/debug";
+import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
+import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 
-const FUNCTION_URL =
-  import.meta.env.VITE_FIREBASE_FUNCTIONS_URL ||
-  "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-
-const ENDPOINT = `${FUNCTION_URL.replace(/\/+$/, "")}/globalResourceSearch`;
+function getEndpoint() {
+  return `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
+}
 const TIMEOUT_MS = 15000;
 const RETRY_DELAY_MS = 1500;
 
@@ -111,12 +112,13 @@ export async function searchDirectory({
   let lastError = null;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
+    const endpoint = getEndpoint();
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     if (typeof window !== "undefined" && window.localStorage?.getItem("wc_debug") === "1") {
       logDebug("DirectorySearch", {
-        endpoint: ENDPOINT,
+        endpoint,
         domain: domain || "",
         pageToken: pageToken || null,
         query: query.slice(0, 50),
@@ -124,7 +126,7 @@ export async function searchDirectory({
     }
 
     try {
-      const res = await fetch(ENDPOINT, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,13 +150,9 @@ export async function searchDirectory({
           await sleep(RETRY_DELAY_MS);
           continue;
         }
-        return {
-          ok: false,
-          items: [],
-          nextPageToken: null,
-          meta: {},
-          error: "Search temporarily unavailable. Please retry.",
-        };
+        const fallback = getCuratedFallback(domain, String(query).trim());
+        const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
+        return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
       }
 
       if (!data?.ok) {
@@ -163,13 +161,9 @@ export async function searchDirectory({
           await sleep(RETRY_DELAY_MS);
           continue;
         }
-        return {
-          ok: false,
-          items: [],
-          nextPageToken: null,
-          meta: {},
-          error: "Search temporarily unavailable. Please retry.",
-        };
+        const fallback = getCuratedFallback(domain, String(query).trim());
+        const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
+        return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
       }
 
       const normalized = normalizeResponse({
@@ -195,21 +189,13 @@ export async function searchDirectory({
         await sleep(RETRY_DELAY_MS);
         continue;
       }
-      return {
-        ok: false,
-        items: [],
-        nextPageToken: null,
-        meta: {},
-        error: "Search temporarily unavailable. Please retry.",
-      };
+      const fallback = getCuratedFallback(domain, String(query).trim());
+      const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
+      return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
     }
   }
 
-  return {
-    ok: false,
-    items: [],
-    nextPageToken: null,
-    meta: {},
-    error: "Search temporarily unavailable. Please retry.",
-  };
+  const fallback = getCuratedFallback(domain, String(query).trim());
+  const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
+  return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
 }

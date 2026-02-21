@@ -7,7 +7,7 @@ import VideoGuidance from "./VideoGuidance";
 import { AlertCircle } from "lucide-react";
 import { formatMessageWithHeadings } from "../../utils/formatMessage";
 
-const MessageBubble = React.memo(({ message }) => {
+const MessageBubble = React.memo(({ message, onAction }) => {
   // Handle tool result messages
   if (message.type === "tool_result" || (typeof message.content === "object" && message.content?.type === "tool_result")) {
     const toolData = typeof message.content === "object" ? message.content : message;
@@ -148,6 +148,22 @@ const MessageBubble = React.memo(({ message }) => {
             {!isMultimodal && message.role === "assistant" && content && !message.audioUrl && (
               <div className="mt-2">
                 <VoiceResponse text={content} />
+              </div>
+            )}
+
+            {/* Action buttons (Retry, Continue offline, Open tools) */}
+            {message.actions?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {message.actions.map((a, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => onAction?.(a.action, message)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 text-white hover:bg-white/20 transition border border-white/20"
+                  >
+                    {a.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>

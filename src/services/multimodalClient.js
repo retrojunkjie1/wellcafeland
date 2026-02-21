@@ -3,29 +3,7 @@
 
 import { isDebugEnabled, logDebug } from "@/lib/debug";
 
-// Phase 61B: Endpoint resolution helpers
-function resolveFunctionsBaseUrl() {
-  const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
-  // Guard: Always use env var if present (production-safe, not localhost-locked)
-  if (env && typeof env === "string" && env.trim()) {
-    return env.trim();
-  }
-
-  // Only use localhost in development mode
-  const isLocalhost =
-    import.meta.env.DEV &&
-    (window.location.hostname === "localhost" ||
-     window.location.hostname === "127.0.0.1");
-
-  if (isLocalhost) {
-    const projectId = "wellnesscafelanding";
-    const region = "us-central1";
-    return `http://localhost:5001/${projectId}/${region}`;
-  }
-
-  // Production fallback
-  return "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-}
+import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 
 function buildEndpoint(path) {
   const base = resolveFunctionsBaseUrl();

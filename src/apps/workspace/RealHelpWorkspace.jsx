@@ -6,11 +6,13 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Home, DollarSign, Briefcase, Users, AlertCircle, ExternalLink, Heart, MapPin, PhoneCall, CheckCircle } from "lucide-react";
 import { rememberWorkspace } from "@/engines/memory/workspaceMemoryEngine";
 import { searchResources } from "@/services/resourceSearch";
+import { searchDirectory } from "@/services/directorySearch";
 import { listHousingProviders } from "@/services/housingService";
 import { listGrants } from "@/services/grantsService";
 import { listSupportPrograms } from "@/services/supportProgramsService";
 import { listCircles } from "@/services/circlesService";
 import { saveFavoriteResource } from "@/services/directoryService";
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 import PageHeader from "@/components/navigation/PageHeader";
 import { loadContentById } from "@/services/contentService";
 import { ContentViewer } from "@/components/content/ContentViewer";
@@ -72,23 +74,45 @@ const RealHelpWorkspace = () => {
         const domain = activeTab === "housing" ? "housing" : 
                       activeTab === "funding" ? "grants" : 
                       activeTab === "programs" ? "assistance" : "programs";
-        
-        const searchResult = await searchResources({
-          query: query.trim(),
-          domain,
-          region: region || undefined,
-          category: activeTab,
-        });
 
-        // Store search response metadata (for counts display)
-        setSearchResponse(searchResult);
-
-        if (searchResult.ok && searchResult.results) {
-          // Split verified vs external for display (already merged by searchResources)
-          // Results are already in order: verified first, external second
-          setResults(searchResult.results);
+        // Programs tab: use globalResourceSearch (live pipeline)
+        if (activeTab === "programs") {
+          const dirResult = await searchDirectory({
+            query: query.trim(),
+            domain,
+            location: region || undefined,
+            category: activeTab,
+            limit: 20,
+          });
+          setSearchResponse({ ok: dirResult.ok, results: dirResult.items, error: dirResult.error });
+          if (dirResult.ok && dirResult.items?.length) {
+            setResults(dirResult.items.map((r) => ({
+              id: r.id,
+              name: r.title,
+              title: r.title,
+              description: r.description || r.summary,
+              website: r.url,
+              url: r.url,
+              region: r.state || r.address,
+              source: r.source,
+              verification: r.verified ? { status: "verified" } : { status: "external" },
+            })));
+          } else {
+            setResults([]);
+          }
         } else {
-          setResults([]);
+          const searchResult = await searchResources({
+            query: query.trim(),
+            domain,
+            region: region || undefined,
+            category: activeTab,
+          });
+          setSearchResponse(searchResult);
+          if (searchResult.ok && searchResult.results) {
+            setResults(searchResult.results);
+          } else {
+            setResults([]);
+          }
         }
       } else {
         setResults([]);
@@ -365,25 +389,27 @@ const RealHelpWorkspace = () => {
                           {item.phone && (
                             <a
                               href={`tel:${item.phone}`}
-                              onClick={() => handleProviderCall(item)}
                               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-wcGold/10 hover:border-wcGold/30 transition text-xs font-medium"
                             >
                               <PhoneCall className="h-3.5 w-3.5" />
                               <span>Call</span>
                             </a>
                           )}
-                          {item.website && (
-                            <a
-                              href={item.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => handleProviderWebsiteClick(item)}
-                              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-wcGold/10 hover:border-wcGold/30 transition text-xs font-medium"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                              <span>Visit Site</span>
-                            </a>
-                          )}
+                          {(item.website || item.url) && (() => {
+                            const href = normalizeExternalUrl(item.website || item.url);
+                            if (!href) return null;
+                            return (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-wcGold/10 hover:border-wcGold/30 transition text-xs font-medium"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                                <span>Visit Site</span>
+                              </a>
+                            );
+                          })()}
                       <button
                         onClick={() => handleOpenDetail(item)}
                         className="flex items-center px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-xs font-medium"

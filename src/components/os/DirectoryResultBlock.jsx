@@ -4,6 +4,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, ExternalLink, ArrowRight, FileText } from "lucide-react";
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 
 const DirectoryResultBlock = ({ message }) => {
   const navigate = useNavigate();
@@ -92,18 +93,22 @@ const DirectoryResultBlock = ({ message }) => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {item.url && (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 rounded-lg p-1.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
-                    title="Visit site"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
+                {item.url && (() => {
+                  const href = normalizeExternalUrl(item.url);
+                  if (!href) return null;
+                  return (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 rounded-lg p-1.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+                      title="Visit site"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  );
+                })()}
                 <button
                   type="button"
                   onClick={() => navigate(`/directory/${routeDomain}/${encodeURIComponent(item.id || item.url)}`)}

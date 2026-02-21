@@ -1,12 +1,20 @@
 // src/apps/support/SupportHubPage.jsx
 
 import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { trackPageView } from "../../services/telemetry";
-import { Phone, Heart, Building2, MapPin, BookOpen, Users } from "lucide-react";
-import FooterMinimal from "@/components/FooterMinimal";
+import { Phone, Heart, Building2, BookOpen } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";
 
+const SUPPORT_TO_DIRECTORY = {
+  crisis: "/directory/hotlines",
+  resources: "/directory/programs",
+  government: "/directory/assistance",
+};
+
 const SupportHubPage = () => {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = "Find Support - WellnessCafe";
     trackPageView("support_hub");
@@ -69,10 +77,15 @@ const SupportHubPage = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {supportCards.map((card) => {
             const Icon = card.icon;
+            const path = SUPPORT_TO_DIRECTORY[card.id];
             return (
               <div
                 key={card.id}
-                className={`lux-card p-6 border-2 ${card.borderColor} ${card.bgColor} transition-all hover:scale-[1.02] hover:shadow-lg`}
+                role={path ? "button" : undefined}
+                tabIndex={path ? 0 : undefined}
+                onClick={path ? () => navigate(path) : undefined}
+                onKeyDown={path ? (e) => e.key === "Enter" && navigate(path) : undefined}
+                className={`lux-card p-6 border-2 ${card.borderColor} ${card.bgColor} transition-all ${path ? "cursor-pointer hover:scale-[1.02] hover:shadow-lg" : ""}`}
               >
                 <div className="flex items-start gap-4">
                   <div className={`${card.color} flex-shrink-0`}>

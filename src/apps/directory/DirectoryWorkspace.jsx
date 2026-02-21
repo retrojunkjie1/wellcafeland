@@ -7,6 +7,7 @@ import { withFrom } from "@/navigation/linkState";
 import { Search, ExternalLink, Heart, Loader2 } from "lucide-react";
 import { searchDirectory } from "@/services/directorySearch";
 import { saveFavoriteResource } from "@/services/directoryService";
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 import PageHeader from "@/components/navigation/PageHeader";
 
 const DOMAIN_CONFIG = {
@@ -458,17 +459,21 @@ const DirectoryWorkspace = () => {
                     >
                       <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
-                    {item.url && (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg p-2 sm:p-2.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition min-h-[48px] min-w-[48px] flex items-center justify-center"
-                        title="Visit site"
-                      >
-                        <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </a>
-                    )}
+                    {item.url && (() => {
+                      const href = normalizeExternalUrl(item.url);
+                      if (!href) return null;
+                      return (
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg p-2 sm:p-2.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition min-h-[48px] min-w-[48px] flex items-center justify-center"
+                          title="Visit site"
+                        >
+                          <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </a>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

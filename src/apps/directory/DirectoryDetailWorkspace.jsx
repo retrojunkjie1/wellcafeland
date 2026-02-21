@@ -6,6 +6,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { withFrom } from "@/navigation/linkState";
 import { MapPin, Phone, Mail, ExternalLink, Heart, FileText, ArrowLeft } from "lucide-react";
 import { getDirectoryItem, saveFavoriteResource, saveResourcePlan } from "@/services/directoryService";
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 
 const DirectoryDetailWorkspace = () => {
   const { domain: routeDomain, id } = useParams();
@@ -229,17 +230,21 @@ const DirectoryDetailWorkspace = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-3 flex-wrap">
-            {item.url && (
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Open Website
-              </a>
-            )}
+            {item.url && (() => {
+              const href = normalizeExternalUrl(item.url);
+              if (!href) return null;
+              return (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open Website
+                </a>
+              );
+            })()}
             <button
               type="button"
               onClick={handleSaveFavorite}

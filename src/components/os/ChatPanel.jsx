@@ -223,12 +223,16 @@ const ChatPanel = () => {
     // Clear error messages from conversation (keep user messages)
     const store = useOSStore.getState();
     if (store.messages && Array.isArray(store.messages)) {
-      const filtered = store.messages.filter(m => 
-        !(m.type === "assistant_text" && 
-          (m.text?.includes("Still here with you") || 
-           m.text?.includes("Connection lost") ||
-           m.content?.includes("Still here with you")))
-      );
+      const isErrorMsg = (m) =>
+        (m.type === "assistant_text" || m.role === "assistant") &&
+        (m.actions?.length > 0 ||
+          m.text?.includes("Still here with you") ||
+          m.text?.includes("Connection lost") ||
+          m.text?.includes("Tap Retry") ||
+          m.content?.includes("Still here with you") ||
+          m.content?.includes("Connection lost") ||
+          m.content?.includes("Tap Retry"));
+      const filtered = store.messages.filter((m) => !isErrorMsg(m));
       if (filtered.length !== store.messages.length) {
         store.setMessages(filtered);
       }
@@ -1183,6 +1187,28 @@ const ChatPanel = () => {
     }
   };
 
+  const handleMessageAction = React.useCallback((action, msg) => {
+    if (action === "retry") {
+      const text = lastUserMessageRef.current || (typeof msg?.content === "string" ? msg.content : msg?.content?.content) || "";
+      if (text && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
+        lastErrorMessageRef.current = null;
+        const store = useOSStore.getState();
+        const msgs = store.messages || [];
+        const filtered = msgs.filter((m) => !(m.actions?.length > 0 && m.role === "assistant"));
+        if (filtered.length < msgs.length) store.setMessages(filtered);
+        sendToAI(text);
+      }
+    } else if (action === "open_tools") {
+      navigate("/tools");
+    } else if (action === "offline") {
+      const text = lastUserMessageRef.current;
+      if (text) {
+        offlineMessageQueueRef.current.push(text);
+        setOfflineQueueLength((n) => n + 1);
+      }
+    }
+  }, [navigate, sendToAI]);
+
   return (
     <div className="flex h-full flex-col bg-slate-950">
       {/* Phase 19: Provider Monitor Strip */}
@@ -1442,7 +1468,7 @@ const ChatPanel = () => {
                   if (msg.type === "assistant_audio") {
                     return (
                       <div key={msg.id} className="space-y-2 animate-fade-in">
-                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} />
+                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} />
                         {msg.audioUrl && (
                           <div className="ml-0 sm:ml-12 w-full sm:w-auto">
                             <VoiceResponse text={msg.text || msg.content} audioUrl={msg.audioUrl} />
@@ -1454,7 +1480,7 @@ const ChatPanel = () => {
                   if (msg.type === "assistant_video") {
                     return (
                       <div key={msg.id} className="space-y-2 animate-fade-in">
-                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} />
+                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} />
                         {msg.videoUrl && (
                           <div className="ml-0 sm:ml-12 w-full max-w-full sm:max-w-2xl">
                             <VideoGuidance
@@ -1537,7 +1563,7 @@ const ChatPanel = () => {
                 if (msg.role === "user") {
                   return (
                     <div key={msg.id} className="space-y-2">
-                      <MessageBubble message={msg} />
+                      <MessageBubble message={msg} onAction={handleMessageAction} />
                       <EmotionalSignalBar 
                         emotion={msg.emotion} 
                         triggers={msg.triggers}
@@ -1557,7 +1583,7 @@ const ChatPanel = () => {
                   );
                 }
                 
-                return <MessageBubble key={msg.id} message={msg} />;
+                return <MessageBubble key={msg.id} message={msg} onAction={handleMessageAction} />;
               })}
               {isThinking && (
                 <div className="flex items-start gap-3 animate-fade-in">

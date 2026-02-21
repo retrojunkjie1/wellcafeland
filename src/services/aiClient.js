@@ -5,6 +5,7 @@
 import { getCorrelationId } from "@/utils/correlation";
 import { logDebug, isDebugEnabled } from "@/lib/debug";
 import { updateChatDiagnostics } from "@/lib/chatDiagnostics";
+import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 
 /**
  * @typedef {Object} AIClientResult
@@ -44,22 +45,7 @@ function logRequest(level, correlationId, data) {
   }
 }
 
-// Resolve base URL (dev/prod) — supports LAN/mobile via hostname in DEV
-function resolveBaseURL() {
-  const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
-  if (env && typeof env === "string" && env.trim()) {
-    return env.trim();
-  }
-
-  if (import.meta.env.DEV && typeof window !== "undefined") {
-    const host = window.location.hostname;
-    return `http://${host}:5001/wellnesscafelanding/us-central1`;
-  }
-
-  return "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-}
-
-const BASE_URL = resolveBaseURL();
+const BASE_URL = resolveFunctionsBaseUrl();
 
 if (import.meta.env.DEV && typeof window !== "undefined") {
   logDebug("AIClient", { BASE_URL, hostname: window.location.hostname });
@@ -256,7 +242,8 @@ export async function callAI(endpoint, body = {}, abortController = null) {
             response.status !== 408 && response.status !== 429) {
           return {
             ok: false,
-            error: "Connection hiccup. I'm still here.",
+            error: "Server returned an error (4xx). Tap Retry to try again.",
+            errorReason: "4xx",
             status: response.status,
             correlationId,
           };
@@ -272,9 +259,11 @@ export async function callAI(endpoint, body = {}, abortController = null) {
           contentType,
           responsePreview: (responseText || "").slice(0, 200),
         });
+        const reason = response.status >= 500 ? "5xx" : response.status >= 400 ? "4xx" : "server_error";
         return {
           ok: false,
-          error: "Connection hiccup. I'm still here.",
+          error: response.status >= 500 ? "Server is having trouble (5xx). Tap Retry to try again." : "Server returned an error. Tap Retry to try again.",
+          errorReason: reason,
           status: response.status,
           correlationId,
         };
@@ -290,7 +279,8 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         });
         return {
           ok: false,
-          error: "Connection hiccup. I'm still here.",
+          error: "Invalid response from server. Tap Retry to try again.",
+          errorReason: "parse_error",
           status: response.status,
           correlationId,
         };
@@ -302,7 +292,8 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         });
         return {
           ok: false,
-          error: "Connection hiccup. I'm still here.",
+          error: "Empty response from server. Tap Retry to try again.",
+          errorReason: "empty",
           status: response.status,
           correlationId,
         };
@@ -387,15 +378,17 @@ export async function callAI(endpoint, body = {}, abortController = null) {
     }
   }
 
-  // All retries exhausted or non-retryable error — user-safe copy only (no raw stack traces)
+  // All retries exhausted or non-retryable error — user-safe copy with specific reason
   const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
   const isAborted = lastError?.name === "AbortError";
   const isNetwork = lastError?.message?.includes("Failed to fetch") || lastError?.message?.includes("NetworkError");
   const errorMsg = isOffline
-    ? "Offline. Please check your connection."
-    : isAborted || isNetwork
-      ? "Still here with you. Tap send to continue."
-      : "Connection hiccup. I'm still here.";
+    ? "Offline. Please check your connection. Tap Retry when back online."
+    : isAborted
+      ? "Request timed out. Tap Retry to try again."
+      : isNetwork
+        ? "Connection error. Tap Retry to try again."
+        : "Something went wrong. Tap Retry to try again.";
 
   try {
     updateChatDiagnostics({
@@ -411,6 +404,7 @@ export async function callAI(endpoint, body = {}, abortController = null) {
   return {
     ok: false,
     error: errorMsg,
+    errorReason: isOffline ? "offline" : isAborted ? "timeout" : isNetwork ? "network" : "unknown",
     status: 0,
   };
 }

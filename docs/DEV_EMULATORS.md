@@ -33,6 +33,23 @@ The model ID in your config is wrong or you don't have access to it. Either:
 - Your Fireworks account doesn't have access to that model
 - Fix: Run `npm run verify:fireworks` in `functions/` and use model IDs from the closest matches
 
+### If 404 MODEL_NOT_AVAILABLE: Use Deployments Resource Name
+
+Serverless models can return 404 if not deployed in your region. Use **on-demand deployments** instead:
+
+1. In Fireworks Console, create a deployment for your model.
+2. Copy the deployment resource name: `accounts/<account>/deployments/<id>`
+3. Set in `functions/.env`:
+   ```
+   FIREWORKS_TARGET_CHAT=accounts/wellnesscafe/deployments/<your-chat-deployment-id>
+   FIREWORKS_TARGET_REASONING=accounts/wellnesscafe/deployments/<your-reasoning-deployment-id>
+   ```
+4. Restart the emulator. The `model` field in Fireworks requests accepts both `accounts/.../models/...` and `accounts/.../deployments/...`.
+
+### DEPLOYMENT_WARMING (503)
+
+When deployments are scaled to zero, Fireworks returns `DEPLOYMENT_SCALING_UP`. The backend retries up to 4 times with backoff. If still warming after retries, it returns `DEPLOYMENT_WARMING` with `Retry-After: 60`. Tell users to wait ~60 seconds and retry.
+
 ---
 
 ## Confirm Emulator Running
@@ -45,8 +62,8 @@ lsof -nP -iTCP:5001 -sTCP:LISTEN
 
 `firebase emulators:status` is not a valid command.
 
-## Models used
+## Models / Deployments used
 
-- **chat:** `FIREWORKS_MODEL_CHAT` / `fireworks.model_chat` — default: `accounts/fireworks/models/llama-v3-70b-instruct`
-- **reasoning:** `FIREWORKS_MODEL_REASONING` / `fireworks.model_reasoning` — default: `accounts/fireworks/models/deepseek-r1`
-- **format:** `accounts/fireworks/models/<name>`
+- **chat:** `FIREWORKS_TARGET_CHAT` (preferred) or `FIREWORKS_MODEL_CHAT` — default: `accounts/fireworks/models/llama-v3-70b-instruct`
+- **reasoning:** `FIREWORKS_TARGET_REASONING` (preferred) or `FIREWORKS_MODEL_REASONING` — default: `accounts/fireworks/models/deepseek-r1`
+- **formats:** `accounts/<...>/models/<name>` or `accounts/<...>/deployments/<id>`
