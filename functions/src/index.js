@@ -13,6 +13,8 @@ const { onClientUpdate } = require("./milestones/onClientUpdate");
 const { chat, tts, stt } = require("./multimodal");
 // Global Resource Search (v2)
 const { globalResourceSearch: globalResourceSearchV2 } = require("./globalResourceSearch");
+// Link Preview (v2)
+const { linkPreview } = require("./linkPreview");
 // Legacy AI Brain (v1 – REQUIRED)
 const aiBrain = require("../aiBrain");
 const { setCorsHeaders } = require("../corsHelper");
@@ -63,6 +65,8 @@ exports.globalResourceSearch = onRequest(
   },
   globalResourceSearchV2
 );
+
+exports.linkPreview = linkPreview;
 
 // ---------------------------
 // v1 LEGACY FUNCTIONS (SAFE)

@@ -2,6 +2,48 @@
 // Profile page with guest mode support
 
 import React, { useEffect, useState } from "react";
+
+const CALMING_OPT_IN_KEY = "wc_calming_tools_opt_in"
+
+function CalmingToolsToggle() {
+  const [on, setOn] = useState(() => {
+    try {
+      return localStorage?.getItem(CALMING_OPT_IN_KEY) === "1"
+    } catch {
+      return false
+    }
+  })
+  const toggle = () => {
+    const next = !on
+    try {
+      localStorage?.setItem(CALMING_OPT_IN_KEY, next ? "1" : "0")
+    } catch {}
+    setOn(next)
+  }
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-white">Show calming tools suggestions</p>
+        <p className="text-xs text-white/60">
+          When on, you may see an inline suggestion (never a popup) after sharing. Default off.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={toggle}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors px-0.5 ${
+          on ? "border-amber-400/40 bg-amber-400/20" : "border-white/20 bg-white/5"
+        }`}
+        role="switch"
+        aria-checked={on}
+      >
+        <span className={`pointer-events-none inline-block h-5 w-5 shrink-0 rounded-full bg-white shadow transition-transform ${
+          on ? "translate-x-5" : "translate-x-0"
+        }`} />
+      </button>
+    </div>
+  )
+}
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
@@ -111,6 +153,7 @@ const ProfilePage = () => {
         <h2 className="text-xs uppercase tracking-[0.3em] text-white/50">
           Preferences
         </h2>
+        <CalmingToolsToggle />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-white">Theme</p>

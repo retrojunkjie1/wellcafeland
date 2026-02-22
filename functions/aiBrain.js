@@ -90,6 +90,12 @@ function evaluateDirectoryIntent(text) {
   return { confidence, queryHint };
 }
 
+const CREATIVE_PATTERNS = [/\bquote(s)?\b/i, /\bstart\s*up\s*line(s)?\b/i, /\bpick\s*up\s*line(s)?\b/i, /\bpickup\s*line(s)?\b/i, /\bjoke(s)?\b/i, /\bline(s)?\s+for\b/i];
+function evaluateCreativeIntent(text) {
+  if (!text || typeof text !== "string") return false;
+  return CREATIVE_PATTERNS.some((p) => p.test(text.trim()));
+}
+
 function toSafeResource(r) {
   return {
     title: (r.title || "").slice(0, 200),
@@ -143,8 +149,9 @@ async function runSimpleChat(prompt, context = "", correlationId = "") {
   }
 
   const systemMessage =
-    "You are WellnessCafe OS. Speak like a calm, grounded recovery guide. " +
-    "Use simple language. No technical jargon. Short paragraphs.";
+    "You are WellnessCafe OS. Be concise. Short paragraphs. No repetitive empathy boilerplate. " +
+    "Vary your openings—avoid starting with the same phrase twice. Ask at most one clarifying question when needed. " +
+    "Never push tools unless the user explicitly asks.";
 
   const userMessage = context ? `Context:\n${context}\n\nUser:\n${prompt}` : prompt;
 
@@ -732,8 +739,26 @@ async function handleSession(req, res) {
 
     let context = body.context || "";
 
-    // Intent: directory_lookup — conservative gate; only query if confidence >= threshold
-    const { confidence: dirConf, queryHint } = evaluateDirectoryIntent(prompt);
+    // Intent: CREATIVE — quotes, pickup lines, etc. Do NOT route to resources
+    if (evaluateCreativeIntent(prompt)) {
+      context = (context ? context + "\n\n" : "") +
+        "[User wants quotes, pickup lines, or creative content. Provide 1–2 short suggestions. Do NOT suggest housing, grants, treatment, or tools.]";
+    }
+
+    // Variation guard: avoid repeating last assistant openings
+    const messages = body.messages || [];
+    const lastAssistantOpeners = messages
+      .filter((m) => m.role === "assistant")
+      .slice(-3)
+      .map((m) => (typeof m.content === "string" ? m.content : m.text || "").slice(0, 60).trim())
+      .filter(Boolean);
+    if (lastAssistantOpeners.length > 0) {
+      context = (context ? context + "\n\n" : "") +
+        `[Avoid starting your reply with any of these: ${lastAssistantOpeners.join(" | ")}]`;
+    }
+
+    // Intent: directory_lookup — conservative gate; only query if confidence >= threshold and NOT creative
+    const { confidence: dirConf, queryHint } = evaluateCreativeIntent(prompt) ? { confidence: 0, queryHint: "" } : evaluateDirectoryIntent(prompt);
     if (dirConf > 0 && dirConf < DIRECTORY_CONFIDENCE_THRESHOLD) {
       return res.status(200).json({
         ok: true,

@@ -561,30 +561,41 @@ const ChatPanel = () => {
           }
         }
 
-        // TRUTH-GATE: Only inject and promise if tool is validated AND we can open it
-        if (toolToInject) {
+        // Opt-in only: do not auto-open modal. Only inject when user explicitly requested (directToolRequest).
+        // Server/decision suggestions become passive inline card (if opt-in + cooldown).
+        const toolToUse = directToolRequest || toolToInject;
+        if (toolToUse) {
           const { validateToolId } = await import("@/utils/toolRouter");
-          if (validateToolId(toolToInject)) {
-            // Attempt tool injection (async - will return null if fails)
+          if (!validateToolId(toolToUse)) {
+            console.warn("[ChatPanel] Tool injection blocked: invalid tool ID", toolToUse);
+          } else if (directToolRequest) {
+            // User explicitly asked for tool - inject immediately
             setTimeout(async () => {
-              const toolMessage = await injectToolIntoChat(toolToInject, {});
-              
-              // TRUTH-GATE: Only add "I've opened" message if tool actually opened
+              const toolMessage = await injectToolIntoChat(toolToUse, {});
               if (toolMessage) {
-                // Tool opened successfully - confirm to user
                 addMessage("assistant", {
                   type: "system",
-                  content: `I've opened the ${TOOL_NAMES[toolToInject] || toolToInject} tool for you. Take your time, I'm here.`,
+                  content: `I've opened the ${TOOL_NAMES[toolToUse] || toolToUse} tool for you. Take your time, I'm here.`,
                 });
-              } else {
-                // Tool failed to open - don't promise it, just show supportive text
-                console.warn("[ChatPanel] Tool injection failed:", toolToInject);
-                // Don't add false promise message
               }
             }, 500);
           } else {
-            // Circuit-breaker: Tool not available, suppress tool-offer language
-            console.warn("[ChatPanel] Tool injection blocked: invalid tool ID", toolToInject);
+            // Server/decision suggested - never auto-open. Only show inline suggestion if opt-in + cooldown.
+            const optIn = typeof localStorage !== "undefined" && localStorage.getItem("wc_calming_tools_opt_in") === "1";
+            const lastAt = parseInt(localStorage?.getItem("wc_calming_last_suggested_at") || "0", 10);
+            const cooldownMs = 10 * 60 * 1000;
+            if (optIn && (Date.now() - lastAt >= cooldownMs)) {
+              try {
+                localStorage.setItem("wc_calming_last_suggested_at", String(Date.now()));
+              } catch {}
+              addMessage("assistant", {
+                type: "recommendation",
+                id: `rec-${Date.now()}`,
+                content: "Based on what you shared, a short practice might help.",
+                suggestion: { toolId: toolToUse },
+                timestamp: Date.now(),
+              });
+            }
           }
         }
 
@@ -1105,23 +1116,26 @@ const ChatPanel = () => {
     
     addMessage("user", messageForStore);
     
-    // Phase 17: Get tool recommendation
+    // Phase 17: Get tool recommendation (with cooldown + preference gating)
     const recommendation = getRecommendedTool({
       message: enrichedMessage,
       emotion: enrichedMessage.emotion,
       triggers: signals.triggers,
       risk: signals.risk,
     });
-    
-    // Phase 21: Show recommendation if available (after a short delay)
-    // Phase 25: Normalize recommendation message
-    if (recommendation) {
+    const prefsOn = (typeof localStorage !== "undefined" && localStorage.getItem("wc_tool_suggestions") !== "off");
+    const lastAt = parseInt(localStorage?.getItem("wc_last_tool_suggested_at") || "0", 10);
+    const cooldownOk = Date.now() - lastAt >= 3 * 60 * 1000;
+    if (recommendation && prefsOn && cooldownOk) {
       setTimeout(() => {
+        try {
+          localStorage?.setItem("wc_last_tool_suggested_at", String(Date.now()));
+        } catch {}
         const recommendationMessage = normalizeMessage({
           id: `recommendation-${Date.now()}`,
           role: "assistant",
           type: "recommendation",
-          content: recommendation.reason || "Based on what you just shared, we can try a short practice together.",
+          content: recommendation.reason || "Try a short practice?",
           suggestion: recommendation,
           timestamp: Date.now(),
         });
@@ -1413,22 +1427,26 @@ const ChatPanel = () => {
             
             addMessage("user", messageForStore);
             
-            // Get recommendation
+            // Get recommendation (with cooldown + preference gating)
             const recommendation = getRecommendedTool({
               message: enrichedMessage,
               emotion: enrichedMessage.emotion,
               triggers: signals.triggers,
               risk: signals.risk,
             });
-            
-            // Phase 25: Normalize recommendation message
-            if (recommendation) {
+            const prefsOn = (typeof localStorage !== "undefined" && localStorage.getItem("wc_tool_suggestions") !== "off");
+            const lastAt = parseInt(localStorage?.getItem("wc_last_tool_suggested_at") || "0", 10);
+            const cooldownOk = Date.now() - lastAt >= 3 * 60 * 1000;
+            if (recommendation && prefsOn && cooldownOk) {
               setTimeout(() => {
+                try {
+                  localStorage?.setItem("wc_last_tool_suggested_at", String(Date.now()));
+                } catch {}
                 const recommendationMessage = normalizeMessage({
                   id: `recommendation-${Date.now()}`,
                   role: "assistant",
                   type: "recommendation",
-                  content: recommendation.reason || "Based on what you just shared, we can try a short practice together.",
+                  content: recommendation.reason || "Try a short practice?",
                   suggestion: recommendation,
                   timestamp: Date.now(),
                 });
@@ -1531,24 +1549,37 @@ const ChatPanel = () => {
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="w-full max-w-full rounded-xl bg-amber-500/10 border border-amber-400/40 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                            <p className="text-sm text-amber-50 flex-1">
-                              {msg.content || msg.text || "Based on what you just shared, we can try a short practice together."}
+                          <div className="w-full max-w-full rounded-xl bg-white/5 border border-white/10 p-3 sm:p-4 flex flex-col gap-3">
+                            <p className="text-sm text-white/80 flex-1">
+                              {msg.content || msg.text || "Try a short practice?"}
                             </p>
-                            <div className="flex flex-row flex-wrap gap-2 justify-start sm:justify-end">
+                            <div className="flex flex-row flex-wrap gap-2">
                               <button
                                 type="button"
-                                className="px-3 py-1.5 text-xs sm:text-sm rounded-lg bg-amber-400 text-slate-950 hover:bg-amber-300 transition min-h-[40px] sm:min-h-0"
+                                className="px-3 py-1.5 text-xs rounded-lg bg-wcGold/30 text-wcGold border border-wcGold/50 hover:bg-wcGold/40 transition"
                                 onClick={() => handleOpenSuggestedTool(msg.suggestion)}
                               >
                                 Open {toolName}
                               </button>
                               <button
                                 type="button"
-                                className="px-3 py-1.5 text-xs sm:text-sm rounded-lg border border-amber-300/60 text-amber-100 hover:bg-amber-300/10 transition min-h-[40px] sm:min-h-0"
-                                onClick={() => dismissSuggestion(msg.id)}
+                                className="px-3 py-1.5 text-xs rounded-lg border border-white/20 text-white/70 hover:bg-white/10 transition"
+                                onClick={() => {
+                                  try { localStorage.setItem("wc_last_tool_suggested_at", String(Date.now())); } catch {}
+                                  dismissSuggestion(msg.id);
+                                }}
                               >
                                 Not now
+                              </button>
+                              <button
+                                type="button"
+                                className="px-3 py-1.5 text-xs rounded-lg text-white/50 hover:text-white/70 transition"
+                                onClick={() => {
+                                  try { localStorage.setItem("wc_tool_suggestions", "off"); } catch {}
+                                  dismissSuggestion(msg.id);
+                                }}
+                              >
+                                Don&apos;t suggest again
                               </button>
                             </div>
                           </div>

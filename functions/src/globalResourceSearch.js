@@ -6,12 +6,14 @@ const { defineSecret } = require("firebase-functions/params")
 const { logger } = require("firebase-functions")
 const axios = require("axios")
 
-const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_TTL_MS = 60 * 1000
 const THROTTLE_WINDOW_MS = 10000
 const THROTTLE_MAX = 8
+const CIRCUIT_OPEN_MS = 10 * 60 * 1000
 const cache = new Map()
 const throttle = new Map()
 const lastLogByCode = {}
+let circuitOpenUntil = 0
 
 function getClientIp(req) {
   return req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
@@ -184,6 +186,17 @@ exports.globalResourceSearch = onRequest(
         return res.json(cached)
       }
 
+      if (Date.now() < circuitOpenUntil) {
+        logOnce("CIRCUIT_OPEN", `Provider disabled until ${new Date(circuitOpenUntil).toISOString()}`)
+        return res.status(200).json({
+          ok: false,
+          error: "Search temporarily unavailable",
+          code: "RATE_LIMITED",
+          results: [],
+          meta: { fallbackReason: "circuit_open" },
+        })
+      }
+
       logger.info("[globalResourceSearch] Query:", {
         original: query,
         normalized: normalizedQuery,
@@ -209,12 +222,14 @@ exports.globalResourceSearch = onRequest(
         const status = upstreamErr.response?.status
         const dataMsg = String(upstreamErr.response?.data?.message || upstreamErr.response?.data?.error || "").toLowerCase()
         if (status === 429) {
-          logOnce("UPSTREAM_429", "RapidAPI rate limited")
-          return res.status(200).json({ ok: false, error: "Upstream rate limited", code: "UPSTREAM_RATE_LIMITED" })
+          circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS
+          logOnce("UPSTREAM_429", "RapidAPI rate limited; circuit open 10min")
+          return res.status(200).json({ ok: false, error: "Upstream rate limited", code: "UPSTREAM_RATE_LIMITED", results: [], meta: { fallbackReason: "rate_limited" } })
         }
         if (status === 403 && dataMsg.includes("not subscribed")) {
-          logOnce("UPSTREAM_403", "RapidAPI not subscribed")
-          return res.status(200).json({ ok: false, error: "Upstream API not enabled", code: "UPSTREAM_NOT_ENABLED" })
+          circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS
+          logOnce("UPSTREAM_403", "RapidAPI not subscribed; circuit open 10min")
+          return res.status(200).json({ ok: false, error: "Upstream API not enabled", code: "UPSTREAM_NOT_ENABLED", results: [], meta: { fallbackReason: "subscription_blocked" } })
         }
         throw upstreamErr
       }
@@ -273,12 +288,14 @@ exports.globalResourceSearch = onRequest(
       const status = err.response?.status
       const dataMsg = String(err.response?.data?.message || err.response?.data?.error || "").toLowerCase()
       if (status === 429) {
-        logOnce("UPSTREAM_429", "RapidAPI rate limited")
-        return res.status(200).json({ ok: false, error: "Upstream rate limited", code: "UPSTREAM_RATE_LIMITED" })
+        circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS
+        logOnce("UPSTREAM_429", "RapidAPI rate limited; circuit open 10min")
+        return res.status(200).json({ ok: false, error: "Upstream rate limited", code: "UPSTREAM_RATE_LIMITED", results: [], meta: { fallbackReason: "rate_limited" } })
       }
       if (status === 403 && dataMsg.includes("not subscribed")) {
-        logOnce("UPSTREAM_403", "RapidAPI not subscribed")
-        return res.status(200).json({ ok: false, error: "Upstream API not enabled", code: "UPSTREAM_NOT_ENABLED" })
+        circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS
+        logOnce("UPSTREAM_403", "RapidAPI not subscribed; circuit open 10min")
+        return res.status(200).json({ ok: false, error: "Upstream API not enabled", code: "UPSTREAM_NOT_ENABLED", results: [], meta: { fallbackReason: "subscription_blocked" } })
       }
 
       logger.error("[globalResourceSearch] Error:", {

@@ -143,6 +143,30 @@ async function firestoreFallback({ query, category, location, limit = 20 }) {
 }
 
 const NO_RETRY_CODES = ["UPSTREAM_RATE_LIMITED", "UPSTREAM_NOT_ENABLED", "RATE_LIMITED"]
+const CLIENT_CACHE_TTL_MS = 10000
+
+const clientCache = new Map()
+function getClientCacheKey(query, domain, category, location, limit, pageToken) {
+  return [String(query || "").trim(), domain || "", category || "", location || "", limit, pageToken || ""].join("|")
+}
+function getClientCached(key) {
+  const entry = clientCache.get(key)
+  if (!entry || Date.now() - entry.ts > CLIENT_CACHE_TTL_MS) {
+    if (entry) clientCache.delete(key)
+    return null
+  }
+  return entry.data
+}
+function setClientCached(key, data) {
+  clientCache.set(key, { ts: Date.now(), data })
+}
+
+function buildFallbackMeta(fallback, sourceCount, code) {
+  const meta = { fallback, sourceCount }
+  if (code === "RATE_LIMITED" || code === "UPSTREAM_RATE_LIMITED") meta.rateLimited = true
+  if (code === "UPSTREAM_NOT_ENABLED") meta.subscriptionBlocked = true
+  return meta
+}
 
 /**
  * Search directory with pagination and retry
@@ -159,6 +183,12 @@ export async function searchDirectory({
 }) {
   if (!query || !String(query).trim()) {
     return { ok: false, items: [], nextPageToken: null, meta: {}, error: "Query is required" }
+  }
+
+  const cacheKey = getClientCacheKey(query, domain, category, location, limit, pageToken)
+  if (!pageToken) {
+    const cached = getClientCached(cacheKey)
+    if (cached) return cached
   }
 
   const region = location || undefined
@@ -207,15 +237,21 @@ export async function searchDirectory({
       if (!res.ok) {
         lastError = data?.error || `Search failed (${res.status})`
         const code = data?.code
-        if (NO_RETRY_CODES.includes(code)) {
+        const isRateLimited = res.status === 429 || res.status === 403 || NO_RETRY_CODES.includes(code)
+        if (isRateLimited) {
+          const effectiveCode = code || (res.status === 429 || res.status === 403 ? "RATE_LIMITED" : undefined)
           const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
           let fallbackSource = "firestore"
+          let out
           if (!items.length) {
             const curated = getCuratedFallback(domain, String(query).trim())
             const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-            return { ok: true, items: curatedItems, nextPageToken: null, meta: { fallback: "curated", sourceCount: curatedItems.length }, error: null }
+            out = { ok: true, items: curatedItems, nextPageToken: null, meta: buildFallbackMeta("curated", curatedItems.length, effectiveCode), error: null }
+          } else {
+            out = { ok: true, items, nextPageToken: null, meta: buildFallbackMeta(fallbackSource, items.length, effectiveCode), error: null }
           }
-          return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+          if (!pageToken) setClientCached(cacheKey, out)
+          return out
         }
         if (attempt < 2) {
           await sleep(RETRY_DELAY_MS)
@@ -240,9 +276,9 @@ export async function searchDirectory({
           if (!items.length) {
             const curated = getCuratedFallback(domain, String(query).trim())
             const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-            return { ok: true, items: curatedItems, nextPageToken: null, meta: { fallback: "curated", sourceCount: curatedItems.length }, error: null }
+            return { ok: true, items: curatedItems, nextPageToken: null, meta: buildFallbackMeta("curated", curatedItems.length, code), error: null }
           }
-          return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+          return { ok: true, items, nextPageToken: null, meta: buildFallbackMeta(fallbackSource, items.length, code), error: null }
         }
         if (attempt < 2) {
           await sleep(RETRY_DELAY_MS)
@@ -265,16 +301,20 @@ export async function searchDirectory({
       })
 
       if (normalized.items.length === 0) {
-        return { ok: true, items: [], nextPageToken: null, meta: { empty: true }, error: null }
+        const out = { ok: true, items: [], nextPageToken: null, meta: { empty: true }, error: null }
+        if (!pageToken) setClientCached(cacheKey, out)
+        return out
       }
 
-      return {
+      const out = {
         ok: true,
         items: normalized.items,
         nextPageToken: normalized.nextPageToken,
         meta: normalized.meta,
         error: null,
       }
+      if (!pageToken) setClientCached(cacheKey, out)
+      return out
     } catch (err) {
       clearTimeout(timeoutId)
       lastError = err?.message || "Request failed"

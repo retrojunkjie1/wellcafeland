@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { searchProviders } from "@/services/providerService";
 import { CheckCircle } from "lucide-react";
 
-export function VerifiedDestinations({ category, regionKey, onSelectProvider }) {
+export function VerifiedDestinations({ category, regionKey, onSelectProvider, onAddRegion, onOpenLink }) {
   const [providers, setProviders] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
@@ -84,7 +84,36 @@ export function VerifiedDestinations({ category, regionKey, onSelectProvider }) 
         {loading ? (
           <div className="text-xs text-white/60 py-4">Loading providers...</div>
         ) : filteredProviders.length === 0 ? (
-          <div className="text-xs text-white/60 py-4">No verified providers found</div>
+          <div className="text-xs text-white/60 py-4 space-y-2">
+            <p>No staff-verified providers in this region yet.</p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => onAddRegion?.()}
+                className="px-2 py-1 rounded bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 text-xs font-medium"
+              >
+                Add region
+              </button>
+              {onOpenLink ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenLink("https://findtreatment.gov")}
+                  className="px-2 py-1 rounded border border-white/20 text-white/70 hover:bg-white/10 text-xs inline-flex items-center gap-1"
+                >
+                  View national resources
+                </button>
+              ) : (
+                <a
+                  href="https://findtreatment.gov"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2 py-1 rounded border border-white/20 text-white/70 hover:bg-white/10 text-xs inline-flex items-center gap-1"
+                >
+                  View national resources
+                </a>
+              )}
+            </div>
+          </div>
         ) : (
           <select
             onChange={(e) => {
