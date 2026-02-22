@@ -520,14 +520,23 @@ const ChatPanel = () => {
         // Text response with intent and links (Prompt-Native Spine)
         const lastMsgIntent = res.intent && typeof res.intent === "object" ? res.intent : null;
         const lastMsgLinks = Array.isArray(res.links) ? res.links : [];
-        addMessage("assistant", {
+        const storedMsg = {
           type: "assistant_text",
           text: processedText,
           content: processedText,
           timestamp: Date.now(),
           intent: lastMsgIntent,
           links: lastMsgLinks,
-        });
+        };
+        if (import.meta.env.DEV && typeof window !== "undefined") {
+          window.__wcLastAssistantMessage = storedMsg;
+          console.debug("[ChatPanel] assistantMessage", {
+            textLength: (processedText || "").length,
+            intentType: lastMsgIntent?.type || null,
+            linksLength: lastMsgLinks.length,
+          });
+        }
+        addMessage("assistant", storedMsg);
 
         // Tool policy: ONLY intent.type === "tool.run" opens tools. tool.suggest = chips only (IntentRenderer).
         const intentType = lastMsgIntent?.type;
@@ -1595,10 +1604,11 @@ const ChatPanel = () => {
                             setWebViewUrl(url);
                           }}
                           onRunTool={(toolId, args) => injectToolIntoChat(toolId, args)}
-                          onDirectorySearch={({ query, region }) => {
+                          onDirectorySearch={({ query, region, domain }) => {
                             const params = new URLSearchParams();
                             if (query) params.set("query", query);
                             if (region) params.set("region", region);
+                            if (domain) params.set("domain", domain);
                             navigate(`/workspace/real-help?${params.toString()}`);
                           }}
                         />

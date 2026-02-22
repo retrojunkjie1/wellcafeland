@@ -69,14 +69,14 @@ const DIRECTORY_STRONG_PHRASES = [
   /\bhelp me find\b/i, /\blooking for\b/i, /\bfind (a|some|resources?)\b/i,
   /\bneed (a|some) (housing|grant|program|resource|treatment|food|shelter|meals?)\b/i,
   /\bsupport (group|program)\b/i, /\bsober (living|home)\b/i,
-  /\b(food|meals?|something to eat|food bank|soup kitchen)\b/i,
+  /\b(food|meals?|something to eat|food bank|soup kitchen|pantry|snap|wic)\b/i,
 ];
 const DIRECTORY_KEYWORDS = [
   /\bfind\b/i, /\bresource/i, /\bhousing\b/i, /\bgrant/i, /\bprogram\b/i,
   /\bdirectory\b/i, /\btreatment\b/i, /\bhotline\b/i, /\bassistance\b/i,
   /\bneed (a|some)\b/i,
   /\bfood\b/i, /\bmeals?\b/i, /\bhunger\b/i, /\bnutrition\b/i, /\bshelter\b/i,
-  /\bfood bank\b/i, /\bsoup kitchen\b/i, /\bsnap\b/i, /\bwic\b/i,
+  /\bfood bank\b/i, /\bsoup kitchen\b/i, /\bsnap\b/i, /\bwic\b/i, /\bpantry\b/i, /\bessentials\b/i,
 ];
 const DIRECTORY_CONFIDENCE_THRESHOLD = 0.55;
 
@@ -920,14 +920,24 @@ async function handleSession(req, res) {
         };
       }
 
-      return res.status(200).json(buildEnvelope({
+      const envelope = buildEnvelope({
         ok: true,
         correlationId,
         assistantText,
         intent,
         links: [],
         meta: { ...(result.meta || {}), confidence: dirConf },
-      }));
+      });
+      if (process.env.NODE_ENV !== "production") {
+        const resCount = intent?.payload?.resources?.length ?? 0;
+        console.log("[aiSession] envelope", {
+          correlationId,
+          intentType: intent?.type || null,
+          domain: intent?.payload?.domain || null,
+          resourcesLength: resCount,
+        });
+      }
+      return res.status(200).json(envelope);
     } catch (chatErr) {
       if (chatErr.code === "AI_PROVIDER_UNAUTHORIZED") {
         return res.status(401).json({

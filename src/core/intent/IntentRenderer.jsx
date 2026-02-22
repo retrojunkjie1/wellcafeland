@@ -36,7 +36,7 @@ export default function IntentRenderer({ intent, onOpenLink, onRunTool, onDirect
           <div className="mt-3">
             <button
               type="button"
-              onClick={() => onDirectorySearch({ query: q, region: region || "" })}
+              onClick={() => onDirectorySearch({ query: q, region: region || "", domain: domain || "" })}
               className="px-3 py-2 rounded-lg text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition border border-white/20"
             >
               Find resources for &quot;{q.slice(0, 40)}{q.length > 40 ? "…" : ""}&quot;

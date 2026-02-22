@@ -47,6 +47,8 @@ function logRequest(level, correlationId, data) {
 
 const BASE_URL = resolveFunctionsBaseUrl();
 
+let lastEnvelope = null;
+
 if (import.meta.env.DEV && typeof window !== "undefined") {
   logDebug("AIClient", { BASE_URL, hostname: window.location.hostname });
 }
@@ -324,11 +326,14 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         toolName: tool?.name || null,
       });
 
-      // DEV only: minimal spine logging
+      const payloadKeys = intent?.payload && typeof intent.payload === "object" ? Object.keys(intent.payload) : [];
+      const resourcesLength = intent?.payload?.resources?.length ?? 0;
       if (import.meta.env.DEV && typeof window !== "undefined") {
         console.debug("[AIClient] envelope", {
           correlationId: responseCorrelationId,
           intentType: intent?.type || null,
+          payloadKeys,
+          resourcesLength,
           assistantTextPreview: (assistantText || "").slice(0, 80),
         });
       }
@@ -368,6 +373,14 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         });
       } catch {
         /* non-blocking */
+      }
+
+      if (import.meta.env.DEV && typeof window !== "undefined") {
+        lastEnvelope = { ...result, payloadKeys, resourcesLength };
+        window.__wcDumpLastEnvelope = () => {
+          console.debug("[wcDump] lastEnvelope", lastEnvelope);
+          console.debug("[wcDump] lastAssistantMessage", typeof window.__wcLastAssistantMessage !== "undefined" ? window.__wcLastAssistantMessage : "(not set)");
+        };
       }
 
       return result;
