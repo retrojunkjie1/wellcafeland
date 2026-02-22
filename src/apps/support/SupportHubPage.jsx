@@ -7,9 +7,9 @@ import { Phone, Heart, Building2, BookOpen } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";
 
 const SUPPORT_TO_DIRECTORY = {
-  crisis: "/directory/hotlines",
-  resources: "/directory/programs",
-  government: "/directory/assistance",
+  crisis: "/resources?type=hotlines",
+  resources: "/resources?type=programs",
+  government: "/resources?type=assistance",
 };
 
 const SupportHubPage = () => {

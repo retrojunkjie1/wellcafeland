@@ -1,7 +1,7 @@
 // src/apps/workspace/RealHelpWorkspace.jsx
 // Real Help workspace - Housing, Grants, Programs, Circles
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Home, DollarSign, Briefcase, Users, AlertCircle, ExternalLink, Heart, MapPin, PhoneCall, CheckCircle } from "lucide-react";
 import { rememberWorkspace } from "@/engines/memory/workspaceMemoryEngine";
@@ -29,11 +29,21 @@ const RealHelpWorkspace = () => {
   const [results, setResults] = useState([]);
   const [curatedResults, setCuratedResults] = useState([]);
   const [startHereContent, setStartHereContent] = useState(null);
-  const [searchResponse, setSearchResponse] = useState(null);
+  const [searchResponse, setSearchResponse] = useState(null)
+  const debounceRef = useRef(null)
+  const DEBOUNCE_MS = 450
+  const MIN_QUERY_LEN = 3
 
   useEffect(() => {
-    loadData();
-    // Load "Start Here" content
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      loadData()
+    }, DEBOUNCE_MS)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null }
+  }, [activeTab, query, region])
+
+  useEffect(() => {
+    // Load "Start Here" content (runs once on mount)
     loadContentById("assistance.realhelp.start")
       .then((content) => {
         setStartHereContent(content);
@@ -69,8 +79,9 @@ const RealHelpWorkspace = () => {
 
       setCuratedResults(curated);
 
-      // If we have a query, also search globally
-      if (query && query.trim()) {
+      // If we have a query (min 3 chars), also search globally
+      const q = (query || "").trim()
+      if (q.length >= MIN_QUERY_LEN) {
         const domain = activeTab === "housing" ? "housing" : 
                       activeTab === "funding" ? "grants" : 
                       activeTab === "programs" ? "assistance" : "programs";
@@ -78,7 +89,7 @@ const RealHelpWorkspace = () => {
         // Programs tab: use globalResourceSearch (live pipeline)
         if (activeTab === "programs") {
           const dirResult = await searchDirectory({
-            query: query.trim(),
+            query: q,
             domain,
             location: region || undefined,
             category: activeTab,
@@ -102,7 +113,7 @@ const RealHelpWorkspace = () => {
           }
         } else {
           const searchResult = await searchResources({
-            query: query.trim(),
+            query: q,
             domain,
             region: region || undefined,
             category: activeTab,
@@ -152,7 +163,7 @@ const RealHelpWorkspace = () => {
                   activeTab === "funding" ? "grants" : 
                   activeTab === "programs" ? "assistance" : "programs";
     
-    navigate(`/directory/${domain}/${encodeURIComponent(item.id)}`);
+    navigate(`/resources/${encodeURIComponent(item.id)}`);
   };
 
   const tabs = [

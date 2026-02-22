@@ -24,7 +24,7 @@ const PROVIDER_CATEGORIES = [
     label: "Therapists",
     icon: Brain,
     description: "Licensed therapists and counselors",
-    path: "/directory/providers",
+    path: "/resources?type=providers",
     type: "therapist",
   },
   {
@@ -32,7 +32,7 @@ const PROVIDER_CATEGORIES = [
     label: "Recovery Coaches",
     icon: Heart,
     description: "Certified recovery coaches and peer support",
-    path: "/directory/providers",
+    path: "/resources?type=providers",
     type: "coach",
   },
   {
@@ -40,7 +40,7 @@ const PROVIDER_CATEGORIES = [
     label: "Somatic Practitioners",
     icon: Sparkles,
     description: "Body-based healing and trauma-informed care",
-    path: "/directory/providers",
+    path: "/resources?type=providers",
     type: "somatic",
   },
   {
@@ -48,7 +48,7 @@ const PROVIDER_CATEGORIES = [
     label: "Spiritual Guides",
     icon: BookOpen,
     description: "Spiritual counselors and guides",
-    path: "/directory/providers",
+    path: "/resources?type=providers",
     type: "spiritual",
   },
 ];
@@ -57,7 +57,7 @@ export default function ProvidersPage() {
   const navigate = useNavigate();
 
   const handleCategoryClick = (category) => {
-    navigate(`/directory/providers?type=${category.type}`);
+    navigate(`/resources?type=${category.type}`);
   };
 
   return (
@@ -79,7 +79,7 @@ export default function ProvidersPage() {
       <div className="mb-6">
         <button
           type="button"
-          onClick={() => navigate("/directory/providers")}
+          onClick={() => navigate("/resources?type=providers")}
           className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm text-white/60 hover:bg-white/10 transition flex items-center gap-3"
         >
           <Search className="h-5 w-5 text-white/40" />
@@ -127,7 +127,7 @@ export default function ProvidersPage() {
         </p>
         <button
           type="button"
-          onClick={() => navigate("/directory/providers")}
+          onClick={() => navigate("/resources?type=providers")}
           className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white hover:bg-white/10 transition"
         >
           <Users className="h-4 w-4" />

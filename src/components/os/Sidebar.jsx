@@ -448,7 +448,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/directory/providers");
+                  navigate("/resources?type=providers");
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"
@@ -459,7 +459,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/directory/housing");
+                  navigate("/resources?type=housing");
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"
@@ -470,7 +470,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/directory/grants");
+                  navigate("/resources?type=grants");
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"
@@ -481,7 +481,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/directory/assistance");
+                  navigate("/resources?type=assistance");
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"
@@ -492,7 +492,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/directory/hotlines");
+                  navigate("/resources?type=hotlines");
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"
@@ -503,7 +503,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/directory/programs");
+                  navigate("/resources?type=programs");
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"

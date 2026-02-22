@@ -95,12 +95,13 @@ const DirectoryWorkspace = () => {
     category: "",
     type: "",
   });
-  const debounceRef = useRef(null);
-  const abortControllerRef = useRef(null);
-  const scrollContainerRef = useRef(null);
-  const lastRequestTimeRef = useRef(0);
-  const pendingRequestRef = useRef(null);
-  const COOLDOWN_MS = 1500;
+  const debounceRef = useRef(null)
+  const abortControllerRef = useRef(null)
+  const scrollContainerRef = useRef(null)
+  const lastRequestTimeRef = useRef(0)
+  const pendingRequestRef = useRef(null)
+  const DEBOUNCE_MS = 450
+  const MIN_QUERY_LEN = 3
 
   const config = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.providers;
 
@@ -131,22 +132,17 @@ const DirectoryWorkspace = () => {
     verified: item.verified,
   });
 
-  const handleSearch = async (searchQuery = query, isInitial = false, pageToken = null) => {
-    const trimmed = searchQuery?.trim() || query.trim();
-    if (!trimmed && !isInitial) return;
+  const handleSearch = async (searchQuery = query, isInitial = false, pageToken = null, forceImmediate = false) => {
+    const trimmed = (searchQuery?.trim() || query.trim()).trim()
+    if (!trimmed && !isInitial) return
 
-    if (!isInitial && !pageToken) {
-      const now = Date.now();
-      const timeSinceLastRequest = now - lastRequestTimeRef.current;
-      if (timeSinceLastRequest < COOLDOWN_MS) return;
-      if (pendingRequestRef.current === trimmed && loading) return;
-    }
+    if (!isInitial && !pageToken && !forceImmediate && trimmed.length < MIN_QUERY_LEN) return
 
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      abortControllerRef.current.abort()
     }
 
-    const isLoadMore = !!pageToken;
+    const isLoadMore = !!pageToken
     if (isLoadMore) {
       setLoadingMore(true);
     } else {
@@ -154,9 +150,9 @@ const DirectoryWorkspace = () => {
       setError(null);
       setHasSearched(true);
     }
-    abortControllerRef.current = new AbortController();
-    pendingRequestRef.current = trimmed;
-    lastRequestTimeRef.current = Date.now();
+    abortControllerRef.current = new AbortController()
+    pendingRequestRef.current = trimmed
+    lastRequestTimeRef.current = Date.now()
 
     try {
       const { ok, items, nextPageToken: nextToken, error: searchError } = await searchDirectory({
@@ -166,7 +162,8 @@ const DirectoryWorkspace = () => {
         category: filters.category === "All categories" || filters.category === "" ? undefined : filters.category,
         pageToken: pageToken || undefined,
         limit: 20,
-      });
+        signal: abortControllerRef.current?.signal,
+      })
 
       if (abortControllerRef.current?.signal?.aborted) return;
 
@@ -174,7 +171,7 @@ const DirectoryWorkspace = () => {
 
       if (!ok) {
         if (!isLoadMore) {
-          setError(searchError || "Couldn't load results.");
+          setError(searchError || "Search is temporarily unavailable. Try again.");
           setResults([]);
         }
         setActualQuery(trimmed);
@@ -194,7 +191,7 @@ const DirectoryWorkspace = () => {
       }
     } catch (err) {
       if (!abortControllerRef.current?.signal?.aborted && !isLoadMore) {
-        setError("Search temporarily unavailable. Please retry.");
+        setError("Search is temporarily unavailable. Try again.");
         setResults([]);
       }
     } finally {
@@ -225,52 +222,30 @@ const DirectoryWorkspace = () => {
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Debounced search on query change
+  // Debounced search on query change (450ms, min 3 chars)
   useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
 
-    // Only auto-search if user has typed something (not on initial mount)
-    // Skip if already loading to prevent duplicate requests
-    if (query && hasSearched && !loading) {
-      debounceRef.current = setTimeout(() => {
-        handleSearch(query, false);
-      }, 500);
+    const trimmed = (query || "").trim()
+    if (trimmed.length >= MIN_QUERY_LEN && hasSearched && !loading) {
+      debounceRef.current = setTimeout(() => handleSearch(query, false), DEBOUNCE_MS)
     }
 
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  // Search when filters change (with rate limiting)
-  useEffect(() => {
-    if (hasSearched && query && !loading) {
-      // Add a delay to batch filter changes and avoid rapid-fire requests
-      const filterTimeout = setTimeout(() => {
-        // Check if enough time has passed since last request
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTimeRef.current;
-        
-        if (timeSinceLastRequest >= COOLDOWN_MS) {
-          handleSearch(query, false);
-        } else {
-          // Wait for remaining cooldown time
-          const remainingTime = COOLDOWN_MS - timeSinceLastRequest;
-          setTimeout(() => {
-            handleSearch(query, false);
-          }, remainingTime);
-        }
-      }, 500); // Increased delay to batch filter changes
-      
-      return () => clearTimeout(filterTimeout);
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.region, filters.category, filters.type]);
+  }, [query])
+
+  // Search when filters change (debounced)
+  useEffect(() => {
+    const trimmed = (query || "").trim()
+    if (hasSearched && trimmed.length >= MIN_QUERY_LEN && !loading) {
+      const filterTimeout = setTimeout(() => handleSearch(query, false, null, true), DEBOUNCE_MS)
+      return () => clearTimeout(filterTimeout)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.region, filters.category, filters.type])
 
   const handleSaveFavorite = async (item) => {
     try {
@@ -305,8 +280,8 @@ const DirectoryWorkspace = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSearch(query, false);
+                  e.preventDefault()
+                  handleSearch(query, false, null, true)
                 }
               }}
               placeholder={domain === "housing" ? "e.g., sober living in Colorado, housing in Denver…" : "Search by name, region, or type…"}
@@ -314,7 +289,7 @@ const DirectoryWorkspace = () => {
             />
             <button
               type="button"
-              onClick={() => handleSearch(query, false)}
+              onClick={() => handleSearch(query, false, null, true)}
               disabled={loading || !query.trim()}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -342,7 +317,7 @@ const DirectoryWorkspace = () => {
             <option value="Texas">Texas</option>
           </select>
 
-          {config.categories.length > 0 && (
+          {config?.categories?.length > 0 && (
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
@@ -357,7 +332,7 @@ const DirectoryWorkspace = () => {
             </select>
           )}
 
-          {config.types.length > 0 && (
+          {config?.types?.length > 0 && (
             <div className="flex items-center gap-2">
               {config.types.map((type) => (
                 <button
@@ -414,11 +389,10 @@ const DirectoryWorkspace = () => {
         ) : hasSearched && results.length === 0 && !error ? (
           <div className="text-center py-12 px-4">
             <p className="text-sm sm:text-base text-white/60">
-              No results found for{" "}
-              <span className="font-medium text-white/80">"{actualQuery || query}"</span>.
+              No matches yet. Try broadening filters.
             </p>
             <p className="text-xs sm:text-sm text-white/50 mt-3">
-              Try another search
+              Try another search or adjust region/category
             </p>
           </div>
         ) : results.length > 0 ? (

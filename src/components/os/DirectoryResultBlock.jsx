@@ -69,7 +69,7 @@ const DirectoryResultBlock = ({ message }) => {
               <div className="flex-1 min-w-0">
                 <button
                   type="button"
-                  onClick={() => navigate(`/directory/${routeDomain}/${encodeURIComponent(item.id || item.url)}`)}
+                  onClick={() => navigate(`/resources/${encodeURIComponent(item.id || item.url)}`)}
                   className="text-sm font-medium text-white hover:underline block mb-1 text-left"
                 >
                   {item.title}
@@ -111,7 +111,7 @@ const DirectoryResultBlock = ({ message }) => {
                 })()}
                 <button
                   type="button"
-                  onClick={() => navigate(`/directory/${routeDomain}/${encodeURIComponent(item.id || item.url)}`)}
+                  onClick={() => navigate(`/resources/${encodeURIComponent(item.id || item.url)}`)}
                   className="flex-shrink-0 rounded-lg p-1.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
                   title="View details"
                 >
@@ -126,7 +126,7 @@ const DirectoryResultBlock = ({ message }) => {
       {results.length > 3 && (
         <button
           type="button"
-          onClick={() => navigate(`/directory/${routeDomain}?q=${encodeURIComponent(query)}`)}
+          onClick={() => navigate(`/resources?type=${routeDomain}${query ? `&q=${encodeURIComponent(query)}` : ""}`)}
           className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition"
         >
           View full directory ({results.length} results)

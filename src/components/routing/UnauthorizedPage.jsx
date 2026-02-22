@@ -36,7 +36,7 @@ const UnauthorizedPage = () => {
       title: "Browse directory",
       description: "Find resources, housing, and support",
       icon: Compass,
-      path: "/directory",
+      path: "/resources",
       color: "text-emerald-400",
       bgColor: "bg-emerald-400/10",
     },

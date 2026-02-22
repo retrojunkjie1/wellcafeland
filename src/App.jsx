@@ -2,7 +2,8 @@
 
 import React, { useEffect, Suspense, lazy } from "react";
 
-import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from "react-router-dom";
+import Loading from "./components/Loading";
 import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
@@ -23,8 +24,18 @@ import CommandConsolePage from "./apps/command/CommandConsolePage";
 import WorkspacePage from "./apps/workspace/WorkspacePage";
 import RealHelpWorkspace from "./apps/workspace/RealHelpWorkspace";
 import GuidePage from "./apps/guide/GuidePage";
-import DirectoryWorkspace from "./apps/directory/DirectoryWorkspace";
-import DirectoryDetailWorkspace from "./apps/directory/DirectoryDetailWorkspace";
+import ResourcesListPage from "./apps/resources/ResourcesListPage";
+import ResourcesDetailPage from "./apps/resources/ResourcesDetailPage";
+
+const DirectoryRedirect = () => {
+  const { domain, id } = useParams();
+  const { search } = useLocation();
+  const q = new URLSearchParams(search);
+  const domainFromQuery = q.get("domain");
+  const typeParam = domain || domainFromQuery;
+  const to = id ? `/resources/${encodeURIComponent(id)}` : (typeParam ? `/resources?type=${typeParam}` : "/resources");
+  return <Navigate to={to} replace />;
+};
 
 import RecoveryPage from "./apps/recovery/RecoveryPage";
 import MilestonesPage from "./apps/milestones/MilestonesPage";
@@ -112,13 +123,7 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center bg-black text-white text-sm">
-            Loading wellness tools…
-          </div>
-        }
-      >
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loading message="Loading…" /></div>}>
         <RouteTracker />
         <Routes>
           {/* Preview - Standalone page, no layout */}
@@ -139,9 +144,11 @@ const App = () => {
           <Route path="/command" element={<CommandConsolePage />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
           <Route path="/workspace/real-help" element={<RealHelpWorkspace />} />
-          <Route path="/directory" element={<DirectoryWorkspace />} />
-          <Route path="/directory/:domain" element={<DirectoryWorkspace />} />
-          <Route path="/directory/:domain/:id" element={<DirectoryDetailWorkspace />} />
+          <Route path="/directory" element={<DirectoryRedirect />} />
+          <Route path="/directory/:domain" element={<DirectoryRedirect />} />
+          <Route path="/directory/:domain/:id" element={<DirectoryRedirect />} />
+          <Route path="/resources" element={<ResourcesListPage />} />
+          <Route path="/resources/:id" element={<ResourcesDetailPage />} />
           <Route path="/guide" element={<GuidePage />} />
           {/* Phase A1: Canonical /living route */}
           <Route path="/living" element={<LivingGuidePageV3 />} />

@@ -8,6 +8,7 @@
 import { logDebug } from "@/lib/debug";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
 import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { listResources } from "@/data/resources";
 
 function getEndpoint() {
   return `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
@@ -93,8 +94,59 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+async function firestoreFallback({ query, category, location, limit = 20 }) {
+  try {
+    let items = []
+    const { items: byType, error: err1 } = await listResources({
+      mode: "indexed",
+      verified: true,
+      type: category || undefined,
+    })
+    if (!err1 && byType?.length) items = byType
+    if (items.length === 0) {
+      const { items: byTag, error: err2 } = await listResources({
+        mode: "indexed",
+        verified: true,
+        tag: category || undefined,
+      })
+      if (!err2 && byTag?.length) items = byTag
+    }
+    const seen = new Set()
+    const merged = items.filter((r) => {
+      const id = r.id || r.title
+      if (seen.has(id)) return false
+      seen.add(id)
+      return true
+    })
+    const q = (query || "").toLowerCase().trim()
+    let filtered = merged
+    if (q.length > 2) {
+      filtered = merged.filter((r) =>
+        (r.title || "").toLowerCase().includes(q) ||
+        ((r.contact?.notes || r.description || "").toLowerCase().includes(q))
+      )
+    }
+    return filtered.slice(0, limit).map((r) => normalizeResult({
+      id: r.id,
+      title: r.title,
+      type: r.type || "resource",
+      url: r.contact?.url || "",
+      description: r.contact?.notes || r.description || "",
+      phone: r.contact?.phone || r.phone || null,
+      state: r.location?.region || r.location?.state || null,
+      verified: r.verified === true,
+      tags: r.tags || [],
+    })).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+const NO_RETRY_CODES = ["UPSTREAM_RATE_LIMITED", "UPSTREAM_NOT_ENABLED", "RATE_LIMITED"]
+
 /**
  * Search directory with pagination and retry
+ * @param {AbortSignal} [signal] - Optional abort signal to cancel in-flight request
  */
 export async function searchDirectory({
   query,
@@ -103,18 +155,26 @@ export async function searchDirectory({
   category,
   pageToken,
   limit = 20,
+  signal,
 }) {
   if (!query || !String(query).trim()) {
-    return { ok: false, items: [], nextPageToken: null, meta: {}, error: "Query is required" };
+    return { ok: false, items: [], nextPageToken: null, meta: {}, error: "Query is required" }
   }
 
-  const region = location || undefined;
-  let lastError = null;
+  const region = location || undefined
+  let lastError = null
 
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const endpoint = getEndpoint();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const endpoint = getEndpoint()
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+    if (signal) {
+      if (signal.aborted) {
+        clearTimeout(timeoutId)
+        throw new DOMException("Aborted", "AbortError")
+      }
+      signal.addEventListener("abort", () => controller.abort())
+    }
 
     if (typeof window !== "undefined" && window.localStorage?.getItem("wc_debug") === "1") {
       logDebug("DirectorySearch", {
@@ -122,7 +182,7 @@ export async function searchDirectory({
         domain: domain || "",
         pageToken: pageToken || null,
         query: query.slice(0, 50),
-      });
+      })
     }
 
     try {
@@ -138,39 +198,75 @@ export async function searchDirectory({
           pageToken: pageToken || undefined,
         }),
         signal: controller.signal,
-      });
+      })
 
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json().catch(() => null)
 
       if (!res.ok) {
-        lastError = data?.error || `Search failed (${res.status})`;
-        if (attempt < 2) {
-          await sleep(RETRY_DELAY_MS);
-          continue;
+        lastError = data?.error || `Search failed (${res.status})`
+        const code = data?.code
+        if (NO_RETRY_CODES.includes(code)) {
+          const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+          let fallbackSource = "firestore"
+          if (!items.length) {
+            const curated = getCuratedFallback(domain, String(query).trim())
+            const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+            return { ok: true, items: curatedItems, nextPageToken: null, meta: { fallback: "curated", sourceCount: curatedItems.length }, error: null }
+          }
+          return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
         }
-        const fallback = getCuratedFallback(domain, String(query).trim());
-        const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
-        return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
+        if (attempt < 2) {
+          await sleep(RETRY_DELAY_MS)
+          continue
+        }
+        let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+        let fallbackSource = "firestore"
+        if (!items.length) {
+          const curated = getCuratedFallback(domain, String(query).trim())
+          items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+          fallbackSource = "curated"
+        }
+        return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
       }
 
       if (!data?.ok) {
-        lastError = data?.error || "Search did not return data";
-        if (attempt < 2) {
-          await sleep(RETRY_DELAY_MS);
-          continue;
+        lastError = data?.error || "Search did not return data"
+        const code = data?.code
+        if (NO_RETRY_CODES.includes(code)) {
+          const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+          let fallbackSource = "firestore"
+          if (!items.length) {
+            const curated = getCuratedFallback(domain, String(query).trim())
+            const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+            return { ok: true, items: curatedItems, nextPageToken: null, meta: { fallback: "curated", sourceCount: curatedItems.length }, error: null }
+          }
+          return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
         }
-        const fallback = getCuratedFallback(domain, String(query).trim());
-        const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
-        return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
+        if (attempt < 2) {
+          await sleep(RETRY_DELAY_MS)
+          continue
+        }
+        let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+        let fallbackSource = "firestore"
+        if (!items.length) {
+          const curated = getCuratedFallback(domain, String(query).trim())
+          items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+          fallbackSource = "curated"
+        }
+        return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
       }
 
       const normalized = normalizeResponse({
         results: data.results || [],
         nextPageToken: data.nextPageToken || null,
         meta: data.meta || {},
-      });
+      })
+
+      if (normalized.items.length === 0) {
+        return { ok: true, items: [], nextPageToken: null, meta: { empty: true }, error: null }
+      }
 
       return {
         ok: true,
@@ -178,24 +274,32 @@ export async function searchDirectory({
         nextPageToken: normalized.nextPageToken,
         meta: normalized.meta,
         error: null,
-      };
+      }
     } catch (err) {
-      clearTimeout(timeoutId);
-      lastError = err?.message || "Request failed";
-      if (err?.name === "AbortError") {
-        lastError = "Request timed out";
-      }
+      clearTimeout(timeoutId)
+      lastError = err?.message || "Request failed"
+      if (err?.name === "AbortError") lastError = "Request timed out"
       if (attempt < 2) {
-        await sleep(RETRY_DELAY_MS);
-        continue;
+        await sleep(RETRY_DELAY_MS)
+        continue
       }
-      const fallback = getCuratedFallback(domain, String(query).trim());
-      const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
-      return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
+      let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+      let fallbackSource = "firestore"
+      if (!items.length) {
+        const curated = getCuratedFallback(domain, String(query).trim())
+        items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+        fallbackSource = "curated"
+      }
+      return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
     }
   }
 
-  const fallback = getCuratedFallback(domain, String(query).trim());
-  const items = fallback.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
-  return { ok: true, items, nextPageToken: null, meta: { fallback: true, sourceCount: items.length }, error: null };
+  let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+  let fallbackSource = "firestore"
+  if (!items.length) {
+    const curated = getCuratedFallback(domain, String(query).trim())
+    items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+    fallbackSource = "curated"
+  }
+  return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
 }

@@ -16,15 +16,14 @@ const ALLOWED_ORIGINS = [
   "https://www.wellnesscafe.net",
 ];
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-if (!OPENAI_API_KEY) {
-  logger.warn("OPENAI_API_KEY not set. Multimodal features disabled.");
+let _openai = null
+function getOpenAI() {
+  if (_openai) return _openai
+  const key = (process.env.OPENAI_API_KEY || "").trim()
+  if (!key) return null
+  _openai = new OpenAI({ apiKey: key })
+  return _openai
 }
-
-const openai = OPENAI_API_KEY
-  ? new OpenAI({ apiKey: OPENAI_API_KEY })
-  : null;
 
 // ===== SYSTEM PROMPT =====
 const SYSTEM_PROMPT = `
@@ -62,8 +61,10 @@ exports.chat = onRequest(
       return res.status(405).json({ error: "Method not allowed" });
     }
 
+    const openai = getOpenAI()
     if (!openai) {
-      return res.status(503).json({ error: "OpenAI not configured" });
+      logger.warn("OPENAI_API_KEY not set. Multimodal features disabled.")
+      return res.status(503).json({ error: "OpenAI not configured" })
     }
 
     try {
@@ -163,8 +164,10 @@ exports.tts = onRequest(
       return res.status(405).json({ error: "Method not allowed" });
     }
 
+    const openai = getOpenAI()
     if (!openai) {
-      return res.status(503).json({ error: "OpenAI not configured" });
+      logger.warn("OPENAI_API_KEY not set. Multimodal features disabled.")
+      return res.status(503).json({ error: "OpenAI not configured" })
     }
 
     try {
@@ -205,8 +208,10 @@ exports.stt = onRequest(
       return res.status(405).json({ error: "Method not allowed" });
     }
 
+    const openai = getOpenAI()
     if (!openai) {
-      return res.status(503).json({ error: "OpenAI not configured" });
+      logger.warn("OPENAI_API_KEY not set. Multimodal features disabled.")
+      return res.status(503).json({ error: "OpenAI not configured" })
     }
 
     try {

@@ -26,7 +26,7 @@ export function BackButton({ className = "" }) {
     else if (parent === "/dashboard") text = "Back to Dashboard";
     else if (parent === "/assistance") text = "Back to Assistance";
     else if (parent === "/social/feed") text = "Back to Social Feed";
-    else if (parent === "/directory") text = "Back to Directory";
+    else if (parent === "/resources") text = "Back to Resources";
 
     return { label: text, meta: m };
   }, [location.pathname]);

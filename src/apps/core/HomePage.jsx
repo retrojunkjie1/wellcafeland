@@ -1,21 +1,41 @@
 // src/apps/core/HomePage.jsx
 // Minimal, ChatGPT-style landing page
 
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { MessageCircle, Wrench, Clock, Sparkles } from "lucide-react";
-import { trackPageView } from "../../services/telemetry";
-import { useSessionIdentity } from "@/hooks/useSessionIdentity";
-import Logo from "@/components/Logo";
+import React,{useEffect,useState} from "react"
+import {useNavigate} from "react-router-dom"
+import {MessageCircle,Wrench,Clock,Sparkles,Compass} from "lucide-react"
+import {trackPageView} from "../../services/telemetry"
+import {useSessionIdentity} from "@/hooks/useSessionIdentity"
+import Logo from "@/components/Logo"
+import {listResources} from "@/data/resources"
+import {ensureDevAuth} from "@/dev/ensureAuth"
 
-const HomePage = () => {
-  const navigate = useNavigate();
-  const identity = useSessionIdentity();
+const HomePage=() => {
+  const navigate=useNavigate()
+  const identity=useSessionIdentity()
+  const [hasResources,setHasResources]=useState(null)
 
   useEffect(() => {
-    document.title = "WellnessCafe - Home";
-    trackPageView("home");
-  }, []);
+    document.title="WellnessCafe - Home"
+    trackPageView("home")
+  },[])
+
+  useEffect(() => {
+    const run = async () => {
+      if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true") {
+        const ok = await ensureDevAuth()
+        if (!ok) {
+          setHasResources(false)
+          return
+        }
+      }
+      listResources({mode:"indexed"}).then((r) => {
+        if(Array.isArray(r.items)) setHasResources(r.items.length>0)
+        else setHasResources(false)
+      }).catch(() => setHasResources(false))
+    }
+    run()
+  },[])
 
   return (
     <div className="space-y-8 py-6">
@@ -72,6 +92,26 @@ const HomePage = () => {
 
         <button
           type="button"
+          onClick={() => navigate("/resources")}
+          className="glass-panel w-full p-3 text-left transition hover:bg-white/10"
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-white/10 p-2 flex-shrink-0">
+              <Compass className="h-5 w-5 text-white/70" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-sm font-medium text-white">Browse resources</h2>
+              <p className="text-xs text-white/60 mt-0.5 line-clamp-2">
+                {hasResources===true
+                  ? "Resources available now"
+                  : "Housing, grants, programs, and support"}
+              </p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
           onClick={() => navigate("/dashboard?view=moments")}
           className="glass-panel w-full p-3 text-left transition hover:bg-white/10"
         >
@@ -108,7 +148,7 @@ const HomePage = () => {
         </button>
       </section>
     </div>
-  );
-};
+  )
+}
 
-export default HomePage;
+export default HomePage

@@ -107,7 +107,7 @@ const CommandConsolePage = () => {
           label: "Find Providers",
           description: "Connect with therapists, coaches, and support",
           icon: Users,
-          action: () => navigate("/directory/providers"),
+          action: () => navigate("/resources?type=providers"),
         },
         {
           id: "circles",

@@ -83,7 +83,7 @@ export default function OSLayout() {
     if (
       tabPath === "/assistance" &&
       (location.pathname.startsWith("/assistance") ||
-        location.pathname.startsWith("/directory") ||
+        location.pathname.startsWith("/resources") ||
         location.pathname.startsWith("/workspace"))
     ) {
       return true;

@@ -1,9 +1,10 @@
 
 // src/apps/dashboard/SessionsAdminPage.jsx
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { trackPageView, trackAction } from "../../services/telemetry";
+import React, { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { trackPageView, trackAction } from "../../services/telemetry"
+import { apiFetch } from "@/lib/apiHelpers"
 
 const SessionsAdminPage = () => {
   const navigate = useNavigate();
@@ -23,13 +24,10 @@ const SessionsAdminPage = () => {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("/aiSession", {
+      const res = await apiFetch("/aiSession", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "templates",
-        }),
-      });
+        body: { mode: "templates" },
+      })
 
       if (!res.ok) {
         throw new Error(`Status ${res.status}`);

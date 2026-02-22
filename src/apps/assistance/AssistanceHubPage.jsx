@@ -26,7 +26,7 @@ const CARDS = [
     description: "Search for treatment funding, grants, and financial aid programs.",
     icon: Wallet,
     action: "navigate",
-    to: "/directory?domain=grants",
+    to: "/resources?type=grants",
   },
   {
     id: "programs",
@@ -34,7 +34,7 @@ const CARDS = [
     description: "Detox, residential, PHP, IOP, and outpatient programs.",
     icon: Hospital,
     action: "navigate",
-    to: "/directory?domain=programs",
+    to: "/resources?type=programs",
   },
   {
     id: "emergency",

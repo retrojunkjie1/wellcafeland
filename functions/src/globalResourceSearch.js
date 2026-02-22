@@ -1,13 +1,68 @@
 // functions/src/globalResourceSearch.js
 // Global Resource Search using RapidAPI real-time web search
 
-const { onRequest } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
-const { logger } = require("firebase-functions");
-const axios = require("axios");
+const { onRequest } = require("firebase-functions/v2/https")
+const { defineSecret } = require("firebase-functions/params")
+const { logger } = require("firebase-functions")
+const axios = require("axios")
+
+const CACHE_TTL_MS = 5 * 60 * 1000
+const THROTTLE_WINDOW_MS = 10000
+const THROTTLE_MAX = 8
+const cache = new Map()
+const throttle = new Map()
+const lastLogByCode = {}
+
+function getClientIp(req) {
+  return req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.headers["x-real-ip"] ||
+    req.connection?.remoteAddress ||
+    "unknown"
+}
+
+function checkThrottle(ip) {
+  const now = Date.now()
+  let entry = throttle.get(ip)
+  if (!entry) {
+    entry = { count: 0, windowStart: now }
+    throttle.set(ip, entry)
+  }
+  if (now - entry.windowStart > THROTTLE_WINDOW_MS) {
+    entry.count = 0
+    entry.windowStart = now
+  }
+  entry.count++
+  if (entry.count > THROTTLE_MAX) return false
+  return true
+}
+
+function getCacheKey(query, domain, category, offset, limit) {
+  return [query, domain || "", category || "", offset, limit].join("|")
+}
+
+function getCached(key) {
+  const entry = cache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    cache.delete(key)
+    return null
+  }
+  return entry.data
+}
+
+function setCache(key, data) {
+  cache.set(key, { ts: Date.now(), data })
+}
+
+function logOnce(code, msg) {
+  const last = lastLogByCode[code] || 0
+  if (Date.now() - last < 60000) return
+  lastLogByCode[code] = Date.now()
+  logger.warn("[globalResourceSearch]", code, msg)
+}
 
 // Define secret for RapidAPI key (set via: firebase functions:secrets:set RAPIDAPI_KEY)
-const RAPIDAPI_KEY_SECRET = defineSecret("RAPIDAPI_KEY");
+const RAPIDAPI_KEY_SECRET = defineSecret("RAPIDAPI_KEY")
 const RAPIDAPI_HOST = "real-time-web-search.p.rapidapi.com";
 const RAPIDAPI_URL = "https://real-time-web-search.p.rapidapi.com/search";
 
@@ -90,37 +145,45 @@ exports.globalResourceSearch = onRequest(
   },
   async (req, res) => {
     if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
+      return res.status(405).json({ error: "Method not allowed" })
     }
 
-    const RAPIDAPI_KEY = RAPIDAPI_KEY_SECRET.value();
+    const ip = getClientIp(req)
+    if (!checkThrottle(ip)) {
+      return res.status(429).json({ ok: false, error: "Rate limited", code: "RATE_LIMITED" })
+    }
+
+    const RAPIDAPI_KEY = RAPIDAPI_KEY_SECRET.value()
 
     if (!RAPIDAPI_KEY) {
       return res.status(503).json({
         ok: false,
         error: "Search service is not configured. Please contact support.",
         details: "RAPIDAPI_KEY not set",
-      });
+      })
     }
 
-    const startTime = Date.now();
+    const startTime = Date.now()
     try {
-      const { query, domain, region, category, limit: reqLimit, pageToken } = req.body;
+      const { query, domain, region, category, limit: reqLimit, pageToken } = req.body
 
       if (!query || !query.trim()) {
         return res.status(400).json({
           ok: false,
           error: "Query is required",
-        });
+        })
       }
 
-      const limit = Math.min(Math.max(parseInt(reqLimit, 10) || 20, 1), 50);
-      const offset = Math.max(parseInt(pageToken, 10) || 0, 0);
+      const limit = Math.min(Math.max(parseInt(reqLimit, 10) || 20, 1), 50)
+      const offset = Math.max(parseInt(pageToken, 10) || 0, 0)
 
-      // Normalize the search query
-      const normalizedQuery = normalizeSearchQuery(query, domain || "", region || "", category || "");
+      const normalizedQuery = normalizeSearchQuery(query, domain || "", region || "", category || "")
+      const cacheKey = getCacheKey(normalizedQuery, domain, category, offset, limit)
+      const cached = getCached(cacheKey)
+      if (cached) {
+        return res.json(cached)
+      }
 
-      // Build RapidAPI request using axios
       logger.info("[globalResourceSearch] Query:", {
         original: query,
         normalized: normalizedQuery,
@@ -131,20 +194,32 @@ exports.globalResourceSearch = onRequest(
         offset,
       });
 
-      const requestLimit = Math.min(offset + limit, 50);
-      const response = await axios.get(RAPIDAPI_URL, {
-        params: {
-          q: normalizedQuery,
-          limit: requestLimit,
-        },
-        headers: {
-          "x-rapidapi-key": RAPIDAPI_KEY,
-          "x-rapidapi-host": RAPIDAPI_HOST,
-        },
-        timeout: 15000,
-      });
+      const requestLimit = Math.min(offset + limit, 50)
+      let response
+      try {
+        response = await axios.get(RAPIDAPI_URL, {
+          params: { q: normalizedQuery, limit: requestLimit },
+          headers: {
+            "x-rapidapi-key": RAPIDAPI_KEY,
+            "x-rapidapi-host": RAPIDAPI_HOST,
+          },
+          timeout: 15000,
+        })
+      } catch (upstreamErr) {
+        const status = upstreamErr.response?.status
+        const dataMsg = String(upstreamErr.response?.data?.message || upstreamErr.response?.data?.error || "").toLowerCase()
+        if (status === 429) {
+          logOnce("UPSTREAM_429", "RapidAPI rate limited")
+          return res.status(200).json({ ok: false, error: "Upstream rate limited", code: "UPSTREAM_RATE_LIMITED" })
+        }
+        if (status === 403 && dataMsg.includes("not subscribed")) {
+          logOnce("UPSTREAM_403", "RapidAPI not subscribed")
+          return res.status(200).json({ ok: false, error: "Upstream API not enabled", code: "UPSTREAM_NOT_ENABLED" })
+        }
+        throw upstreamErr
+      }
 
-      const data = response.data;
+      const data = response.data
 
       // Normalize results - handle different response formats
       let rawResults = [];
@@ -183,33 +258,36 @@ exports.globalResourceSearch = onRequest(
       const normalizedResults = normalizeResults(rawResults);
 
       // Slice for offset (RapidAPI may not support offset; apply client-side)
-      const sliced = normalizedResults.slice(offset, offset + limit);
-      const nextPageToken = normalizedResults.length >= offset + limit ? String(offset + limit) : null;
-
-      return res.json({
+      const sliced = normalizedResults.slice(offset, offset + limit)
+      const nextPageToken = normalizedResults.length >= offset + limit ? String(offset + limit) : null
+      const payload = {
         ok: true,
         results: sliced,
         query: normalizedQuery,
         nextPageToken,
-        meta: {
-          sourceCount: sliced.length,
-          tookMs: Date.now() - startTime,
-        },
-      });
+        meta: { sourceCount: sliced.length, tookMs: Date.now() - startTime },
+      }
+      setCache(cacheKey, payload)
+      return res.json(payload)
     } catch (err) {
+      const status = err.response?.status
+      const dataMsg = String(err.response?.data?.message || err.response?.data?.error || "").toLowerCase()
+      if (status === 429) {
+        logOnce("UPSTREAM_429", "RapidAPI rate limited")
+        return res.status(200).json({ ok: false, error: "Upstream rate limited", code: "UPSTREAM_RATE_LIMITED" })
+      }
+      if (status === 403 && dataMsg.includes("not subscribed")) {
+        logOnce("UPSTREAM_403", "RapidAPI not subscribed")
+        return res.status(200).json({ ok: false, error: "Upstream API not enabled", code: "UPSTREAM_NOT_ENABLED" })
+      }
+
       logger.error("[globalResourceSearch] Error:", {
         message: err.message,
         code: err.code,
-        response: err.response
-          ? {
-              status: err.response.status,
-              statusText: err.response.statusText,
-              data: err.response.data,
-            }
-          : null,
-      });
+        response: err.response ? { status: err.response.status, statusText: err.response.statusText } : null,
+      })
 
-      let errorMessage = "Search failed";
+      let errorMessage = "Search failed"
       if (err.response) {
         if (err.response.status === 401 || err.response.status === 403) {
           errorMessage = "API authentication failed. Please check RapidAPI configuration.";

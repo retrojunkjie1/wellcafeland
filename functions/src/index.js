@@ -15,6 +15,7 @@ const { chat, tts, stt } = require("./multimodal");
 const { globalResourceSearch: globalResourceSearchV2 } = require("./globalResourceSearch");
 // Legacy AI Brain (v1 – REQUIRED)
 const aiBrain = require("../aiBrain");
+const { setCorsHeaders } = require("../corsHelper");
 
 // ---------------------------
 // v2 FUNCTIONS (CORRECT)
@@ -75,14 +76,8 @@ exports.aiMedia = functions.https.onRequest(aiBrain.handleMedia);
 // v1 GLOBAL RESOURCE SEARCH (LEGACY)
 // ---------------------------
 
-function setCorsHeaders(res) {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
-}
-
 exports.globalResourceSearchV1 = functions.https.onRequest(async (req, res) => {
-  setCorsHeaders(res);
+  setCorsHeaders(req, res);
   if (req.method === "OPTIONS") {
     return res.status(204).send("");
   }
