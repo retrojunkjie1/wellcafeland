@@ -67,16 +67,8 @@ export function forecastRecoveryRisk(emotion, text) {
     }
   }
 
-  // Emotional intensity-based recommendations
-  if (emotion === "panic" || lowerText.includes("panic") || lowerText.includes("anxious")) {
-    if (!recommendedIntervention) {
-      recommendedIntervention = "breathing";
-    }
-    if (riskLevel === "safe") {
-      riskLevel = "warning";
-      riskReasons.push("Panic detected");
-    }
-  }
+  // Tool policy: ONLY recommend for explicit cravings/relapse-risk language OR compound high-intensity patterns.
+  // No broad single-word triggers (panic, anxious, overwhelm, numb alone) — prevents random tool popups.
 
   if (emotion === "urge" || lowerText.includes("craving") || lowerText.includes("tempted")) {
     if (!recommendedIntervention) {
@@ -93,44 +85,6 @@ export function forecastRecoveryRisk(emotion, text) {
     riskReasons.push("Shame combined with substance use thoughts");
     if (!recommendedIntervention) {
       recommendedIntervention = "talk";
-    }
-  }
-
-  // Overwhelm patterns
-  if (emotion === "overwhelm" || lowerText.includes("too much") || lowerText.includes("can't handle")) {
-    if (!recommendedIntervention) {
-      recommendedIntervention = "grounding";
-    }
-    if (riskLevel === "safe") {
-      riskLevel = "warning";
-      riskReasons.push("Overwhelm detected");
-    }
-  }
-
-  // Dissociation patterns
-  if (emotion === "dissociation" || lowerText.includes("numb") || lowerText.includes("disconnected")) {
-    if (!recommendedIntervention) {
-      recommendedIntervention = "grounding";
-    }
-    if (riskLevel === "safe") {
-      riskLevel = "warning";
-      riskReasons.push("Dissociation detected");
-    }
-  }
-
-  // Video requests
-  if (lowerText.includes("show") || lowerText.includes("demonstrate") || 
-      lowerText.includes("visual") || lowerText.includes("see")) {
-    if (!recommendedIntervention) {
-      recommendedIntervention = "video";
-    }
-  }
-
-  // Audio/voice needs
-  if (lowerText.includes("talk to me") || lowerText.includes("speak") || 
-      lowerText.includes("hear") || lowerText.includes("voice")) {
-    if (!recommendedIntervention) {
-      recommendedIntervention = "audio";
     }
   }
 

@@ -8,7 +8,8 @@ import {ensureDevAuth} from "@/dev/ensureAuth"
 import Loading from "@/components/Loading"
 import PageHeader from "@/components/navigation/PageHeader"
 import {ExternalLink,MapPin,CheckCircle} from "lucide-react"
-import {normalizeExternalUrl} from "@/utils/normalizeUrl"
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const NEED_DEV_AUTH = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true"
 
@@ -169,16 +170,14 @@ const ResourcesListPage=() => {
                       )}
                     </div>
 
-                    {r.contact?.url && (
-                      <a
-                        href={normalizeExternalUrl(r.contact.url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
+                    {r.contact?.url && normalizeExternalUrl(r.contact.url) && (
+                      <OpenInAppButton
+                        url={normalizeExternalUrl(r.contact.url)}
+                        title={r.title}
                         className="p-2 rounded-lg bg-white/5 hover:bg-white/10"
                       >
                         <ExternalLink className="h-4 w-4" />
-                      </a>
+                      </OpenInAppButton>
                     )}
                   </div>
                 </div>

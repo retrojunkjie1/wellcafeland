@@ -13,6 +13,8 @@ import ToolBlock from "./ToolBlock";
 import WelcomeScreen from "./WelcomeScreen";
 import VoiceInput from "./VoiceInput";
 import DirectoryResultBlock from "./DirectoryResultBlock";
+import IntentRenderer from "@/core/intent/IntentRenderer";
+import InAppWebView from "@/components/InAppWebView";
 import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
@@ -191,6 +193,8 @@ const ChatPanel = () => {
   const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
+  const [webViewUrl, setWebViewUrl] = useState(null);
+  const [webViewTitle, setWebViewTitle] = useState("");
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const isSendingRef = useRef(false);
@@ -513,89 +517,48 @@ const ChatPanel = () => {
           console.warn("[ChatPanel] Failed to apply phrasing to response:", err);
         }
 
-        // Text response from robust AI client
+        // Text response with intent and links (Prompt-Native Spine)
+        const lastMsgIntent = res.intent && typeof res.intent === "object" ? res.intent : null;
+        const lastMsgLinks = Array.isArray(res.links) ? res.links : [];
         addMessage("assistant", {
           type: "assistant_text",
           text: processedText,
           content: processedText,
           timestamp: Date.now(),
+          intent: lastMsgIntent,
+          links: lastMsgLinks,
         });
 
-        // TRUTH-GATE: Only promise tool opening if we can actually execute it
-        // Priority 1: Backend tool object (explicit signal from server)
-        let toolToInject = null;
-        let toolFromServer = false;
-        
-        if (res.tool && res.tool.name) {
-          const backendToolId = res.tool.name;
-          // Server already validated tool exists (truth-gate on server side)
+        // Tool policy: ONLY intent.type === "tool.run" opens tools. tool.suggest = chips only (IntentRenderer).
+        const intentType = lastMsgIntent?.type;
+        const intentToolId = lastMsgIntent?.payload?.toolId;
+        if (intentType === "tool.run" && intentToolId) {
           const { validateToolId } = await import("@/utils/toolRouter");
-          if (validateToolId(backendToolId)) {
-            toolToInject = backendToolId;
-            toolFromServer = true; // Mark as server-validated
-          } else {
-            console.warn("[ChatPanel] Server suggested invalid tool:", backendToolId);
-            // Circuit-breaker: Suppress tool-offer language
-          }
-        }
-        
-        // Priority 2: Backend toolRoute (legacy support)
-        if (!toolToInject && (res.meta?.toolRoute || res.meta?.toolId)) {
-          const backendToolId = res.meta.toolRoute || res.meta.toolId;
-          const { validateToolId } = await import("@/utils/toolRouter");
-          if (validateToolId(backendToolId)) {
-            toolToInject = backendToolId;
-            toolFromServer = true;
-          }
-        }
-
-        // Priority 3: Decision engine recommendation (only if server didn't suggest)
-        if (!toolToInject) {
-          const intervention = decision?.forecast?.recommendedIntervention;
-          if (intervention) {
-            const { normalizeModeToToolId, validateToolId } = await import("@/utils/toolRouter");
-            const normalizedToolId = normalizeModeToToolId(intervention);
-            if (normalizedToolId && validateToolId(normalizedToolId)) {
-              toolToInject = normalizedToolId;
-            }
-          }
-        }
-
-        // Opt-in only: do not auto-open modal. Only inject when user explicitly requested (directToolRequest).
-        // Server/decision suggestions become passive inline card (if opt-in + cooldown).
-        const toolToUse = directToolRequest || toolToInject;
-        if (toolToUse) {
-          const { validateToolId } = await import("@/utils/toolRouter");
-          if (!validateToolId(toolToUse)) {
-            console.warn("[ChatPanel] Tool injection blocked: invalid tool ID", toolToUse);
-          } else if (directToolRequest) {
-            // User explicitly asked for tool - inject immediately
+          if (validateToolId(intentToolId)) {
             setTimeout(async () => {
-              const toolMessage = await injectToolIntoChat(toolToUse, {});
+              const toolMessage = await injectToolIntoChat(intentToolId, lastMsgIntent?.payload?.args || {});
               if (toolMessage) {
                 addMessage("assistant", {
                   type: "system",
-                  content: `I've opened the ${TOOL_NAMES[toolToUse] || toolToUse} tool for you. Take your time, I'm here.`,
+                  content: `I've opened the ${TOOL_NAMES[intentToolId] || intentToolId} tool for you. Take your time, I'm here.`,
                 });
               }
             }, 500);
-          } else {
-            // Server/decision suggested - never auto-open. Only show inline suggestion if opt-in + cooldown.
-            const optIn = typeof localStorage !== "undefined" && localStorage.getItem("wc_calming_tools_opt_in") === "1";
-            const lastAt = parseInt(localStorage?.getItem("wc_calming_last_suggested_at") || "0", 10);
-            const cooldownMs = 10 * 60 * 1000;
-            if (optIn && (Date.now() - lastAt >= cooldownMs)) {
-              try {
-                localStorage.setItem("wc_calming_last_suggested_at", String(Date.now()));
-              } catch {}
-              addMessage("assistant", {
-                type: "recommendation",
-                id: `rec-${Date.now()}`,
-                content: "Based on what you shared, a short practice might help.",
-                suggestion: { toolId: toolToUse },
-                timestamp: Date.now(),
-              });
-            }
+          }
+        }
+        // Legacy: res.tool from backend (only when explicit request; backend gates tool.run)
+        if (!intentType && res.tool?.name && directToolRequest) {
+          const { validateToolId } = await import("@/utils/toolRouter");
+          if (validateToolId(res.tool.name)) {
+            setTimeout(async () => {
+              const toolMessage = await injectToolIntoChat(res.tool.name, {});
+              if (toolMessage) {
+                addMessage("assistant", {
+                  type: "system",
+                  content: `I've opened the ${TOOL_NAMES[res.tool.name] || res.tool.name} tool for you. Take your time, I'm here.`,
+                });
+              }
+            }, 500);
           }
         }
 
@@ -674,8 +637,12 @@ const ChatPanel = () => {
           return;
         }
 
-        // Check for real help queries (Phase 12)
-        // Enhanced detection for food/housing queries
+        // Skip directory navigation when backend already returned directory.search intent (results in chat)
+        const hasDirectoryIntent = lastMsgIntent?.type === "directory.search";
+        if (hasDirectoryIntent) {
+          // IntentRenderer will show results; do not navigate away
+        } else {
+        // Check for real help queries (Phase 12) — only when backend did not return directory intent
         const directoryQueries = detectDirectoryQuery(text);
         if (directoryQueries) {
           // Determine priority/category from query
@@ -730,7 +697,7 @@ const ChatPanel = () => {
           return;
         }
 
-        // Check for directory search queries
+        // Check for directory search queries (unreachable if directoryQueries navigated above)
         if (directoryQueries) {
           setTimeout(async () => {
             try {
@@ -771,6 +738,7 @@ const ChatPanel = () => {
               addMessage("assistant", "I had trouble searching the directory. Please try opening it directly from the sidebar.");
             }
           }, 500);
+        }
         }
       } catch (innerErr) {
         console.error("[ChatPanel] Inner sendToAI error:", innerErr);
@@ -1614,7 +1582,30 @@ const ChatPanel = () => {
                   );
                 }
                 
-                return <MessageBubble key={msg.id} message={msg} onAction={handleMessageAction} />;
+                // Default: MessageBubble + IntentRenderer when intent present
+                return (
+                  <div key={msg.id} className="space-y-2">
+                    <MessageBubble message={msg} onAction={handleMessageAction} />
+                    {msg.intent && (
+                      <div className="ml-0 sm:ml-12">
+                        <IntentRenderer
+                          intent={msg.intent}
+                          onOpenLink={({ url, title }) => {
+                            setWebViewTitle(title || url);
+                            setWebViewUrl(url);
+                          }}
+                          onRunTool={(toolId, args) => injectToolIntoChat(toolId, args)}
+                          onDirectorySearch={({ query, region }) => {
+                            const params = new URLSearchParams();
+                            if (query) params.set("query", query);
+                            if (region) params.set("region", region);
+                            navigate(`/workspace/real-help?${params.toString()}`);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
               })}
               {isThinking && (
                 <div className="flex items-start gap-3 animate-fade-in">
@@ -1742,6 +1733,16 @@ const ChatPanel = () => {
         onClose={() => setFaceScanPromptOpen(false)}
         onStartScan={handleFaceScan}
       />
+
+      {/* In-app link preview (resource.preview intent) */}
+      {webViewUrl && (
+        <InAppWebView
+          url={webViewUrl}
+          title={webViewTitle || "Preview"}
+          onClose={() => { setWebViewUrl(null); setWebViewTitle(""); }}
+          onOpenExternally
+        />
+      )}
     </div>
   );
 };

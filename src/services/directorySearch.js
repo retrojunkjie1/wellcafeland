@@ -142,7 +142,7 @@ async function firestoreFallback({ query, category, location, limit = 20 }) {
   }
 }
 
-const NO_RETRY_CODES = ["UPSTREAM_RATE_LIMITED", "UPSTREAM_NOT_ENABLED", "RATE_LIMITED"]
+const NO_RETRY_CODES = ["UPSTREAM_RATE_LIMITED", "UPSTREAM_NOT_ENABLED", "PROVIDER_NOT_SUBSCRIBED", "RATE_LIMITED"]
 const CLIENT_CACHE_TTL_MS = 10000
 
 const clientCache = new Map()

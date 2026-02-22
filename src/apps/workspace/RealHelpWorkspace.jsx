@@ -54,20 +54,22 @@ const RealHelpWorkspace = () => {
   const [curatedResults, setCuratedResults] = useState([]);
   const [searchResponse, setSearchResponse] = useState(null)
   const [webViewUrl, setWebViewUrl] = useState(null)
-  const debounceRef = useRef(null)
-  const abortControllerRef = useRef(null)
-  const searchInputRef = useRef(null)
-  const regionInputRef = useRef(null)
-  const DEBOUNCE_MS = 450
-  const MIN_QUERY_LEN = 3
+  const debounceRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const regionInputRef = useRef(null);
+  const requestIdRef = useRef(0);
+  const DEBOUNCE_MS = 600;
+  const MIN_QUERY_LEN = 3;
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      loadData()
-    }, DEBOUNCE_MS)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); debounceRef.current = null }
-  }, [activeTab, query, region])
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => loadData(), DEBOUNCE_MS);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    };
+  }, [activeTab, query, region]);
 
   useEffect(() => {
     // Remember workspace visit (PHASE 44)
@@ -83,6 +85,7 @@ const RealHelpWorkspace = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
     const signal = controller.signal;
+    const reqId = ++requestIdRef.current;
 
     setLoading(true);
     try {
@@ -99,7 +102,7 @@ const RealHelpWorkspace = () => {
         curated = await listCircles();
       }
 
-      if (signal.aborted) return;
+      if (signal.aborted || reqId !== requestIdRef.current) return;
       setCuratedResults(curated);
 
       // If we have a query (min 3 chars), also search globally
@@ -119,7 +122,7 @@ const RealHelpWorkspace = () => {
             limit: 20,
             signal,
           });
-          if (signal.aborted) return;
+          if (signal.aborted || reqId !== requestIdRef.current) return;
           setSearchResponse({ ok: dirResult.ok, results: dirResult.items, error: dirResult.error, meta: dirResult.meta });
           if (dirResult.ok && dirResult.items?.length) {
             setResults(dirResult.items.map((r) => ({
@@ -143,7 +146,7 @@ const RealHelpWorkspace = () => {
             region: region || undefined,
             category: activeTab,
           });
-          if (signal.aborted) return;
+          if (signal.aborted || reqId !== requestIdRef.current) return;
           setSearchResponse(searchResult);
           if (searchResult.ok && searchResult.results) {
             setResults(searchResult.results);
@@ -207,7 +210,8 @@ const RealHelpWorkspace = () => {
       <PageHeader
         title="Find Real Help"
         subtitle="Search verified resources. Save what you need."
-        showBack={false}
+        showBack
+        backTo="/assistance"
       />
 
       {/* Crisis bar - compact, non-dominant */}

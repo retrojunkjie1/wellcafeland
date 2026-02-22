@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { searchProviders } from "@/services/providerService";
 import { CheckCircle } from "lucide-react";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 export function VerifiedDestinations({ category, regionKey, onSelectProvider, onAddRegion, onOpenLink }) {
   const [providers, setProviders] = useState([]);
@@ -103,14 +104,13 @@ export function VerifiedDestinations({ category, regionKey, onSelectProvider, on
                   View national resources
                 </button>
               ) : (
-                <a
-                  href="https://findtreatment.gov"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <OpenInAppButton
+                  url="https://findtreatment.gov"
+                  title="Find Treatment.gov"
                   className="px-2 py-1 rounded border border-white/20 text-white/70 hover:bg-white/10 text-xs inline-flex items-center gap-1"
                 >
                   View national resources
-                </a>
+                </OpenInAppButton>
               )}
             </div>
           </div>

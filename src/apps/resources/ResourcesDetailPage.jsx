@@ -8,7 +8,8 @@ import {ensureDevAuth} from "@/dev/ensureAuth"
 import Loading from "@/components/Loading"
 import PageHeader from "@/components/navigation/PageHeader"
 import {ArrowLeft,ExternalLink,MapPin,Phone,Mail,CheckCircle} from "lucide-react"
-import {normalizeExternalUrl} from "@/utils/normalizeUrl"
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const NEED_DEV_AUTH = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true"
 
@@ -120,16 +121,8 @@ const ResourcesDetailPage = () => {
             {item.contact.email}
           </a>
         )}
-        {url && (
-          <a
-            href={normalizeExternalUrl(url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm hover:bg-white/10"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Visit site
-          </a>
+        {url && normalizeExternalUrl(url) && (
+          <OpenInAppButton url={normalizeExternalUrl(url)} title={item.title} />
         )}
         {Array.isArray(item.tags) && item.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-6">

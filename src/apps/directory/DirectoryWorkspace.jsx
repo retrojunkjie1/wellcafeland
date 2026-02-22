@@ -9,6 +9,7 @@ import { searchDirectory } from "@/services/directorySearch";
 import { saveFavoriteResource } from "@/services/directoryService";
 import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 import PageHeader from "@/components/navigation/PageHeader";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const DOMAIN_CONFIG = {
   providers: {
@@ -100,8 +101,8 @@ const DirectoryWorkspace = () => {
   const scrollContainerRef = useRef(null)
   const lastRequestTimeRef = useRef(0)
   const pendingRequestRef = useRef(null)
-  const DEBOUNCE_MS = 450
-  const MIN_QUERY_LEN = 3
+  const DEBOUNCE_MS = 600;
+  const MIN_QUERY_LEN = 3;
 
   const config = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.providers;
 
@@ -222,7 +223,7 @@ const DirectoryWorkspace = () => {
     return () => el.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Debounced search on query change (450ms, min 3 chars)
+  // Debounced search on query change (600ms, min 3 chars)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
@@ -437,15 +438,13 @@ const DirectoryWorkspace = () => {
                       const href = normalizeExternalUrl(item.url);
                       if (!href) return null;
                       return (
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <OpenInAppButton
+                          url={href}
+                          title={item.title}
                           className="rounded-lg p-2 sm:p-2.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition min-h-[48px] min-w-[48px] flex items-center justify-center"
-                          title="Visit site"
                         >
-                          <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </a>
+                          <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5" title="Visit site" />
+                        </OpenInAppButton>
                       );
                     })()}
                   </div>

@@ -67,15 +67,102 @@ function safeJsonParse(str, fallback = null) {
 // Conservative intent gate: keywords + patterns with confidence
 const DIRECTORY_STRONG_PHRASES = [
   /\bhelp me find\b/i, /\blooking for\b/i, /\bfind (a|some|resources?)\b/i,
-  /\bneed (a|some) (housing|grant|program|resource|treatment)\b/i,
+  /\bneed (a|some) (housing|grant|program|resource|treatment|food|shelter|meals?)\b/i,
   /\bsupport (group|program)\b/i, /\bsober (living|home)\b/i,
+  /\b(food|meals?|something to eat|food bank|soup kitchen)\b/i,
 ];
 const DIRECTORY_KEYWORDS = [
   /\bfind\b/i, /\bresource/i, /\bhousing\b/i, /\bgrant/i, /\bprogram\b/i,
   /\bdirectory\b/i, /\btreatment\b/i, /\bhotline\b/i, /\bassistance\b/i,
   /\bneed (a|some)\b/i,
+  /\bfood\b/i, /\bmeals?\b/i, /\bhunger\b/i, /\bnutrition\b/i, /\bshelter\b/i,
+  /\bfood bank\b/i, /\bsoup kitchen\b/i, /\bsnap\b/i, /\bwic\b/i,
 ];
 const DIRECTORY_CONFIDENCE_THRESHOLD = 0.55;
+
+// Intent allowlist (must match src/core/intent/intentTypes.js)
+const INTENT_ALLOWLIST = [
+  "chat.message",
+  "directory.search",
+  "resource.preview",
+  "tool.suggest",
+  "tool.run",
+  "page.navigate",
+];
+
+function isIntentAllowed(type) {
+  if (!type || typeof type !== "string") return false;
+  return INTENT_ALLOWLIST.includes(type.trim());
+}
+
+function normalizeIntent(inputIntent) {
+  if (!inputIntent || typeof inputIntent !== "object") {
+    return { type: "chat.message", payload: {} };
+  }
+  const type = (inputIntent.type || "chat.message").trim();
+  const safeType = isIntentAllowed(type) ? type : "chat.message";
+  const payload = inputIntent.payload && typeof inputIntent.payload === "object"
+    ? inputIntent.payload
+    : {};
+  return { type: safeType, payload };
+}
+
+// Detect explicit tool request from user prompt (server-side tool gating)
+const EXPLICIT_TOOL_PATTERNS = [
+  /\b(start|open|run|do|try|use)\s+(breathing|grounding|breathe|ground)\b/i,
+  /\b(breathing|grounding|breathe|ground)\s+(with me|exercise|now|please)\b/i,
+  /\b(help me|let's|let us)\s+(breathe|ground)\b/i,
+  /\b(need|want)\s+(to\s+)?(breathe|ground|do breathing|do grounding)\b/i,
+  /\b(urge surfing|urge-surfing|journal|journaling)\s+(with me|now|please)\b/i,
+  /\b(start|open)\s+(urge surfing|journaling|body scan)\b/i,
+  /\b(need|want)\s+(breathing|grounding|journaling|urge surfing)\b/i,
+];
+
+function detectExplicitToolRequest(prompt) {
+  if (!prompt || typeof prompt !== "string") return null;
+  const t = prompt.trim();
+  if (t.length < 4) return null;
+  if (EXPLICIT_TOOL_PATTERNS.some((p) => p.test(t))) {
+    const lower = t.toLowerCase();
+    if (/\bbreath|breathe\b/.test(lower)) return "breathing";
+    if (/\bground|54321|5-4-3-2-1\b/.test(lower)) return "grounding";
+    if (/\burge surf|surf the urge\b/.test(lower)) return "urge-surfing";
+    if (/\bjournal\b/.test(lower)) return "journaling";
+    if (/\bbody scan\b/.test(lower)) return "body-scan";
+    if (/\bmeditation\b/.test(lower)) return "meditation";
+    if (/\beducation\b/.test(lower)) return "education";
+  }
+  return null;
+}
+
+function buildEnvelope(opts) {
+  const {
+    ok = true,
+    correlationId = "",
+    assistantText = "",
+    intent = { type: "chat.message", payload: {} },
+    links = [],
+    meta = {},
+  } = opts;
+  const safeIntent = normalizeIntent(intent);
+  const safeLinks = Array.isArray(links) ? links.slice(0, 20) : [];
+  return {
+    ok: !!ok,
+    correlationId: String(correlationId || ""),
+    assistantText: String(assistantText || ""),
+    intent: safeIntent,
+    links: safeLinks,
+    meta: typeof meta === "object" ? meta : {},
+    // Legacy fields for backward compatibility
+    message: {
+      id: `msg_${Date.now()}`,
+      role: "assistant",
+      text: String(assistantText || ""),
+      meta: meta,
+    },
+    tool: null,
+  };
+}
 
 function evaluateDirectoryIntent(text) {
   if (!text || typeof text !== "string") return { confidence: 0, queryHint: "" };
@@ -108,6 +195,18 @@ function toSafeResource(r) {
   };
 }
 
+// Expand food-related queries for better matching
+const FOOD_QUERY_EXPANSIONS = ["food", "meal", "hunger", "eat", "nutrition", "snap", "wic", "food bank", "soup kitchen", "pantry"];
+function expandQueryForMatch(queryText) {
+  const q = (queryText || "").toLowerCase().trim();
+  if (q.length < 2) return [];
+  const terms = [q];
+  if (FOOD_QUERY_EXPANSIONS.some((t) => q.includes(t))) {
+    terms.push("food", "meal", "nutrition", "assistance", "pantry", "bank");
+  }
+  return [...new Set(terms)];
+}
+
 async function queryResourcesForContext(queryText, limit = 8) {
   try {
     const snap = await db.collection("resources")
@@ -116,19 +215,25 @@ async function queryResourcesForContext(queryText, limit = 8) {
       .get();
     const items = [];
     snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
-    const q = (queryText || "").toLowerCase().trim();
-    const filtered = q.length > 2
-      ? items.filter((r) =>
-          (r.title || "").toLowerCase().includes(q) ||
-          (r.type || "").toLowerCase().includes(q) ||
-          (Array.isArray(r.tags) && r.tags.some((t) => String(t).toLowerCase().includes(q))))
+    const searchTerms = expandQueryForMatch(queryText);
+    const filtered = searchTerms.length > 0
+      ? items.filter((r) => {
+          const title = (r.title || "").toLowerCase();
+          const type = (r.type || "").toLowerCase();
+          const desc = (r.description || r.snippet || "").toLowerCase();
+          const tags = (Array.isArray(r.tags) ? r.tags : []).map((t) => String(t).toLowerCase());
+          return searchTerms.some((term) =>
+            title.includes(term) || type.includes(term) || desc.includes(term) ||
+            tags.some((t) => t.includes(term) || term.includes(t)));
+        })
       : items;
-    return filtered.slice(0, limit).map(toSafeResource);
+    const raw = filtered.slice(0, limit);
+    return { safe: raw.map(toSafeResource), raw };
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
       console.warn("[aiSession] resources query error:", err.message);
     }
-    return [];
+    return { safe: [], raw: [] };
   }
 }
 
@@ -459,19 +564,16 @@ async function handleSession(req, res) {
     const mode = body.mode || "session"
 
     // SAFETY GATE: Block dangerous tool requests (self-harm, surgery, medical procedures)
-    const DANGEROUS_TOOL_PATTERN = /(self-surgeon|self_surgeon|surgery|procedure|incision|stitch|remove at home)/i
+    const DANGEROUS_TOOL_PATTERN = /(self-surgeon|self_surgeon|surgery|procedure|incision|stitch|remove at home)/i;
     if (DANGEROUS_TOOL_PATTERN.test(mode)) {
-      return res.status(200).json({
+      return res.status(200).json(buildEnvelope({
         ok: true,
         correlationId,
-        message: {
-          id: `msg_${Date.now()}`,
-          role: "assistant",
-          text: "I'm here with you. What you're describing sounds like it needs professional medical care. If this is urgent, please reach out to emergency services or a healthcare provider. I can help you find resources or support while you take that step.",
-          meta: {},
-        },
-        tool: null,
-      })
+        assistantText: "I'm here with you. What you're describing sounds like it needs professional medical care. If this is urgent, please reach out to emergency services or a healthcare provider. I can help you find resources or support while you take that step.",
+        intent: { type: "chat.message", payload: {} },
+        links: [],
+        meta: {},
+      }));
     }
 
     // Handle telemetry mode
@@ -610,29 +712,27 @@ async function handleSession(req, res) {
     // (Future) MODE: template_detail, admin_list, admin_save can be added here
 
     // TOOL ROUTING: Handle tool-specific modes (self-surgeon removed — safety)
-    const toolModes = ["breathing", "grounding", "urge-surfing", "journaling", "body-scan", "meditation", "education"]
+    const toolModes = ["breathing", "grounding", "urge-surfing", "self_surgeon", "journaling", "body-scan", "meditation", "education"];
     if (toolModes.includes(mode)) {
       const toolIdMap = {
         "urge-surfing": "urge-surfing",
+        "self_surgeon": "urge-surfing",
         "body-scan": "body-scan",
-      }
-      const toolId = toolIdMap[mode] || mode
+      };
+      const toolId = toolIdMap[mode] || mode;
 
       // Safety gate: block any toolRequested matching dangerous patterns (model or client)
       if (DANGEROUS_TOOL_PATTERN.test(toolId)) {
-        return res.status(200).json({
+        return res.status(200).json(buildEnvelope({
           ok: true,
           correlationId,
-          message: {
-            id: `msg_${Date.now()}`,
-            role: "assistant",
-            text: "I'm here with you. What you're describing sounds like it needs professional medical care. If this is urgent, please reach out to emergency services or a healthcare provider. I can help you find resources or support while you take that step.",
-            meta: {},
-          },
-          tool: null,
-        })
+          assistantText: "I'm here with you. What you're describing sounds like it needs professional medical care. If this is urgent, please reach out to emergency services or a healthcare provider. I can help you find resources or support while you take that step.",
+          intent: { type: "chat.message", payload: {} },
+          links: [],
+          meta: {},
+        }));
       }
-      
+
       const prompt =
         body.prompt ||
         body.message ||
@@ -641,41 +741,46 @@ async function handleSession(req, res) {
         "Help me with a short, gentle recovery reflection.";
 
       const context = body.context || "";
+      const explicitTool = detectExplicitToolRequest(prompt);
 
       try {
         const result = await runSimpleChat(prompt, context, correlationId);
+        const assistantText = result.reply || result.content || "I'm here. Let's take this one breath at a time.";
 
-        // Validate tool exists in registry (server-side truth-gate; self-surgeon removed)
-        const validTools = ["breathing", "grounding", "body-scan", "journaling", "urge-surfing", "meditation", "education"]
+        // Validate tool exists in registry (server-side truth-gate)
+        const validTools = ["breathing", "grounding", "body-scan", "journaling", "urge-surfing", "meditation", "education"];
         const normalizedToolId = toolIdMap[toolId] || toolId;
         const toolExists = validTools.includes(normalizedToolId);
-        
-        // STANDARDIZED RESPONSE SCHEMA
-        const response = {
+
+        // Tool gating: tool.run ONLY when user explicitly requested; else tool.suggest (chips only)
+        const intentType = (explicitTool && toolExists) ? "tool.run" : "tool.suggest";
+        const intent = {
+          type: intentType,
+          payload: { toolId: normalizedToolId, args: {} },
+        };
+
+        const envelope = buildEnvelope({
           ok: true,
           correlationId,
-          message: {
-            id: `msg_${Date.now()}`,
-            role: "assistant",
-            text: result.reply || result.content || "I'm here. Let's take this one breath at a time.",
-            meta: result.meta || {},
-          },
-          // Only include tool if it exists (Truth-Gate)
-          tool: toolExists ? {
-            name: normalizedToolId,
-            action: "open",
-            params: {},
-          } : null,
-        };
-        
+          assistantText,
+          intent,
+          links: [],
+          meta: result.meta || {},
+        });
+        // Legacy: include tool only for tool.run (explicit request)
+        if (intentType === "tool.run" && toolExists) {
+          envelope.tool = { name: normalizedToolId, action: "open", params: {} };
+        }
+
         console.log("[aiSession] Tool-mode response", {
           correlationId,
           toolRequested: toolId,
-          toolExists,
-          toolIncluded: !!response.tool,
+          explicitRequest: !!explicitTool,
+          intentType,
+          toolIncluded: !!envelope.tool,
         });
-        
-        return res.status(200).json(response);
+
+        return res.status(200).json(envelope);
       } catch (chatErr) {
         if (chatErr.code === "AI_PROVIDER_UNAUTHORIZED") {
           return res.status(401).json({
@@ -760,20 +865,27 @@ async function handleSession(req, res) {
     // Intent: directory_lookup — conservative gate; only query if confidence >= threshold and NOT creative
     const { confidence: dirConf, queryHint } = evaluateCreativeIntent(prompt) ? { confidence: 0, queryHint: "" } : evaluateDirectoryIntent(prompt);
     if (dirConf > 0 && dirConf < DIRECTORY_CONFIDENCE_THRESHOLD) {
-      return res.status(200).json({
+      return res.status(200).json(buildEnvelope({
         ok: true,
         correlationId,
-        message: {
-          id: `msg_${Date.now()}`,
-          role: "assistant",
-          text: "I'd like to help you find resources. What kind of support are you looking for—housing, grants, treatment programs, or something else?",
-          meta: { directoryIntent: "clarifying" },
-        },
-        tool: null,
-      });
+        assistantText: "I'd like to help you find resources. What kind of support are you looking for—housing, grants, treatment programs, or something else?",
+        intent: { type: "chat.message", payload: {} },
+        links: [],
+        meta: { directoryIntent: "clarifying", confidence: dirConf },
+      }));
     }
+    let directoryResources = [];
     if (dirConf >= DIRECTORY_CONFIDENCE_THRESHOLD) {
-      const resources = await queryResourcesForContext(queryHint, 8);
+      const { safe: resources, raw: rawResources } = await queryResourcesForContext(queryHint, 8);
+      directoryResources = rawResources.map((r) => ({
+        id: r.id,
+        title: (r.title || "").slice(0, 200),
+        description: (r.description || r.snippet || "").slice(0, 300),
+        region: r.location || r.region || "",
+        url: r.contact?.url || r.url || "",
+        category: r.type || "resource",
+        source: r.source || "",
+      }));
       if (resources.length > 0) {
         const resourceBlob = resources.map((r) =>
           `- ${r.title} (${r.type})${r.verified ? " [verified]" : ""}${r.contact?.url ? ` — ${r.contact.url}` : ""}`
@@ -789,19 +901,33 @@ async function handleSession(req, res) {
 
     try {
       const result = await runSimpleChat(prompt, context, correlationId);
+      const assistantText = result.reply || result.content || "I'm here. Let's take this one breath at a time.";
 
-      // STANDARDIZED RESPONSE SCHEMA (default chat mode)
-      return res.status(200).json({
+      // Build intent: directory.search when dirConf >= threshold
+      let intent = { type: "chat.message", payload: {} };
+      if (dirConf >= DIRECTORY_CONFIDENCE_THRESHOLD) {
+        const q = (queryHint || "").toLowerCase();
+        const domain = /\bfood\b|\bmeal\b|\bhunger\b|\beat\b|\bnutrition\b|\bsnap\b|\bwic\b|\bpantry\b/.test(q)
+          ? "food.essentials"
+          : /\bhousing\b|\bshelter\b|\bsober\b/.test(q)
+            ? "housing"
+            : /\bgrant\b|\bfunding\b/.test(q)
+              ? "grants"
+              : "programs";
+        intent = {
+          type: "directory.search",
+          payload: { query: queryHint, region: "", domain, resources: directoryResources },
+        };
+      }
+
+      return res.status(200).json(buildEnvelope({
         ok: true,
         correlationId,
-        message: {
-          id: `msg_${Date.now()}`,
-          role: "assistant",
-          text: result.reply || result.content || "I'm here. Let's take this one breath at a time.",
-          meta: result.meta || {},
-        },
-        tool: null, // No tool in default chat mode
-      });
+        assistantText,
+        intent,
+        links: [],
+        meta: { ...(result.meta || {}), confidence: dirConf },
+      }));
     } catch (chatErr) {
       if (chatErr.code === "AI_PROVIDER_UNAUTHORIZED") {
         return res.status(401).json({

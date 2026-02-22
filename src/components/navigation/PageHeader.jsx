@@ -1,18 +1,19 @@
 // src/components/navigation/PageHeader.jsx
 // Minimal page header component for OS 2.0
+// Phase 2D: useSmartBack for consistent back behavior
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useSmartBack } from "@/lib/useSmartBack";
 
 const PageHeader = ({ title, subtitle, showBack = false, backTo }) => {
-  const navigate = useNavigate();
+  const onBack = useSmartBack(backTo || "/home");
 
   return (
     <header className="mb-6 space-y-2">
-      {showBack && backTo && (
+      {showBack && (
         <button
           type="button"
-          onClick={() => navigate(backTo)}
+          onClick={onBack}
           className="text-sm text-white/60 hover:text-white mb-2"
         >
           ← Back

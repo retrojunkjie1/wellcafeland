@@ -307,28 +307,42 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         });
       }
 
-      // Standardize response extraction (support both new schema and legacy)
-      const text = data.message?.text || data.content || data.text || data.reply || "";
+      // Standardize response extraction (new envelope + legacy)
+      const assistantText = data.assistantText || data.message?.text || data.content || data.text || data.reply || "";
+      const intent = data.intent && typeof data.intent === "object" ? data.intent : null;
+      const links = Array.isArray(data.links) ? data.links : [];
       const tool = data.tool || (data.meta?.toolRoute ? { name: data.meta.toolRoute } : null);
-      
+
       // Extract correlation ID from response
       const responseCorrelationId = data.correlationId || correlationId;
 
       logRequest("log", correlationId, {
         action: "response_success",
-        hasText: !!text,
+        hasText: !!assistantText,
         hasTool: !!tool,
+        hasIntent: !!intent,
         toolName: tool?.name || null,
       });
 
+      // DEV only: minimal spine logging
+      if (import.meta.env.DEV && typeof window !== "undefined") {
+        console.debug("[AIClient] envelope", {
+          correlationId: responseCorrelationId,
+          intentType: intent?.type || null,
+          assistantTextPreview: (assistantText || "").slice(0, 80),
+        });
+      }
+
       const result = {
         ok: data.ok !== false, // Default to true if not explicitly false
-        text,
+        text: assistantText,
+        assistantText,
+        intent,
+        links,
         tool, // Tool invocation data (null if no tool)
         meta: {
           ...(data.meta || {}),
           correlationId: responseCorrelationId,
-          // Preserve tool routing from backend (legacy support)
           toolRoute: tool?.name || data.toolRoute || data.meta?.toolRoute || null,
           toolId: tool?.name || data.toolId || data.meta?.toolId || null,
         },

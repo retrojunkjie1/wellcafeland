@@ -2,15 +2,17 @@
 // Directory item detail view
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { withFrom } from "@/navigation/linkState";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSmartBack } from "@/lib/useSmartBack";
 import { MapPin, Phone, Mail, ExternalLink, Heart, FileText, ArrowLeft } from "lucide-react";
 import { getDirectoryItem, saveFavoriteResource, saveResourcePlan } from "@/services/directoryService";
 import { normalizeExternalUrl } from "@/utils/normalizeUrl";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const DirectoryDetailWorkspace = () => {
   const { domain: routeDomain, id } = useParams();
   const navigate = useNavigate();
+  const onBack = useSmartBack(`/directory/${routeDomain || "housing"}`);
   
   // Map route domain to backend domain format
   const domainMap = {
@@ -114,13 +116,10 @@ const DirectoryDetailWorkspace = () => {
           <p className="text-sm text-white/60 mb-4">Resource not found</p>
           <button
             type="button"
-            onClick={() => {
-              const from = location.state?.from || `/directory/${routeDomain}`;
-              navigate(withFrom(`/directory/${routeDomain}`, { pathname: from }));
-            }}
+            onClick={onBack}
             className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white hover:bg-white/20 transition"
           >
-            Back to Directory
+            Back
           </button>
         </div>
       </div>
@@ -133,14 +132,11 @@ const DirectoryDetailWorkspace = () => {
       <div className="border-b border-white/10 bg-slate-950 px-6 py-4">
           <button
             type="button"
-            onClick={() => {
-              const from = location.state?.from || `/directory/${routeDomain}`;
-              navigate(withFrom(`/directory/${routeDomain}`, { pathname: from }));
-            }}
+            onClick={onBack}
             className="flex items-center gap-2 text-sm text-white/70 hover:text-white mb-3 transition"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Directory
+            Back
           </button>
         <h1 className="text-xl font-medium text-white">{item.title || "Resource"}</h1>
         <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -234,15 +230,14 @@ const DirectoryDetailWorkspace = () => {
               const href = normalizeExternalUrl(item.url);
               if (!href) return null;
               return (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <OpenInAppButton
+                  url={href}
+                  title={item.title}
                   className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Open Website
-                </a>
+                </OpenInAppButton>
               );
             })()}
             <button
