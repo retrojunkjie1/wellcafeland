@@ -29,6 +29,7 @@ function normalizeSearchQuery(query, domain, region, category) {
     programs: ["recovery programs", "IOP", "PHP", "rehab", "support groups"],
     providers: ["therapist", "counselor", "recovery coach"],
     hotlines: ["crisis hotline", "suicide prevention", "helpline"],
+    "food.essentials": ["food bank", "food pantry", "SNAP", "WIC", "meal program", "soup kitchen", "grocery assistance"],
   };
 
   const queryLower = searchQuery.toLowerCase();

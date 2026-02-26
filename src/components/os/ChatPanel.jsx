@@ -1595,7 +1595,16 @@ const ChatPanel = () => {
                 return (
                   <div key={msg.id} className="space-y-2">
                     <MessageBubble message={msg} onAction={handleMessageAction} />
-                    {msg.intent && (
+                    {msg.intent && (() => {
+                      if (msg.intent?.type === "directory.search") {
+                        logDebug("ChatPanel", {
+                          intentType: msg.intent.type,
+                          payloadQuery: msg.intent.payload?.query,
+                          payloadDomain: msg.intent.payload?.domain,
+                          payloadResourcesLength: msg.intent.payload?.resources?.length ?? 0,
+                        });
+                      }
+                      return (
                       <div className="ml-0 sm:ml-12">
                         <IntentRenderer
                           intent={msg.intent}
@@ -1609,11 +1618,14 @@ const ChatPanel = () => {
                             if (query) params.set("query", query);
                             if (region) params.set("region", region);
                             if (domain) params.set("domain", domain);
+                            const priority = domain === "food.essentials" ? "programs" : domain === "grants" ? "funding" : domain === "housing" ? "housing" : domain === "programs" ? "programs" : "programs";
+                            params.set("priority", priority);
                             navigate(`/workspace/real-help?${params.toString()}`);
                           }}
                         />
                       </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 );
               })}

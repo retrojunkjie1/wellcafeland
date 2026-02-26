@@ -5,9 +5,8 @@
  * DEV without emulators: uses hostname so phone on LAN can reach.
  */
 export function resolveFunctionsBaseUrl() {
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true") {
-    const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-    return `http://${host}:5001/wellnesscafelanding/us-central1`;
+  if (import.meta.env.VITE_USE_EMULATORS === "true") {
+    return "http://127.0.0.1:5001/wellnesscafelanding/us-central1";
   }
   const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
   if (env && typeof env === "string" && env.trim()) {

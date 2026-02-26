@@ -42,13 +42,24 @@ const WhatToExpectAccordion = () => {
   );
 };
 
+const DOMAIN_TO_PRIORITY = {
+  "food.essentials": "programs",
+  housing: "housing",
+  grants: "funding",
+  programs: "programs",
+};
+
 const RealHelpWorkspace = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  const [activeTab, setActiveTab] = useState(searchParams.get("priority") || "housing");
-  const [query, setQuery] = useState(searchParams.get("query") || "");
-  const [region, setRegion] = useState(searchParams.get("region") || "");
+  const qp = searchParams;
+  const urlPriority = qp.get("priority");
+  const urlDomain = qp.get("domain");
+  const resolvedDomain = (urlDomain && urlDomain.trim()) ? urlDomain.trim() : null;
+  const resolvedPriority = urlPriority || (urlDomain && DOMAIN_TO_PRIORITY[urlDomain]) || "housing";
+  const [activeTab, setActiveTab] = useState(resolvedPriority);
+  const [query, setQuery] = useState(qp.get("query") || "");
+  const [region, setRegion] = useState(qp.get("region") || "");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
   const [curatedResults, setCuratedResults] = useState([]);
@@ -69,7 +80,7 @@ const RealHelpWorkspace = () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = null;
     };
-  }, [activeTab, query, region]);
+  }, [activeTab, query, region, resolvedDomain]);
 
   useEffect(() => {
     // Remember workspace visit (PHASE 44)
@@ -108,9 +119,7 @@ const RealHelpWorkspace = () => {
       // If we have a query (min 3 chars), also search globally
       const q = (query || "").trim()
       if (q.length >= MIN_QUERY_LEN) {
-        const domain = activeTab === "housing" ? "housing" : 
-                      activeTab === "funding" ? "grants" : 
-                      activeTab === "programs" ? "assistance" : "programs";
+        const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : "programs");
 
         // Programs tab: use globalResourceSearch (live pipeline) with abort support
         if (activeTab === "programs") {
@@ -123,6 +132,9 @@ const RealHelpWorkspace = () => {
             signal,
           });
           if (signal.aborted || reqId !== requestIdRef.current) return;
+          if (import.meta.env.DEV) {
+            console.debug("[RealHelp] programs search", { query: q, region: region || null, domain, resultCount: dirResult.items?.length ?? 0 });
+          }
           setSearchResponse({ ok: dirResult.ok, results: dirResult.items, error: dirResult.error, meta: dirResult.meta });
           if (dirResult.ok && dirResult.items?.length) {
             setResults(dirResult.items.map((r) => ({
@@ -135,6 +147,7 @@ const RealHelpWorkspace = () => {
               region: r.state || r.address,
               source: r.source,
               verification: r.verified ? { status: "verified" } : { status: "external" },
+              ...(domain && { domain: domain }),
             })));
           } else {
             setResults([]);
@@ -142,14 +155,17 @@ const RealHelpWorkspace = () => {
         } else {
           const searchResult = await searchResources({
             query: q,
-            domain,
+            domain: domain,
             region: region || undefined,
             category: activeTab,
           });
           if (signal.aborted || reqId !== requestIdRef.current) return;
           setSearchResponse(searchResult);
           if (searchResult.ok && searchResult.results) {
-            setResults(searchResult.results);
+            setResults(searchResult.results.map((r) => ({
+              ...r,
+              ...(domain && { domain: domain }),
+            })));
           } else {
             setResults([]);
           }
@@ -169,9 +185,7 @@ const RealHelpWorkspace = () => {
 
   const handleSaveFavorite = async (item) => {
     try {
-      const domain = activeTab === "housing" ? "housing" : 
-                    activeTab === "funding" ? "grants" : 
-                    activeTab === "programs" ? "assistance" : "programs";
+      const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : "programs");
       
       await saveFavoriteResource(domain, {
         id: item.id,
@@ -189,9 +203,7 @@ const RealHelpWorkspace = () => {
   };
 
   const handleOpenDetail = (item) => {
-    const domain = activeTab === "housing" ? "housing" : 
-                  activeTab === "funding" ? "grants" : 
-                  activeTab === "programs" ? "assistance" : "programs";
+    const domain = activeTab === "housing" ? "housing" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : "programs";
     
     navigate(`/resources/${encodeURIComponent(item.id)}`);
   };

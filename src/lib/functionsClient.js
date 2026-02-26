@@ -2,7 +2,7 @@
 // Centralized Cloud Functions caller with automatic auth token attachment
 
 import { getAuth } from "firebase/auth";
-import { httpsCallable, getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { httpsCallable, getFunctions } from "firebase/functions";
 import app from "@/firebase";
 import { logTelemetry } from "@/telemetry/telemetry";
 
@@ -15,18 +15,6 @@ let functionsInstance = null;
 function getFunctionsInstance() {
   if (!functionsInstance) {
     functionsInstance = getFunctions(app, FUNCTIONS_REGION);
-    
-    // Connect to emulator in development if URL is localhost
-    if (import.meta.env.DEV && FUNCTIONS_URL?.includes("localhost")) {
-      try {
-        const emulatorHost = new URL(FUNCTIONS_URL).hostname;
-        const emulatorPort = new URL(FUNCTIONS_URL).port || 5001;
-        connectFunctionsEmulator(functionsInstance, emulatorHost, parseInt(emulatorPort));
-        console.log(`[FunctionsClient] Connected to emulator at ${emulatorHost}:${emulatorPort}`);
-      } catch (err) {
-        console.warn("[FunctionsClient] Failed to connect to emulator:", err);
-      }
-    }
   }
   return functionsInstance;
 }

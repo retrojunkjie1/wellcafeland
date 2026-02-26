@@ -95,11 +95,14 @@ function normalizeSearchQuery(query, domain, region, category) {
     programs: "addiction recovery programs IOP PHP rehab support groups",
     providers: "recovery therapists addiction counselors",
     hotlines: "crisis hotline suicide prevention addiction helpline",
+    "food.essentials": "food bank food pantry SNAP WIC meal program soup kitchen groceries",
   };
 
-  // Add domain context if not already present
+  // Add domain context if not already present (check if ANY domain word is in query)
   const domainContext = domainTerms[domain] || "";
-  if (domainContext && !searchQuery.toLowerCase().includes(domainContext.split(" ")[0])) {
+  const domainWords = domainContext ? domainContext.split(/\s+/).filter(Boolean) : [];
+  const hasAnyDomainWord = domainWords.some((w) => w.length > 2 && searchQuery.toLowerCase().includes(w.toLowerCase()));
+  if (domainContext && !hasAnyDomainWord) {
     searchQuery = `${searchQuery} ${domainContext}`;
   }
 
@@ -196,6 +199,7 @@ exports.globalResourceSearch = onRequest(
 
       const normalizedQuery = normalizeSearchQuery(query, domain || "", region || "", category || "");
       const rawQueryLen = (query || "").trim().length;
+      logger.info("[globalResourceSearch]", { domain: domain || null, rawQueryLen, normalizedQuery });
 
       // A2: Min query length — do NOT call external API for < 3 chars
       if (rawQueryLen < MIN_QUERY_LEN) {

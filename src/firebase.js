@@ -25,11 +25,12 @@ export const auth=getAuth(app)
 export const db=getFirestore(app)
 export const functions=getFunctions(app)
 
-// Emulator wiring (DEV only, explicit toggle)
-if(import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS==="true"){
-  connectAuthEmulator(auth,"http://localhost:9099",{disableWarnings:true})
-  connectFirestoreEmulator(db,"localhost",8080)
-  connectFunctionsEmulator(functions,"localhost",5001)
+// Emulator wiring (only when VITE_USE_EMULATORS === "true")
+if (import.meta.env.VITE_USE_EMULATORS === "true") {
+  connectFirestoreEmulator(db, "127.0.0.1", 8081);
+  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  console.debug("[Firebase] emulators", { firestore: "127.0.0.1:8081", functions: "127.0.0.1:5001", auth: "127.0.0.1:9099" });
 }
 
 export default app
