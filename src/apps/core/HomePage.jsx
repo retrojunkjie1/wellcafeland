@@ -96,7 +96,7 @@ const HomePage = () => {
         </button>
         <button
           type="button"
-          onClick={() => navigate("/workspace/real-help")}
+          onClick={() => navigate("/assistance")}
           className={tileBase}
         >
           <div className="flex items-center gap-3">
@@ -176,7 +176,7 @@ const HomePage = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button
             type="button"
-            onClick={() => navigate("/workspace/real-help?priority=housing")}
+            onClick={() => navigate("/assistance?priority=housing")}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-white/70 hover:text-white text-sm transition"
           >
             <Home className="h-4 w-4 flex-shrink-0" />
@@ -184,7 +184,7 @@ const HomePage = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/workspace/real-help?priority=programs")}
+            onClick={() => navigate("/assistance?priority=programs")}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-white/70 hover:text-white text-sm transition"
           >
             <Building2 className="h-4 w-4 flex-shrink-0" />
@@ -192,7 +192,7 @@ const HomePage = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/workspace/real-help?priority=funding")}
+            onClick={() => navigate("/assistance?priority=funding")}
             className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 text-white/70 hover:text-white text-sm transition"
           >
             <DollarSign className="h-4 w-4 flex-shrink-0" />

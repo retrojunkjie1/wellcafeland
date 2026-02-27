@@ -16,6 +16,31 @@ service cloud.firestore {
       allow create,update,delete: if isAdmin();
     }
 
+    // Clinical engine: user reads own session data (server writes via Admin SDK)
+    match /assessmentSessions/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    match /clinicalFormulations/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    match /carePlans/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    match /carePlans/{sessionId}/items/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+    match /safetyFlags/{sessionId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+    match /auditEvents/{eventId} {
+      allow read,write: if false;
+    }
+
     // Default deny for everything else
     match /{document=**} {
       allow read,write: if false;

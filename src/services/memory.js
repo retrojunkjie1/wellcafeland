@@ -4,20 +4,11 @@
 // Thin front-end helper that talks to aiSession (legacy endpoint), which then talks to Pinecone.
 // NOT for primary conversational AI (use guideEngine() or sendChatMultimodal() instead)
 
-const MEMORY_ENDPOINT = "/aiSession";
+import { callAiSession } from "@/services/aiSessionClient";
 
 const safeFetchJson = async (body)=>{
   try{
-    const res=await fetch(MEMORY_ENDPOINT,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify(body)
-    });
-    if(!res.ok){
-      console.error("Memory API error",res.status);
-      return null;
-    }
-    return await res.json();
+    return await callAiSession(body);
   }catch(err){
     console.error("Memory API failed",err);
     return null;

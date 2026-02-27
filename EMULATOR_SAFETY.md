@@ -30,3 +30,4 @@
    - "Connection issue" banners disappear when emulators are running and `VITE_USE_EMULATORS=true`
    - `/resources` no longer shows "Missing or insufficient permissions" when user is authenticated (signed-out users will see permissions error—expected)
    - `aiSession` returns a real response when `OPENAI_API_KEY` is set in `functions/.env`
+   - `globalResourceSearch` uses RapidAPI when `RAPIDAPI_KEY` is in `functions/.env` (or Secret Manager in production)

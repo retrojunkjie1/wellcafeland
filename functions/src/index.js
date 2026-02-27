@@ -1,8 +1,11 @@
 /** * Firebase Functions Entry Point * Mixed v1 + v2 SAFE CONFIG */
 const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
-const functions = require("firebase-functions"); // v1 (legacy)
+const functionsV1 = require("firebase-functions/v1");
 const axios = require("axios");
+
+const isDev = () =>
+  process.env.FUNCTIONS_EMULATOR === "true" || process.env.NODE_ENV !== "production";
 
 // ---------------------------
 // Imports
@@ -11,8 +14,9 @@ const axios = require("axios");
 const { onClientUpdate } = require("./milestones/onClientUpdate");
 // Multimodal Wellness Engine (v2)
 const { chat, tts, stt } = require("./multimodal");
-// Global Resource Search (v2)
-const { globalResourceSearch: globalResourceSearchV2 } = require("./globalResourceSearch");
+// Global Resource Search (v2) - exported directly with secrets from globalResourceSearch.js
+const { globalResourceSearch } = require("./globalResourceSearch");
+const { buildClinicalPlan } = require("./buildClinicalPlan");
 // Link Preview (v2)
 const { linkPreview } = require("./linkPreview");
 // Legacy AI Brain (v1 – REQUIRED)
@@ -57,33 +61,43 @@ exports.multimodalStt = onRequest(
   stt
 );
 
-exports.globalResourceSearch = onRequest(
-  {
-    region: "us-central1",
-    cors: true,
-    secrets: ["RAPIDAPI_KEY"],
-  },
-  globalResourceSearchV2
-);
+exports.globalResourceSearch = globalResourceSearch;
+exports.searchLiveResources = globalResourceSearch;
+exports.searchLiveResourcesV1 = exports.globalResourceSearchV1;
+
+exports.buildClinicalPlan = buildClinicalPlan;
 
 exports.linkPreview = linkPreview;
+
+exports.health = onRequest(
+  { region: "us-central1", cors: true },
+  (req, res) => res.status(200).json({ ok: true, service: "functions", region: "us-central1" })
+);
 
 // ---------------------------
 // v1 LEGACY FUNCTIONS (SAFE)
 // ---------------------------
-// ❌ DO NOT USE functions.region()
-// ✅ Region is inferred automatically in v1
-exports.aiSession = functions.https.onRequest(aiBrain.handleSession);
-exports.aiMedia = functions.https.onRequest(aiBrain.handleMedia);
-
-// ---------------------------
-// v1 GLOBAL RESOURCE SEARCH (LEGACY)
-// ---------------------------
-
-exports.globalResourceSearchV1 = functions.https.onRequest(async (req, res) => {
+// NOTE: aiSession stays Gen1 to avoid blocked in-place Gen1→Gen2 upgrades. Use aiSessionV2 for Gen2 experiments.
+exports.aiSession = functionsV1.region("us-central1").https.onRequest(async (req, res) => {
   setCorsHeaders(req, res);
   if (req.method === "OPTIONS") {
     return res.status(204).send("");
+  }
+  return aiBrain.handleSession(req, res);
+});
+exports.aiMedia = functionsV1.region("us-central1").https.onRequest(aiBrain.handleMedia);
+
+// ---------------------------
+// v1 GLOBAL RESOURCE SEARCH (LEGACY) — emulator/dev only
+// ---------------------------
+
+exports.globalResourceSearchV1 = functionsV1.https.onRequest(async (req, res) => {
+  setCorsHeaders(req, res);
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+  if (!isDev()) {
+    return res.status(404).json({ ok: false, error: "Not available" });
   }
   if (req.method !== "POST") {
     return res.status(405).json({ ok: false, error: "Method not allowed" });

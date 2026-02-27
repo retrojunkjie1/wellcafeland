@@ -61,7 +61,7 @@ const ProviderRecommendationsWidget = () => {
     if (rec.type === "circle") {
       navigate("/circles");
     } else {
-      navigate(`/workspace/real-help?priority=${rec.type}`);
+      navigate(`/assistance?priority=${rec.type}`);
     }
   };
 

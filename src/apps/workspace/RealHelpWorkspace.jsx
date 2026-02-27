@@ -1,9 +1,9 @@
 // src/apps/workspace/RealHelpWorkspace.jsx
-// Real Help workspace - Housing, Grants, Programs, Circles
+// Unified Assistance — one page, action-first. Housing, Food, Funding, Programs, Emergency, Circles.
 
 import React, { useState, useEffect, useRef } from "react"
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Home, DollarSign, Briefcase, Users, AlertCircle, ExternalLink, Heart, MapPin, PhoneCall, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
+import { Home, DollarSign, Briefcase, Users, ExternalLink, Heart, MapPin, PhoneCall, CheckCircle } from "lucide-react";
 import { rememberWorkspace } from "@/engines/memory/workspaceMemoryEngine";
 import { searchResources } from "@/services/resourceSearch";
 import { searchDirectory } from "@/services/directorySearch";
@@ -12,38 +12,13 @@ import { listGrants } from "@/services/grantsService";
 import { listSupportPrograms } from "@/services/supportProgramsService";
 import { listCircles } from "@/services/circlesService";
 import { saveFavoriteResource } from "@/services/directoryService";
+import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
 import { normalizeExternalUrl } from "@/utils/normalizeUrl";
-import PageHeader from "@/components/navigation/PageHeader";
-import { VerifiedDestinations } from "@/components/realhelp/VerifiedDestinations";
 import InAppWebView from "@/components/InAppWebView";
 
-const WhatToExpectAccordion = () => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full px-4 py-3 flex items-center justify-between text-sm text-white/70 hover:bg-white/5 transition"
-      >
-        <span>What to expect (1 min read)</span>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </button>
-      {open && (
-        <div className="px-4 pb-4 pt-0 text-xs text-white/60 space-y-2 border-t border-white/10">
-          <p><strong className="text-white/80">Right now:</strong> Emergency shelter, crisis support, medical stabilization.</p>
-          <p><strong className="text-white/80">Next week:</strong> Housing, food, initial treatment.</p>
-          <p><strong className="text-white/80">Next month:</strong> Treatment programs, funding, legal help.</p>
-          <p><strong className="text-white/80">Ongoing:</strong> Recovery circles, outpatient care, rebuilding.</p>
-          <p className="pt-2">988 and 911 are always available. Every resource here is verified.</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const DOMAIN_TO_PRIORITY = {
-  "food.essentials": "programs",
+  "food.essentials": "food",
+  hotlines: "emergency",
   housing: "housing",
   grants: "funding",
   programs: "programs",
@@ -52,12 +27,20 @@ const DOMAIN_TO_PRIORITY = {
 const RealHelpWorkspace = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAssistanceRoute = location.pathname === "/assistance";
   const qp = searchParams;
   const urlPriority = qp.get("priority");
   const urlDomain = qp.get("domain");
   const resolvedDomain = (urlDomain && urlDomain.trim()) ? urlDomain.trim() : null;
   const resolvedPriority = urlPriority || (urlDomain && DOMAIN_TO_PRIORITY[urlDomain]) || "housing";
   const [activeTab, setActiveTab] = useState(resolvedPriority);
+
+  // Sync activeTab when URL priority changes (e.g. from Assistance page)
+  useEffect(() => {
+    const next = urlPriority || (urlDomain && DOMAIN_TO_PRIORITY[urlDomain]) || "housing";
+    setActiveTab((prev) => (prev !== next ? next : prev));
+  }, [urlPriority, urlDomain]);
   const [query, setQuery] = useState(qp.get("query") || "");
   const [region, setRegion] = useState(qp.get("region") || "");
   const [loading, setLoading] = useState(false);
@@ -111,6 +94,32 @@ const RealHelpWorkspace = () => {
         curated = await listSupportPrograms({ region: region || undefined });
       } else if (activeTab === "circles") {
         curated = await listCircles();
+      } else if (activeTab === "food") {
+        curated = getCuratedFallback("food.essentials", query).map((r) => ({
+          id: r.id,
+          name: r.name,
+          title: r.name,
+          description: r.description,
+          website: r.link,
+          url: r.link,
+          phone: r.phone,
+          source: r.source,
+          verification: r.verified ? { status: "verified" } : { status: "external" },
+          curated: true,
+        }));
+      } else if (activeTab === "emergency") {
+        curated = getCuratedFallback("hotlines", query).map((r) => ({
+          id: r.id,
+          name: r.name,
+          title: r.name,
+          description: r.description,
+          website: r.link,
+          url: r.link,
+          phone: r.phone,
+          source: r.source,
+          verification: r.verified ? { status: "verified" } : { status: "external" },
+          curated: true,
+        }));
       }
 
       if (signal.aborted || reqId !== requestIdRef.current) return;
@@ -119,7 +128,7 @@ const RealHelpWorkspace = () => {
       // If we have a query (min 3 chars), also search globally
       const q = (query || "").trim()
       if (q.length >= MIN_QUERY_LEN) {
-        const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : "programs");
+        const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : activeTab === "emergency" ? "hotlines" : "programs");
 
         // Programs tab: use globalResourceSearch (live pipeline) with abort support
         if (activeTab === "programs") {
@@ -185,7 +194,7 @@ const RealHelpWorkspace = () => {
 
   const handleSaveFavorite = async (item) => {
     try {
-      const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : "programs");
+      const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : activeTab === "emergency" ? "hotlines" : "programs");
       
       await saveFavoriteResource(domain, {
         id: item.id,
@@ -203,15 +212,17 @@ const RealHelpWorkspace = () => {
   };
 
   const handleOpenDetail = (item) => {
-    const domain = activeTab === "housing" ? "housing" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : "programs";
+    const domain = activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : activeTab === "emergency" ? "hotlines" : "programs";
     
     navigate(`/resources/${encodeURIComponent(item.id)}`);
   };
 
   const tabs = [
     { id: "housing", label: "Housing", icon: Home },
+    { id: "food", label: "Food", icon: MapPin },
     { id: "funding", label: "Funding", icon: DollarSign },
     { id: "programs", label: "Programs", icon: Briefcase },
+    { id: "emergency", label: "Emergency", icon: PhoneCall },
     { id: "circles", label: "Circles", icon: Users },
   ];
 
@@ -219,69 +230,27 @@ const RealHelpWorkspace = () => {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-white">
-      <PageHeader
-        title="Find Real Help"
-        subtitle="Search verified resources. Save what you need."
-        showBack
-        backTo="/assistance"
-      />
-
-      {/* Crisis bar - compact, non-dominant */}
-      <div id="crisis-bar" className="border-b border-red-400/20 bg-red-400/[0.06] px-4 sm:px-6 py-2">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-2 text-xs">
-          <AlertCircle className="h-3.5 w-3.5 text-red-300 flex-shrink-0" />
-          <span className="text-red-200/80">Crisis?</span>
-          <a href="tel:988" className="text-red-200 hover:text-red-100 font-medium">Call 988</a>
-          <span className="text-red-300/50">|</span>
-          <a href="sms:988" className="text-red-200 hover:text-red-100 font-medium">Text 988</a>
-          <span className="text-red-200/60">24/7</span>
+      {/* Minimal header — one line, action-first */}
+      <div className="flex-shrink-0 border-b border-white/10 px-4 sm:px-6 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-medium text-white">Find Help</h1>
+            <p className="text-xs text-white/50 mt-0.5">Housing · Food · Funding · Programs · Crisis</p>
+          </div>
+          {isAssistanceRoute ? (
+            <div className="flex items-center gap-3">
+              <a href="tel:988" className="text-xs text-red-300 hover:text-red-200 font-medium whitespace-nowrap">988</a>
+              <button type="button" onClick={() => navigate("/assistance/request")} className="text-xs text-white/50 hover:text-white/80">Request Help</button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => navigate("/assistance")} className="text-xs text-white/60 hover:text-white">← Back</button>
+          )}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-          {/* Quick Start - 3 buttons, 1-line helper */}
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <h3 className="text-sm font-medium text-white mb-3">Start here</h3>
-            <div className="flex flex-wrap gap-2 mb-2">
-              <button
-                type="button"
-                onClick={() => { setActiveTab("housing"); setQuery("emergency shelter"); searchInputRef.current?.focus(); }}
-                className="px-3 py-1.5 text-xs rounded-lg bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 transition font-medium"
-              >
-                Find a bed tonight
-              </button>
-              <button
-                type="button"
-                onClick={() => { setActiveTab("programs"); setQuery("treatment"); searchInputRef.current?.focus(); }}
-                className="px-3 py-1.5 text-xs rounded-lg bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 transition font-medium"
-              >
-                Find treatment
-              </button>
-              <button
-                type="button"
-                onClick={() => { setActiveTab("funding"); setQuery("grants"); searchInputRef.current?.focus(); }}
-                className="px-3 py-1.5 text-xs rounded-lg bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 transition font-medium"
-              >
-                Find funding
-              </button>
-            </div>
-            <p className="text-xs text-white/50">Type what you need + add a city/state if you can.</p>
-          </div>
-
-          {/* What to expect - collapsed accordion */}
-          <WhatToExpectAccordion />
-
-          {/* Verified Destinations Module */}
-          <VerifiedDestinations
-            category={activeTab === "housing" ? "housing" : activeTab === "funding" ? "funding" : activeTab === "programs" ? "treatment" : "circles"}
-            regionKey={region || undefined}
-            onSelectProvider={(provider) => setQuery(provider.name)}
-            onAddRegion={() => regionInputRef.current?.focus()}
-            onOpenLink={(url) => setWebViewUrl(url)}
-          />
-
-          {/* Tabs */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4">
+          {/* Tabs — primary action */}
           <div className="flex gap-2 border-b border-white/10 pb-px overflow-x-auto">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -349,34 +318,16 @@ const RealHelpWorkspace = () => {
               <div className="text-sm text-white/50">Finding resources...</div>
             </div>
           ) : allResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-12 gap-4">
-              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-                <Heart className="h-8 w-8 text-white/30" />
-              </div>
-              <div className="text-center max-w-md">
-                <h3 className="text-base font-medium text-white mb-2">No results yet</h3>
-                <p className="text-sm text-white/60 mb-4">
-                  {query || region
-                    ? "Try adjusting your search terms or region filter."
-                    : `Browse ${tabs.find((t) => t.id === activeTab)?.label.toLowerCase()} resources or try searching above.`}
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  <button
-                    type="button"
-                    onClick={() => regionInputRef.current?.focus()}
-                    className="px-3 py-2 text-xs rounded-lg bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 transition font-medium"
-                  >
-                    Add region
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWebViewUrl("https://findtreatment.gov")}
-                    className="px-3 py-2 text-xs rounded-lg border border-white/20 text-white/80 hover:bg-white/10 transition font-medium inline-flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    View national resources
-                  </button>
-                </div>
+            <div className="flex flex-col items-center justify-center p-10 gap-3">
+              <Heart className="h-10 w-10 text-white/20" />
+              <p className="text-sm text-white/50 text-center">
+                {query || region ? "Try different words or region." : `Pick a category above or search.`}
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <button type="button" onClick={() => regionInputRef.current?.focus()} className="px-3 py-1.5 text-xs rounded-lg bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 font-medium">Add region</button>
+                <button type="button" onClick={() => setWebViewUrl("https://findtreatment.gov")} className="px-3 py-1.5 text-xs rounded-lg border border-white/20 text-white/70 hover:bg-white/10 font-medium inline-flex items-center gap-1">
+                  <ExternalLink className="h-3 w-3" /> National resources
+                </button>
               </div>
             </div>
           ) : (
@@ -496,48 +447,12 @@ const RealHelpWorkspace = () => {
             </>
           )}
 
-          {/* Crisis Resources Footer */}
-          <div className="mt-12 pt-8 border-t border-white/10">
-            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-6">
-              <h3 className="text-base font-semibold text-white mb-4">24/7 Crisis & Support Resources</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <PhoneCall className="h-4 w-4 text-wcGold flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="text-sm font-medium text-white">988 Suicide & Crisis Lifeline</p>
-                      <p className="text-xs text-white/60">Call or text 988, available 24/7</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <PhoneCall className="h-4 w-4 text-wcGold flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="text-sm font-medium text-white">SAMHSA National Helpline</p>
-                      <p className="text-xs text-white/60">1-800-662-4357 (treatment referrals)</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <PhoneCall className="h-4 w-4 text-wcGold flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="text-sm font-medium text-white">Crisis Text Line</p>
-                      <p className="text-xs text-white/60">Text HOME to 741741</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <PhoneCall className="h-4 w-4 text-wcGold flex-shrink-0 mt-1" />
-                    <div>
-                      <p className="text-sm font-medium text-white">Disaster Distress Helpline</p>
-                      <p className="text-xs text-white/60">1-800-985-5990</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-white/50 mt-4 leading-relaxed">
-                These lines are confidential, free, and staffed by trained counselors who understand crisis and addiction. You don't have to be suicidal to call—if you're struggling, that's reason enough.
-              </p>
-            </div>
+          {/* Minimal crisis footer — tap to act */}
+          <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap items-center justify-center gap-3 text-xs text-white/50">
+            <a href="tel:988" className="text-red-300 hover:text-red-200 font-medium">988</a>
+            <a href="tel:18006624357" className="hover:text-white">SAMHSA 1-800-662-4357</a>
+            <span className="text-white/30">|</span>
+            <a href="sms:741741" className="hover:text-white">Text HOME to 741741</a>
           </div>
         </div>
       </div>

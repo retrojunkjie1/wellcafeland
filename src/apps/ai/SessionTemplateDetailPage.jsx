@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { trackAction, trackPageView } from "../../services/telemetry";
-import { apiFetch } from "../../lib/apiHelpers";
+import { callAiSession } from "@/services/aiSessionClient";
 
 const SessionTemplateDetailPage = () => {
   const { id } = useParams();
@@ -52,19 +52,10 @@ const SessionTemplateDetailPage = () => {
         templateId: template.id || template.slug || template.title,
       });
 
-      const response = await apiFetch("/aiSession", {
-        method: "POST",
-        body: {
-          mode: "session",
-          templateId: template.id || template.slug || template.title,
-        },
+      const data = await callAiSession({
+        mode: "session",
+        templateId: template.id || template.slug || template.title,
       });
-
-      if (!response.ok) {
-        throw new Error(`Session request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
       const plan = data.sessionPlan || data.session || data.plan;
 
       if (!plan || !Array.isArray(plan.steps)) {
@@ -75,7 +66,7 @@ const SessionTemplateDetailPage = () => {
     } catch (err) {
       console.error("Session start error:", err);
       setError(
-        "We couldn't start this session right now. Try again in a moment."
+        err.code === "AUTH_REQUIRED" ? "Please sign in to continue." : "We couldn't start this session right now. Try again in a moment."
       );
     } finally {
       setLoadingSession(false);

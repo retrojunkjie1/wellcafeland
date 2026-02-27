@@ -4,8 +4,8 @@
 // 2) Fallback to client-side RapidAPI via globalWebSearch
 
 import { globalWebSearch } from "./searchService";
+import { globalResourceSearch } from "./globalResourceSearchClient";
 import { logError, logInfo, logWarn } from "@/services/logService";
-import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 
 // Request deduplication cache
 const requestCache = new Map();
@@ -115,41 +115,21 @@ function mapResultsToDirectory(results, domain) {
  * Call the Firebase Function for global resource search
  */
 async function callFunctionSearch({ query, domain, region, category }) {
-  const endpoint = `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s
 
   try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const data = await globalResourceSearch(
+      {
         query: (query || "").trim(),
         domain: domain || "",
         region: region || undefined,
         category: category || undefined,
-      }),
-      signal: controller.signal,
-    });
+      },
+      { signal: controller.signal }
+    );
 
     clearTimeout(timeoutId);
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      const errorMessage =
-        data?.error ||
-        `Search failed with status ${res.status} (${res.statusText})`;
-
-      return {
-        ok: false,
-        results: [],
-        error: errorMessage,
-        query: data?.query || query,
-      };
-    }
 
     if (data && data.ok && Array.isArray(data.results)) {
       return {
@@ -166,28 +146,28 @@ async function callFunctionSearch({ query, domain, region, category }) {
       error: "Search did not return any usable data.",
       query,
     };
-    } catch (err) {
-      clearTimeout(timeoutId);
+  } catch (err) {
+    clearTimeout(timeoutId);
 
-      if (err.name === "AbortError") {
-        logWarn("resourceSearch", "Firebase Function search timed out", { query });
-        return {
-          ok: false,
-          results: [],
-          error: "Search timed out. Please try again.",
-          query,
-        };
-      }
-
-      logError("resourceSearch", err, { query, endpoint: "callFunctionSearch" });
-
+    if (err.name === "AbortError") {
+      logWarn("resourceSearch", "Firebase Function search timed out", { query });
       return {
         ok: false,
         results: [],
-        error: err.message || "Search error",
+        error: "Search timed out. Please try again.",
         query,
       };
     }
+
+    logError("resourceSearch", err, { query, endpoint: "callFunctionSearch" });
+    const errorMessage = err?.data?.error || err?.message || `Search failed (${err?.status || "unknown"})`;
+    return {
+      ok: false,
+      results: [],
+      error: errorMessage,
+      query: err?.data?.query || query,
+    };
+  }
 }
 
 /**
@@ -201,30 +181,14 @@ export async function searchResources({ query, domain, region, category }) {
     const { searchProviders } = await import("./providerService");
     const verifiedProviders = await searchProviders({ query, category: domain, regionKey: region });
     
-    // Call live resource search function (real FindTreatment.gov integration)
+    // Call live resource search function (globalResourceSearch)
     let liveResults = [];
     try {
-      const functionsUrl = resolveFunctionsBaseUrl();
-      const response = await fetch(`${functionsUrl.replace(/\/+$/, "")}/searchLiveResources`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          query, 
-          location: region, 
-          category: domain,
-          state: region, // Pass state for filtering
-        }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Results are already normalized with verification status from backend
-        liveResults = data.results || [];
-      } else {
-        // Graceful fallback: use verified providers only
-        console.warn("Live resource search failed, using verified providers only:", response.status);
+      const data = await globalResourceSearch({ query, domain, region, category });
+      if (data?.ok && Array.isArray(data.results)) {
+        liveResults = data.results;
       }
     } catch (err) {
-      // Graceful fallback: use verified providers only
       console.warn("Live resource search failed, using verified providers only:", err);
     }
 

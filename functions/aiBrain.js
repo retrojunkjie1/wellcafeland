@@ -11,6 +11,20 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+// Firestore timestamp helper (admin v13+)
+let FieldValue;
+try {
+  ({ FieldValue } = require("firebase-admin/firestore"));
+} catch (e) {
+  FieldValue = null;
+}
+const serverTimestampSafe = () => {
+  try {
+    if (FieldValue && typeof FieldValue.serverTimestamp === "function") return FieldValue.serverTimestamp();
+  } catch (e) {}
+  return new Date();
+};
+
 const OPENAI_MODEL = "gpt-4o-mini";
 const CHAT_TEMPERATURE = 0.3;
 const CHAT_MAX_TOKENS = 500;
@@ -63,6 +77,57 @@ function safeJsonParse(str, fallback = null) {
     return fallback;
   }
 }
+
+const isEmulator = (req) => {
+  // Strong signals (emulator runtime)
+  if (process.env.FUNCTIONS_EMULATOR === "true") return true;
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) return true;
+  if (process.env.FIRESTORE_EMULATOR_HOST) return true;
+  if (process.env.FUNCTIONS_EMULATOR_HOST) return true;
+
+  // Host / origin signals — only when NODE_ENV !== production
+  const host = String(req?.headers?.host || "");
+  const origin = String(req?.headers?.origin || "");
+  const referer = String(req?.headers?.referer || "");
+
+  // localhost/127.0.0.1 only when not production
+  if (process.env.NODE_ENV !== "production") {
+    if (host.includes("127.0.0.1") || host.includes("localhost")) return true;
+    if (origin.includes("127.0.0.1") || origin.includes("localhost")) return true;
+    if (referer.includes("127.0.0.1") || referer.includes("localhost")) return true;
+  }
+  // LAN (192.168.*) only when emulator runtime — FUNCTIONS_EMULATOR already returns above, but keep explicit for clarity
+  if (process.env.FUNCTIONS_EMULATOR === "true") {
+    if (origin.startsWith("http://192.168.") || origin.startsWith("https://192.168.")) return true;
+    if (referer.startsWith("http://192.168.") || referer.startsWith("https://192.168.")) return true;
+  }
+
+  return false;
+};
+
+const getBearerToken = (req) => {
+  const h = req?.headers?.authorization || req?.headers?.Authorization;
+  if (!h || typeof h !== "string") return null;
+  const parts = h.split(" ");
+  if (parts.length !== 2) return null;
+  if (parts[0].toLowerCase() !== "bearer") return null;
+  return parts[1];
+};
+
+const base64UrlDecodeJson = (part) => {
+  const s = String(part || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padded = s + "===".slice((s.length + 3) % 4);
+  const buf = Buffer.from(padded, "base64");
+  return JSON.parse(buf.toString("utf8"));
+};
+
+const decodeJwtUnsafe = (token) => {
+  const pieces = String(token || "").split(".");
+  if (pieces.length < 2) return null;
+  const header = base64UrlDecodeJson(pieces[0]);
+  const payload = base64UrlDecodeJson(pieces[1]);
+  return { header, payload };
+};
 
 // Conservative intent gate: keywords + patterns with confidence
 const DIRECTORY_STRONG_PHRASES = [
@@ -474,7 +539,7 @@ async function generateSession(payload = {}) {
     durationMinutes: raw.durationMinutes || minutes,
     category: raw.category || supportType,
     steps: Array.isArray(raw.steps) ? raw.steps : [],
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: serverTimestampSafe(),
     source: "ai_generate",
   };
 
@@ -486,8 +551,8 @@ async function generateSession(payload = {}) {
     try {
       await db.collection("users").doc(userId).set({
         lastSession: session,
-        lastSessionAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastSessionAt: serverTimestampSafe(),
+        updatedAt: serverTimestampSafe(),
       }, { merge: true });
     } catch (err) {
       console.error("Failed to update user lastSession:", err);
@@ -546,8 +611,39 @@ async function handleSession(req, res) {
 
   try {
     const body = typeof req.body === "string" ? safeJsonParse(req.body, {}) : req.body || {};
-    const userId = body.userId || "unknown";
     const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    const token = getBearerToken(req);
+    if (!token) {
+      return res.status(401).json({ ok: false, code: "AUTH_REQUIRED", message: "Auth required" });
+    }
+
+    try {
+      const decoded = decodeJwtUnsafe(token);
+
+      if (isEmulator(req) && decoded?.header?.alg === "none" && decoded?.payload) {
+        const p = decoded.payload;
+        req.user = {
+          uid: p.user_id || p.sub || "dev",
+          email: p.email || null,
+          provider: p.firebase?.sign_in_provider || p.provider_id || "emulator",
+          raw: p,
+        };
+      } else {
+        // Production path (or non-emulator requests)
+        const verified = await admin.auth().verifyIdToken(token);
+        req.user = {
+          uid: verified.uid,
+          email: verified.email || null,
+          provider: verified.firebase?.sign_in_provider || null,
+          raw: verified,
+        };
+      }
+    } catch (e) {
+      return res.status(401).json({ ok: false, code: "AUTH_INVALID", message: "Invalid auth token" });
+    }
+
+    const userId = req.user?.uid || body.userId || "unknown";
 
     const { key: apiKey, source: keySource } = getResolvedOpenAIKey();
     if (process.env.NODE_ENV !== "production") {
@@ -583,7 +679,7 @@ async function handleSession(req, res) {
         await db.collection("telemetry").add({
           userId,
           event,
-          ts: admin.firestore.FieldValue.serverTimestamp(),
+          ts: serverTimestampSafe(),
         });
         return res.status(200).json({ ok: true });
       } catch (err) {
@@ -1118,7 +1214,7 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
       await db.collection("agentExecutions").add({
         userId,
         agent,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: serverTimestampSafe(),
         success: true,
         responseTime: 0, // Would need to track this
         result: result,
@@ -1165,7 +1261,7 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
       await db.collection("agentExecutions").add({
         userId,
         agent,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: serverTimestampSafe(),
         success: false,
         error: err.message,
       });

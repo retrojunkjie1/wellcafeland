@@ -43,37 +43,22 @@ export async function checkFirestore() {
  * Check Firebase Functions connectivity
  */
 export async function checkFunctions() {
-  const functionsUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || 
-                      "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-  
   const startTime = Date.now();
   try {
-    // Try a simple health check endpoint or use a lightweight function
-    const response = await Promise.race([
-      fetch(`${functionsUrl}/globalResourceSearch`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: "health check" }),
-      }),
-      new Promise((_, reject) => 
+    const { globalResourceSearch } = await import("@/services/globalResourceSearchClient");
+    await Promise.race([
+      globalResourceSearch({ query: "health check" }),
+      new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Timeout")), HEALTH_CHECK_TIMEOUT)
       ),
     ]);
-
     const latencyMs = Date.now() - startTime;
-    
-    // Even if it returns an error, if we got a response, the service is reachable
-    if (response.status === 400 || response.status === 200) {
-      return { ok: true, latencyMs };
-    }
-    
-    return { 
-      ok: false, 
-      error: `Functions returned status ${response.status}`,
-      latencyMs,
-    };
+    return { ok: true, latencyMs };
   } catch (err) {
     const latencyMs = Date.now() - startTime;
+    if (err?.status === 400) {
+      return { ok: true, latencyMs };
+    }
     logError("healthService", err, { check: "functions" });
     return { 
       ok: false, 

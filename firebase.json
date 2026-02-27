@@ -42,8 +42,16 @@
     ],
     "rewrites": [
       {
-        "source": "/api/**",
+        "source": "/api/aiSession",
+        "function": "aiSession"
+      },
+      {
+        "source": "/api/globalResourceSearch",
         "function": "globalResourceSearch"
+      },
+      {
+        "source": "/api/searchLiveResources",
+        "function": "searchLiveResources"
       },
       {
         "source": "/aiSession",

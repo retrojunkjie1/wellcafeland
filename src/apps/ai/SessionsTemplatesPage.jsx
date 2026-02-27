@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { trackPageView, trackAction } from "../../services/telemetry";
 import { useUIStore } from "../../stores/uiStore";
-import { apiFetch } from "../../lib/apiHelpers";
+import { callAiSession } from "@/services/aiSessionClient";
 
 const SessionsTemplatesPage = () => {
   const navigate = useNavigate();
@@ -32,20 +32,10 @@ const SessionsTemplatesPage = () => {
       }
       setError(null);
 
-      // Legacy AI endpoint – restricted to template management only
-      const response = await apiFetch("/aiSession", {
-        method: "POST",
-        body: {
-          mode: "templates",
-          intent: "recovery_mix", // generic bucket; backend can decide
-        },
+      const data = await callAiSession({
+        mode: "templates",
+        intent: "recovery_mix",
       });
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
       const list =
         data.templates ||
         data.sessions ||
@@ -56,7 +46,7 @@ const SessionsTemplatesPage = () => {
     } catch (err) {
       console.error("Template load error:", err);
       setError(
-        "We couldn't load your sessions right now. Try again in a moment."
+        err.code === "AUTH_REQUIRED" ? "Please sign in to continue." : "We couldn't load your sessions right now. Try again in a moment."
       );
     } finally {
       setLoading(false);

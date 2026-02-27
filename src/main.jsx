@@ -3,7 +3,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext";
-import { ensureDevAuth } from "@/dev/ensureAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { WcOsProvider } from "./core/WcOsProvider";
 import { initTheme } from "@/theme/themeStore";
@@ -38,9 +37,6 @@ root.render(
     </ErrorBoundary>
   </StrictMode>
 );
-
-// DEV: bootstrap anonymous auth for emulator (non-blocking)
-ensureDevAuth()
 
 // Step 4: Initialize services AFTER UI is mounted (non-blocking)
 // Services must not block or crash the app

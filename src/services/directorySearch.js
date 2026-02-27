@@ -7,12 +7,8 @@
 
 import { logDebug } from "@/lib/debug";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
-import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { globalResourceSearch } from "@/services/globalResourceSearchClient";
 import { listResources } from "@/data/resources";
-
-function getEndpoint() {
-  return `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
-}
 const TIMEOUT_MS = 15000;
 const RETRY_DELAY_MS = 1500;
 
@@ -195,7 +191,6 @@ export async function searchDirectory({
   let lastError = null
 
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const endpoint = getEndpoint()
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
     if (signal) {
@@ -208,7 +203,6 @@ export async function searchDirectory({
 
     if (typeof window !== "undefined" && window.localStorage?.getItem("wc_debug") === "1") {
       logDebug("DirectorySearch", {
-        endpoint,
         domain: domain || "",
         pageToken: pageToken || null,
         query: query.slice(0, 50),
@@ -216,56 +210,19 @@ export async function searchDirectory({
     }
 
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const data = await globalResourceSearch(
+        {
           query: String(query).trim(),
           domain: domain || "",
           region,
           category: category || undefined,
           limit,
           pageToken: pageToken || undefined,
-        }),
-        signal: controller.signal,
-      })
+        },
+        { signal: controller.signal }
+      )
 
       clearTimeout(timeoutId)
-
-      const data = await res.json().catch(() => null)
-
-      if (!res.ok) {
-        lastError = data?.error || `Search failed (${res.status})`
-        const code = data?.code
-        const isRateLimited = res.status === 429 || res.status === 403 || NO_RETRY_CODES.includes(code)
-        if (isRateLimited) {
-          const effectiveCode = code || (res.status === 429 || res.status === 403 ? "RATE_LIMITED" : undefined)
-          const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-          let fallbackSource = "firestore"
-          let out
-          if (!items.length) {
-            const curated = getCuratedFallback(domain, String(query).trim())
-            const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-            out = { ok: true, items: curatedItems, nextPageToken: null, meta: buildFallbackMeta("curated", curatedItems.length, effectiveCode), error: null }
-          } else {
-            out = { ok: true, items, nextPageToken: null, meta: buildFallbackMeta(fallbackSource, items.length, effectiveCode), error: null }
-          }
-          if (!pageToken) setClientCached(cacheKey, out)
-          return out
-        }
-        if (attempt < 2) {
-          await sleep(RETRY_DELAY_MS)
-          continue
-        }
-        let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-        let fallbackSource = "firestore"
-        if (!items.length) {
-          const curated = getCuratedFallback(domain, String(query).trim())
-          items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-          fallbackSource = "curated"
-        }
-        return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
-      }
 
       if (!data?.ok) {
         lastError = data?.error || "Search did not return data"
@@ -319,6 +276,25 @@ export async function searchDirectory({
       clearTimeout(timeoutId)
       lastError = err?.message || "Request failed"
       if (err?.name === "AbortError") lastError = "Request timed out"
+      const status = err?.status
+      const data = err?.data || null
+      const code = data?.code
+      const isRateLimited = status === 429 || status === 403 || NO_RETRY_CODES.includes(code)
+      if (isRateLimited) {
+        const effectiveCode = code || (status === 429 || status === 403 ? "RATE_LIMITED" : undefined)
+        const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
+        let fallbackSource = "firestore"
+        if (!items.length) {
+          const curated = getCuratedFallback(domain, String(query).trim())
+          const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
+          const out = { ok: true, items: curatedItems, nextPageToken: null, meta: buildFallbackMeta("curated", curatedItems.length, effectiveCode), error: null }
+          if (!pageToken) setClientCached(cacheKey, out)
+          return out
+        }
+        const out = { ok: true, items, nextPageToken: null, meta: buildFallbackMeta(fallbackSource, items.length, effectiveCode), error: null }
+        if (!pageToken) setClientCached(cacheKey, out)
+        return out
+      }
       if (attempt < 2) {
         await sleep(RETRY_DELAY_MS)
         continue

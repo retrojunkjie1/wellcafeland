@@ -5,7 +5,7 @@
 
 // Legacy AI – restricted scope: Agent utilities only
 // This endpoint is used for agent orchestration, not primary conversational AI
-const SESSION_ENDPOINT = "/aiSession";
+import { callAiSession } from "@/services/aiSessionClient";
 
 /**
  * Call an AI agent with payload
@@ -15,20 +15,7 @@ const SESSION_ENDPOINT = "/aiSession";
  */
 export const callAgent = async (agent, payload = {}) => {
   try {
-    const res = await fetch(SESSION_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode: "agent",
-        agent,
-        ...payload,
-      }),
-    });
-    if (!res.ok) {
-      console.error("Agent call failed", agent, res.status);
-      return null;
-    }
-    return await res.json();
+    return await callAiSession({ mode: "agent", agent, ...payload });
   } catch (err) {
     console.error("Agent call error", agent, err);
     return null;

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { signInWithEmailAndPassword, signInAnonymously } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase";
+import { bootstrapAnonymousAuth } from "@/services/authBootstrap";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
 
@@ -69,7 +70,7 @@ const LoginPage = () => {
     }
 
     try {
-      await signInAnonymously(auth);
+      await bootstrapAnonymousAuth();
       const onboardingComplete = localStorage.getItem("wc_onboarding_complete");
       const from = location.state?.from?.pathname;
       if (!onboardingComplete && !from) {

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAuth } from "firebase/auth";
 import Logo from "../../components/Logo";
 import { Heart, Wind, Brain, Sparkles, ArrowRight } from "lucide-react";
+import { buildClinicalPlan } from "@/services/clinicalPlanService";
 
 const OnboardingPage = () => {
   const [step, setStep] = useState(0);
@@ -33,13 +35,28 @@ const OnboardingPage = () => {
     );
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     localStorage.setItem("wc_onboarding_complete", "true");
-    // Store selected concerns if needed
     if (selectedConcerns.length > 0) {
       localStorage.setItem("wc_onboarding_concerns", JSON.stringify(selectedConcerns));
     }
-    navigate("/", { replace: true });
+    const user = getAuth().currentUser;
+    if (user) {
+      try {
+        const result = await buildClinicalPlan({
+          concerns: selectedConcerns,
+          commitment: "medium",
+          support: "some",
+        });
+        if (result?.ok && result?.summary) {
+          navigate("/plan/start", { replace: true, state: { plan: result } });
+          return;
+        }
+      } catch {
+        // fallback to default
+      }
+    }
+    navigate("/plan/start", { replace: true, state: { plan: null } });
   };
 
   const steps = [

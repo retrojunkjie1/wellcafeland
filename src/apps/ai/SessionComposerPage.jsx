@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { trackPageView, trackAction } from "../../services/telemetry";
-import { apiFetch } from "../../lib/apiHelpers";
+import { callAiSession } from "@/services/aiSessionClient";
 
 const CATEGORIES = [
   { id: "grounding", label: "Grounding" },
@@ -45,23 +45,14 @@ const SessionComposerPage = () => {
       // Generate correlation ID for tracing
       const correlationId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      const response = await apiFetch("/aiSession", {
-        method: "POST",
-        body: {
-          mode: "generate_session",
-          supportType: category,
-          tone: tone,
-          minutes: minutes,
-          note: notes,
-          correlationId,
-        },
+      const data = await callAiSession({
+        mode: "generate_session",
+        supportType: category,
+        tone: tone,
+        minutes: minutes,
+        note: notes,
+        correlationId,
       });
-
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
       
       // Parse standardized response schema
       if (data.ok === false) {
@@ -118,10 +109,11 @@ const SessionComposerPage = () => {
       }
     } catch (err) {
       console.error("Generate session error:", err);
-      // Calm fallback message (no red error banner unless ok:false)
-      const errorMessage = err.message?.includes("status") 
-        ? "Connection issue. Please try again in a moment."
-        : "I'm having trouble building your session right now. Please try again in a moment.";
+      const errorMessage = err.code === "AUTH_REQUIRED"
+        ? "Please sign in to continue."
+        : err.message?.includes("status")
+          ? "Connection issue. Please try again in a moment."
+          : "I'm having trouble building your session right now. Please try again in a moment.";
       setError(errorMessage);
     } finally {
       setLoading(false);
