@@ -7,11 +7,11 @@
 
 import { logDebug } from "@/lib/debug";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
-import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { buildApiUrl } from "@/services/apiBase";
 import { listResources } from "@/data/resources";
 
 function getEndpoint() {
-  return `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
+  return buildApiUrl("/globalResourceSearch");
 }
 const TIMEOUT_MS = 15000;
 const RETRY_DELAY_MS = 1500;

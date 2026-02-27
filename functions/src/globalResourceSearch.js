@@ -6,6 +6,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const axios = require("axios");
+const { getPathwayCardsForQuery } = require("./pathwayCards");
 
 const CACHE_TTL_MS = 30 * 1000; // 30s TTL
 const RATE_LIMIT_WINDOW_MS = 30 * 1000; // 30s window
@@ -13,12 +14,29 @@ const RATE_LIMIT_MAX = 10; // 10 req per 30s per fingerprint
 const CIRCUIT_OPEN_MS = 10 * 60 * 1000;
 const EXTERNAL_TIMEOUT_MS = 9000; // 8-10s
 const MIN_QUERY_LEN = 3;
+const RAPIDAPI_HOST_DEFAULT = "real-time-web-search.p.rapidapi.com";
+const RAPIDAPI_URL_DEFAULT = `https://${RAPIDAPI_HOST_DEFAULT}/search`;
 
 const cache = new Map();
 const rateLimit = new Map();
 const inFlight = new Map(); // coalesce identical concurrent requests
 const lastLogByCode = {};
 let circuitOpenUntil = 0;
+let rapidApiKeyLoggedOnce = false;
+
+const RAPIDAPI_KEY_SECRET = defineSecret("RAPIDAPI_KEY");
+
+const safeText = (value, max) => ((value || "").length > max ? `${(value || "").slice(0, max)}…` : (value || ""));
+
+function maskForLog(val, prefixLen = 3, suffixLen = 2) {
+  if (!val || typeof val !== "string") return "****";
+  if (val.length < prefixLen + suffixLen) return "****";
+  return val.slice(0, prefixLen) + "***" + val.slice(-suffixLen);
+}
+
+function getCorrelationId(req) {
+  return req.headers["x-correlation-id"] || req.body?.correlationId || `grs_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
 
 function getClientIp(req) {
   return req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
@@ -68,17 +86,59 @@ function setCache(key, data) {
   cache.set(key, { ts: Date.now(), data });
 }
 
-function logOnce(code, msg) {
+function logOnce(code, msg, level = "info") {
   const last = lastLogByCode[code] || 0;
   if (Date.now() - last < 60000) return;
   lastLogByCode[code] = Date.now();
-  logger.warn("[globalResourceSearch]", code, msg);
+  if (level === "warn") logger.warn("[globalResourceSearch]", code, msg);
+  else logger.info("[globalResourceSearch]", code, msg);
 }
 
-// Define secret for RapidAPI key (set via: firebase functions:secrets:set RAPIDAPI_KEY)
-const RAPIDAPI_KEY_SECRET = defineSecret("RAPIDAPI_KEY")
-const RAPIDAPI_HOST = "real-time-web-search.p.rapidapi.com";
-const RAPIDAPI_URL = "https://real-time-web-search.p.rapidapi.com/search";
+function buildFallbackResponse(query, domain, reason) {
+  const cards = getPathwayCardsForQuery(query, domain);
+  const results = cards.map((c) => ({
+    id: c.id,
+    title: c.title,
+    description: c.description,
+    url: c.url || "",
+    source: c.source || "WellnessCafe",
+    snippet: c.description,
+    category: c.category,
+    actionText: c.actionText,
+    searchHint: c.searchHint,
+    verified: c.verified,
+  }));
+  const retryAt = Date.now() + CIRCUIT_OPEN_MS;
+  return {
+    ok: true,
+    provider: "fallback",
+    results,
+    query: (query || "").trim(),
+    nextPageToken: null,
+    safetyNotice: {
+      message: "Showing verified pathways. Live search will resume when available.",
+      calm: true,
+    },
+    nextSteps: ["Try the suggestions above", "Add your city or state for local results"],
+    meta: { fallback: true, sourceCount: results.length, retryAt, provider: "RapidAPI" },
+    debug: { reason },
+  };
+}
+
+function buildProviderNotSubscribedResponse(query, domain) {
+  const retryAt = Date.now() + CIRCUIT_OPEN_MS;
+  return {
+    ok: false,
+    code: "PROVIDER_NOT_SUBSCRIBED",
+    message: "Provider not enabled",
+    provider: "RapidAPI",
+    retryAt,
+    nextSteps: ["Subscribe in RapidAPI", "Set RAPIDAPI_KEY", "Set RAPIDAPI_HOST"],
+    query: (query || "").trim(),
+    results: [],
+    meta: { fallback: true, retryAt, provider: "RapidAPI" },
+  };
+}
 
 /**
  * Normalize search query based on domain
@@ -167,24 +227,39 @@ exports.globalResourceSearch = onRequest(
 
     const fingerprint = getFingerprint(req);
     if (!checkRateLimit(fingerprint)) {
-      return res.status(200).json({
-        ok: false,
-        error: "Search is busy. Try again in a moment.",
-        code: "RATE_LIMITED",
-        results: [],
-        meta: { fallback: true, retryAfterMs: 5000 },
-      });
+      const { query, domain } = req.body || {};
+      const fallback = buildFallbackResponse(query || "", domain, "RATE_LIMITED");
+      return res.status(200).json(fallback);
     }
 
-    const RAPIDAPI_KEY = RAPIDAPI_KEY_SECRET.value();
+    let RAPIDAPI_KEY;
+    let keySource = "none";
+    try {
+      RAPIDAPI_KEY = RAPIDAPI_KEY_SECRET.value();
+      if (RAPIDAPI_KEY) keySource = "Secret Manager";
+    } catch {
+      RAPIDAPI_KEY = null;
+    }
+    // Local dev: set RAPIDAPI_KEY and RAPIDAPI_HOST in functions/.env for emulator fallback.
+    if (!RAPIDAPI_KEY && process.env.RAPIDAPI_KEY) {
+      RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+      keySource = "RAPIDAPI_KEY";
+    }
+
+    if (RAPIDAPI_KEY && process.env.NODE_ENV !== "production" && !rapidApiKeyLoggedOnce) {
+      rapidApiKeyLoggedOnce = true;
+      logger.info("[globalResourceSearch] rapidapi_key", { present: true, source: keySource, masked: maskForLog(RAPIDAPI_KEY) });
+    }
 
     if (!RAPIDAPI_KEY) {
-      return res.status(503).json({
-        ok: false,
-        error: "Search service is not configured. Please contact support.",
-        details: "RAPIDAPI_KEY not set",
-      });
+      logOnce("NO_KEY", "RAPIDAPI_KEY not set; using fallback", "info");
+      const { query, domain } = req.body || {};
+      const fallback = buildFallbackResponse(query || "", domain, "NO_KEY");
+      return res.status(200).json(fallback);
     }
+
+    const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || RAPIDAPI_HOST_DEFAULT;
+    const RAPIDAPI_URL = process.env.RAPIDAPI_URL || `https://${RAPIDAPI_HOST}/search`;
 
     const startTime = Date.now();
     try {
@@ -224,14 +299,12 @@ exports.globalResourceSearch = onRequest(
       }
 
       if (Date.now() < circuitOpenUntil) {
-        logOnce("CIRCUIT_OPEN", `Provider disabled until ${new Date(circuitOpenUntil).toISOString()}`);
-        return res.status(200).json({
-          ok: false,
-          error: "Search temporarily unavailable",
-          code: "RATE_LIMITED",
-          results: [],
-          meta: { fallback: true, fallbackReason: "circuit_open" },
-        });
+        const untilIso = new Date(circuitOpenUntil).toISOString();
+        logger.info("[globalResourceSearch] CIRCUIT_OPEN", { until: untilIso, untilMs: circuitOpenUntil, message: `Provider disabled until ${untilIso}` });
+        const { query, domain } = req.body || {};
+        const fallback = buildFallbackResponse(query || "", domain, "CIRCUIT_OPEN");
+        fallback.meta = { ...(fallback.meta || {}), retryAt: circuitOpenUntil, provider: "RapidAPI" };
+        return res.status(200).json(fallback);
       }
 
       const doFetch = async () => {
@@ -242,8 +315,8 @@ exports.globalResourceSearch = onRequest(
             const response = await axios.get(RAPIDAPI_URL, {
               params: { q: normalizedQuery, limit: requestLimit },
               headers: {
-                "x-rapidapi-key": RAPIDAPI_KEY,
-                "x-rapidapi-host": RAPIDAPI_HOST,
+                "X-RapidAPI-Key": RAPIDAPI_KEY,
+                "X-RapidAPI-Host": RAPIDAPI_HOST,
               },
               timeout: EXTERNAL_TIMEOUT_MS,
             });
@@ -290,26 +363,51 @@ exports.globalResourceSearch = onRequest(
           } catch (upstreamErr) {
             lastErr = upstreamErr;
             const status = upstreamErr.response?.status;
-            const dataMsg = String(upstreamErr.response?.data?.message || upstreamErr.response?.data?.error || "").toLowerCase();
-            if (status === 403 && dataMsg.includes("not subscribed")) {
-              circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS;
-              logOnce("UPSTREAM_403", "RapidAPI not subscribed; circuit open 10min");
-              return { ok: false, error: "Search provider not available", code: "PROVIDER_NOT_SUBSCRIBED", results: [], meta: { fallback: true, fallbackReason: "subscription_blocked" } };
+            const correlationId = getCorrelationId(req);
+            if (status === 401 || status === 403 || status === 404) {
+              const bodyRaw = upstreamErr.response?.data;
+              const bodyStr = typeof bodyRaw === "string" ? bodyRaw : JSON.stringify(bodyRaw || "");
+              const bodyTruncated = safeText(bodyStr, 1200);
+              logger.warn("[globalResourceSearch] rapidapi_auth_error", {
+                status,
+                correlationId,
+                host: RAPIDAPI_HOST,
+                body: bodyTruncated,
+                message: "RapidAPI subscription/app mismatch or wrong host for this API",
+              });
             }
+            // 401/403/404 = config/subscription mismatch — do NOT open circuit
+            if (status === 401 || status === 403 || status === 404) {
+              return buildProviderNotSubscribedResponse(normalizedQuery, domain || "");
+            }
+            // Circuit only for 429 / >=500 / timeout / network
             if (status === 429) {
               if (attempt === 1) {
                 await new Promise((r) => setTimeout(r, 1500));
                 continue;
               }
               circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS;
-              logOnce("UPSTREAM_429", "RapidAPI rate limited; circuit open 10min");
-              return { ok: false, error: "Search is busy. Try again in a moment.", code: "RATE_LIMITED", results: [], meta: { fallback: true, retryAfterMs: 5000 } };
+              logOnce("UPSTREAM_429", "RapidAPI rate limited; circuit open 10min", "info");
+              return buildFallbackResponse(normalizedQuery, domain || "", "UPSTREAM_429");
+            }
+            if (status >= 500) {
+              circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS;
+              logOnce("UPSTREAM_5XX", `RapidAPI server error ${status}; circuit open 10min`, "info");
+              return buildFallbackResponse(normalizedQuery, domain || "", "UPSTREAM_5XX");
             }
             if (upstreamErr.code === "ECONNABORTED" || upstreamErr.message?.includes("timeout")) {
               if (attempt === 1) {
                 await new Promise((r) => setTimeout(r, 500));
                 continue;
               }
+              circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS;
+              logOnce("UPSTREAM_TIMEOUT", "RapidAPI timeout; circuit open 10min", "info");
+              return buildFallbackResponse(normalizedQuery, domain || "", "UPSTREAM_TIMEOUT");
+            }
+            if (!status && (upstreamErr.code === "ECONNREFUSED" || upstreamErr.code === "ENOTFOUND" || upstreamErr.code === "ETIMEDOUT")) {
+              circuitOpenUntil = Date.now() + CIRCUIT_OPEN_MS;
+              logOnce("UPSTREAM_NETWORK", `RapidAPI network error ${upstreamErr.code}; circuit open 10min`, "info");
+              return buildFallbackResponse(normalizedQuery, domain || "", "UPSTREAM_NETWORK");
             }
             throw upstreamErr;
           }
@@ -332,10 +430,9 @@ exports.globalResourceSearch = onRequest(
       return res.json(result);
     } catch (err) {
       logger.error("[globalResourceSearch] Error:", { message: err.message, code: err.code });
-      const errorMessage = err.code === "ECONNABORTED" || err.message?.includes("timeout")
-        ? "Search timed out. Try again."
-        : "Search failed. Try again in a moment.";
-      return res.status(500).json({ ok: false, error: errorMessage, results: [] });
+      const { query, domain } = req.body || {};
+      const fallback = buildFallbackResponse(query || "", domain, "ERROR");
+      return res.status(200).json(fallback);
     }
   }
 );

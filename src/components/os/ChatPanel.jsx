@@ -684,7 +684,7 @@ const ChatPanel = () => {
           // Only show "opening" message if navigation actually happens
           setTimeout(() => {
             try {
-              const targetUrl = `/workspace/real-help?priority=${priority}${category ? `&category=${category}` : ""}${directoryQueries.query ? `&query=${encodeURIComponent(directoryQueries.query)}` : ""}`;
+              const targetUrl = `/assistance?priority=${priority}${category ? `&category=${category}` : ""}${directoryQueries.query ? `&query=${encodeURIComponent(directoryQueries.query)}` : ""}`;
               navigate(targetUrl);
               
               // Only add message after navigation succeeds
@@ -1620,7 +1620,7 @@ const ChatPanel = () => {
                             if (domain) params.set("domain", domain);
                             const priority = domain === "food.essentials" ? "programs" : domain === "grants" ? "funding" : domain === "housing" ? "housing" : domain === "programs" ? "programs" : "programs";
                             params.set("priority", priority);
-                            navigate(`/workspace/real-help?${params.toString()}`);
+                            navigate(`/assistance?${params.toString()}`);
                           }}
                         />
                       </div>

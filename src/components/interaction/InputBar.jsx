@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { ArrowUp, Mic, Loader2 } from "lucide-react";
 import { useInteractionCanvasStore } from "@/stores/useInteractionCanvasStore";
 import { useAIStore } from "@/apps/ai/useAIStore";
-import { apiFetch } from "@/lib/apiHelpers";
+import { callAiSession } from "@/services/aiSessionClient";
 
 const QUICK_PROMPTS = [
   "I feel overwhelmed",
@@ -33,25 +33,10 @@ const InputBar = () => {
     setThinking(true);
 
     try {
-      const res = await apiFetch("/aiSession", {
-        method: "POST",
-        body: {
-          prompt: text,
-          mode: "session",
-        },
+      const data = await callAiSession({
+        prompt: text,
+        mode: "session",
       });
-
-      if (!res.ok) {
-        const body = await res.text();
-        console.error("AI error:", body);
-        const errorMsg =
-          "I reached for our higher counsel but the line was faint. Try again in a few breaths.";
-        addMessage("assistant", errorMsg);
-        addAssistantMessage(errorMsg);
-        return;
-      }
-
-      const data = await res.json();
       const reply =
         data.reply ||
         data.summary ||
@@ -62,7 +47,9 @@ const InputBar = () => {
     } catch (err) {
       console.error("AI request failed:", err);
       const errorMsg =
-        "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment.";
+        err.code === "AUTH_REQUIRED"
+          ? "Please sign in to continue."
+          : "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment.";
       addMessage("assistant", errorMsg);
       addAssistantMessage(errorMsg);
     } finally {

@@ -6,7 +6,7 @@ import app from "@/firebase";
 import { db } from "@/firebase";
 import { APP_VERSION } from "@/config/version";
 import { firebaseConfig } from "@/config/firebaseConfig";
-import { apiFetch } from "@/lib/apiHelpers";
+import { callAiSession } from "@/services/aiSessionClient";
 
 export function AdminDeploy() {
   const [deployInfo, setDeployInfo] = useState(null);
@@ -87,23 +87,14 @@ export function AdminDeploy() {
                   setSessionBuilderHealth(null);
                   try {
                     const correlationId = `health_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-                    const response = await apiFetch("/aiSession", {
-                      method: "POST",
-                      body: {
-                        mode: "generate_session",
-                        supportType: "grounding",
-                        tone: "calm",
-                        minutes: 5,
-                        note: "Health check test",
-                        correlationId,
-                      },
+                    const data = await callAiSession({
+                      mode: "generate_session",
+                      supportType: "grounding",
+                      tone: "calm",
+                      minutes: 5,
+                      note: "Health check test",
+                      correlationId,
                     });
-
-                    if (!response.ok) {
-                      throw new Error(`HTTP ${response.status}`);
-                    }
-
-                    const data = await response.json();
                     
                     setSessionBuilderHealth({
                       ok: data.ok !== false,
@@ -116,9 +107,10 @@ export function AdminDeploy() {
                         : "✅ Session builder is healthy",
                     });
                   } catch (err) {
+                    const msg = err.code === "AUTH_REQUIRED" ? "Please sign in to continue." : err.message;
                     setSessionBuilderHealth({
                       ok: false,
-                      message: `❌ Health check failed: ${err.message}`,
+                      message: `❌ Health check failed: ${msg}`,
                     });
                   } finally {
                     setTestingHealth(false);

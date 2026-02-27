@@ -26,7 +26,7 @@ const CARDS = [
     description: "Search for treatment funding, grants, and financial aid programs.",
     icon: Wallet,
     action: "navigate",
-    to: "/resources?type=grants",
+    to: "/workspace/real-help?priority=funding",
   },
   {
     id: "programs",
@@ -34,7 +34,7 @@ const CARDS = [
     description: "Detox, residential, PHP, IOP, and outpatient programs.",
     icon: Hospital,
     action: "navigate",
-    to: "/resources?type=programs",
+    to: "/workspace/real-help?priority=programs",
   },
   {
     id: "emergency",
@@ -50,7 +50,7 @@ const CARDS = [
     description: "Describe what you need and let WellnessCafe search across all categories.",
     icon: Search,
     action: "navigate",
-    to: "/workspace/real-help?priority=programs",
+    to: "/workspace/real-help",
   },
 ];
 

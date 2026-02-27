@@ -5,7 +5,8 @@
 import { getCorrelationId } from "@/utils/correlation";
 import { logDebug, isDebugEnabled } from "@/lib/debug";
 import { updateChatDiagnostics } from "@/lib/chatDiagnostics";
-import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { buildApiUrl } from "@/services/apiBase";
+import { callAiSession } from "@/services/aiSessionClient";
 
 /**
  * @typedef {Object} AIClientResult
@@ -45,12 +46,10 @@ function logRequest(level, correlationId, data) {
   }
 }
 
-const BASE_URL = resolveFunctionsBaseUrl();
-
 let lastEnvelope = null;
 
 if (import.meta.env.DEV && typeof window !== "undefined") {
-  logDebug("AIClient", { BASE_URL, hostname: window.location.hostname });
+  logDebug("AIClient", { apiUrl: buildApiUrl("/aiSession"), hostname: window.location.hostname });
 }
 
 const MAX_RETRIES = 3;
@@ -99,11 +98,10 @@ export async function callAI(endpoint, body = {}, abortController = null) {
     "chat": "aiSession",
   };
   const actualEndpoint = endpointMap[endpoint] || endpoint;
-  const url = `${BASE_URL.replace(/\/+$/, "")}/${actualEndpoint}`;
+  const url = buildApiUrl(actualEndpoint);
   
   logDebug("Chat", {
     projectId: "wellnesscafelanding",
-    functionsBaseUrl: BASE_URL,
     chatEndpoint: url,
     actualEndpoint,
   });
@@ -117,8 +115,8 @@ export async function callAI(endpoint, body = {}, abortController = null) {
     toolIntent: body.mode || body.metadata?.toolIntent || null,
   });
   
-  // CRITICAL: Fail hard if production is pointing to localhost
-  if (import.meta.env.PROD && (url.includes("localhost") || url.includes("127.0.0.1"))) {
+  // CRITICAL: Fail hard if production is pointing to localhost (relative /api/* should never hit this)
+  if (import.meta.env.PROD && url && (url.includes("localhost") || url.includes("127.0.0.1"))) {
     const error = "CRITICAL: Production build is pointing to localhost. Check VITE_FIREBASE_FUNCTIONS_URL.";
     console.error("[AIClient]", error, { url, env: import.meta.env.MODE });
     logRequest("error", correlationId, {
@@ -178,125 +176,63 @@ export async function callAI(endpoint, body = {}, abortController = null) {
 
       const requestBody = {
         ...body,
-        correlationId, // Include correlation ID in request
+        correlationId,
         schemaVersion: "1.0",
       };
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-        signal: combinedSignal,
-      });
+      let data;
+      try {
+        data = await callAiSession(requestBody, { signal: combinedSignal });
+      } catch (callErr) {
+        if (timeoutId != null) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        if (callErr.code === "AUTH_REQUIRED") {
+          return {
+            ok: false,
+            error: "Please sign in to continue.",
+            status: 401,
+            correlationId,
+          };
+        }
+        const status = callErr.status || 0;
+        logRequest("error", correlationId, {
+          action: "response_error",
+          status,
+          error: callErr.message,
+        });
+        if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+          return {
+            ok: false,
+            error: "Server returned an error (4xx). Tap Retry to try again.",
+            errorReason: "4xx",
+            status,
+            correlationId,
+          };
+        }
+        lastError = callErr;
+        if (attemptCount < MAX_RETRIES) continue;
+        break;
+      }
 
       if (timeoutId != null) {
         clearTimeout(timeoutId);
         timeoutId = null;
       }
 
-      // Single read: body stream consumed once
-      const responseText = await response.text().catch(() => "");
-
-      // DEV + wc_debug: verbose error output (no secrets)
-      if (import.meta.env.DEV && isDebugEnabled()) {
-        logDebug("AIClient", {
-          url,
-          status: response.status,
-          responsePreview: (responseText || "").slice(0, 300),
-        });
-      }
-
-      const contentType = response.headers.get("content-type") || "";
-
       logRequest("log", correlationId, {
         action: "response_received",
-        status: response.status,
-        statusText: response.statusText,
-        contentType,
+        status: 200,
       });
 
-      if (!response.ok) {
-        let errorText = "Unknown error";
-        if (contentType.includes("application/json") && responseText) {
-          try {
-            const errorData = JSON.parse(responseText);
-            errorText = errorData.error || errorData.message || JSON.stringify(errorData).slice(0, 200);
-          } catch {
-            errorText = responseText.slice(0, 400);
-          }
-        } else if (responseText) {
-          errorText = responseText.includes("<html") || responseText.includes("<!DOCTYPE")
-            ? "Server returned HTML error page (check function deployment)"
-            : responseText.slice(0, 400);
-        }
-        const safe = errorText?.slice(0, 400) || "Unknown error";
-
-        logRequest("error", correlationId, {
-          action: "response_error",
-          status: response.status,
-          error: safe,
-          contentType,
-        });
-
-        if (response.status >= 400 && response.status < 500 &&
-            response.status !== 408 && response.status !== 429) {
-          return {
-            ok: false,
-            error: "Server returned an error (4xx). Tap Retry to try again.",
-            errorReason: "4xx",
-            status: response.status,
-            correlationId,
-          };
-        }
-
-        lastError = new Error(`Server error (${response.status}). ${safe}`);
-        if (attemptCount < MAX_RETRIES) continue;
-      }
-
-      if (!contentType.includes("application/json")) {
-        logRequest("error", correlationId, {
-          action: "invalid_response_type",
-          contentType,
-          responsePreview: (responseText || "").slice(0, 200),
-        });
-        const reason = response.status >= 500 ? "5xx" : response.status >= 400 ? "4xx" : "server_error";
-        return {
-          ok: false,
-          error: response.status >= 500 ? "Server is having trouble (5xx). Tap Retry to try again." : "Server returned an error. Tap Retry to try again.",
-          errorReason: reason,
-          status: response.status,
-          correlationId,
-        };
-      }
-
-      let data = null;
-      try {
-        data = responseText ? JSON.parse(responseText) : null;
-      } catch (parseErr) {
-        logRequest("error", correlationId, {
-          action: "json_parse_error",
-          error: parseErr.message,
-        });
-        return {
-          ok: false,
-          error: "Invalid response from server. Tap Retry to try again.",
-          errorReason: "parse_error",
-          status: response.status,
-          correlationId,
-        };
-      }
-
       if (!data) {
-        logRequest("error", correlationId, {
-          action: "empty_response",
-        });
+        logRequest("error", correlationId, { action: "empty_response" });
         return {
           ok: false,
           error: "Empty response from server. Tap Retry to try again.",
           errorReason: "empty",
-          status: response.status,
+          status: 200,
           correlationId,
         };
       }
@@ -351,7 +287,7 @@ export async function callAI(endpoint, body = {}, abortController = null) {
           toolRoute: tool?.name || data.toolRoute || data.meta?.toolRoute || null,
           toolId: tool?.name || data.toolId || data.meta?.toolId || null,
         },
-        status: response.status,
+        status: 200,
         correlationId: responseCorrelationId,
       };
       
@@ -437,25 +373,14 @@ export async function callAI(endpoint, body = {}, abortController = null) {
 }
 
 /**
- * Runtime check: resolved Functions base URL + reason (for diagnostics)
+ * Runtime check: resolved API URL (for diagnostics)
  * @returns {{ url: string, reason: string, mode: string }}
  */
 export function getResolvedFunctionsBaseUrl() {
-  const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
-  if (env && typeof env === "string" && env.trim()) {
-    return { url: env.trim(), reason: "env", mode: import.meta.env.MODE };
-  }
-  if (import.meta.env.DEV && typeof window !== "undefined") {
-    const host = window.location.hostname;
-    return {
-      url: `http://${host}:5001/wellnesscafelanding/us-central1`,
-      reason: "dev_lan",
-      mode: "development",
-    };
-  }
+  const url = buildApiUrl("/aiSession");
   return {
-    url: "https://us-central1-wellnesscafelanding.cloudfunctions.net",
-    reason: "production",
+    url,
+    reason: "api_base",
     mode: import.meta.env.MODE,
   };
 }
@@ -465,7 +390,7 @@ export function getResolvedFunctionsBaseUrl() {
  */
 export async function checkHealth() {
   try {
-    const response = await fetch(`${BASE_URL}/health`, {
+    const response = await fetch(buildApiUrl("/health"), {
       method: "GET",
       signal: AbortSignal.timeout(5000),
     });

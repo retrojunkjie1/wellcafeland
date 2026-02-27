@@ -36,6 +36,13 @@ export const CURATED_BY_DOMAIN = {
     { id: "samhsa", name: "SAMHSA National Helpline", description: "24/7 free referral for treatment. 1-800-662-4357.", phone: "1-800-662-4357", link: "https://www.samhsa.gov/find-help/national-helpline", source: "samhsa.gov", verified: true },
     { id: "findtreatment", name: "FindTreatment.gov", description: "Official treatment locator. Find facilities and programs.", phone: null, link: "https://findtreatment.gov", source: "findtreatment.gov", verified: true },
   ],
+  "food.essentials": [
+    { id: "feeding-america", name: "Feeding America", description: "Nationwide network of food banks. Find a food bank near you.", phone: null, link: "https://www.feedingamerica.org/find-your-local-foodbank", source: "feedingamerica.org", verified: true },
+    { id: "snap", name: "SNAP (Supplemental Nutrition Assistance Program)", description: "Federal food assistance. Apply through your state.", phone: null, link: "https://www.fns.usda.gov/snap", source: "usda.gov", verified: true },
+    { id: "wic", name: "WIC (Women, Infants, and Children)", description: "Nutrition assistance for pregnant women and young children.", phone: null, link: "https://www.fns.usda.gov/wic", source: "usda.gov", verified: true },
+    { id: "211-food", name: "211", description: "Dial 211 for local food pantries, meal programs, and emergency food.", phone: "211", link: "https://www.211.org", source: "211.org", verified: true },
+    { id: "meals-on-wheels", name: "Meals on Wheels America", description: "Home-delivered meals for seniors and those in need.", phone: null, link: "https://www.mealsonwheelsamerica.org", source: "mealsonwheelsamerica.org", verified: true },
+  ],
   programs: [
     { id: "aa", name: "Alcoholics Anonymous", description: "Free peer support meetings worldwide. Find meetings near you.", phone: null, link: "https://www.aa.org", source: "aa.org", verified: true },
     { id: "na", name: "Narcotics Anonymous", description: "Free support for recovery from drug addiction.", phone: null, link: "https://www.na.org", source: "na.org", verified: true },

@@ -1,0 +1,144 @@
+[
+  {
+    "slug": "box-breathing-4x4",
+    "title": "4×4 Box Breathing",
+    "category": ["Breathing"],
+    "intensity": "low",
+    "durationSec": 180,
+    "clinicalIntent": "Structured breathing to support nervous system regulation without strain. Helps shift from sympathetic activation toward parasympathetic calm.",
+    "indications": ["anxiety", "overwhelm", "mild stress", "pre-sleep preparation"],
+    "contraindications": ["Active respiratory distress", "Severe COPD or breathing difficulty without clinician guidance"],
+    "steps": [
+      { "label": "Inhale", "description": "Inhale gently through the nose for a count of 4.", "durationSec": 4 },
+      { "label": "Hold", "description": "Hold the breath softly for a count of 4. No straining—if uncomfortable, shorten or skip.", "durationSec": 4 },
+      { "label": "Exhale", "description": "Exhale slowly through the mouth for a count of 4.", "durationSec": 4 },
+      { "label": "Rest", "description": "Pause and rest for a count of 4 before the next breath cycle.", "durationSec": 4 }
+    ],
+    "aftercare": ["Notice how your body feels. If you feel lightheaded, return to normal breathing and rest."],
+    "whenToEscalate": "If you experience chest pain, severe dizziness, or breathing difficulty, stop and seek medical attention. In crisis, call 988 (U.S.) or local emergency services."
+  },
+  {
+    "slug": "grounding-54321",
+    "title": "5-4-3-2-1 Senses Grounding",
+    "category": ["Grounding"],
+    "intensity": "low",
+    "durationSec": 240,
+    "clinicalIntent": "Sensory reconnection to the present moment when internal experience feels too loud or overwhelming. Anchors attention in the here-and-now.",
+    "indications": ["anxiety", "overwhelm", "panic", "freeze", "dissociation"],
+    "contraindications": ["None for general use. Proceed gently; stop any step that increases distress."],
+    "steps": [
+      { "label": "5 things you see", "description": "Gently look around and name 5 things you can see, out loud or silently.", "durationSec": 30 },
+      { "label": "4 things you feel", "description": "Notice 4 things you can feel through touch: feet on floor, clothing, chair, air on skin.", "durationSec": 30 },
+      { "label": "3 things you hear", "description": "Name 3 sounds you can hear right now, even faint ones.", "durationSec": 30 },
+      { "label": "2 things you smell", "description": "Notice 2 things you can smell, or remember a calming smell.", "durationSec": 30 },
+      { "label": "1 thing you taste", "description": "Notice 1 thing about the taste in your mouth, or imagine a comforting taste.", "durationSec": 30 }
+    ],
+    "aftercare": ["Take a few natural breaths. You can repeat this sequence if needed."],
+    "whenToEscalate": "If you feel increasingly unsafe or disconnected, stop and reach out to a trusted person or crisis line. Call 988 (U.S.) if you are in danger or considering self-harm."
+  },
+  {
+    "slug": "panic-anchoring-feet-breath",
+    "title": "Panic Anchoring: Feet and Breath",
+    "category": ["Emergency"],
+    "intensity": "low",
+    "durationSec": 180,
+    "clinicalIntent": "Short reset to help the body remember it has ground and breath when panic or fear spikes. Minimal cognitive load, maximum physical anchoring.",
+    "indications": ["panic", "acute anxiety", "overwhelm", "freeze"],
+    "contraindications": ["None. Safe to use during acute distress. Stop if any step worsens symptoms."],
+    "steps": [
+      { "label": "Find your feet", "description": "Notice your feet on the floor or any surface. Press them down gently and feel the contact.", "durationSec": 30 },
+      { "label": "Long exhale", "description": "Take a slow breath in, then a longer, softer exhale—as if gently fogging a mirror.", "durationSec": 45 },
+      { "label": "Name safety cues", "description": "Look for 2 or 3 signs that you are physically safe right now: a closed door, trusted objects, your own breathing.", "durationSec": 45 }
+    ],
+    "aftercare": ["Stay with your breath. Repeat the exhale step as often as needed. No pressure to fix anything quickly."],
+    "whenToEscalate": "If panic does not ease or you feel in danger, call 988 (U.S.) or local emergency services. You deserve support."
+  },
+  {
+    "slug": "anchoring-protocol",
+    "title": "Anchoring Protocol",
+    "category": ["Emergency"],
+    "intensity": "low",
+    "durationSec": 180,
+    "clinicalIntent": "For panic states—immediate physical and breath-based anchoring. Simple, repetitive, body-focused. Trauma-informed.",
+    "indications": ["panic", "acute distress", "nervous system overwhelm"],
+    "contraindications": ["None. Designed for acute use. Proceed at your own pace."],
+    "steps": [
+      { "label": "Hand on chest", "description": "Place your hand over your chest. Feel the warmth and gentle pressure.", "durationSec": 30 },
+      { "label": "Slow exhale", "description": "Exhale slowly, making the exhale longer than the inhale. Repeat 3–4 times.", "durationSec": 45 },
+      { "label": "Count breaths", "description": "Count your breaths: 1 on inhale, 2 on exhale. Give your mind something simple to focus on.", "durationSec": 45 }
+    ],
+    "aftercare": ["Stay with your hand on your chest as long as it feels supportive."],
+    "whenToEscalate": "If distress increases or you feel unsafe, stop and call 988 (U.S.) or local emergency services."
+  },
+  {
+    "slug": "standard-ritual-sequence",
+    "title": "Standard Ritual Sequence",
+    "category": ["Grounding"],
+    "intensity": "low",
+    "durationSec": 320,
+    "clinicalIntent": "Gentle nervous system protocol: pause, ground, orient, release. For general regulation and daily reset.",
+    "indications": ["mild stress", "transition between activities", "daily grounding", "pre-sleep"],
+    "contraindications": ["None. Proceed gently; pause any step that feels too much."],
+    "steps": [
+      { "label": "Pause and arrive", "description": "Take a moment to pause and arrive in this space. No rush.", "durationSec": 6 },
+      { "label": "Breathe slowly", "description": "Breathe slowly and naturally, letting your body settle.", "durationSec": 8 },
+      { "label": "Soft body scan", "description": "Gently scan your body from head to toe, noticing sensations without judgment.", "durationSec": 8 },
+      { "label": "Release tension", "description": "Release any tension you notice, without forcing. Allow, don't push.", "durationSec": 10 }
+    ],
+    "aftercare": ["Notice how you feel. You can repeat the sequence if helpful."],
+    "whenToEscalate": "If you experience increased distress or dissociation, stop and reach out for support. Call 988 (U.S.) if in crisis."
+  },
+  {
+    "slug": "hand-on-heart-shame-soften",
+    "title": "Hand-on-Heart Shame Soften",
+    "category": ["Emotional"],
+    "intensity": "low",
+    "durationSec": 240,
+    "clinicalIntent": "Gentle self-contact and self-talk protocol for when shame feels heavy or the mind is attacking itself. Validates experience without dismissing.",
+    "indications": ["shame", "self-criticism", "overwhelm", "numbness"],
+    "contraindications": ["If touch feels unsafe, use a soft object or imagine the gesture. Proceed only as far as feels okay."],
+    "steps": [
+      { "label": "Hand placement", "description": "Place a hand over your chest or another area that feels safe to touch.", "durationSec": 30 },
+      { "label": "Anchor breath", "description": "Take 3 slow, natural breaths, noticing your hand rise and fall.", "durationSec": 45 },
+      { "label": "Gentle statement", "description": "Quietly repeat a kind phrase: 'It makes sense that I feel this way,' or 'I am allowed to be human in this moment.'", "durationSec": 60 },
+      { "label": "Stay with warmth", "description": "Stay with the feeling of your hand resting there. Imagine warmth or soft light if that helps.", "durationSec": 45 }
+    ],
+    "aftercare": ["Language must never blame. All phrases should validate experience, not dismiss it."],
+    "whenToEscalate": "If shame intensifies or you feel increasingly isolated, reach out to a trusted person or professional. Call 988 (U.S.) if you are in danger or considering self-harm."
+  },
+  {
+    "slug": "grief-wave-seat",
+    "title": "Grief Wave Seat",
+    "category": ["Emotional"],
+    "intensity": "low",
+    "durationSec": 300,
+    "clinicalIntent": "Practice for sitting with a wave of grief in a way that honors it without drowning in it. Accompaniment, not exposure.",
+    "indications": ["grief", "loss", "overwhelm", "numbness"],
+    "contraindications": ["If grief feels overwhelming or destabilizing, pause and seek support. This is not exposure therapy."],
+    "steps": [
+      { "label": "Choose a position", "description": "Sit or lie in a position that feels as safe as possible for a few minutes.", "durationSec": 30 },
+      { "label": "Name the wave", "description": "Quietly name the wave: 'A wave of grief is here,' or whatever language feels right.", "durationSec": 45 },
+      { "label": "Stay close to breath", "description": "Let your breath move naturally, as if breathing alongside the grief instead of against it.", "durationSec": 90 },
+      { "label": "Set a gentle limit", "description": "Tell yourself: 'For these next few minutes I will just stay with this wave. It does not have to be resolved.'", "durationSec": 60 }
+    ],
+    "aftercare": ["Permission to stop at any time. This is accompaniment, not endurance. Be gentle with yourself."],
+    "whenToEscalate": "If grief becomes overwhelming or you feel unable to cope, stop and reach out for support. Call 988 (U.S.) if you are in danger or considering self-harm."
+  },
+  {
+    "slug": "orienting-protocol",
+    "title": "Orienting Protocol",
+    "category": ["Grounding"],
+    "intensity": "low",
+    "durationSec": 220,
+    "clinicalIntent": "For freeze states—helps reconnect with the present moment and environment. Trauma-informed: gentle, non-overwhelming, sensory-based.",
+    "indications": ["freeze", "dissociation", "numbness", "disconnection"],
+    "contraindications": ["If orienting increases distress, stop and try a simpler anchor (e.g., feet on floor, one breath)."],
+    "steps": [
+      { "label": "Look around safely", "description": "Look around your environment, noticing what feels safe. No pressure to name everything.", "durationSec": 30 },
+      { "label": "Name 5 objects", "description": "Name 5 objects you can see. They can be simple: a wall, a window, a chair.", "durationSec": 45 },
+      { "label": "Feel feet on ground", "description": "Feel your feet on the ground. Notice the support beneath you. Press down gently if that helps.", "durationSec": 45 }
+    ],
+    "aftercare": ["You can repeat the feet-on-ground step as often as needed."],
+    "whenToEscalate": "If you feel increasingly disconnected or unsafe, stop and reach out to a trusted person. Call 988 (U.S.) if in crisis."
+  }
+]

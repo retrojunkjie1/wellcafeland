@@ -43,14 +43,13 @@ export async function checkFirestore() {
  * Check Firebase Functions connectivity
  */
 export async function checkFunctions() {
-  const functionsUrl = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || 
-                      "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-  
+  const { buildApiUrl } = await import("@/services/apiBase");
+  const endpoint = buildApiUrl("/globalResourceSearch");
+
   const startTime = Date.now();
   try {
-    // Try a simple health check endpoint or use a lightweight function
     const response = await Promise.race([
-      fetch(`${functionsUrl}/globalResourceSearch`, {
+      fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: "health check" }),

@@ -10,7 +10,9 @@ import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
 import { ToolsRegistry } from "@/engines/tools/ToolsRegistry";
 import { getToolById } from "@/tools/toolResolver";
+import { loadToolBySlug } from "@/services/toolLoader";
 import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
+import { ToolProtocolView } from "@/components/tools/ToolProtocolView";
 import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
 import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
 import { PanicResetSessionView } from "@/components/tools/PanicResetSessionView";
@@ -33,6 +35,8 @@ const ToolDetailPage = () => {
   }, [toolId]);
 
   const [toolMeta, setToolMeta] = useState(null);
+  const [protocolTool, setProtocolTool] = useState(null);
+  const [protocolToolLoaded, setProtocolToolLoaded] = useState(false);
   const [content, setContent] = useState(null);
   const [recoveryBasicsContent, setRecoveryBasicsContent] = useState(null);
   const [learningTopicId, setLearningTopicId] = useState(null); // Phase 45: Learning paths
@@ -53,6 +57,26 @@ const ToolDetailPage = () => {
     }, 1000);
     return () => clearInterval(id);
   }, [isSessionActive]);
+
+  // Load protocol tool (Firestore + seed) for Daily Practice slugs
+  useEffect(() => {
+    if (!decodedId) {
+      setProtocolToolLoaded(true);
+      return;
+    }
+    setProtocolToolLoaded(false);
+    let cancelled = false;
+    loadToolBySlug(decodedId).then((loaded) => {
+      if (cancelled) return;
+      setProtocolToolLoaded(true);
+      if (loaded && Array.isArray(loaded.steps) && loaded.steps.length > 0) {
+        setProtocolTool(loaded);
+      } else {
+        setProtocolTool(null);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [decodedId]);
 
   // load tool metadata from registry or toolResolver (Phase 59B)
   // Breathing tool MUST always render (offline-safe, no dependencies)
@@ -254,6 +278,24 @@ const ToolDetailPage = () => {
     }
   };
 
+  // Wait for protocol load when we have a slug (avoids flash of wrong content)
+  if (decodedId && !protocolToolLoaded) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center px-4">
+        <div className="text-sm text-slate-500">Loading…</div>
+      </div>
+    );
+  }
+
+  // Protocol tools (seed/Firestore): step-by-step Daily Practice
+  if (protocolTool && Array.isArray(protocolTool.steps) && protocolTool.steps.length > 0) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white">
+        <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
+      </div>
+    );
+  }
+
   // Phase 46: Interactive Journey (luxury multi-layer learning OS)
   if (!isSessionTool && learningTopicId) {
     return (
@@ -349,12 +391,16 @@ const ToolDetailPage = () => {
     );
   }
 
-  // If neither session nor content found
-  if (!toolMeta && !content && !recoveryBasicsContent && !learningTopicId) {
+  // Tool not found: calm page with slug and CTA
+  const nothingToShow = protocolToolLoaded && !protocolTool && !toolMeta && !content && !recoveryBasicsContent && !learningTopicId;
+  if (nothingToShow) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
-        <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300">
-          This tool could not be found.{" "}
+        <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300 max-w-md">
+          <p className="mb-2">Tool not found.</p>
+          {decodedId && (
+            <p className="text-xs text-slate-500 mb-4 font-mono">Requested: {decodedId}</p>
+          )}
           <button
             type="button"
             onClick={() => navigate("/tools")}

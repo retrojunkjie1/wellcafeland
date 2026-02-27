@@ -849,33 +849,16 @@ export async function callWellnessChat({ messages, mode = "default" }) {
       console.log("[callWellnessChat] Multimodal endpoint failed, trying fallback:", multimodalErr.message);
     }
 
-    // Fallback to /aiSession (v1 function)
-    const fallbackUrl = import.meta.env.DEV 
-      ? "/aiSession"
-      : "https://us-central1-wellnesscafelanding.cloudfunctions.net/aiSession";
-    
-    const fallbackRes = await fetch(fallbackUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: userPrompt,
-        mode: "session",
-        context: messages.length > 1 
-          ? messages.slice(0, -1).map(m => `${m.role}: ${m.content}`).join("\n")
-          : "",
-      }),
+    // Fallback to /api/aiSession via centralized client
+    const { callAiSession } = await import("@/services/aiSessionClient");
+
+    const fallbackData = await callAiSession({
+      prompt: userPrompt,
+      mode: "session",
+      context: messages.length > 1
+        ? messages.slice(0, -1).map((m) => `${m.role}: ${m.content}`).join("\n")
+        : "",
     });
-
-    if (!fallbackRes.ok) {
-      return {
-        ok: false,
-        error: "I couldn't reach the wellness engine right now. Please try again in a moment.",
-      };
-    }
-
-    const fallbackData = await fallbackRes.json().catch(() => null);
     const reply = 
       fallbackData?.reply ||
       fallbackData?.choices?.[0]?.message?.content ||

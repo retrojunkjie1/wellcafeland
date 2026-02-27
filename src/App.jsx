@@ -16,8 +16,7 @@ import LivingGuidePage from "./apps/living/LivingGuidePage";
 // Phase 70: Route LivingGuidePageV3
 import { LivingGuidePageV3 } from "./apps/living/LivingGuidePageV3";
 import SequencePage from "./apps/sequences/SequencePage";
-// Assistance Hub (real-world help)
-import AssistanceHubPage from "./apps/assistance/AssistanceHubPage";
+// Unified Assistance (real-world help — one page, action-first)
 // Phase 70: Route unrouted pages
 import AssistancePage from "./apps/assistance/AssistancePage";
 import CommandConsolePage from "./apps/command/CommandConsolePage";
@@ -26,6 +25,11 @@ import RealHelpWorkspace from "./apps/workspace/RealHelpWorkspace";
 import GuidePage from "./apps/guide/GuidePage";
 import ResourcesListPage from "./apps/resources/ResourcesListPage";
 import ResourcesDetailPage from "./apps/resources/ResourcesDetailPage";
+
+const RealHelpRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={`/assistance${search || ""}`} replace />;
+};
 
 const DirectoryRedirect = () => {
   const { domain, id } = useParams();
@@ -89,6 +93,7 @@ import LoginPage from "./apps/auth/LoginPage";
 import SignupPage from "./apps/auth/SignupPage";
 
 import OnboardingPage from "./apps/onboarding/OnboardingPage";
+import PlanStartPage from "./apps/plan/PlanStartPage";
 
 import AdminConsolePage from "./apps/dashboard/AdminConsolePage";
 
@@ -137,13 +142,13 @@ const App = () => {
             <Route path="/home" element={<HomePage />} />
             <Route path="/explore" element={<ExplorePage />} />
           <Route path="/sequence/:id" element={<SequencePage />} />
-          {/* Assistance Hub - Real-world help directory */}
-          <Route path="/assistance" element={<AssistanceHubPage />} />
+          {/* Assistance — unified Find Help (housing, food, funding, programs, crisis) */}
+          <Route path="/assistance" element={<RealHelpWorkspace />} />
           {/* Phase 70: Route unrouted AssistancePage */}
           <Route path="/assistance/request" element={<AssistancePage />} />
           <Route path="/command" element={<CommandConsolePage />} />
+          <Route path="/workspace/real-help" element={<RealHelpRedirect />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
-          <Route path="/workspace/real-help" element={<RealHelpWorkspace />} />
           <Route path="/directory" element={<DirectoryRedirect />} />
           <Route path="/directory/:domain" element={<DirectoryRedirect />} />
           <Route path="/directory/:domain/:id" element={<DirectoryRedirect />} />
@@ -156,6 +161,7 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/plan/start" element={<PlanStartPage />} />
 
           {/* Public Routes - Accessible in guest mode */}
           <Route path="/recovery" element={<RecoveryPage />} />

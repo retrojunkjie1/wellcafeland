@@ -14,7 +14,6 @@ import { OSPageChrome } from "@/components/nav/OSPageChrome";
 import { navPush } from "@/navigation/navHistory";
 import { featureFlags } from "@/config/featureFlags";
 import { KillSwitchGate } from "@/components/routing/KillSwitchGate";
-import AssistantOrb from "@/apps/ai/AssistantOrb";
 import GodEyeDrawer from "@/components/os/GodEyeDrawer";
 
 // C1: Global constants for safe area calculations
@@ -194,8 +193,6 @@ export default function OSLayout() {
         </div>
       </nav>
 
-      {/* Orb - Mount unconditionally, must not depend on chat/AI/network */}
-      <AssistantOrb />
       {/* God-Eye diagnostics - visible only when wc_debug=1 */}
       <GodEyeDrawer />
     </div>

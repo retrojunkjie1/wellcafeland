@@ -5,7 +5,7 @@
 
 import { globalWebSearch } from "./searchService";
 import { logError, logInfo, logWarn } from "@/services/logService";
-import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { buildApiUrl } from "@/services/apiBase";
 
 // Request deduplication cache
 const requestCache = new Map();
@@ -115,7 +115,7 @@ function mapResultsToDirectory(results, domain) {
  * Call the Firebase Function for global resource search
  */
 async function callFunctionSearch({ query, domain, region, category }) {
-  const endpoint = `${resolveFunctionsBaseUrl().replace(/\/+$/, "")}/globalResourceSearch`;
+  const endpoint = buildApiUrl("/globalResourceSearch");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s
 
@@ -201,18 +201,18 @@ export async function searchResources({ query, domain, region, category }) {
     const { searchProviders } = await import("./providerService");
     const verifiedProviders = await searchProviders({ query, category: domain, regionKey: region });
     
-    // Call live resource search function (real FindTreatment.gov integration)
+    // Call live resource search function (globalResourceSearch)
     let liveResults = [];
     try {
-      const functionsUrl = resolveFunctionsBaseUrl();
-      const response = await fetch(`${functionsUrl.replace(/\/+$/, "")}/searchLiveResources`, {
+      const endpoint = buildApiUrl("/globalResourceSearch");
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          query, 
-          location: region, 
-          category: domain,
-          state: region, // Pass state for filtering
+        body: JSON.stringify({
+          query,
+          domain,
+          region,
+          category,
         }),
       });
       if (response.ok) {

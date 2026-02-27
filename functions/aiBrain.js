@@ -64,6 +64,38 @@ function safeJsonParse(str, fallback = null) {
   }
 }
 
+const isEmulator = (req) => {
+  if (process.env.FUNCTIONS_EMULATOR === "true") return true;
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) return true;
+  const host = String(req?.headers?.host || "");
+  if (host.includes("127.0.0.1") || host.includes("localhost")) return true;
+  return false;
+};
+
+const getBearerToken = (req) => {
+  const h = req?.headers?.authorization || req?.headers?.Authorization;
+  if (!h || typeof h !== "string") return null;
+  const parts = h.split(" ");
+  if (parts.length !== 2) return null;
+  if (parts[0].toLowerCase() !== "bearer") return null;
+  return parts[1];
+};
+
+const base64UrlDecodeJson = (part) => {
+  const s = String(part || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padded = s + "===".slice((s.length + 3) % 4);
+  const buf = Buffer.from(padded, "base64");
+  return JSON.parse(buf.toString("utf8"));
+};
+
+const decodeJwtUnsafe = (token) => {
+  const pieces = String(token || "").split(".");
+  if (pieces.length < 2) return null;
+  const header = base64UrlDecodeJson(pieces[0]);
+  const payload = base64UrlDecodeJson(pieces[1]);
+  return { header, payload };
+};
+
 // Conservative intent gate: keywords + patterns with confidence
 const DIRECTORY_STRONG_PHRASES = [
   /\bhelp me find\b/i, /\blooking for\b/i, /\bfind (a|some|resources?)\b/i,
@@ -546,8 +578,38 @@ async function handleSession(req, res) {
 
   try {
     const body = typeof req.body === "string" ? safeJsonParse(req.body, {}) : req.body || {};
-    const userId = body.userId || "unknown";
     const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    const token = getBearerToken(req);
+    if (!token) {
+      return res.status(401).json({ ok: false, code: "AUTH_REQUIRED", message: "Auth required" });
+    }
+
+    try {
+      const decoded = decodeJwtUnsafe(token);
+
+      if (isEmulator(req) && decoded?.header?.alg === "none" && decoded?.payload) {
+        const p = decoded.payload;
+        req.user = {
+          uid: p.user_id || p.sub || "dev",
+          email: p.email || null,
+          provider: p.firebase?.sign_in_provider || p.provider_id || "emulator",
+          raw: p,
+        };
+      } else {
+        const verified = await admin.auth().verifyIdToken(token);
+        req.user = {
+          uid: verified.uid,
+          email: verified.email || null,
+          provider: verified.firebase?.sign_in_provider || null,
+          raw: verified,
+        };
+      }
+    } catch (e) {
+      return res.status(401).json({ ok: false, code: "AUTH_INVALID", message: "Invalid auth token" });
+    }
+
+    const userId = req.user?.uid || body.userId || "unknown";
 
     const { key: apiKey, source: keySource } = getResolvedOpenAIKey();
     if (process.env.NODE_ENV !== "production") {
