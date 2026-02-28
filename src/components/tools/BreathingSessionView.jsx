@@ -126,8 +126,10 @@ export const BreathingSessionView = ({
     };
   }, [isActive, pattern, onCycleComplete, voiceGuideEnabled]);
 
+  const reducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const getScale = () => {
-    if (!isActive) return 1;
+    if (!isActive || reducedMotion) return 1;
     if (phase === "inhale") return 1.4;
     if (phase === "exhale") return 0.75;
     return 1.0;
@@ -168,17 +170,17 @@ export const BreathingSessionView = ({
         <ArrowLeft size={14} />
       </button>
 
-      {/* Luxury Orb zone - premium design with depth */}
-      <div className="flex flex-col items-center justify-center gap-6 overflow-visible min-h-[60vh] py-12">
+      {/* Luxury Orb zone - overflow-hidden to prevent scrollbars */}
+      <div className="flex flex-col items-center justify-center gap-6 overflow-hidden min-h-[60vh] py-12">
         {/* Premium breathing orb with luxury materials */}
         <div
-          className="relative flex aspect-square w-64 sm:w-80 items-center justify-center overflow-visible"
-          style={{
-            transform: `scale(${getScale()})`,
-            opacity: getOpacity(),
-            transition: "all 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-            filter: isActive ? "blur(0px)" : "blur(1px)",
-          }}
+          className="relative flex aspect-square w-64 sm:w-80 items-center justify-center overflow-hidden"
+            style={{
+              transform: `scale(${getScale()})`,
+              opacity: getOpacity(),
+              transition: reducedMotion ? "none" : "all 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+              filter: isActive ? "blur(0px)" : "blur(1px)",
+            }}
         >
           {/* Outer atmospheric glow - multi-layered luxury effect */}
           <div 
@@ -248,11 +250,11 @@ export const BreathingSessionView = ({
             {/* Shimmer overlay - luxury animation */}
             <div 
               className="absolute inset-0 rounded-full opacity-30"
-              style={{
-                background: "linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.4) 45%, transparent 90%)",
-                backgroundSize: "200% 200%",
-                animation: isActive ? "luxuryShimmer 4s ease-in-out infinite" : "none",
-              }}
+            style={{
+              background: "linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.4) 45%, transparent 90%)",
+              backgroundSize: "200% 200%",
+              animation: isActive && !reducedMotion ? "luxuryShimmer 4s ease-in-out infinite" : "none",
+            }}
             />
 
             {/* Central text content - premium typography */}
@@ -282,8 +284,8 @@ export const BreathingSessionView = ({
             </div>
 
             {/* Pulse ring - organic breathing animation */}
-            {isActive && (
-              <div 
+            {isActive && !reducedMotion && (
+              <div
                 className="absolute inset-[-8px] rounded-full border border-amber-300/40"
                 style={{
                   animation: "luxuryPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
@@ -293,7 +295,7 @@ export const BreathingSessionView = ({
             )}
 
             {/* Particle effects - luxury detail */}
-            {isActive && Array.from({ length: 6 }).map((_, i) => (
+            {isActive && !reducedMotion && Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
                 className="absolute rounded-full"
@@ -347,7 +349,7 @@ export const BreathingSessionView = ({
               
               setVoiceGuideEnabled(newState);
             }}
-            className="flex items-center gap-2.5 rounded-full border border-white/30 bg-gradient-to-r from-white/10 via-white/5 to-transparent backdrop-blur-xl px-5 py-2.5 text-sm font-light text-white/90 hover:from-white/15 hover:to-white/10 transition-all duration-300 shadow-lg shadow-black/20 hover:scale-105"
+            className="flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 backdrop-blur-xl px-5 py-2.5 text-sm font-light text-white/80 hover:bg-white/10 transition"
           >
             {voiceGuideEnabled ? (
               <>

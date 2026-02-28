@@ -52,6 +52,7 @@ import IntelligencePulse from "../hud/IntelligencePulse";
 // Phase 31: Face Signal Engine
 import { getFaceEmotionSnapshot } from "@/core/system/faceSignal";
 import FaceScanPrompt from "./FaceScanPrompt";
+import AuthGateCard from "@/components/system/AuthGateCard";
 import { logDebug } from "@/lib/debug";
 
 const TOOL_NAMES = {
@@ -1222,38 +1223,13 @@ const ChatPanel = () => {
   if (authGate) {
     return (
       <div className="flex h-full flex-col bg-slate-950 items-center justify-center p-6">
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-8 max-w-md w-full">
-          <h2 className="text-xl font-light text-white mb-2">Sign in to continue</h2>
-          <p className="text-sm text-slate-300/80 mb-6">
-            {authGateReason || "To protect your privacy and continuity, we require a secure sign-in for sessions."}
-          </p>
-          <div className="flex flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className="w-full rounded-xl bg-white/15 border border-white/20 px-4 py-3 text-sm font-medium text-white hover:bg-white/25 transition"
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-sm font-medium text-white hover:bg-white/10 transition"
-            >
-              Create account
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/tools")}
-              className="w-full rounded-xl px-4 py-3 text-sm text-white/60 hover:text-white/80 transition"
-            >
-              Explore tools
-            </button>
-          </div>
-          <p className="mt-6 text-xs text-white/40 text-center">
-            Guest browsing is available, but sessions require authentication.
-          </p>
-        </div>
+        <AuthGateCard
+          title="Sign in to continue"
+          subtitle={authGateReason || "To protect your privacy and continuity, we require a secure sign-in for sessions."}
+          onLogin={() => navigate("/login")}
+          onSignup={() => navigate("/signup")}
+          onExplore={() => navigate("/tools")}
+        />
       </div>
     );
   }

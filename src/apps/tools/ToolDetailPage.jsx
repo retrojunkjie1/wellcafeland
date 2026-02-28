@@ -5,6 +5,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import RouteGuard from "@/components/system/RouteGuard";
 import { ContentViewer } from "@/components/content/ContentViewer";
 import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
@@ -281,31 +282,38 @@ const ToolDetailPage = () => {
   // Wait for protocol load when we have a slug (avoids flash of wrong content)
   if (decodedId && !protocolToolLoaded) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center px-4">
-        <div className="text-sm text-slate-500">Loading…</div>
-      </div>
+      <RouteGuard ready={true}>
+        <div className="flex min-h-[40vh] items-center justify-center px-4">
+          <div className="text-sm text-slate-500">Loading…</div>
+        </div>
+      </RouteGuard>
     );
   }
 
   // Protocol tools (seed/Firestore): step-by-step Daily Practice
   if (protocolTool && Array.isArray(protocolTool.steps) && protocolTool.steps.length > 0) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
-        <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
-      </div>
+      <RouteGuard ready={true}>
+        <div className="min-h-screen bg-slate-950 text-white">
+          <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
+        </div>
+      </RouteGuard>
     );
   }
 
   // Phase 46: Interactive Journey (luxury multi-layer learning OS)
   if (!isSessionTool && learningTopicId) {
     return (
-      <InteractiveJourneyView topicId={learningTopicId} />
+      <RouteGuard ready={true}>
+        <InteractiveJourneyView topicId={learningTopicId} />
+      </RouteGuard>
     );
   }
 
   // Phase 44: Recovery Basics content (deep, trauma-informed) - fallback for old system
   if (!isSessionTool && recoveryBasicsContent) {
     return (
+      <RouteGuard ready={true}>
       <div className="mx-auto max-w-3xl px-4 py-6 space-y-8">
         {/* C1: Back button handled by OSPageChrome - no duplicate */}
         {/* Title */}
@@ -338,6 +346,7 @@ const ToolDetailPage = () => {
           </div>
         </div>
       </div>
+      </RouteGuard>
     );
   }
 
@@ -353,7 +362,8 @@ const ToolDetailPage = () => {
     if (isBreathingContent) {
       // Show interactive breathing view with orb and voice guide
       return (
-        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+        <RouteGuard ready={true}>
+        <div className="relative min-h-[70vh] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
           <ToolSessionLayout
             tool={{
               id: "breathing",
@@ -379,15 +389,18 @@ const ToolDetailPage = () => {
             />
           </ToolSessionLayout>
         </div>
+        </RouteGuard>
       );
     }
     
     // Non-breathing content: standard markdown view
     return (
+      <RouteGuard ready={true}>
       <div className="mx-auto max-w-3xl px-4 py-6">
         {/* C1: Back button handled by OSPageChrome - no duplicate */}
         <ContentViewer title={content.title} body={content.body} />
       </div>
+      </RouteGuard>
     );
   }
 
@@ -395,6 +408,7 @@ const ToolDetailPage = () => {
   const nothingToShow = protocolToolLoaded && !protocolTool && !toolMeta && !content && !recoveryBasicsContent && !learningTopicId;
   if (nothingToShow) {
     return (
+      <RouteGuard ready={true}>
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300 max-w-md">
           <p className="mb-2">Tool not found.</p>
@@ -410,13 +424,14 @@ const ToolDetailPage = () => {
           </button>
         </div>
       </div>
+      </RouteGuard>
     );
   }
 
   // Session-based tool view
   if (toolMeta?.sessionType) {
     return (
-      <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+      <div className="relative min-h-[70vh] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
         {/* subtle background particles */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           {Array.from({ length: 20 }).map((_, i) => (
