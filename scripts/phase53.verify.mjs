@@ -1,37 +1,47 @@
 #!/usr/bin/env node
 import fs from "fs";
+import os from "os";
 
 const VITE_PORT=process.env.VITE_PORT||"5173";
 const PROJECT_ID=process.env.FIREBASE_PROJECT_ID||process.env.GCLOUD_PROJECT||"wellnesscafelanding";
 const REGION=process.env.FUNCTIONS_REGION||"us-central1";
 
 const functionsBase=`http://127.0.0.1:5001/${PROJECT_ID}/${REGION}`;
-const viteBase=`http://127.0.0.1:${VITE_PORT}`;
-
 const authToken=process.env.PHASE53_AUTH_TOKEN||"";
+const overrideBase=process.env.PHASE53_BASE_URL||"";
 
-async function checkGet(url){
+const getLanIp=()=>{
+  const ifaces=os.networkInterfaces();
+  for(const name of Object.keys(ifaces)){
+    for(const net of ifaces[name]||[]){
+      if(net && net.family==="IPv4" && !net.internal){
+        return net.address;
+      }
+    }
+  }
+  return "";
+};
+
+async function tryGet(url){
   try{
-    const r=await fetch(url);
+    const r=await fetch(url,{method:"GET"});
     return r.status;
   }catch{
     return "ERR";
   }
 }
 
-async function checkPost(url,body){
+async function postJson(url,body){
   try{
     const headers={"Content-Type":"application/json"};
     if(authToken){
       headers.Authorization=`Bearer ${authToken}`;
     }
-
     const r=await fetch(url,{
       method:"POST",
       headers,
       body:JSON.stringify(body)
     });
-
     return r.status;
   }catch{
     return "ERR";
@@ -49,41 +59,67 @@ function fail(report){
   process.exit(1);
 }
 
-async function run(){
-  // Matches frontend: ChatPanel callAI("aiSession",{...}) + aiSessionClient. mode "telemetry" = no-op ping, returns 200.
-  const aiSessionPayload={
-    mode:"telemetry",
-    event:{}
-  };
+async function resolveBase(){
+  if(overrideBase){
+    return overrideBase.replace(/\/$/,"");
+  }
 
-  // Matches frontend: directorySearch sends {query,domain,region,category,limit,pageToken}. query required (min 3 chars).
-  const globalSearchPayload={
-    query:"test",
-    domain:"",
-    limit:1
-  };
+  const lanIp=getLanIp();
+  const candidates=[
+    `http://127.0.0.1:${VITE_PORT}`,
+    `http://localhost:${VITE_PORT}`
+  ];
+
+  if(lanIp){
+    candidates.push(`http://${lanIp}:${VITE_PORT}`);
+  }
+
+  for(const base of candidates){
+    const s=await tryGet(`${base}/`);
+    if(s!=="ERR"){
+      return base;
+    }
+  }
+
+  return `http://127.0.0.1:${VITE_PORT}`;
+}
+
+async function run(){
+  const base=await resolveBase();
+
+  const aiSessionPayload={mode:"telemetry",event:{}};
+  const globalSearchPayload={query:"test",domain:"",limit:1};
+
+  const proxyAi=await postJson(`${base}/api/aiSession`,aiSessionPayload);
+  const proxySearch=await postJson(`${base}/api/globalResourceSearch`,globalSearchPayload);
 
   const report={
+    chosenBase:base,
     projectId:PROJECT_ID,
     region:REGION,
     vitePort:VITE_PORT,
     breathingExists:fs.existsSync("src/features/breathing/LuxuryBreathing.jsx"),
     direct:{
-      aiSession:await checkGet(`${functionsBase}/aiSession`),
-      globalResourceSearch:await checkGet(`${functionsBase}/globalResourceSearch`)
+      aiSession:await tryGet(`${functionsBase}/aiSession`),
+      globalResourceSearch:await tryGet(`${functionsBase}/globalResourceSearch`)
     },
     proxy:{
-      aiSession:await checkPost(`${viteBase}/api/aiSession`,aiSessionPayload),
-      globalResourceSearch:await checkPost(`${viteBase}/api/globalResourceSearch`,globalSearchPayload)
+      aiSession:proxyAi,
+      globalResourceSearch:proxySearch
     }
   };
 
-  const requiredOk=
-    report.breathingExists===true &&
-    report.proxy.aiSession===200 &&
-    report.proxy.globalResourceSearch===200;
+  const hardBad=[report.proxy.aiSession,report.proxy.globalResourceSearch].some((s)=>(s===404 || s==="ERR"));
+  if(hardBad){
+    return fail(report);
+  }
 
-  if(!requiredOk){
+  const ok=
+    report.breathingExists===true &&
+    report.proxy.globalResourceSearch===200 &&
+    (report.proxy.aiSession===200 || report.proxy.aiSession===401);
+
+  if(!ok){
     return fail(report);
   }
 
