@@ -2,7 +2,11 @@
 import fs from "fs";
 import os from "os";
 
-const VITE_PORT=process.env.VITE_PORT||"5173";
+const portStr=process.env.VITE_PORT||"5173";
+const portsFromEnv=portStr.split(",").map((p)=>p.trim()).filter(Boolean);
+const defaultPorts=["5173","5174","5175","4173","3000"];
+const PORTS=[...new Set([...portsFromEnv,...defaultPorts])];
+
 const PROJECT_ID=process.env.FIREBASE_PROJECT_ID||process.env.GCLOUD_PROJECT||"wellnesscafelanding";
 const REGION=process.env.FUNCTIONS_REGION||"us-central1";
 
@@ -27,16 +31,45 @@ const withTimeout=(signalMs)=>{
   return {signal:controller.signal,done:()=>clearTimeout(id)};
 };
 
-async function probeBase(base){
-  const t=withTimeout(1200);
+async function getText(url){
+  const t=withTimeout(900);
   try{
-    const r=await fetch(`${base}/`,{method:"GET",signal:t.signal});
+    const r=await fetch(url,{method:"GET",signal:t.signal});
+    const text=await r.text();
+    t.done();
+    return {ok:true,status:r.status,text};
+  }catch(e){
+    t.done();
+    return {ok:false,status:"ERR",error:{name:e.name,message:e.message,code:e.code||null}};
+  }
+}
+
+async function probe(url){
+  const t=withTimeout(900);
+  try{
+    const r=await fetch(url,{method:"GET",signal:t.signal});
     t.done();
     return {ok:true,status:r.status};
   }catch(e){
     t.done();
-    return {ok:false,error:{name:e.name,message:e.message,code:e.code||null}};
+    return {ok:false,status:"ERR",error:{name:e.name,message:e.message,code:e.code||null}};
   }
+}
+
+async function looksLikeVite(base){
+  const root=await getText(`${base}/`);
+  if(!root.ok || root.status!==200){
+    return {ok:false,root};
+  }
+  const hasClient=root.text.includes("/@vite/client");
+  if(!hasClient){
+    return {ok:false,root};
+  }
+  const client=await probe(`${base}/@vite/client`);
+  if(!client.ok || client.status!==200){
+    return {ok:false,root,client};
+  }
+  return {ok:true,root:{status:root.status},client};
 }
 
 async function postJson(url,body){
@@ -62,26 +95,29 @@ async function postJson(url,body){
 
 async function resolveBase(){
   if(overrideBase){
-    return {chosen:overrideBase,probes:{[overrideBase]:await probeBase(overrideBase)}};
+    const viteProbe=await looksLikeVite(overrideBase);
+    return {chosen:overrideBase,probes:{[overrideBase]:viteProbe}};
   }
 
   const lanIp=getLanIp();
-  const candidates=[
-    `http://127.0.0.1:${VITE_PORT}`,
-    `http://localhost:${VITE_PORT}`
-  ];
-  if(lanIp){
-    candidates.push(`http://${lanIp}:${VITE_PORT}`);
+  const hosts=["127.0.0.1","localhost"];
+  if(lanIp){hosts.push(lanIp);}
+
+  const candidates=[];
+  for(const port of PORTS){
+    for(const host of hosts){
+      candidates.push(`http://${host}:${port}`);
+    }
   }
 
   const probes={};
   for(const base of candidates){
-    probes[base]=await probeBase(base);
+    probes[base]=await looksLikeVite(base);
     if(probes[base].ok){
       return {chosen:base,probes};
     }
   }
-  return {chosen:candidates[0],probes};
+  return {chosen:candidates[0]||`http://127.0.0.1:5173`,probes};
 }
 
 function print(report){
@@ -109,7 +145,7 @@ async function run(){
     baseProbes:probes,
     projectId:PROJECT_ID,
     region:REGION,
-    vitePort:VITE_PORT,
+    ports:PORTS,
     breathingExists:fs.existsSync("src/features/breathing/LuxuryBreathing.jsx"),
     proxy:{
       aiSession:ai,
