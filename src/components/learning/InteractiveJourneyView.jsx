@@ -2,9 +2,10 @@
 // Luxury, cinematic, multi-layer learning OS
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, ChevronsDownUp, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, Sparkles } from "lucide-react";
 import { getTileIcons } from "@/engines/learningPaths/tileIconMap";
 import { useNavigate } from "react-router-dom";
+import BackButton from "@/components/system/BackButton";
 
 import { getTopic, getTopicList } from "@/engines/learningPaths/learningPathsEngine";
 import {
@@ -109,14 +110,7 @@ export default function InteractiveJourneyView({ topicId }) {
     <div className="px-4 py-6 max-w-4xl mx-auto space-y-6">
       {/* Header Row */}
       <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => navigate("/recovery")}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/70 border border-slate-700/70 text-xs text-slate-200 hover:text-amber-200 hover:border-amber-400/60 transition-all"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-          Back
-        </button>
+        <BackButton to="/tools" />
 
         {/* Topic Dropdown */}
         <div className="relative" ref={topicDropdownRef}>
@@ -168,16 +162,13 @@ export default function InteractiveJourneyView({ topicId }) {
           <p className="text-xs text-slate-500">{tiles.length} tiles</p>
         </div>
 
-        {/* Scrollable Container */}
+        {/* Scrollable Container — subtle fade edges, dark scrollbar if visible */}
         <div className="relative group/scroll">
-          {/* Scroll Container */}
-          <div 
+          <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none z-10" />
+          <div
             ref={scrollContainerRef}
             className="no-scrollbar flex gap-3 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
           >
             {tiles.map((tile, index) => {
               const tileIcons = getTileIcons(topicId, tile.id);

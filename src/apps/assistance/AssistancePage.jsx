@@ -3,6 +3,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "@/os/PageHeader";
 import {
   UtensilsCrossed,
   DollarSign,
@@ -77,7 +78,9 @@ const AssistancePage = () => {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-5xl">
+      <PageHeader title="Assistance" subtitle="Food · Grants · Housing · Emergency · Local" />
+      <div className="px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <header className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-semibold text-white mb-2">

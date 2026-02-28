@@ -180,18 +180,25 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         schemaVersion: "1.0",
       };
 
+      const ctx = Array.isArray(body?.messages) ? body.messages.slice(-12).map((m) => ({
+        role: m.role || "user",
+        text: (m.content || m.text || "").slice(0, 8000),
+      })) : [];
+      const callOptions = { signal: combinedSignal };
+      if (ctx.length > 0) callOptions.contextMessages = ctx;
+
       let data;
       try {
-        data = await callAiSession(requestBody, { signal: combinedSignal });
+        data = await callAiSession(requestBody, callOptions);
       } catch (callErr) {
         if (timeoutId != null) {
           clearTimeout(timeoutId);
           timeoutId = null;
         }
-        if (callErr.code === "AUTH_REQUIRED") {
+        if (callErr.code === "AUTH_REQUIRED" || callErr.code === "AUTH_INVALID") {
           return {
             ok: false,
-            error: "Please sign in to continue.",
+            error: callErr.code === "AUTH_INVALID" ? "Your session expired. Please sign in again." : "Please sign in to continue.",
             status: 401,
             correlationId,
           };

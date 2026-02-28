@@ -2,10 +2,12 @@
 
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { useOSStore } from "@/stores/useOSStore";
-
 import SignalHeader from "@/components/dashboard/SignalHeader";
+import PageHeader from "@/components/system/PageHeader";
+import BackButton from "@/components/system/BackButton";
+import SectionTabs from "@/components/system/SectionTabs";
+import NotReadyCard from "@/components/system/NotReadyCard";
 
 import EmotionStrip from "@/components/dashboard/EmotionStrip";
 
@@ -137,154 +139,40 @@ const DashboardPage = () => {
 
 
 
+  const tabs = [{ id: "moments", label: "Moments" }, { id: "insights", label: "Insights" }, { id: "signals", label: "Signals" }];
+
   return (
-
     <div className="mx-auto w-full max-w-5xl flex flex-col px-4 pb-6 pt-4 sm:px-6 lg:px-0 overflow-x-hidden">
-
-      {/* Top header with user/session info */}
-
-      <div className="mb-4">
-
+      <PageHeader
+        title="Signals & Moments"
+        subtitle="Your emotional patterns and check-ins"
+        leftSlot={<BackButton to="/" />}
+      />
+      <div className="mb-4 mt-2">
         <SignalHeader />
-
       </div>
-
-
-
-      {/* View toggle */}
-
-      <div className="mb-4 flex items-center justify-between gap-3">
-
-        <div className="flex flex-wrap rounded-full bg-white/5 p-1 text-xs font-medium text-slate-300 backdrop-blur-sm gap-1">
-
-          <button
-
-            type="button"
-
-            onClick={() => setActiveView("moments")}
-
-            className={`rounded-full px-4 py-2 transition whitespace-nowrap ${
-
-              activeView === "moments"
-
-                ? "bg-white text-slate-900"
-
-                : "bg-transparent text-slate-300"
-
-            }`}
-
-          >
-
-            Moments
-
-          </button>
-
-          <button
-
-            type="button"
-
-            onClick={() => setActiveView("insights")}
-
-            className={`rounded-full px-4 py-2 transition whitespace-nowrap ${
-
-              activeView === "insights"
-
-                ? "bg-white text-slate-900"
-
-                : "bg-transparent text-slate-300"
-
-            }`}
-
-          >
-
-            Insights
-
-          </button>
-
-          <button
-
-            type="button"
-
-            onClick={() => setActiveView("signals")}
-
-            className={`rounded-full px-4 py-2 transition whitespace-nowrap ${
-
-              activeView === "signals"
-
-                ? "bg-amber-400 text-slate-900"
-
-                : "bg-transparent text-slate-300"
-
-            }`}
-
-          >
-
-            Signals
-
-          </button>
-
-        </div>
-
+      <div className="mb-4">
+        <SectionTabs tabs={tabs} activeId={activeView} onChange={setActiveView} />
       </div>
-
-
 
       {activeView === "moments" && (
-
-        <div className="flex-1 space-y-4 overflow-visible">
-
-          <div className="rounded-3xl bg-white/5 px-4 py-4 text-sm text-slate-200 shadow-lg shadow-black/40 backdrop-blur-md">
-
-            <h2 className="mb-1 text-lg font-semibold text-white">
-
-              Today's Moments
-
-            </h2>
-
-            <p className="text-xs text-slate-400">
-
-              Your check-ins, reflections, and practices will appear here. Each
-
-              one is a small piece of your bigger story.
-
-            </p>
-
-          </div>
-
-          {/* NOTE: keep existing moments list implementation below if it exists in another file. */}
-
+        <div className="flex-1 space-y-4">
+          <NotReadyCard
+            title="Today's Moments"
+            body="Your check-ins, reflections, and practices will appear here. This module is being brought online safely."
+            actions={[{ label: "Start a check-in", to: "/tools" }, { label: "Talk to WellnessCafe", to: "/chat" }]}
+          />
         </div>
-
       )}
 
-
-
       {activeView === "insights" && (
-
-        <div className="flex-1 space-y-4 overflow-visible">
-
-          <div className="rounded-3xl bg-white/5 px-4 py-4 text-sm text-slate-200 shadow-lg shadow-black/40 backdrop-blur-md">
-
-            <h2 className="mb-1 text-lg font-semibold text-white">
-
-              Weekly Insights
-
-            </h2>
-
-            <p className="text-xs text-slate-400">
-
-              As you log more moments, we'll surface patterns here: emotional
-
-              trends, trigger clusters, and gentle suggestions.
-
-            </p>
-
-          </div>
-
-          {/* NOTE: keep / merge any existing insights widgets here. */}
-
+        <div className="flex-1 space-y-4">
+          <NotReadyCard
+            title="Weekly Insights"
+            body="As you log more moments, we'll surface patterns here: emotional trends, trigger clusters, and gentle suggestions."
+            actions={[{ label: "Start a check-in", to: "/tools" }, { label: "Talk to WellnessCafe", to: "/chat" }]}
+          />
         </div>
-
       )}
 
 

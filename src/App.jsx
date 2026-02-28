@@ -57,6 +57,7 @@ const ExplorePage = lazy(() =>
 );
 import VoiceJournal from "./apps/tools/VoiceJournal";
 import VoiceCheckIn from "./apps/tools/VoiceCheckIn";
+import BreathingToolPage from "./apps/tools/BreathingToolPage";
 
 import ProvidersPage from "./apps/providers/ProvidersPage";
 import ProviderDashboardPage from "./apps/provider/ProviderDashboardPage";
@@ -106,7 +107,10 @@ import SeedDataPage from "./apps/admin/SeedDataPage";
 import AdminRoute from "./components/AdminRoute";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
+import AdminHubPage from "./apps/admin/AdminHubPage";
 import UnauthorizedPage from "./components/routing/UnauthorizedPage";
+import { RouteGuard } from "./os/RouteGuard";
+import NotFound from "./os/NotFound";
 import { AdminGuard } from "./admin/AdminGuard";
 import { AdminShell } from "./admin/AdminShell";
 import { AdminPage } from "./admin/AdminPage";
@@ -137,15 +141,15 @@ const App = () => {
           
           <Route element={<OSLayout />}>
             {/* OS Routes */}
-            <Route path="/" element={<ChatPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/explore" element={<ExplorePage />} />
+            <Route path="/" element={<RouteGuard routeKey="route:/"><ChatPage /></RouteGuard>} />
+            <Route path="/chat" element={<RouteGuard routeKey="route:/chat"><ChatPage /></RouteGuard>} />
+            <Route path="/home" element={<RouteGuard routeKey="route:/home"><HomePage /></RouteGuard>} />
+            <Route path="/explore" element={<RouteGuard routeKey="route:/explore"><ExplorePage /></RouteGuard>} />
           <Route path="/sequence/:id" element={<SequencePage />} />
           {/* Assistance — unified Find Help (housing, food, funding, programs, crisis) */}
-          <Route path="/assistance" element={<RealHelpWorkspace />} />
+          <Route path="/assistance" element={<RouteGuard routeKey="route:/assistance"><RealHelpWorkspace /></RouteGuard>} />
           {/* Phase 70: Route unrouted AssistancePage */}
-          <Route path="/assistance/request" element={<AssistancePage />} />
+          <Route path="/assistance/request" element={<RouteGuard routeKey="route:/assistance/request"><AssistancePage /></RouteGuard>} />
           <Route path="/command" element={<CommandConsolePage />} />
           <Route path="/workspace/real-help" element={<RealHelpRedirect />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
@@ -160,7 +164,7 @@ const App = () => {
           <Route path="/living/v3" element={<Navigate to="/living" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/onboarding" element={<RouteGuard routeKey="route:/onboarding"><OnboardingPage /></RouteGuard>} />
           <Route path="/plan/start" element={<PlanStartPage />} />
 
           {/* Public Routes - Accessible in guest mode */}
@@ -168,9 +172,11 @@ const App = () => {
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/tools" element={<ToolsPage />} />
+          {/* Phase 52: Calm Reset breathing MVP */}
+          <Route path="/tools/breathing" element={<RouteGuard routeKey="route:/tools/breathing"><BreathingToolPage /></RouteGuard>} />
           {/* Phase 70: Route classic ToolsPage */}
           <Route path="/tools/classic" element={<ToolsPageClassic />} />
-          <Route path="/tools/:toolId" element={<ToolDetailPage />} />
+          <Route path="/tools/:toolId" element={<RouteGuard routeKey="route:/tools/:toolId"><ToolDetailPage /></RouteGuard>} />
           <Route path="/tools/voice-journal" element={<VoiceJournal />} />
           <Route path="/tools/voice-checkin" element={<VoiceCheckIn />} />
           <Route path="/support" element={<SupportHubPage />} />
@@ -448,12 +454,13 @@ const App = () => {
             }
           />
 
-          {/* Phase I: God-Eye Admin Dashboard - Parameterized routes must come LAST */}
+          {/* Phase 53C: Admin Hub — God-Eye, Overseer, Templates, Theme, Seed */}
+          <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminHubPage /></RequireAdmin></RequireAuth>} />
+          {/* Admin sections (overview, warroom, etc.) */}
           <Route path="/admin/:section" element={<AdminPage />} />
-          <Route path="/admin" element={<AdminPage />} />
         </Route>
 
-          <Route path="*" element={<UnauthorizedPage />} />
+          <Route path="*" element={<RouteGuard routeKey="route:*"><NotFound /></RouteGuard>} />
         </Routes>
       </Suspense>
     </BrowserRouter>

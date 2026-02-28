@@ -115,6 +115,16 @@ export const useOSStore = create((set, get) => ({
     return chat;
   },
 
+  setMessages: (msgs) =>
+    set((state) => ({
+      messages: Array.isArray(msgs) ? msgs : state.messages,
+      chats: state.chats.map((c) =>
+        c.id === state.currentChatId
+          ? { ...c, messages: Array.isArray(msgs) ? msgs : c.messages, updatedAt: Date.now() }
+          : c
+      ),
+    })),
+
   openChat: (chatId) => {
     const chat = get().chats.find((c) => c.id === chatId);
     if (chat) {

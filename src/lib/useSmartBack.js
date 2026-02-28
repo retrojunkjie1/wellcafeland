@@ -1,20 +1,19 @@
 // src/lib/useSmartBack.js
-// Phase 2D: Consistent back behavior — history-aware navigation
+// Phase 52: Simple back navigation — history.back or navigate("/")
 
 import { useNavigate } from "react-router-dom";
 
-/**
- * Returns a handler that navigates back when possible, else to fallback route.
- * @param {string} fallbackRoute - Route when history.length <= 1
- * @returns {() => void}
- */
-export function useSmartBack(fallbackRoute = "/home") {
+export const useSmartBack = () => {
   const navigate = useNavigate();
-  return () => {
-    if (window.history.length > 1) {
-      navigate(-1);
+  const canGoBack = typeof window !== "undefined" && window.history.length > 1;
+
+  const goBack = () => {
+    if (canGoBack) {
+      window.history.back();
     } else {
-      navigate(fallbackRoute);
+      navigate("/");
     }
   };
-}
+
+  return { goBack, canGoBack };
+};

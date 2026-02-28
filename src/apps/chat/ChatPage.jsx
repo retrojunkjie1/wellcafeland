@@ -4,13 +4,14 @@
 import React, { useEffect } from "react";
 import ChatPanel from "@/components/os/ChatPanel";
 import { useOSStore, MODES } from "@/stores/useOSStore";
+import { useChatMemory } from "@/hooks/useChatMemory";
 
 const ChatPage = () => {
   const { setMode, createChat, currentChatId, messages } = useOSStore();
+  useChatMemory(currentChatId || "default");
 
   useEffect(() => {
     setMode(MODES.CHAT);
-    // Only create new chat if we don't have one and no messages exist
     if (!currentChatId && messages.length === 0) {
       createChat("New Chat");
     }

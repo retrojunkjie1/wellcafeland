@@ -350,6 +350,37 @@ body {
     display: none;
   }
 
+  /* Phase 53C: Premium scrollbar — thin, dark track, subtle thumb */
+  .os-scrollbar,
+  .os-scrollbar * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(15, 23, 42, 0.6);
+  }
+  .os-scrollbar::-webkit-scrollbar,
+  .os-scrollbar *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .os-scrollbar::-webkit-scrollbar-track,
+  .os-scrollbar *::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 3px;
+  }
+  .os-scrollbar::-webkit-scrollbar-thumb,
+  .os-scrollbar *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+  .os-scrollbar::-webkit-scrollbar-thumb:hover,
+  .os-scrollbar *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  /* Phase 53C: Tool/modal surfaces — no inner scroll */
+  .os-panel {
+    overflow: hidden;
+  }
+
   /* Custom animations for Interactive Journey View */
   @keyframes spin-slow {
     from {

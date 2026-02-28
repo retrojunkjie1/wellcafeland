@@ -6,6 +6,7 @@ import { getAuth } from "firebase/auth";
 import Logo from "../../components/Logo";
 import { Heart, Wind, Brain, Sparkles, ArrowRight } from "lucide-react";
 import { buildClinicalPlan } from "@/services/clinicalPlanService";
+import PageHeader from "@/os/PageHeader";
 
 const OnboardingPage = () => {
   const [step, setStep] = useState(0);
@@ -129,7 +130,9 @@ const OnboardingPage = () => {
   const currentStep = steps[step];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col">
+      <PageHeader title="Welcome" subtitle="WellnessCafe" />
+      <div className="flex-1 flex items-center justify-center px-4">
       <div className="w-full max-w-2xl">
         <div className="lux-card p-8 md:p-12 space-y-8">
           {/* Progress indicator */}
@@ -189,6 +192,7 @@ const OnboardingPage = () => {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

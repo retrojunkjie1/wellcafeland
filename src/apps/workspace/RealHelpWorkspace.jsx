@@ -15,6 +15,7 @@ import { saveFavoriteResource } from "@/services/directoryService";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
 import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 import InAppWebView from "@/components/InAppWebView";
+import PageHeader from "@/os/PageHeader";
 
 const DOMAIN_TO_PRIORITY = {
   "food.essentials": "food",
@@ -230,23 +231,20 @@ const RealHelpWorkspace = () => {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-white">
-      {/* Minimal header — one line, action-first */}
-      <div className="flex-shrink-0 border-b border-white/10 px-4 sm:px-6 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-medium text-white">Find Help</h1>
-            <p className="text-xs text-white/50 mt-0.5">Housing · Food · Funding · Programs · Crisis</p>
-          </div>
-          {isAssistanceRoute ? (
+      <PageHeader
+        title="Find Help"
+        subtitle="Housing · Food · Funding · Programs · Crisis"
+        actions={
+          isAssistanceRoute ? (
             <div className="flex items-center gap-3">
               <a href="tel:988" className="text-xs text-red-300 hover:text-red-200 font-medium whitespace-nowrap">988</a>
               <button type="button" onClick={() => navigate("/assistance/request")} className="text-xs text-white/50 hover:text-white/80">Request Help</button>
             </div>
           ) : (
             <button type="button" onClick={() => navigate("/assistance")} className="text-xs text-white/60 hover:text-white">← Back</button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-4">
@@ -321,7 +319,7 @@ const RealHelpWorkspace = () => {
             <div className="flex flex-col items-center justify-center p-10 gap-3">
               <Heart className="h-10 w-10 text-white/20" />
               <p className="text-sm text-white/50 text-center">
-                {query || region ? "Try different words or region." : `Pick a category above or search.`}
+                {query || region ? "Try adding your city or state for better results." : "Pick a category above or search."}
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button type="button" onClick={() => regionInputRef.current?.focus()} className="px-3 py-1.5 text-xs rounded-lg bg-wcGold/20 text-wcGold border border-wcGold/40 hover:bg-wcGold/30 font-medium">Add region</button>
@@ -333,10 +331,18 @@ const RealHelpWorkspace = () => {
           ) : (
             <>
               <div className="flex flex-col gap-2 mb-4">
-                <p className="text-sm text-white/60">
-                  Found <span className="font-medium text-white border border-black shadow-[0px_4px_12px_0px_rgba(0,0,0,0.15)]">{allResults.length}</span> resource{allResults.length !== 1 ? 's' : ''}
-                </p>
-                {(searchResponse?.meta?.rateLimited || searchResponse?.meta?.subscriptionBlocked || searchResponse?.meta?.fallback) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm text-white/60">
+                    Found <span className="font-medium text-white">{allResults.length}</span> resource{allResults.length !== 1 ? "s" : ""}
+                  </p>
+                  {(searchResponse?.meta?.provider === "live" || (!searchResponse?.meta?.fallback && searchResponse?.ok)) && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">Live results</span>
+                  )}
+                  {(searchResponse?.meta?.fallback || searchResponse?.meta?.provider === "fallback") && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30">Verified pathways</span>
+                  )}
+                </div>
+                {(searchResponse?.meta?.rateLimited || searchResponse?.meta?.subscriptionBlocked) && (
                   <p className="text-xs text-white/50">Showing verified resources we already have.</p>
                 )}
               </div>

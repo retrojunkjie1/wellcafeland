@@ -193,9 +193,11 @@ export async function searchResources({ query, domain, region, category }) {
     }
 
     // Return combined: verified first, then live results
+    const provider = liveResults.length > 0 ? "live" : (verifiedProviders.length > 0 ? "fallback" : "none");
     return {
       ok: true,
       results: [...verifiedProviders, ...liveResults],
+      meta: { provider, fallback: liveResults.length === 0 },
     };
   } catch (err) {
     console.warn("Provider search failed, falling back to legacy search:", err);
@@ -280,12 +282,13 @@ export async function searchResources({ query, domain, region, category }) {
     }
 
       if (fnResult.ok && fnResult.results.length > 0) {
-        // Already in directory format or close enough
+        const isFallback = fnResult.provider === "fallback" || fnResult.meta?.fallback === true;
         const result = {
           ok: true,
           results: mapResultsToDirectory(fnResult.results, domain),
           error: null,
           query: fnResult.query || normalizedQuery,
+          meta: { provider: isFallback ? "fallback" : "live", fallback: isFallback },
         };
         
         // Observe search success (if intelligence engine available)

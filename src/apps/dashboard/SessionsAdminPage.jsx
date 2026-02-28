@@ -1,10 +1,10 @@
-
 // src/apps/dashboard/SessionsAdminPage.jsx
 
 import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { trackPageView, trackAction } from "../../services/telemetry"
 import { callAiSession } from "@/services/aiSessionClient"
+import PageHeader from "@/os/PageHeader"
 
 const SessionsAdminPage = () => {
   const navigate = useNavigate();
@@ -74,7 +74,8 @@ const SessionsAdminPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-slate-950 text-white">
+      <PageHeader title="Admin · Sessions" subtitle="Manage session templates" />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <header className="mb-6">
           <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-3">
