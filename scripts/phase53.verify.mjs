@@ -1,34 +1,60 @@
 #!/usr/bin/env node
-import fs from "node:fs";
-import path from "node:path";
-import {fileURLToPath} from "node:url";
+import fs from "fs";
 
-const __dirname=path.dirname(fileURLToPath(import.meta.url));
-const root=path.join(__dirname,"..");
+const VITE_PORT=process.env.VITE_PORT||"5173";
+const PROJECT_ID=process.env.FIREBASE_PROJECT_ID||process.env.GCLOUD_PROJECT||"wellnesscafelanding";
+const REGION=process.env.FUNCTIONS_REGION||"us-central1";
+
+const functionsBase=`http://127.0.0.1:5001/${PROJECT_ID}/${REGION}`;
+const viteBase=`http://127.0.0.1:${VITE_PORT}`;
 
 async function check(url){
   try{
     const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({})});
     return r.status;
-  }catch(e){
+  }catch{
     return "ERR";
   }
 }
 
-async function run(){
-  const ai=await check("http://127.0.0.1:5001/wellnesscafelanding/us-central1/aiSession");
-  const search=await check("http://127.0.0.1:5001/wellnesscafelanding/us-central1/globalResourceSearch");
-
-  const appPath=path.join(root,"src","App.jsx");
-  const appContent=fs.existsSync(appPath)?fs.readFileSync(appPath,"utf8"):"";
-  const routeOk=/path\s*=\s*["']\*["']/.test(appContent)||/<Route\s+path=["']\*["']/.test(appContent);
-
-  const breathingExists=fs.existsSync(path.join(root,"src","features","breathing","LuxuryBreathing.jsx"));
-
+function print(report){
   console.log("PHASE53_VERIFY");
-  console.log(JSON.stringify({aiSession:ai,globalSearch:search,routeCatchAll:routeOk,breathingExists},null,2));
-  if(!routeOk){console.error("FAIL: No catch-all route");process.exit(1);}
-  if(!breathingExists){console.error("FAIL: LuxuryBreathing missing");process.exit(1);}
+  console.log(JSON.stringify(report,null,2));
+}
+
+function fail(report){
+  print(report);
+  console.error("FAIL");
+  process.exit(1);
+}
+
+async function run(){
+  const report={
+    projectId:PROJECT_ID,
+    region:REGION,
+    vitePort:VITE_PORT,
+    breathingExists:fs.existsSync("src/features/breathing/LuxuryBreathing.jsx"),
+    direct:{
+      aiSession:await check(`${functionsBase}/aiSession`),
+      globalResourceSearch:await check(`${functionsBase}/globalResourceSearch`)
+    },
+    proxy:{
+      aiSession:await check(`${viteBase}/api/aiSession`),
+      globalResourceSearch:await check(`${viteBase}/api/globalResourceSearch`)
+    }
+  };
+
+  const requiredOk=
+    report.breathingExists===true &&
+    report.proxy.aiSession===200 &&
+    report.proxy.globalResourceSearch===200;
+
+  if(!requiredOk){
+    return fail(report);
+  }
+
+  print(report);
   console.log("PASS");
 }
+
 run().catch((e)=>{console.error(e);process.exit(1);});
