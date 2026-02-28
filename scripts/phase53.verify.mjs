@@ -8,9 +8,30 @@ const REGION=process.env.FUNCTIONS_REGION||"us-central1";
 const functionsBase=`http://127.0.0.1:5001/${PROJECT_ID}/${REGION}`;
 const viteBase=`http://127.0.0.1:${VITE_PORT}`;
 
-async function check(url){
+const authToken=process.env.PHASE53_AUTH_TOKEN||"";
+
+async function checkGet(url){
   try{
-    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({})});
+    const r=await fetch(url);
+    return r.status;
+  }catch{
+    return "ERR";
+  }
+}
+
+async function checkPost(url,body){
+  try{
+    const headers={"Content-Type":"application/json"};
+    if(authToken){
+      headers.Authorization=`Bearer ${authToken}`;
+    }
+
+    const r=await fetch(url,{
+      method:"POST",
+      headers,
+      body:JSON.stringify(body)
+    });
+
     return r.status;
   }catch{
     return "ERR";
@@ -29,18 +50,31 @@ function fail(report){
 }
 
 async function run(){
+  // Matches frontend: ChatPanel callAI("aiSession",{...}) + aiSessionClient. mode "telemetry" = no-op ping, returns 200.
+  const aiSessionPayload={
+    mode:"telemetry",
+    event:{}
+  };
+
+  // Matches frontend: directorySearch sends {query,domain,region,category,limit,pageToken}. query required (min 3 chars).
+  const globalSearchPayload={
+    query:"test",
+    domain:"",
+    limit:1
+  };
+
   const report={
     projectId:PROJECT_ID,
     region:REGION,
     vitePort:VITE_PORT,
     breathingExists:fs.existsSync("src/features/breathing/LuxuryBreathing.jsx"),
     direct:{
-      aiSession:await check(`${functionsBase}/aiSession`),
-      globalResourceSearch:await check(`${functionsBase}/globalResourceSearch`)
+      aiSession:await checkGet(`${functionsBase}/aiSession`),
+      globalResourceSearch:await checkGet(`${functionsBase}/globalResourceSearch`)
     },
     proxy:{
-      aiSession:await check(`${viteBase}/api/aiSession`),
-      globalResourceSearch:await check(`${viteBase}/api/globalResourceSearch`)
+      aiSession:await checkPost(`${viteBase}/api/aiSession`,aiSessionPayload),
+      globalResourceSearch:await checkPost(`${viteBase}/api/globalResourceSearch`,globalSearchPayload)
     }
   };
 
