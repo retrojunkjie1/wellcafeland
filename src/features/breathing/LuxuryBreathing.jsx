@@ -1,28 +1,23 @@
-import React,{useState,useEffect,useRef} from "react";
-
-const INHALE_MS = 4000;
-const EXHALE_MS = 6000;
+import React,{useState,useEffect} from "react";
 
 export default function LuxuryBreathing(){
   const [phase,setPhase]=useState("inhale");
-  const timeoutRef=useRef(null);
 
   useEffect(()=>{
-    const run=()=>{
-      const ms=phase==="inhale"?INHALE_MS:EXHALE_MS;
-      timeoutRef.current=setTimeout(()=>{
-        setPhase((p)=>(p==="inhale"?"exhale":"inhale"));
-        run();
-      },ms);
-    };
-    run();
-    return ()=>{if(timeoutRef.current)clearTimeout(timeoutRef.current);};
-  },[phase]);
+    const id=setInterval(()=>{
+      setPhase((p)=>(p==="inhale"?"exhale":"inhale"));
+    },4000);
+    return ()=>clearInterval(id);
+  },[]);
 
   return (
-    <div className="wc-breathing">
-      <div className={`wc-breath-circle ${phase}`}>
-        <span>{phase==="inhale"?"Breathe in slowly":"Release gently"}</span>
+    <div className="flex items-center justify-center py-12">
+      <div className={`relative flex items-center justify-center rounded-full transition-all duration-[4000ms] ease-in-out
+        ${phase==="inhale"?"scale-110":"scale-90"}
+        w-48 h-48 bg-gradient-to-br from-teal-400/20 to-blue-500/20 border border-white/10 backdrop-blur-xl`}>
+        <span className="text-sm text-slate-200">
+          {phase==="inhale"?"Breathe in slowly":"Release gently"}
+        </span>
       </div>
     </div>
   );
