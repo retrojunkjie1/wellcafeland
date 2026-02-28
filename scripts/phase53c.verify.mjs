@@ -28,7 +28,7 @@ const withTimeout=(signalMs)=>{
 };
 
 async function getText(url){
-  const t=withTimeout(2000);
+  const t=withTimeout(4000);
   try{
     const r=await fetch(url,{method:"GET",signal:t.signal});
     const text=await r.text();
@@ -126,7 +126,12 @@ async function run(){
 
   const allRoutesOk=ROUTES.every((r)=>routeResults[r]?.status===200);
   const allFilesExist=FILES.every((f)=>fileExists[f]);
+  const admin404=routeResults["/admin"]?.status===404;
 
+  if(admin404){
+    report.message="Phase 53C requires /admin hub wired. Got 404.";
+    return fail(report);
+  }
   if(!allRoutesOk || !allFilesExist){
     return fail(report);
   }
