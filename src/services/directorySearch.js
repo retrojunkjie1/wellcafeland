@@ -172,7 +172,7 @@ function buildFallbackMeta(fallback, sourceCount, code) {
  * Search directory with pagination and retry
  * @param {AbortSignal} [signal] - Optional abort signal to cancel in-flight request
  */
-export async function searchDirectory({
+async function searchDirectoryImpl({
   query,
   domain,
   location,
@@ -342,4 +342,23 @@ export async function searchDirectory({
     fallbackSource = "curated"
   }
   return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+}
+
+
+/**
+ * Defensive wrapper: never throws to UI. Returns curated fallback on uncaught error.
+ */
+export async function searchDirectory(params) {
+  try {
+    return await searchDirectoryImpl(params);
+  } catch (e) {
+    if (typeof console !== 'undefined' && console.warn) console.warn('[directorySearch] Defensive fallback:', e?.message);
+    const domain = params?.domain || '';
+    const query = String(params?.query || '').trim();
+    let items = [];
+    try {
+      items = getCuratedFallback(domain, query).map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
+    } catch (_) {}
+    return { ok: true, items, nextPageToken: null, meta: { fallback: 'curated', sourceCount: items.length }, error: null };
+  }
 }

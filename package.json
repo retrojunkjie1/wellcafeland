@@ -12,7 +12,8 @@
     "deploy": "npm run predeploy:check && firebase deploy --only hosting",
     "grant:admin": "node scripts/grantAdmin.cjs",
     "grant:admin:aleggi": "node scripts/grantAdmin.cjs aleggi007@gmail.com",
-    "phase52:routes": "node scripts/phase52-route-audit.mjs"
+    "phase52:routes": "node scripts/phase52-route-audit.mjs",
+    "phase53:verify": "node scripts/phase53.verify.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

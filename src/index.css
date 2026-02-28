@@ -372,3 +372,60 @@ body {
     transform-style: preserve-3d;
   }
 }
+
+/* Phase 53: NotReady + LuxuryBreathing */
+.wc-notready {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.wc-notready-card {
+  text-align: center;
+  max-width: 24rem;
+}
+.wc-notready-card h2 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.5rem;
+}
+.wc-notready-card p {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.6);
+}
+.wc-breathing {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.wc-breath-circle {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  transition: transform 4s ease-in-out, opacity 1s ease;
+  background: radial-gradient(circle, rgba(245,213,128,0.15) 0%, transparent 70%);
+  border: 2px solid rgba(245,213,128,0.3);
+}
+.wc-breath-circle.inhale {
+  transform: scale(1.15);
+  opacity: 1;
+}
+.wc-breath-circle.exhale {
+  transform: scale(0.9);
+  opacity: 0.9;
+}
+.wc-breath-circle span {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.85);
+}

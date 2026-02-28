@@ -19,6 +19,7 @@ import { CategoryChips } from "@/components/explore/CategoryChips";
 import { ToolCard } from "@/components/explore/ToolCard";
 import { allTools } from "@/tools/toolResolver";
 import { featureFlags } from "@/config/featureFlags";
+import RouteGuard from "@/components/system/RouteGuard";
 
 const ToolsPageCinematic = () => {
   const navigate = useNavigate();
@@ -128,7 +129,8 @@ const ToolsPageCinematic = () => {
   }, [selectedCategory]);
 
   return (
-    <CinematicContainer theme="calm">
+    <RouteGuard ready={true}>
+      <CinematicContainer theme="calm">
       {/* Phase 60 Ultra: Ambient Orbs Background */}
       <AmbientOrbs density="low" />
       
@@ -228,6 +230,7 @@ const ToolsPageCinematic = () => {
         )}
       </div>
     </CinematicContainer>
+    </RouteGuard>
   );
 };
 

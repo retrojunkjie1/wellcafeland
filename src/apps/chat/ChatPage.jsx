@@ -4,6 +4,7 @@
 import React, { useEffect } from "react";
 import ChatPanel from "@/components/os/ChatPanel";
 import { useOSStore, MODES } from "@/stores/useOSStore";
+import RouteGuard from "@/components/system/RouteGuard";
 
 const ChatPage = () => {
   const { setMode, createChat, currentChatId, messages } = useOSStore();
@@ -17,9 +18,11 @@ const ChatPage = () => {
   }, [setMode, createChat, currentChatId, messages.length]);
 
   return (
-    <div className="flex h-screen flex-col bg-slate-950 animate-fade-in">
-      <ChatPanel />
-    </div>
+    <RouteGuard ready={true}>
+      <div className="flex h-screen flex-col bg-slate-950 animate-fade-in">
+        <ChatPanel />
+      </div>
+    </RouteGuard>
   );
 };
 
