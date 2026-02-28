@@ -360,10 +360,10 @@ const ToolDetailPage = () => {
                                  content.tags?.includes("breathing");
     
     if (isBreathingContent) {
-      // Show interactive breathing view with orb and voice guide
+      // Show interactive breathing view with orb and voice guide — no scrollbars
       return (
         <RouteGuard ready={true}>
-        <div className="relative min-h-[70vh] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+        <div className="relative h-[100dvh] min-h-[560px] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
           <ToolSessionLayout
             tool={{
               id: "breathing",
@@ -428,10 +428,10 @@ const ToolDetailPage = () => {
     );
   }
 
-  // Session-based tool view
+  // Session-based tool view — no scrollbars, containment
   if (toolMeta?.sessionType) {
     return (
-      <div className="relative min-h-[70vh] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+      <div className="relative h-[100dvh] min-h-[560px] overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
         {/* subtle background particles */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           {Array.from({ length: 20 }).map((_, i) => (
