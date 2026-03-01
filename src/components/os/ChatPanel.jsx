@@ -3,7 +3,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { useOSStore } from "@/stores/useOSStore";
 import { useAIStore } from "@/apps/ai/useAIStore";
@@ -182,9 +182,8 @@ function detectDirectoryQuery(text) {
 }
 
 // Helper: Convert base64 to Blob
-const ChatPanel = () => {
+const ChatPanel = ({ initialDraft }) => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { messages, addMessage, injectToolIntoChat, openWorkspace } = useOSStore();
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
@@ -212,19 +211,12 @@ const ChatPanel = () => {
   const lastErrorMessageRef = useRef(null);
   const offlineMessageQueueRef = useRef([]); // Message queue for offline sends
 
-  // Phase 54A: Prefill from ?prefill= (trauma-safe: populate once, no auto-send)
+  // Phase 54A: Prefill from initialDraft (trauma-safe: populate once, no auto-send)
   useEffect(() => {
-    if (prefillAppliedRef.current) return;
-    const prefill = searchParams.get("prefill");
-    if (prefill && typeof prefill === "string") {
-      try {
-        setInput(decodeURIComponent(prefill));
-        prefillAppliedRef.current = true;
-      } catch {
-        prefillAppliedRef.current = true;
-      }
-    }
-  }, [searchParams]);
+    if (prefillAppliedRef.current || !initialDraft) return;
+    setInput(initialDraft);
+    prefillAppliedRef.current = true;
+  }, [initialDraft]);
 
   // Hard reset fallback: Reset conversation state only (not auth/identity)
   const resetConversationState = React.useCallback(() => {

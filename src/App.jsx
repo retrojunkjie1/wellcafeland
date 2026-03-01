@@ -142,7 +142,7 @@ const App = () => {
           
           <Route element={<OSLayout />}>
             {/* OS Routes */}
-            <Route path="/" element={<RouteGuard routeKey="route:/"><StabilizationEntryPage /></RouteGuard>} />
+            <Route path="/" element={<StabilizationEntryPage />} />
             <Route path="/chat" element={<RouteGuard routeKey="route:/chat"><ChatPage /></RouteGuard>} />
             <Route path="/home" element={<RouteGuard routeKey="route:/home"><HomePage /></RouteGuard>} />
             <Route path="/explore" element={<RouteGuard routeKey="route:/explore"><ExplorePage /></RouteGuard>} />
