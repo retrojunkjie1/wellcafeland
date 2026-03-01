@@ -11,6 +11,7 @@ import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 import OSLayout from "./layouts/OSLayout";
 
 import HomePage from "./apps/core/HomePage";
+import StabilizationEntryPage from "./apps/core/StabilizationEntryPage";
 import ChatPage from "./apps/chat/ChatPage";
 import LivingGuidePage from "./apps/living/LivingGuidePage";
 // Phase 70: Route LivingGuidePageV3
@@ -141,7 +142,7 @@ const App = () => {
           
           <Route element={<OSLayout />}>
             {/* OS Routes */}
-            <Route path="/" element={<RouteGuard routeKey="route:/"><ChatPage /></RouteGuard>} />
+            <Route path="/" element={<RouteGuard routeKey="route:/"><StabilizationEntryPage /></RouteGuard>} />
             <Route path="/chat" element={<RouteGuard routeKey="route:/chat"><ChatPage /></RouteGuard>} />
             <Route path="/home" element={<RouteGuard routeKey="route:/home"><HomePage /></RouteGuard>} />
             <Route path="/explore" element={<RouteGuard routeKey="route:/explore"><ExplorePage /></RouteGuard>} />
