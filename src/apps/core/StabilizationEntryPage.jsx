@@ -1,24 +1,13 @@
 // src/apps/core/StabilizationEntryPage.jsx
 // Phase 54A: Voice-first stabilization entry — calm, minimal, no auth required
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mic, ArrowRight, ShieldAlert, Sparkles } from "lucide-react";
-
-const ANCHOR_SENTENCE = "You don't have to explain—just tell me what's happening right now, in one breath.";
+import { Mic, ArrowRight, LifeBuoy, Grid3X3 } from "lucide-react";
 
 export default function StabilizationEntryPage() {
   const navigate = useNavigate();
   const [text, setText] = useState("");
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mq.matches);
-    const handler = (e) => setPrefersReducedMotion(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
 
   const handleContinue = () => {
     const trimmed = text.trim();
@@ -34,23 +23,24 @@ export default function StabilizationEntryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900 flex flex-col items-center justify-center px-4 py-8 pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 flex flex-col items-center justify-center px-4 py-8 pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 space-y-6">
-        {/* Breathing orb */}
+        {/* Breathing orb — respects prefers-reduced-motion */}
         <div className="flex justify-center">
           <div
-            className={`w-20 h-20 rounded-full border border-white/10 bg-white/5 ${
-              prefersReducedMotion ? "" : "animate-pulse"
-            }`}
-            style={prefersReducedMotion ? {} : { animationDuration: "4s" }}
+            className="w-20 h-20 rounded-full border border-white/10 bg-white/5 animate-pulse motion-reduce:animate-none"
+            style={{ animationDuration: "4s" }}
             aria-hidden
           />
         </div>
 
-        {/* Primary sentence */}
-        <p className="text-xl sm:text-2xl font-light text-white/90 text-center leading-relaxed">
-          {ANCHOR_SENTENCE}
-        </p>
+        {/* Title + main line */}
+        <div className="text-center space-y-2">
+          <h1 className="text-xl sm:text-2xl font-light text-white/90">You don&apos;t have to explain—</h1>
+          <p className="text-xl sm:text-2xl font-light text-white/90 leading-relaxed">
+            Just tell me what&apos;s happening right now, in one breath.
+          </p>
+        </div>
 
         {/* Input row */}
         <div className="flex items-center gap-2">
@@ -90,7 +80,7 @@ export default function StabilizationEntryPage() {
             onClick={() => navigate("/assistance")}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 transition"
           >
-            <ShieldAlert className="h-4 w-4" />
+            <LifeBuoy className="h-4 w-4" />
             I need immediate help
           </button>
           <button
@@ -98,7 +88,7 @@ export default function StabilizationEntryPage() {
             onClick={() => navigate("/tools")}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 transition"
           >
-            <Sparkles className="h-4 w-4" />
+            <Grid3X3 className="h-4 w-4" />
             Open tools
           </button>
           <button
@@ -106,7 +96,7 @@ export default function StabilizationEntryPage() {
             onClick={() => navigate("/explore")}
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 hover:bg-white/10 transition"
           >
-            <Sparkles className="h-4 w-4" />
+            <Grid3X3 className="h-4 w-4" />
             Browse
           </button>
         </div>
