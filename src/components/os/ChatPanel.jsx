@@ -11,7 +11,6 @@ import { useAdminTelemetry } from "@/hooks/useAdminTelemetry";
 import MessageBubble from "./MessageBubble";
 import ToolBlock from "./ToolBlock";
 import WelcomeScreen from "./WelcomeScreen";
-import VoiceInput from "./VoiceInput";
 import DirectoryResultBlock from "./DirectoryResultBlock";
 import IntentRenderer from "@/core/intent/IntentRenderer";
 import InAppWebView from "@/components/InAppWebView";
@@ -54,6 +53,7 @@ import { getFaceEmotionSnapshot } from "@/core/system/faceSignal";
 import FaceScanPrompt from "./FaceScanPrompt";
 import { logDebug } from "@/lib/debug";
 import ThreadCueBar from "./ThreadCueBar";
+import ChatComposerBar from "@/components/system/ChatComposerBar";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 
 const TOOL_NAMES = {
@@ -1208,7 +1208,7 @@ const ChatPanel = () => {
   }, [navigate, sendToAI]);
 
   return (
-    <div className="flex h-full flex-col bg-slate-950">
+    <div className="flex min-h-screen flex-col bg-slate-950">
       {/* Phase 19: Provider Monitor Strip */}
       <ProviderMonitorStrip />
       
@@ -1449,7 +1449,7 @@ const ChatPanel = () => {
       {/* Messages Area */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 pb-[90px] sm:pb-8">
+          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 pb-28">
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
               <div className="mb-8 text-center animate-fade-in">
@@ -1685,79 +1685,22 @@ const ChatPanel = () => {
         </div>
       )}
 
-      {/* Input Bar - ChatGPT style */}
-      <div className="border-t border-white/10 bg-slate-950 sticky bottom-0 z-10 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-end gap-2">
-            <div className="flex-1 relative">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => { const v = e.target.value; setInput(v); clearTimeout(ingestDebounceRef.current); ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300); }}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask anything"
-                rows={1}
-                className="w-full resize-none rounded-2xl border border-white/20 bg-white/5 px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none transition-colors"
-                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-              />
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Phase 31: Face scan button */}
-              <button
-                type="button"
-                onClick={() => setFaceScanPromptOpen(true)}
-                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Read my expression"
-                aria-label="Read my expression"
-              >
-                <svg
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-              <VoiceInput
-                onTranscript={(transcribedText) => {
-                  setInput(transcribedText);
-                  // User can edit before sending, or it will auto-send if onSend is provided
-                }}
-                onSend={(transcribedText) => {
-                  if (transcribedText.trim() && !isSending && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
-                    addMessage("user", transcribedText);
-                    sendToAI(transcribedText);
-                  }
-                }}
-                onComplete={(audioBlob) => {
-                  // Phase 14: Open voice session workspace when mic is held
-                  handleVoiceInputComplete(audioBlob);
-                }}
-                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!input.trim() || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSending ? (
-                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                ) : (
-                  <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Phase 54B: Luxury chat composer */}
+      <ChatComposerBar
+        value={input}
+        onChange={(v) => {
+          setInput(v);
+          clearTimeout(ingestDebounceRef.current);
+          ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
+        }}
+        onSend={handleSend}
+        onMic={() => navigate("/tools/voice-checkin")}
+        onFaceScan={() => setFaceScanPromptOpen(true)}
+        disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
+        isSending={isSending}
+        inputRef={textareaRef}
+        placeholder="Ask anything"
+      />
 
       {/* Phase 31: Face Scan Prompt Modal */}
       <FaceScanPrompt
