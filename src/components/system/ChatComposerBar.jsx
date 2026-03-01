@@ -62,7 +62,7 @@ const ChatComposerBar = ({
           placeholder={placeholder}
           rows={1}
           disabled={disabled}
-          className="flex-1 min-h-[48px] max-h-32 resize-none rounded-xl bg-slate-950/30 border border-white/10 px-3 py-3 text-sm sm:text-base text-white placeholder:text-slate-400 focus:border-white/20 focus:outline-none transition-colors"
+          className="flex-1 min-h-[56px] max-h-32 resize-none rounded-xl bg-slate-950/30 border border-white/10 px-3 py-3 text-sm sm:text-base text-white placeholder:text-slate-400 focus:border-white/20 focus:outline-none transition-colors"
         />
         <button
           type="button"
