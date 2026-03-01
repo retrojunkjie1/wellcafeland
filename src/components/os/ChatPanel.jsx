@@ -1449,7 +1449,7 @@ const ChatPanel = () => {
       {/* Messages Area */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 pb-32">
+          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: "calc(var(--wc-bottom-nav-h) + var(--wc-emulator-banner-h) + 96px)" }}>
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
               <div className="mb-8 text-center animate-fade-in">

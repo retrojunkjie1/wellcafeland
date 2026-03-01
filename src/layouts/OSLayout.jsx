@@ -15,10 +15,9 @@ import { navPush } from "@/navigation/navHistory";
 import { featureFlags } from "@/config/featureFlags";
 import { KillSwitchGate } from "@/components/routing/KillSwitchGate";
 import GodEyeDrawer from "@/components/os/GodEyeDrawer";
+import { EmulatorBanner } from "@/components/system/EmulatorBanner";
 
-// C1: Global constants for safe area calculations
-const BOTTOM_NAV_HEIGHT = 60;
-
+// Phase 53C: Uses CSS vars --wc-bottom-nav-h, --wc-emulator-banner-h
 const TABS = [
   { id: "home", label: "Home", path: "/", icon: Home },
   { id: "explore", label: "Explore", path: "/explore", icon: Compass },
@@ -100,7 +99,7 @@ export default function OSLayout() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-white overflow-x-hidden">
+    <div className={"flex h-screen flex-col bg-slate-950 text-white overflow-x-hidden wc-app-shell" + (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true" ? " wc-emulator-active" : "")}>
       {/* Guest Banner */}
       {isGuest && (
         <div className="flex items-center justify-between bg-yellow-500/10 text-yellow-600 text-xs px-4 py-1.5 border-b border-yellow-500/20">
@@ -154,11 +153,8 @@ export default function OSLayout() {
 
       {/* Main */}
       <main
-        className="flex-1 overflow-y-auto overflow-x-hidden"
-        style={{
-          paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))`,
-          backgroundColor: "var(--wc-glass)",
-        }}
+        className="flex-1 overflow-y-auto overflow-x-hidden wc-shell-pad-bottom"
+        style={{ backgroundColor: "var(--wc-glass)" }}
       >
         <NavigationProvider>
           <OSPageChrome />
@@ -168,9 +164,12 @@ export default function OSLayout() {
         </NavigationProvider>
       </main>
 
-      {/* Bottom Nav */}
-      <nav className="border-t border-white/10 bg-slate-950/80 backdrop-blur-xl px-2 wc-safe-bottom">
-        <div className="mx-auto flex max-w-3xl justify-between py-1.5">
+      {/* Emulator Banner — fixed above nav when VITE_USE_EMULATORS=true */}
+      <EmulatorBanner />
+
+      {/* Bottom Nav — Phase 54C2: fixed, safe-area aware */}
+      <nav className="wc-fixed-bottom-nav border-t border-white/10 bg-white/5 backdrop-blur-xl px-2">
+        <div className="mx-auto flex max-w-3xl justify-between items-center h-full min-h-0 py-1.5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const active = isActivePath(tab.path);

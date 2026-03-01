@@ -4,6 +4,9 @@
 @tailwind utilities;
 
 :root {
+  /* Phase 53C: App shell reserved space */
+  --wc-bottom-nav-h: 72px;
+  --wc-emulator-banner-h: 0;
   --background: 225 55% 4%;
   --foreground: 210 40% 98%;
   --card: 225 55% 6%;
@@ -383,6 +386,36 @@ body {
 .wc-safe-inset-bottom {
   bottom: max(0px, env(safe-area-inset-bottom));
 }
+/* Phase 54C2: Global safe-area shell utilities */
+.wc-shell-pad-bottom {
+  padding-bottom: calc(var(--wc-bottom-nav-h) + var(--wc-emulator-banner-h) + env(safe-area-inset-bottom));
+}
+.wc-fixed-emulator {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--wc-emulator-banner-h);
+  z-index: 40;
+}
+.wc-fixed-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--wc-bottom-nav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 50;
+}
+
+
+/* Phase 53C: App shell — reserves space for fixed nav + emulator banner */
+.wc-app-shell {
+  min-height: 100svh;
+  padding-bottom: calc(var(--wc-bottom-nav-h) + env(safe-area-inset-bottom) + var(--wc-emulator-banner-h));
+}
+.wc-app-shell.wc-emulator-active {
+  --wc-emulator-banner-h: 34px;
+}
 
 /* Phase 53: NotReady + LuxuryBreathing */
 .wc-notready {
@@ -440,3 +473,4 @@ body {
   letter-spacing: 0.1em;
   color: rgba(255,255,255,0.85);
 }
+/* brace-check: .wc-breath-circle span block closed */

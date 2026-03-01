@@ -30,7 +30,8 @@
     "phase54b:verify": "node scripts/phase54b.verify.mjs",
     "phase54b:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase54b.verify.mjs",
     "phase54c:verify": "node scripts/phase54c.verify.mjs",
-    "phase54c:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase54c.verify.mjs"
+    "phase54c:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase54c.verify.mjs",
+    "phase54c2:verify": "node scripts/phase54c2.verify.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

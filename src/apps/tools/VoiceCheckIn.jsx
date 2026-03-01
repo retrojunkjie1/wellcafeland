@@ -13,7 +13,9 @@ const isSecureContextOk = () => {
   return host === "localhost" || host === "127.0.0.1";
 };
 
-const TEXT_FALLBACK_PREFILL = "I don't have to explain—just tell me what's happening right now, in one breath.";
+const isLanHost = () => /^192\.168\./.test(window.location.hostname);
+
+const TEXT_FALLBACK_PREFILL = "You don't have to explain—just tell me what's happening right now, in one breath.";
 
 const VoiceCheckIn = ({ onComplete, onCancel }) => {
   const navigate = useNavigate();
@@ -88,7 +90,11 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
       setRecordingTime(0);
     } catch (err) {
       console.error("Failed to start recording:", err);
-      setErrorCard("permission_denied");
+      if (!isSecureContextOk() && isLanHost()) {
+        setErrorCard("secure_context");
+      } else {
+        setErrorCard("permission_denied");
+      }
     }
   }, []);
 
@@ -195,7 +201,7 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
           <div className="lux-card p-4 border border-amber-500/40 bg-amber-500/10 rounded-xl">
             <h3 className="text-sm font-medium text-amber-300 mb-2">Voice needs a secure connection</h3>
             <p className="text-sm text-white/80 mb-3">
-              Open this app on http://localhost:5173 for voice, or serve over https for LAN.
+              Voice needs secure access on this device. Use localhost for dev or enable HTTPS for LAN.
             </p>
             <div className="flex gap-2">
               <button
