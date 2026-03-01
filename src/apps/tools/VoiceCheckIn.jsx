@@ -1,11 +1,22 @@
 // src/apps/tools/VoiceCheckIn.jsx
 // Micro 10-20 second voice check-in
+// Phase 54C: Voice guardrails (no alert, no new tab, graceful fallback)
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Mic, MicOff, Loader2, CheckCircle } from "lucide-react";
 import { detectEmotionFromText, transcribeAudio, guideEngine } from "@/services/multimodalClient";
 
+const isSecureContextOk = () => {
+  if (window.isSecureContext) return true;
+  const host = window.location.hostname;
+  return host === "localhost" || host === "127.0.0.1";
+};
+
+const TEXT_FALLBACK_PREFILL = "I don't have to explain—just tell me what's happening right now, in one breath.";
+
 const VoiceCheckIn = ({ onComplete, onCancel }) => {
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [, setAudioBlob] = useState(null);
@@ -14,16 +25,18 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
   const [response, setResponse] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [errorCard, setErrorCard] = useState(null);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
+  const recordingTimeRef = useRef(0);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
     if (mediaRecorderRef.current?.stream) {
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
     }
     setIsRecording(false);
   }, []);
@@ -31,12 +44,12 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
   useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
+                  
+          
+    setRecordingTime((prev) => {
           const next = prev + 1;
-          // Auto-stop at 20 seconds
-          if (next >= 19) {
-            stopRecording();
-          }
+          recordingTimeRef.current = next;
+          if (next >= 19) stopRecording();
           return next;
         });
       }, 1000);
@@ -47,13 +60,12 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
       }
     }
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isRecording, stopRecording]);
 
-  const startRecording = async () => {
+  const attemptGetUserMedia = useCallback(async () => {
+    setErrorCard(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -61,15 +73,13 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
+        if (event.data.size > 0) chunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
         handleProcessCheckIn(blob);
       };
 
@@ -78,39 +88,45 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
       setRecordingTime(0);
     } catch (err) {
       console.error("Failed to start recording:", err);
-      alert("Microphone access denied. Please enable microphone permissions.");
+      setErrorCard("permission_denied");
     }
-  };
+  }, []);
 
+  const startRecording = async () => {
+    setErrorCard(null);
+    if (!isSecureContextOk()) {
+      setErrorCard("secure_context");
+      return;
+    }
+    await attemptGetUserMedia();
+  };
 
   const handleProcessCheckIn = async (blob) => {
     if (recordingTime < 3) {
-      alert("Please record at least 3 seconds for a meaningful check-in.");
+      setErrorCard("too_short");
       return;
     }
 
     setProcessing(true);
+    setErrorCard(null);
     try {
-      // Step 1: Transcribe
       const transcriptionResult = await transcribeAudio(blob);
       if (!transcriptionResult.ok || !transcriptionResult.text) {
-        alert(transcriptionResult.error || "Failed to transcribe check-in");
+        setErrorCard("transcribe_failed");
         setProcessing(false);
         return;
       }
 
-      const transcript = transcriptionResult.text;
-      setTranscript(transcript);
+      const transcriptText = transcriptionResult.text;
+      setTranscript(transcriptText);
 
-      // Step 2: Detect emotion
-      const emotion = detectEmotionFromText(transcript);
+      const emotion = detectEmotionFromText(transcriptText);
       setEmotionalState({
         state: emotion.emotionalState,
         intensity: emotion.intensity,
         tags: emotion.tags,
       });
 
-      // Step 3: Generate quick grounding suggestion
       let groundingSuggestion = "";
       if (emotion.emotionalState === "anxious" && emotion.intensity >= 3) {
         groundingSuggestion = "Take 3 deep breaths. Name 5 things you can see around you.";
@@ -124,10 +140,7 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
         groundingSuggestion = "Thank you for checking in. You're here, and that matters.";
       }
 
-      // Step 4: Get AI response
-      const aiResponse = await guideEngine(transcript, {
-        mode: "default",
-      });
+      const aiResponse = await guideEngine(transcriptText, { mode: "default" });
 
       setResponse({
         text: aiResponse.ok ? aiResponse.content : groundingSuggestion,
@@ -143,7 +156,7 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
           title: "Voice Check-In",
           summary: `Emotional state: ${emotion.emotionalState} (${emotion.intensity}/5)`,
           data: {
-            transcript,
+            transcript: transcriptText,
             emotionalState: emotion.emotionalState,
             intensity: emotion.intensity,
             tags: emotion.tags,
@@ -154,10 +167,20 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
       }
     } catch (err) {
       console.error("Check-in processing error:", err);
-      alert("Failed to process check-in. Please try again.");
+      setErrorCard("process_failed");
     } finally {
       setProcessing(false);
     }
+  };
+
+  const goToTextChat = () => {
+    setErrorCard(null);
+    navigate("/chat?prefill=" + encodeURIComponent(TEXT_FALLBACK_PREFILL));
+  };
+
+  const openLocalhost = () => {
+    const url = window.location.href.replace(window.location.host, "localhost:5173");
+    window.location.href = url;
   };
 
   return (
@@ -168,7 +191,69 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
           <p className="text-sm text-white/70">Name what's present in one breath (10-20 seconds)</p>
         </div>
 
-        {/* Recording Area */}
+        {errorCard === "secure_context" && (
+          <div className="lux-card p-4 border border-amber-500/40 bg-amber-500/10 rounded-xl">
+            <h3 className="text-sm font-medium text-amber-300 mb-2">Voice needs a secure connection</h3>
+            <p className="text-sm text-white/80 mb-3">
+              Open this app on http://localhost:5173 for voice, or serve over https for LAN.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={openLocalhost}
+                className="px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 hover:bg-amber-500/30 transition"
+              >
+                Open localhost
+              </button>
+              <button
+                onClick={goToTextChat}
+                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 transition"
+              >
+                Use text instead
+              </button>
+            </div>
+          </div>
+        )}
+
+        {errorCard === "permission_denied" && (
+          <div className="lux-card p-4 border border-red-500/40 bg-red-500/10 rounded-xl">
+            <h3 className="text-sm font-medium text-red-300 mb-2">Microphone permission is off</h3>
+            <ul className="text-sm text-white/80 mb-3 list-disc list-inside space-y-1">
+              <li>Chrome: Site settings → Microphone → Allow</li>
+              <li>macOS: System Settings → Privacy & Security → Microphone → allow for browser</li>
+            </ul>
+            <div className="flex gap-2">
+              <button
+                onClick={attemptGetUserMedia}
+                className="px-4 py-2 rounded-xl bg-red-500/20 border border-red-500/40 text-red-200 hover:bg-red-500/30 transition"
+              >
+                Try again
+              </button>
+              <button
+                onClick={goToTextChat}
+                className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 transition"
+              >
+                Use text instead
+              </button>
+            </div>
+          </div>
+        )}
+
+        {(errorCard === "too_short" || errorCard === "transcribe_failed" || errorCard === "process_failed") && (
+          <div className="lux-card p-4 border border-white/20 bg-white/5 rounded-xl">
+            <p className="text-sm text-white/80 mb-2">
+              {errorCard === "too_short" && "Please record at least 3 seconds for a meaningful check-in."}
+              {errorCard === "transcribe_failed" && "Failed to transcribe. Please try again."}
+              {errorCard === "process_failed" && "Failed to process check-in. Please try again."}
+            </p>
+            <button
+              onClick={() => setErrorCard(null)}
+              className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 transition"
+            >
+              OK
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col items-center justify-center min-h-[200px]">
           {isRecording ? (
             <>
@@ -239,7 +324,6 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
         </div>
       </div>
 
-      {/* Bottom Actions */}
       {onCancel && !completed && (
         <div className="border-t border-white/10 p-4">
           <button
@@ -255,4 +339,3 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
 };
 
 export default VoiceCheckIn;
-

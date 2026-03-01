@@ -29,7 +29,7 @@ const ChatComposerBar = ({
   return (
     <div
       data-wc-composer="1"
-      className="sticky bottom-0 z-20 px-4 pb-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+      className="sticky bottom-0 z-20 px-4 pt-3 wc-safe-bottom-lg"
     >
       <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg px-3 py-2 flex items-end gap-2">
         {onFaceScan && (

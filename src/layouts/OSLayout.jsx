@@ -169,7 +169,7 @@ export default function OSLayout() {
       </main>
 
       {/* Bottom Nav */}
-      <nav className="border-t border-white/10 bg-slate-950/80 backdrop-blur-xl px-2 pb-[env(safe-area-inset-bottom)]">
+      <nav className="border-t border-white/10 bg-slate-950/80 backdrop-blur-xl px-2 wc-safe-bottom">
         <div className="mx-auto flex max-w-3xl justify-between py-1.5">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -179,7 +179,7 @@ export default function OSLayout() {
               <button
                 key={tab.id}
                 onClick={() => navigate(tab.path)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] transition ${
+                className={`flex flex-col items-center gap-0.5 h-11 min-w-11 rounded-xl text-[10px] transition ${
                   active
                     ? "bg-amber-400/10 text-amber-200"
                     : "text-white/40 hover:text-white/60"

@@ -373,6 +373,17 @@ body {
   }
 }
 
+/* Phase 54C: Safe area utilities for bottom nav + composer */
+.wc-safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.wc-safe-bottom-lg {
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+}
+.wc-safe-inset-bottom {
+  bottom: max(0px, env(safe-area-inset-bottom));
+}
+
 /* Phase 53: NotReady + LuxuryBreathing */
 .wc-notready {
   min-height: 40vh;
