@@ -19,7 +19,7 @@ const fetchGet=async (url,ms=4000) => {
     const res=await withTimeout(ms,(signal)=>fetch(url,{method:"GET",signal,headers:{"accept":"text/html,*/*"}}));
     return {ok:true,status:res.status};
   }catch(e){
-    return {ok:false,status:"ERR",error:{name:e?.name||"Error",message:e?.message||String(e)}};
+    return {ok:false,error:{name:e?.name||"Error",message:e?.message||String(e)}};
   }
 };
 
@@ -35,18 +35,17 @@ const probeBase=async (base) => {
 };
 
 const resolveBase=async () => {
-  const forced=process.env.PHASE54_BASE_URL||process.env.PHASE53_BASE_URL;
+  const forced=process.env.PHASE53_BASE_URL||process.env.PHASE53C_BASE_URL;
   if(forced){
     const p=await probeBase(forced);
-    return {chosenBase:forced,baseProbes:{[forced]:{ok:p.ok,root:{status:p.root.status||"ERR"},client:{status:p.client.status||"ERR"}}}};
+    return {chosenBase:forced,baseProbes:{[forced]:{ok:p.ok,root:{status:p.root.status||"ERR"},client:{ok:p.client.ok,status:p.client.status||"ERR"}}}};
   }
-  const  orts=parsePorts();
   const ports=parsePorts();
   const baseProbes={};
   for(const port of ports){
     const base=`http://127.0.0.1:${port}`;
     const p=await probeBase(base);
-    baseProbes[base]={ok:p.ok,root:{status:p.root.status||"ERR"},client:{status:p.client.status||"ERR"}};
+    baseProbes[base]={ok:p.ok,root:{status:p.root.status||"ERR"},client:{ok:p.client.ok,status:p.client.status||"ERR"}};
     if(p.ok){
       return {chosenBase:base,baseProbes,ports};
     }
@@ -55,26 +54,20 @@ const resolveBase=async () => {
   return {chosenBase:null,baseProbes,ports};
 };
 
-const readIndex=() => {
-  const p=path.resolve(process.cwd(),"index.html");
-  if(!fs.existsSync(p)){
-    return {ok:false,error:"index.html missing"};
-  }
-  const html=fs.readFileSync(p,"utf8");
-  const hasApp=html.includes('data-wc-app="1"')||html.includes("data-wc-app='1'");
-  const hasEntry=html.includes('data-wc-entry="1"')||html.includes("data-wc-entry='1'");
-  return {ok:true,hasApp,hasEntry};
-};
+const fileExists=(rel) => fs.existsSync(path.resolve(process.cwd(),rel));
 
 const main=async () => {
   const {chosenBase,baseProbes,ports}=await resolveBase();
-  const index=readIndex();
-
   const report={
     chosenBase:chosenBase||"NONE",
     baseProbes,
     ports,
-    index,
+    requiredFiles:{
+      "src/components/system/PageHeader.jsx":fileExists("src/components/system/PageHeader.jsx"),
+      "src/components/system/BackButton.jsx":fileExists("src/components/system/BackButton.jsx"),
+      "src/components/system/NotReadyCard.jsx":fileExists("src/components/system/NotReadyCard.jsx"),
+      "src/apps/admin/AdminHubPage.jsx":fileExists("src/apps/admin/AdminHubPage.jsx")
+    },
     routes:{}
   };
 
@@ -82,18 +75,8 @@ const main=async () => {
 
   if(!chosenBase){
     pass=false;
-  }
-
-  if(!index.ok || !index.hasApp){
-    pass=false;
-  }
-  // Phase54 requires entry marker in index.html (added when Phase54A lands)
-  if(!index.ok || !index.hasEntry){
-    pass=false;
-  }
-
-  if(chosenBase){
-    const routes=["/","/chat","/tools","/home"];
+  }else{
+    const routes=["/","/chat","/tools","/profile","/admin"];
     for(const r of routes){
       const res=await fetchGet(`${chosenBase}${r}`,4000);
       report.routes[r]=res.ok?{status:res.status}:{status:"ERR",error:res.error};
@@ -103,7 +86,13 @@ const main=async () => {
     }
   }
 
-  console.log("PHASE54_VERIFY");
+  for(const [k,v] of Object.entries(report.requiredFiles)){
+    if(!v){
+      pass=false;
+    }
+  }
+
+  console.log("PHASE53C_VERIFY");
   console.log(JSON.stringify(report,null,2));
   console.log(pass?"PASS":"FAIL");
   process.exit(pass?0:1);

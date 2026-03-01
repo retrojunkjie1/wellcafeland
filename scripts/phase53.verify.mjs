@@ -25,6 +25,8 @@ const getLanIp=()=>{
   return "";
 };
 
+const sleep=(ms)=>new Promise((r)=>setTimeout(r,ms));
+
 const withTimeout=(signalMs)=>{
   const controller=new AbortController();
   const id=setTimeout(()=>controller.abort(),signalMs);
@@ -73,7 +75,7 @@ async function looksLikeVite(base){
 }
 
 async function postJson(url,body){
-  const t=withTimeout(2000);
+  const t=withTimeout(6000);
   try{
     const headers={"Content-Type":"application/json"};
     if(authToken){
@@ -91,6 +93,32 @@ async function postJson(url,body){
     t.done();
     return {status:"ERR",error:{name:e.name,message:e.message,code:e.code||null}};
   }
+}
+
+async function postJsonRetry(url,body,attempts=3){
+  let last=null;
+  for(let i=0;i<attempts;i++){
+    const res=await postJson(url,body);
+    if(res.status!=="ERR"){
+      return res;
+    }
+    last=res;
+    await sleep(250*(i+1));
+  }
+  return last||{status:"ERR"};
+}
+
+async function waitForProxy(base){
+  const deadline=Date.now()+12000;
+  const payload={q:"test",limit:1};
+  while(Date.now()<deadline){
+    const res=await postJsonRetry(`${base}/api/globalResourceSearch`,payload,1);
+    if(res && res.status!=="ERR"){
+      return {ready:true,status:res.status};
+    }
+    await sleep(300);
+  }
+  return {ready:false};
 }
 
 async function resolveBase(){
@@ -134,15 +162,27 @@ function fail(report){
 async function run(){
   const {chosen,probes}=await resolveBase();
 
+  const readiness=await waitForProxy(chosen);
+  if(!readiness.ready){
+    return fail({
+      chosenBase:chosen,
+      baseProbes:probes,
+      readiness,
+      message:"Proxy not ready (timeouts). Ensure Vite + emulators are running."
+    });
+  }
+
+
   const aiSessionPayload={mode:"telemetry",event:{}};
   const globalSearchPayload={query:"test",domain:"",limit:1};
 
-  const ai=await postJson(`${chosen}/api/aiSession`,aiSessionPayload);
-  const search=await postJson(`${chosen}/api/globalResourceSearch`,globalSearchPayload);
+  const ai=await postJsonRetry(`${chosen}/api/aiSession`,aiSessionPayload,3);
+  const search=await postJsonRetry(`${chosen}/api/globalResourceSearch`,globalSearchPayload,3);
 
   const report={
     chosenBase:chosen,
     baseProbes:probes,
+    readiness,
     projectId:PROJECT_ID,
     region:REGION,
     ports:PORTS,

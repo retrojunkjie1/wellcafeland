@@ -18,7 +18,13 @@
     "phase53:verify:auth": "PHASE53_AUTH_TOKEN=$PHASE53_AUTH_TOKEN node scripts/phase53.verify.mjs",
     "phase53:verify:lan": "PHASE53_BASE_URL=http://192.168.1.123:5173 node scripts/phase53.verify.mjs",
     "phase53:verify:localhost": "PHASE53_BASE_URL=http://127.0.0.1:5173 node scripts/phase53.verify.mjs",
-    "phase53:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase53.verify.mjs"
+    "phase53:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase53.verify.mjs",
+    "phase53c:verify": "node scripts/phase53c.verify.mjs",
+    "phase53c:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase53c.verify.mjs",
+    "phase53c:ux": "node scripts/phase53c.ux.verify.mjs",
+    "phase53c:ux:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase53c.ux.verify.mjs",
+    "phase54:verify": "node scripts/phase54.verify.mjs",
+    "phase54:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase54.verify.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
