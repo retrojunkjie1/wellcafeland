@@ -53,6 +53,8 @@ import IntelligencePulse from "../hud/IntelligencePulse";
 import { getFaceEmotionSnapshot } from "@/core/system/faceSignal";
 import FaceScanPrompt from "./FaceScanPrompt";
 import { logDebug } from "@/lib/debug";
+import ThreadCueBar from "./ThreadCueBar";
+import { useContinuityStore } from "@/engines/continuity/continuityStore";
 
 const TOOL_NAMES = {
   breathing: "Breathing Exercise",
@@ -186,6 +188,7 @@ const ChatPanel = () => {
   const { messages, addMessage, injectToolIntoChat, openWorkspace } = useOSStore();
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
+  const { ingestUserDraft, pushAction, initThread } = useContinuityStore();
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
   const [input, setInput] = useState("");
@@ -206,6 +209,8 @@ const ChatPanel = () => {
   const connectionStateRef = useRef("idle");
   const lastErrorMessageRef = useRef(null);
   const offlineMessageQueueRef = useRef([]); // Message queue for offline sends
+  const ingestDebounceRef = useRef(null);
+  useEffect(() => { initThread(); }, [initThread]);
   
   // Hard reset fallback: Reset conversation state only (not auth/identity)
   const resetConversationState = React.useCallback(() => {
@@ -870,6 +875,7 @@ const ChatPanel = () => {
         timestamp: Date.now(),
       });
       addMessage("user", offlineUserMessage);
+      pushAction({ type: "message", label: "Sent a message", href: "/chat", ts: Date.now() });
       offlineMessageQueueRef.current.push(text);
       setOfflineQueueLength((n) => n + 1);
       setInput("");
@@ -1140,6 +1146,7 @@ const ChatPanel = () => {
       console.warn("[ChatPanel] Soft redirect failed:", err);
     }
     
+    pushAction({ type: "message", label: "Sent a message", href: "/chat", ts: Date.now() });
     setInput("");
     await sendToAI(text);
   };
@@ -1207,6 +1214,9 @@ const ChatPanel = () => {
       
       {/* Phase 27: Intelligence Pulse Indicator */}
       <IntelligencePulse />
+      
+      {/* Phase 54B: Thread continuity cue */}
+      <ThreadCueBar onContinue={() => textareaRef.current?.focus()} />
       
       {/* Welcome Screen (before conversation starts) */}
       {!hasStarted && (
@@ -1683,7 +1693,7 @@ const ChatPanel = () => {
               <textarea
                 ref={textareaRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => { const v = e.target.value; setInput(v); clearTimeout(ingestDebounceRef.current); ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything"
                 rows={1}
