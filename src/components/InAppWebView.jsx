@@ -14,7 +14,6 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
           {onOpenExternally && (
             <a
               href={url}
-              target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg border border-white/20 text-white/70 hover:bg-white/10 transition"
               title="Open externally"

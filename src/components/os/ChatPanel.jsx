@@ -2,6 +2,7 @@
 // Clean ChatGPT-style chat panel (no stacking)
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useNavigate } from "react-router-dom";
 import { ArrowUp, Loader2 } from "lucide-react";
@@ -54,6 +55,7 @@ import FaceScanPrompt from "./FaceScanPrompt";
 import { logDebug } from "@/lib/debug";
 import ThreadCueBar from "./ThreadCueBar";
 import ChatComposerBar from "@/components/system/ChatComposerBar";
+import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 
 const TOOL_NAMES = {
@@ -195,6 +197,7 @@ const ChatPanel = () => {
   const [isSending, setIsSending] = useState(false);
   const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
+  const [voiceCheckInModalOpen, setVoiceCheckInModalOpen] = useState(false);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
   const [webViewUrl, setWebViewUrl] = useState(null);
   const [webViewTitle, setWebViewTitle] = useState("");
@@ -1449,7 +1452,7 @@ const ChatPanel = () => {
       {/* Messages Area */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: "calc(var(--wc-bottom-nav-h) + var(--wc-emulator-banner-h) + 96px)" }}>
+          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: "calc(var(--wc-composer-h, 84px) + var(--wc-bottom-nav-h, 72px) + env(safe-area-inset-bottom))" }}>
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
               <div className="mb-8 text-center animate-fade-in">
@@ -1685,24 +1688,39 @@ const ChatPanel = () => {
         </div>
       )}
 
-      {/* Phase 54B: Luxury chat composer */}
-      <ChatComposerBar
-        value={input}
-        onChange={(v) => {
-          setInput(v);
-          clearTimeout(ingestDebounceRef.current);
-          ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
-        }}
-        onSend={handleSend}
-        onMic={() => navigate("/tools/voice-checkin")}
-        onFaceScan={() => setFaceScanPromptOpen(true)}
-        disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-        isSending={isSending}
-        inputRef={textareaRef}
-        placeholder="Ask anything"
-      />
+      {/* Phase 55: ComposerDock — portal into shell when dock exists */}
+      {(() => {
+        const composerEl = (
+          <ChatComposerBar
+              value={input}
+              onChange={(v) => {
+                setInput(v);
+                clearTimeout(ingestDebounceRef.current);
+                ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
+              }}
+              onSend={handleSend}
+              onMic={() => setVoiceCheckInModalOpen(true)}
+              onFaceScan={() => setFaceScanPromptOpen(true)}
+              disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
+              isSending={isSending}
+              inputRef={textareaRef}
+              placeholder="Ask anything"
+            />
+        );
+        const dock = typeof document !== "undefined" ? document.getElementById("wc-composer-dock") : null;
+        if (dock) {
+          return createPortal(composerEl, dock);
+        }
+        return composerEl;
+      })()}
 
       {/* Phase 31: Face Scan Prompt Modal */}
+
+      {/* Voice Check-In Modal — in-app, never new tab */}
+      <VoiceCheckInModal
+        open={voiceCheckInModalOpen}
+        onClose={() => setVoiceCheckInModalOpen(false)}
+      />
       <FaceScanPrompt
         open={faceScanPromptOpen}
         onClose={() => setFaceScanPromptOpen(false)}

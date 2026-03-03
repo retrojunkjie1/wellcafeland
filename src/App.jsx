@@ -8,7 +8,7 @@ import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 
-import OSLayout from "./layouts/OSLayout";
+import ExperienceShell from "./system/ExperienceShell";
 
 import HomePage from "./apps/core/HomePage";
 import ChatPage from "./apps/chat/ChatPage";
@@ -135,7 +135,7 @@ const App = () => {
           <Route path="/preview/:token" element={<SessionPreviewPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
-          <Route element={<OSLayout />}>
+          <Route element={<ExperienceShell />}>
             {/* OS Routes */}
             <Route path="/" element={<ChatPage />} />
             <Route path="/chat" element={<ChatPage />} />

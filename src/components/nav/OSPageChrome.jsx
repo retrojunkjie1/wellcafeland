@@ -22,7 +22,7 @@ export function OSPageChrome() {
   if (!title) return null;
 
   return (
-    <div className="sticky top-0 z-40 border-b border-white/10 bg-black/40 backdrop-blur-md">
+    <div className="sticky top-[var(--wc-topbar-h)] z-40 border-b border-white/10 bg-black/40 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl flex-col gap-0.5 px-4 py-1.5 rounded-none">
         <div className="flex items-center justify-between gap-2 h-[32px]">
           {canGoBack ? (

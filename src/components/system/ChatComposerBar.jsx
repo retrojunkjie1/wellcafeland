@@ -2,6 +2,7 @@
 // Phase 54B: Luxury chat composer (voice-first, large hit targets)
 
 import React from "react";
+import { useSheet } from "@/context/SheetContext";
 import { Mic, ArrowUp, Loader2, Smile } from "lucide-react";
 
 const ChatComposerBar = ({
@@ -15,6 +16,7 @@ const ChatComposerBar = ({
   isSending = false,
   inputRef,
 }) => {
+  const { sheetOpen } = useSheet();
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -29,7 +31,7 @@ const ChatComposerBar = ({
   return (
     <div
       data-wc-composer="1"
-      className="sticky bottom-0 z-20 px-4 pt-3 wc-safe-bottom-lg"
+      className={`sticky bottom-0 z-20 px-4 pt-3 wc-safe-bottom-lg transition-opacity ${sheetOpen ? "opacity-0 pointer-events-none" : ""}`}
     >
       <div className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-lg px-3 py-2 flex items-end gap-2">
         {onFaceScan && (

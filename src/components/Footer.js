@@ -17,7 +17,7 @@ const Footer = () => (
               href="https://facebook.com/wellnesscafe"
               className="social-link"
               aria-label="Facebook"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -33,7 +33,7 @@ const Footer = () => (
               href="https://instagram.com/wellnesscafe"
               className="social-link"
               aria-label="Instagram"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -49,7 +49,7 @@ const Footer = () => (
               href="https://twitter.com/wellnesscafe"
               className="social-link"
               aria-label="Twitter"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -65,7 +65,7 @@ const Footer = () => (
               href="https://linkedin.com/company/wellnesscafe"
               className="social-link"
               aria-label="LinkedIn"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg

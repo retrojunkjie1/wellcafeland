@@ -7,6 +7,8 @@
   /* Phase 53C: App shell reserved space */
   --wc-bottom-nav-h: 72px;
   --wc-emulator-banner-h: 0;
+  /* Phase 55: Composer dock height */
+  --wc-composer-h: 84px;
   --background: 225 55% 4%;
   --foreground: 210 40% 98%;
   --card: 225 55% 6%;
@@ -404,9 +406,124 @@ body {
   bottom: 0;
   height: var(--wc-bottom-nav-h);
   padding-bottom: env(safe-area-inset-bottom);
-  z-index: 50;
+  z-index: 30;
 }
 
+/* Global app header — sticky, safe-area, no overlap */
+.wc-global-header {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* AppTopBar — single header, no overlap */
+.wc-topbar {
+  padding-top: env(safe-area-inset-top);
+}
+.wc-topbar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0.375rem 1rem;
+  min-height: 48px;
+}
+.wc-topbar__left {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wc-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: min(520px, 44vw);
+  flex-shrink: 0;
+}
+.wc-topbar__right > * {
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 44px;
+  min-width: 44px;
+}
+.wc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  overflow: hidden;
+}
+.wc-chip .wc-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 779px) {
+  .wc-topbar__subtitle { opacity: 0.6; }
+}
+@media (max-width: 639px) {
+  .wc-topbar__subtitle { display: none; }
+  .wc-chip--guest .wc-chip-label { display: none; }
+}
+
+/* PageHeader: stable right-rail, no overlap */
+.wc-page-header {
+  padding-top: env(safe-area-inset-top);
+  min-height: 44px;
+}
+.wc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: min(520px, 40vw);
+}
+.wc-header-right > * {
+  min-height: 44px;
+  min-width: 44px;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Chip utility for right-rail items — calm, minimal */
+.wc-header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  overflow: hidden;
+}
+.wc-header-chip .wc-header-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Emotion chip: collapse to icon-only below 780px */
+@media (max-width: 779px) {
+  .wc-header-chip--emotion .wc-header-chip-label { display: none; }
+}
+/* Guest label: hide below 640px, keep dot/pill */
+@media (max-width: 639px) {
+  .wc-header-chip--guest .wc-header-chip-label { display: none; }
+}
 
 /* Phase 53C: App shell — reserves space for fixed nav + emulator banner */
 .wc-app-shell {
@@ -474,3 +591,16 @@ body {
   color: rgba(255,255,255,0.85);
 }
 /* brace-check: .wc-breath-circle span block closed */
+
+/* Phase 55: ComposerDock — fixed above bottom nav */
+.wc-composer-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--wc-bottom-nav-h, 72px) + env(safe-area-inset-bottom));
+  z-index: 45;
+  pointer-events: none;
+}
+.wc-composer-dock > * {
+  pointer-events: auto;
+}

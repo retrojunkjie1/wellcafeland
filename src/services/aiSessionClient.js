@@ -27,21 +27,35 @@ export const callAiSession = async (payload, options = {}) => {
     err.code = "AUTH_REQUIRED";
     throw err;
   }
-  const idToken = await user.getIdToken();
+  let idToken = await user.getIdToken();
   const body = { userId: getAnonymousUserId(), ...(payload || {}) };
   const url = buildApiUrl("/aiSession");
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify(body),
-    signal: options.signal,
-  });
-  const data = await resp.json().catch(() => ({}));
+
+  const doFetch = async (token) => {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      signal: options.signal,
+    });
+    const data = await resp.json().catch(() => ({}));
+    return { resp, data };
+  };
+
+  let { resp, data } = await doFetch(idToken);
+
+  if (resp.status === 401) {
+    idToken = await user.getIdToken(true);
+    const retry = await doFetch(idToken);
+    resp = retry.resp;
+    data = retry.data;
+  }
+
   if (!resp.ok) {
-    const err = new Error(data?.error || data?.message || "AI_SESSION_FAILED");
+    const err = new Error(resp.status === 401 ? "Session reconnecting…" : (data?.error || data?.message || "AI_SESSION_FAILED"));
     err.status = resp.status;
     err.code = resp.status === 401 ? "AUTH_REQUIRED" : "AI_SESSION_FAILED";
     err.data = data;

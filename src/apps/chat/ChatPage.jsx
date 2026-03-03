@@ -19,7 +19,7 @@ const ChatPage = () => {
 
   return (
     <RouteGuard ready={true}>
-      <div className="flex h-screen flex-col bg-slate-950 animate-fade-in">
+      <div className="flex flex-1 flex-col min-h-0 animate-fade-in">
         <ChatPanel />
       </div>
     </RouteGuard>

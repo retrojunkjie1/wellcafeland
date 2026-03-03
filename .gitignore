@@ -41,8 +41,10 @@ dist-ssr
 .vite
 .turbo
 .next
+.nuxt
 out
 build
+coverage
 
 # OS files
 Thumbs.db
@@ -62,8 +64,12 @@ serviceAccount*.json
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+firebase-export/
+emulator-data/
 
 # Temporary files
 *.tmp
 *.temp
 .cache
+tmp/
+temp/
