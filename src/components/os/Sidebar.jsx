@@ -22,6 +22,7 @@ import {
   Mic,
   Video,
   Calendar,
+  Shield,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOSStore, MODES } from "@/stores/useOSStore";
@@ -786,9 +787,32 @@ const Sidebar = ({ isMobile = false, onClose }) => {
           </div>
         )}
 
-        {/* Profile Section */}
+        {/* Admin Section — visible to all; locked style when not admin */}
         {showContent && (
           <div className="mt-auto border-t border-white/5 pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (isAdmin) {
+                  navigate("/admin");
+                } else {
+                  navigate("/login?next=/admin");
+                }
+                if (isMobile) onClose?.();
+              }}
+              title={isAdmin ? "Admin Hub" : "Admin only"}
+              className={clsx(
+                "w-full flex items-center gap-2 px-4 py-2 text-xs transition",
+                location.pathname.startsWith("/admin")
+                  ? "text-wcGold bg-wcGold/10"
+                  : isAdmin
+                    ? "text-white/60 hover:text-white hover:bg-white/5"
+                    : "text-white/40 hover:text-white/60 hover:bg-white/5"
+              )}
+            >
+              <Shield className="h-3.5 w-3.5" />
+              <span>Admin</span>
+            </button>
             <button
               type="button"
               onClick={() => {

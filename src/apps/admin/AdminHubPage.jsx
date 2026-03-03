@@ -1,52 +1,63 @@
 // src/apps/admin/AdminHubPage.jsx
-// Phase 53C: Admin hub — God Eye, Overseer, Templates, Theme, Seed tiles
+// Phase 53C: Admin hub — God Eye, Overseer, Templates (minimal, no guards)
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Eye, LayoutDashboard, Zap, FileText, Palette, Database } from "lucide-react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Eye, LayoutDashboard, Zap, FileText } from "lucide-react";
 import PageHeader from "@/components/system/PageHeader";
 import BackButton from "@/components/system/BackButton";
-import { useGodEye } from "@/admin/godeye/GodEyeContext";
+import NotReadyCard from "@/components/system/NotReadyCard";
 
-const TILE_CLASS = "flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-6 text-center hover:bg-white/10 hover:border-amber-400/20 transition min-h-[120px]";
+const TILE_CLASS = "flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/4 px-5 py-5 text-center hover:bg-white/7 transition min-h-[100px]";
 
 export default function AdminHubPage() {
-  const navigate = useNavigate();
-  const { toggle: toggleGodEye } = useGodEye();
-
-  const tiles = [
-    { id: "god-eye", label: "God Eye", desc: "System observability", icon: Eye, onClick: toggleGodEye },
-    { id: "overseer", label: "Overseer Console", desc: "Agent orchestration", icon: LayoutDashboard, to: "/admin/overseer" },
-    { id: "overseer-ultra", label: "Overseer Ultra", desc: "Advanced console", icon: Zap, to: "/admin/overseer-ultra" },
-    { id: "templates", label: "Templates", desc: "Session templates", icon: FileText, to: "/admin/templates" },
-    { id: "theme", label: "Theme", desc: "Theme control", icon: Palette, to: "/admin/theme" },
-    { id: "seed", label: "Seed Data", desc: "Seed & fixtures", icon: Database, to: "/admin/seed" },
-  ];
+  const [showGodEyeNotReady, setShowGodEyeNotReady] = useState(false);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <PageHeader
         title="Admin Hub"
-        subtitle="God-Eye · Overseer · Templates · Theme"
+        subtitle="God-eye visibility and overseer orchestration"
         leftSlot={<BackButton to="/profile" />}
       />
-      <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {tiles.map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => (t.onClick ? t.onClick() : t.to && navigate(t.to))}
-              className={TILE_CLASS}
-            >
-              <Icon className="h-6 w-6 text-amber-400/80" />
-              <span className="text-sm font-medium text-white">{t.label}</span>
-              <span className="text-[11px] text-white/50">{t.desc}</span>
-            </button>
-          );
-        })}
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <button
+          type="button"
+          onClick={() => setShowGodEyeNotReady(true)}
+          className={TILE_CLASS}
+        >
+          <Eye className="h-6 w-6 text-amber-400/80" />
+          <span className="text-sm font-medium text-white">God Eye</span>
+        </button>
+        <Link to="/admin/overseer" className={TILE_CLASS}>
+          <LayoutDashboard className="h-6 w-6 text-amber-400/80" />
+          <span className="text-sm font-medium text-white">Overseer Console</span>
+        </Link>
+        <Link to="/admin/overseer-ultra" className={TILE_CLASS}>
+          <Zap className="h-6 w-6 text-amber-400/80" />
+          <span className="text-sm font-medium text-white">Overseer Ultra</span>
+        </Link>
+        <Link to="/admin/templates" className={TILE_CLASS}>
+          <FileText className="h-6 w-6 text-amber-400/80" />
+          <span className="text-sm font-medium text-white">Templates</span>
+        </Link>
       </div>
+      {showGodEyeNotReady && (
+        <div className="mt-6">
+          <NotReadyCard
+            title="God Eye"
+            body="System observability is being brought online safely."
+            actions={[{ label: "Chat", to: "/chat" }, { label: "Tools", to: "/tools" }]}
+          />
+          <button
+            type="button"
+            onClick={() => setShowGodEyeNotReady(false)}
+            className="mt-3 text-xs text-slate-400 hover:text-white/80"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
     </div>
   );
 }

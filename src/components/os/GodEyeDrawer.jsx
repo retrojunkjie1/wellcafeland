@@ -29,7 +29,7 @@ export default function GodEyeDrawer() {
 
   return (
     <div
-      className={`fixed left-0 top-1/2 -translate-y-1/2 z-[9996] w-48 rounded-r border border-amber-500/30 bg-black/90 px-2 py-2 text-[10px] font-mono text-amber-300/90 ${showByDebug ? "pointer-events-none" : ""}`}
+      className={`fixed left-0 top-1/2 -translate-y-1/2 z-40 w-48 rounded-r border border-amber-500/30 bg-black/90 px-2 py-2 text-[10px] font-mono text-amber-300/90 ${showByDebug ? "pointer-events-none" : ""}`}
       aria-hidden="true"
     >
       {showByAdmin && (

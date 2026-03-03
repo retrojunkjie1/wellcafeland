@@ -1,8 +1,9 @@
 // src/features/breathing/LuxuryBreathingShell.jsx
 // Phase 53: OS-grade layout shell — no scrollbars, luxury glass, containment
+// Phase 53C2: BackButton styling, rounded-3xl, bg-white/5
 
 import React from "react";
-import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 
 export default function LuxuryBreathingShell({
   onBack,
@@ -11,7 +12,7 @@ export default function LuxuryBreathingShell({
   children,
 }) {
   return (
-    <div className="relative flex flex-col overflow-hidden min-h-[400px] rounded-3xl border border-white/10 bg-slate-900/35 backdrop-blur-xl w-full h-full">
+    <div className="relative flex flex-col overflow-hidden min-h-[400px] rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl w-full h-full">
       {/* Luxury background layers */}
       <div className="absolute inset-0 bg-slate-950 pointer-events-none" />
       <div
@@ -23,15 +24,15 @@ export default function LuxuryBreathingShell({
       />
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/40 to-slate-950/80 pointer-events-none" />
 
-      {/* Back button — OS-native circular */}
+      {/* Back button — BackButton styling */}
       {onBack && (
         <button
           type="button"
           onClick={onBack}
-          className="absolute top-[calc(12px+env(safe-area-inset-top))] left-3 z-50 inline-flex items-center justify-center rounded-full p-2.5 text-xs transition-all bg-slate-950/40 border border-white/10 hover:bg-white/10 text-slate-200"
+          className="absolute top-[calc(12px+env(safe-area-inset-top))] left-3 z-50 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 hover:bg-white/10 transition"
           aria-label="Go back"
         >
-          <ArrowLeft size={14} />
+          Back
         </button>
       )}
 

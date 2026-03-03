@@ -32,7 +32,7 @@ const ChatPage = () => {
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 animate-fade-in">
-      <ChatPanel initialDraft={initialDraft} />
+      <ChatPanel initialDraft={initialDraft} dockComposer />
     </div>
   );
 };

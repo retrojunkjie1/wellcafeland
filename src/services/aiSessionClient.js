@@ -38,14 +38,15 @@ export const callAiSession=async(payload={},options={})=>{
     throw e
   }
 
-  const idToken=await user.getIdToken()
+  let idToken=await user.getIdToken()
   let body={userId:getAnonymousUserId(),...(payload||{})}
   if (options?.contextMessages && Array.isArray(options.contextMessages) && options.contextMessages.length>0){
     const lastN=(options.contextMessagesLimit||12)
     const ctx=options.contextMessages.slice(-lastN).map(m=>({role:m.role||"user",text:(m.text||m.content||"").slice(0,8000)}))
     body={...body,contextMessages:ctx}
   }
-  const res=await fetch("/api/aiSession",{
+
+  const doFetch=()=>fetch("/api/aiSession",{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
@@ -54,6 +55,15 @@ export const callAiSession=async(payload={},options={})=>{
     body:JSON.stringify(body),
     signal,
   })
+
+  let res=await doFetch()
+
+  if (res.status===401){
+    try{
+      idToken=await user.getIdToken(true)
+      res=await doFetch()
+    }catch{}
+  }
 
   const json=await res.json().catch(()=>null)
 

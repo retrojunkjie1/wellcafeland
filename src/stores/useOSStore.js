@@ -89,6 +89,10 @@ export const useOSStore = create((set, get) => ({
   exploreOpen: false,
   exploreSection: null, // 'tools' | 'providers' | 'support' | 'education'
 
+  // Dock composer bind (ChatPanel → AppDock when dockComposer)
+  dockComposerBind: null,
+  setDockComposerBind: (v) => set({ dockComposerBind: v }),
+
   // Actions
   createChat: (title = "New Chat") => {
     const welcomeMsg = {

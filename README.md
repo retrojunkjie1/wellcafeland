@@ -71,7 +71,28 @@ REACT_APP_FIREBASE_APP_ID=your_app_id
 ### 3. Start Development
 
 ```bash
-npm start
+npm run dev
+```
+
+#### LAN access (mobile / other devices)
+
+```bash
+# Start dev server bound to 0.0.0.0 (LAN reachable)
+npm run dev:lan
+
+# Kill stale processes on dev ports, then start
+npm run dev:lan:clean
+```
+
+Expect Vite to print:
+- `Local: http://localhost:5173`
+- `Network: http://192.168.x.x:5173`
+
+Confirm LAN is reachable from another device. Proxy (`/api` → functions) is unchanged.
+
+```bash
+# List processes on dev ports
+npm run ports
 ```
 
 ## 📁 Project Structure

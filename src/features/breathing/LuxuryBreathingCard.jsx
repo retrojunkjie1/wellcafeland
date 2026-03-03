@@ -1,8 +1,9 @@
 // src/features/breathing/LuxuryBreathingCard.jsx
 // Phase 53: Premium breathing surface — overflow-hidden, no scrollbars
+// Phase 53C2: BackButton styling, End Session neutral (danger on hover only)
 
 import React from "react";
-import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 
 export default function LuxuryBreathingCard({
   onBack,
@@ -12,16 +13,16 @@ export default function LuxuryBreathingCard({
   children,
 }) {
   return (
-    <div className="relative rounded-3xl border border-white/10 bg-slate-950/60 backdrop-blur-xl shadow-xl overflow-hidden">
-      {/* Back button */}
+    <div className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden">
+      {/* Back button — BackButton styling */}
       {onBack && (
         <button
           type="button"
           onClick={onBack}
-          className="absolute top-[calc(12px+env(safe-area-inset-top))] left-3 z-50 inline-flex items-center justify-center rounded-full p-2.5 text-xs transition-all hover:scale-105 backdrop-blur-xl bg-white/10 border border-white/20 text-amber-200/80 hover:text-amber-200"
+          className="absolute top-[calc(12px+env(safe-area-inset-top))] left-3 z-50 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white/80 hover:bg-white/10 transition"
           aria-label="Go back"
         >
-          <ArrowLeft size={14} />
+          Back
         </button>
       )}
 
@@ -36,7 +37,7 @@ export default function LuxuryBreathingCard({
           <button
             type="button"
             onClick={onToggleVoice}
-            className="flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition"
+            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition"
           >
             {voiceEnabled ? (
               <>
@@ -53,13 +54,13 @@ export default function LuxuryBreathingCard({
         </div>
       )}
 
-      {/* End Session — neutral by default, red on hover */}
+      {/* End Session — neutral by default, danger on hover/focus only */}
       {onEnd && (
         <div className="px-4 pb-6">
           <button
             type="button"
             onClick={onEnd}
-            className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-sm font-medium text-white/90 hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-300 transition"
+            className="w-full rounded-xl border border-white/10 bg-white/6 px-4 py-3 text-sm font-medium text-white/90 hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-300 focus:bg-red-500/15 focus:border-red-500/30 focus:text-red-300 transition"
           >
             End Session
           </button>

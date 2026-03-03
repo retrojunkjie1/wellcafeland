@@ -19,9 +19,9 @@ import { GodEyeProvider, useGodEye } from "@/admin/godeye/GodEyeContext";
 import { useAdminClaim } from "@/hooks/useAdminClaim";
 import { RouteGuard } from "@/os/RouteGuard";
 import { useSmartBack } from "@/lib/useSmartBack";
-
-// C1: Global constants for safe area calculations
-const BOTTOM_NAV_HEIGHT = 60;
+import AppDock from "@/components/system/AppDock";
+import { SheetProvider, useSheet } from "@/context/SheetContext";
+import { EmulatorStatusPill } from "@/components/system/EmulatorStatusPill";
 
 const TABS = [
   { id: "home", label: "Home", path: "/", icon: Home },
@@ -112,6 +112,7 @@ export default function OSLayout() {
 
   return (
     <GodEyeProvider>
+    <SheetProvider>
     <OSLayoutInner
       location={location}
       navigate={navigate}
@@ -123,6 +124,7 @@ export default function OSLayout() {
       user={user}
       isActivePath={isActivePath}
     />
+    </SheetProvider>
     </GodEyeProvider>
   );
 }
@@ -140,26 +142,29 @@ function OSLayoutInner({
 }) {
   const { isAdmin } = useAdminClaim();
   const { toggle: toggleGodEye } = useGodEye();
+  const { sheetOpen } = useSheet();
 
   return (
-    <div className="flex h-screen flex-col bg-slate-950 text-white overflow-x-hidden">
+    <div className={`flex h-screen flex-col bg-slate-950 text-white overflow-x-hidden [--wc-topbar-h:72px] [--wc-dock-h:76px] ${sheetOpen ? "wc-sheet-open" : ""}`}>
       {/* Guest Banner */}
       {isGuest && (
         <div className="flex items-center justify-between bg-yellow-500/10 text-yellow-600 text-xs px-4 py-1.5 border-b border-yellow-500/20">
-          <span>Guest mode</span>
+          <span className="hidden sm:inline">Guest mode</span>
           <button
             onClick={() => navigate("/login")}
-            className="rounded-full border border-yellow-600/40 bg-yellow-600/10 px-3 py-0.5 text-[11px] font-medium hover:bg-yellow-600/20 transition"
+            className="rounded-full border border-yellow-600/40 bg-yellow-600/10 p-2 sm:px-3 sm:py-0.5 text-[11px] font-medium hover:bg-yellow-600/20 transition shrink-0"
+            aria-label="Sign in"
           >
-            Sign in
+            <span className="hidden sm:inline">Sign in</span>
+            <svg className="h-4 w-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
           </button>
         </div>
       )}
 
-      {/* Top App Bar */}
-      <header className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl px-4 py-1.5 h-[48px]">
+      {/* Top App Bar — sticky, safe-area, 3-col grid so right never crowds center */}
+      <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top)] grid grid-cols-[1fr_auto_1fr] items-center gap-2 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl px-4 py-1.5 min-h-[var(--wc-topbar-h)]">
         {/* Left: Back (when not home) + Home */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           {!isHome && canGoBack && (
             <button
               type="button"
@@ -187,31 +192,31 @@ function OSLayoutInner({
         </button>
         </div>
 
-        <div />
+        <div className="min-w-0 text-center truncate text-xs text-white/60 px-2">WellnessCafe</div>
 
-        {/* Right */}
-        <div className="flex items-center gap-2">
+        {/* Right cluster — never overflow */}
+        <div className="flex items-center justify-end gap-2 min-w-0 flex-wrap max-w-[min(560px,48vw)]">
           {isAdmin && (
             <button
               type="button"
               onClick={toggleGodEye}
-              className="flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-xs text-amber-200 hover:bg-amber-400/20 transition"
+              className="shrink-0 flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-1.5 text-xs text-amber-200 hover:bg-amber-400/20 transition min-h-[44px]"
               aria-label="Toggle God-Eye"
             >
               <span className="text-amber-400">◉</span>
-              <span>God-Eye</span>
+              <span className="hidden sm:inline">God-Eye</span>
             </button>
           )}
           {featureFlags.showAnonymousBadge && isGuest && (
-            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/70">Anonymous</span>
+            <div className="shrink-0 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs min-h-[44px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+              <span className="hidden sm:inline text-white/70">Anonymous</span>
             </div>
           )}
           {isAuthenticated && user?.email && (
-            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              <span className="text-white/70">{user.email.split("@")[0]}</span>
+            <div className="shrink-0 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs min-w-0 max-w-[10rem] sm:max-w-[14rem] truncate min-h-[44px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+              <span className="text-white/70 truncate">{user.email.split("@")[0]}</span>
             </div>
           )}
         </div>
@@ -221,7 +226,7 @@ function OSLayoutInner({
       <main
         className="flex-1 overflow-y-auto overflow-x-hidden os-scrollbar"
         style={{
-          paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))`,
+          paddingBottom: "calc(var(--wc-dock-h,76px) + env(safe-area-inset-bottom))",
           backgroundColor: "var(--wc-glass)",
         }}
       >
@@ -235,30 +240,14 @@ function OSLayoutInner({
         </NavigationProvider>
       </main>
 
-      {/* Bottom Nav */}
-      <nav className="border-t border-white/10 bg-slate-950/80 backdrop-blur-xl px-2 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-3xl justify-between py-1.5">
-          {[...TABS, ...(isAdmin ? [ADMIN_TAB] : [])].map((tab) => {
-            const Icon = tab.icon;
-            const active = isActivePath(tab.path);
+      <AppDock
+        location={location}
+        navigate={navigate}
+        isActivePath={isActivePath}
+        isAdmin={isAdmin}
+      />
 
-            return (
-              <button
-                key={tab.id}
-                onClick={() => navigate(tab.path)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg text-[10px] transition ${
-                  active
-                    ? "bg-amber-400/10 text-amber-200"
-                    : "text-white/40 hover:text-white/60"
-                }`}
-              >
-                <Icon className={`h-5 w-5 ${active ? "text-amber-300" : "text-white/50"}`} />
-                <span className="leading-tight">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <EmulatorStatusPill />
 
       <GodEyeDrawer />
     </div>

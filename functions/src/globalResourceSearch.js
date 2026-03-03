@@ -376,9 +376,11 @@ exports.globalResourceSearch = onRequest(
                 message: "RapidAPI subscription/app mismatch or wrong host for this API",
               });
             }
-            // 401/403/404 = config/subscription mismatch — do NOT open circuit
+            // 401/403/404 = config/subscription mismatch — return 200 with fallback (never blank)
             if (status === 401 || status === 403 || status === 404) {
-              return buildProviderNotSubscribedResponse(normalizedQuery, domain || "");
+              const fallback = buildFallbackResponse(normalizedQuery, domain || "", "RAPIDAPI_NOT_SUBSCRIBED");
+              fallback.meta = { ...(fallback.meta || {}), live: "unavailable", reason: "RAPIDAPI_NOT_SUBSCRIBED" };
+              return fallback;
             }
             // Circuit only for 429 / >=500 / timeout / network
             if (status === 429) {

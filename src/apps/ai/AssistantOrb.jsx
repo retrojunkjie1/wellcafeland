@@ -100,7 +100,7 @@ const AssistantOrb = () => {
         <button
           type="button"
           onClick={handleRepeatFromOrb}
-          className="fixed max-w-[220px] truncate rounded-full border border-border bg-background/95 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm hover:bg-muted transition-colors z-[9998]"
+          className="fixed max-w-[220px] truncate rounded-full border border-border bg-background/95 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm hover:bg-muted transition-colors z-50"
           style={{
             bottom: "calc(140px + env(safe-area-inset-bottom))",
             right: "calc(16px + env(safe-area-inset-right))",
@@ -121,7 +121,7 @@ const AssistantOrb = () => {
       <button
         type="button"
         onClick={handleOpenConsole}
-        className="fixed flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 shadow-lg hover:bg-amber-400 transition-transform hover:scale-105 active:scale-95 z-[9999] pointer-events-auto"
+        className="fixed flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 shadow-lg hover:bg-amber-400 transition-transform hover:scale-105 active:scale-95 z-50 pointer-events-auto"
         style={{
           bottom: "calc(80px + env(safe-area-inset-bottom))",
           right: "calc(16px + env(safe-area-inset-right))",
@@ -140,7 +140,7 @@ const AssistantOrb = () => {
       {/* wc_debug: orb state overlay (dev only) */}
       {isDebugEnabled() && import.meta.env.DEV && (
         <div
-          className="fixed z-[9997] rounded bg-black/80 px-2 py-1 text-[10px] font-mono text-amber-300 pointer-events-none"
+          className="fixed z-40 rounded bg-black/80 px-2 py-1 text-[10px] font-mono text-amber-300 pointer-events-none"
           style={{
             bottom: "calc(180px + env(safe-area-inset-bottom))",
             right: "calc(16px + env(safe-area-inset-right))",

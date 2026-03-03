@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
+    "dev:lan": "vite --host 0.0.0.0 --port 5173",
+    "dev:lan:clean": "node scripts/kill-ports.mjs && vite --host 0.0.0.0 --port 5173",
+    "ports": "lsof -nP -iTCP:5173,5174,5175,4173,3000 -sTCP:LISTEN || true",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -13,6 +16,7 @@
     "grant:admin": "node scripts/grantAdmin.cjs",
     "grant:admin:aleggi": "node scripts/grantAdmin.cjs aleggi007@gmail.com",
     "phase52:routes": "node scripts/phase52-route-audit.mjs",
+    "verify:http:selftest": "node -e \"fetch('http://127.0.0.1:5173/').then(r=>console.log('HTTP',r.status)).catch(e=>console.error('ERR',e))\"",
     "phase53:verify": "node scripts/phase53.verify.mjs",
     "phase53:verify:proxy": "VITE_PORT=5173 node scripts/phase53.verify.mjs",
     "phase53:verify:auth": "PHASE53_AUTH_TOKEN=$PHASE53_AUTH_TOKEN node scripts/phase53.verify.mjs",
@@ -24,7 +28,12 @@
     "phase53c:ux": "node scripts/phase53c.ux.verify.mjs",
     "phase53c:ux:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase53c.ux.verify.mjs",
     "phase54:verify": "node scripts/phase54.verify.mjs",
-    "phase54:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase54.verify.mjs"
+    "phase54:verify:ports": "VITE_PORT=5173,5174,5175,4173,3000 node scripts/phase54.verify.mjs",
+    "check:port": "node scripts/dev-port-check.mjs",
+    "vite:base": "node scripts/viteBase.detect.mjs",
+    "phaseUX:diagnose": "node scripts/phaseUX.diagnose.mjs",
+    "phaseUX:verify": "node scripts/phaseUX.verify.mjs",
+    "phaseUX:markers": "node scripts/phaseUX.markers.verify.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",

@@ -12,15 +12,14 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
         <span className="text-sm text-white/80 truncate flex-1 mr-4">{title}</span>
         <div className="flex items-center gap-2 flex-shrink-0">
           {onOpenExternally && (
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => window.open(url, "_blank", "noopener,noreferrer")}
               className="p-2 rounded-lg border border-white/20 text-white/70 hover:bg-white/10 transition"
               title="Open externally"
             >
               <ExternalLink className="h-4 w-4" />
-            </a>
+            </button>
           )}
           <button
             type="button"

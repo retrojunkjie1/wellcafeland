@@ -2,41 +2,56 @@
 // Micro 10-20 second voice check-in
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Mic, MicOff, Loader2, CheckCircle } from "lucide-react";
 import { detectEmotionFromText, transcribeAudio, guideEngine } from "@/services/multimodalClient";
+import { useStateEngine } from "@/hooks/useStateEngine";
+import AudioWaveMeter from "@/components/audio/AudioWaveMeter";
 
-const VoiceCheckIn = ({ onComplete, onCancel }) => {
+const TEXT_FALLBACK_PREFILL = "You don't have to explain—just tell me what's happening right now, in one breath.";
+
+const VoiceCheckIn = ({ onComplete, onCancel, onUseTextInstead }) => {
+  const navigate = useNavigate();
+  const {actions} = useStateEngine();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [stream, setStream] = useState(null);
   const [, setAudioBlob] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [emotionalState, setEmotionalState] = useState(null);
   const [response, setResponse] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [error, setError] = useState(null);
   const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
+  const recordingTimeRef = useRef(0);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
-    if (mediaRecorderRef.current?.stream) {
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    const s = streamRef.current;
+    if (s) {
+      s.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      setStream(null);
     }
     setIsRecording(false);
   }, []);
 
   useEffect(() => {
+    recordingTimeRef.current = recordingTime;
+  }, [recordingTime]);
+
+  useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
+        setRecordingTime((prev) => {
           const next = prev + 1;
-          // Auto-stop at 20 seconds
-          if (next >= 19) {
-            stopRecording();
-          }
+          if (next >= 19) stopRecording();
           return next;
         });
       }, 1000);
@@ -54,22 +69,30 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
   }, [isRecording, stopRecording]);
 
   const startRecording = async () => {
+    setError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const audioStream = await navigator.mediaDevices.getUserMedia({audio: true});
+      streamRef.current = audioStream;
+      setStream(audioStream);
+
+      actions.setLastTool({id: "voice_checkin"});
+      actions.setLastInput({type: "voice"});
+      actions.setSignal({label: "present", intensity: 4, valence: "neu"});
+
+      const mediaRecorder = new MediaRecorder(audioStream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
+        if (event.data.size > 0) chunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, {type: "audio/webm"});
         setAudioBlob(blob);
-        stream.getTracks().forEach(track => track.stop());
+        audioStream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setStream(null);
         handleProcessCheckIn(blob);
       };
 
@@ -78,23 +101,24 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
       setRecordingTime(0);
     } catch (err) {
       console.error("Failed to start recording:", err);
-      alert("Microphone access denied. Please enable microphone permissions.");
+      setError("Microphone access is blocked. Enable it in browser permissions.");
+      actions.setSignal({label: "blocked", intensity: 6, valence: "neg"});
     }
   };
 
 
   const handleProcessCheckIn = async (blob) => {
-    if (recordingTime < 3) {
-      alert("Please record at least 3 seconds for a meaningful check-in.");
+    if (recordingTimeRef.current < 3) {
+      setError("Please record at least 3 seconds for a meaningful check-in.");
       return;
     }
 
+    setError(null);
     setProcessing(true);
     try {
-      // Step 1: Transcribe
       const transcriptionResult = await transcribeAudio(blob);
       if (!transcriptionResult.ok || !transcriptionResult.text) {
-        alert(transcriptionResult.error || "Failed to transcribe check-in");
+        setError(transcriptionResult.error || "Failed to transcribe check-in");
         setProcessing(false);
         return;
       }
@@ -149,16 +173,54 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
             tags: emotion.tags,
             grounding: groundingSuggestion,
           },
-          durationSeconds: recordingTime,
+          durationSeconds: recordingTimeRef.current,
         });
       }
     } catch (err) {
       console.error("Check-in processing error:", err);
-      alert("Failed to process check-in. Please try again.");
+      setError("Failed to process check-in. Please try again.");
     } finally {
       setProcessing(false);
     }
   };
+
+  const isSecureContext = typeof window !== "undefined" && (
+    window.location.protocol === "https:" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  );
+
+  if (!isSecureContext) {
+    const openLocalhost = () => {
+      if (typeof window !== "undefined") {
+        window.location.href = `http://127.0.0.1:${window.location.port || "5173"}${window.location.pathname || "/"}${window.location.search || ""}`;
+      }
+    };
+    return (
+      <div className="flex flex-col h-full items-center justify-center p-6">
+        <div className="max-w-sm rounded-2xl border border-amber-400/30 bg-white/5 backdrop-blur-xl p-6 text-center shadow-xl">
+          <h3 className="text-lg font-medium text-white mb-2">Microphone unavailable</h3>
+          <p className="text-sm text-white/70 mb-4">Audio capture requires localhost or HTTPS.</p>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <button
+              type="button"
+              onClick={openLocalhost}
+              className="rounded-xl bg-amber-500/20 border border-amber-400/30 px-4 py-2.5 text-sm font-medium text-amber-200 hover:bg-amber-500/30 transition"
+            >
+              Open localhost
+            </button>
+            <button
+              type="button"
+              onClick={() => (onUseTextInstead || onCancel)?.()}
+              className="rounded-xl border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/70 hover:bg-white/10 transition"
+            >
+              Use text instead
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-slate-950 text-white">
@@ -168,10 +230,39 @@ const VoiceCheckIn = ({ onComplete, onCancel }) => {
           <p className="text-sm text-white/70">Name what's present in one breath (10-20 seconds)</p>
         </div>
 
+        {error && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 space-y-3">
+            <p>{error}</p>
+            {error.includes("Microphone") && (
+              <button
+                type="button"
+                onClick={() => { setError(null); startRecording(); }}
+                className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30 transition"
+              >
+                Try again
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                const fn = onUseTextInstead || onCancel;
+                if (fn) fn();
+                else navigate(`/chat?prefill=${encodeURIComponent(TEXT_FALLBACK_PREFILL)}`);
+              }}
+              className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/10 transition"
+            >
+              Use text instead
+            </button>
+          </div>
+        )}
+
         {/* Recording Area */}
         <div className="flex flex-col items-center justify-center min-h-[200px]">
           {isRecording ? (
             <>
+              <div className="w-full max-w-xs mb-4 px-2">
+                <AudioWaveMeter stream={stream} active={isRecording} height={28} />
+              </div>
               <div className="text-center mb-6">
                 <div className="text-3xl font-medium text-white mb-2">{recordingTime}s</div>
                 <div className="text-sm text-white/50">Recording...</div>

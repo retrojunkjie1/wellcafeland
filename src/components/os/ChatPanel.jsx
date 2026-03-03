@@ -4,14 +4,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useNavigate } from "react-router-dom";
-import { ArrowUp, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useOSStore } from "@/stores/useOSStore";
 import { useAIStore } from "@/apps/ai/useAIStore";
 import { useAdminTelemetry } from "@/hooks/useAdminTelemetry";
 import MessageBubble from "./MessageBubble";
 import ToolBlock from "./ToolBlock";
 import WelcomeScreen from "./WelcomeScreen";
-import VoiceInput from "./VoiceInput";
 import DirectoryResultBlock from "./DirectoryResultBlock";
 import IntentRenderer from "@/core/intent/IntentRenderer";
 import InAppWebView from "@/components/InAppWebView";
@@ -53,6 +52,8 @@ import IntelligencePulse from "../hud/IntelligencePulse";
 import { getFaceEmotionSnapshot } from "@/core/system/faceSignal";
 import FaceScanPrompt from "./FaceScanPrompt";
 import AuthGateCard from "@/components/system/AuthGateCard";
+import ChatComposerBar from "@/components/system/ChatComposerBar";
+import { useStateEngine } from "@/hooks/useStateEngine";
 import { logDebug } from "@/lib/debug";
 
 const TOOL_NAMES = {
@@ -182,10 +183,11 @@ function detectDirectoryQuery(text) {
 }
 
 // Helper: Convert base64 to Blob
-const ChatPanel = ({ initialDraft }) => {
+const ChatPanel = ({ initialDraft, dockComposer = false }) => {
   const navigate = useNavigate();
   const { messages, addMessage, injectToolIntoChat, openWorkspace } = useOSStore();
   const { setThinking, isThinking } = useAIStore();
+  const { actions } = useStateEngine();
   const identity = useSessionIdentity();
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
@@ -200,7 +202,7 @@ const ChatPanel = ({ initialDraft }) => {
   const [webViewUrl, setWebViewUrl] = useState(null);
   const [webViewTitle, setWebViewTitle] = useState("");
   const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const composerRef = useRef(null);
   const isSendingRef = useRef(false);
   // PHASE H: Chat state preservation
   const lastUnsentMessageRef = useRef(null);
@@ -217,6 +219,21 @@ const ChatPanel = ({ initialDraft }) => {
     setInput(initialDraft);
     prefillAppliedRef.current = true;
   }, [initialDraft]);
+
+  // B4: Dock composer bind (ChatPanel → AppDock when dockComposer)
+  useEffect(() => {
+    if (!dockComposer) return;
+    const setDockComposerBind = useOSStore.getState().setDockComposerBind;
+    setDockComposerBind({
+      input,
+      setInput,
+      handleSend,
+      onFaceScan: () => setFaceScanPromptOpen(true),
+      disabled: isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response",
+      isSending,
+    });
+    return () => setDockComposerBind(null);
+  }, [dockComposer, input, isSending, handleSend]);
 
   // Hard reset fallback: Reset conversation state only (not auth/identity)
   const resetConversationState = React.useCallback(() => {
@@ -870,19 +887,8 @@ const ChatPanel = ({ initialDraft }) => {
     }
   }, [messages, addMessage, injectToolIntoChat, setThinking, logEvent, openWorkspace, navigate]);
 
-  const handleVoiceInputComplete = (audioBlob) => {
-    // Phase 14: Open voice session workspace when mic is held
-    if (audioBlob) {
-      openWorkspace({
-        type: "voice-session",
-        title: "Voice Session",
-        data: { audioBlob },
-      });
-    }
-  };
-
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (overrideText) => {
+    const text = (overrideText ?? input).trim();
     // Guard: Prevent duplicate sends using connection state
     if (!text || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
       return;
@@ -904,6 +910,10 @@ const ChatPanel = ({ initialDraft }) => {
     }
 
     // PHASE H: Restore last unsent message if needed (already in input via state)
+
+    // Phase 55: State Engine — lightweight signal snapshot on send
+    actions.setLastInput({type: "text", value: text.slice(0, 80)});
+    actions.setSignal({label: "sharing", intensity: 3, valence: "neu"});
 
     // Phase 17: Enrich message with emotion before storing
     const userMessage = {
@@ -1171,13 +1181,6 @@ const ChatPanel = ({ initialDraft }) => {
     await sendToAI(text);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   // Phase 31: Face scan handler
   const handleFaceScan = async () => {
     try {
@@ -1243,7 +1246,7 @@ const ChatPanel = ({ initialDraft }) => {
   }
 
   return (
-    <div className="flex h-full flex-col bg-slate-950">
+    <div className="flex min-h-screen flex-col bg-slate-950">
       {/* Phase 19: Provider Monitor Strip */}
       <ProviderMonitorStrip />
       
@@ -1481,7 +1484,7 @@ const ChatPanel = ({ initialDraft }) => {
       {/* Messages Area */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 pb-[90px] sm:pb-8">
+          <div className="mx-auto w-full max-w-3xl px-4 pt-4 pb-28 sm:px-6 sm:pb-28">
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
               <div className="mb-8 text-center animate-fade-in">
@@ -1717,79 +1720,20 @@ const ChatPanel = ({ initialDraft }) => {
         </div>
       )}
 
-      {/* Input Bar - ChatGPT style */}
-      <div className="border-t border-white/10 bg-slate-950 sticky bottom-0 z-10 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto w-full max-w-screen-xl px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-end gap-2">
-            <div className="flex-1 relative">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask anything"
-                rows={1}
-                className="w-full resize-none rounded-2xl border border-white/20 bg-white/5 px-3 sm:px-4 py-2 sm:py-3 pr-10 sm:pr-12 text-sm sm:text-base text-white placeholder:text-white/50 focus:border-white/30 focus:outline-none transition-colors"
-                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-              />
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Phase 31: Face scan button */}
-              <button
-                type="button"
-                onClick={() => setFaceScanPromptOpen(true)}
-                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-white transition hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Read my expression"
-                aria-label="Read my expression"
-              >
-                <svg
-                  className="h-4 w-4 sm:h-5 sm:w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-              <VoiceInput
-                onTranscript={(transcribedText) => {
-                  setInput(transcribedText);
-                  // User can edit before sending, or it will auto-send if onSend is provided
-                }}
-                onSend={(transcribedText) => {
-                  if (transcribedText.trim() && !isSending && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
-                    addMessage("user", transcribedText);
-                    sendToAI(transcribedText);
-                  }
-                }}
-                onComplete={(audioBlob) => {
-                  // Phase 14: Open voice session workspace when mic is held
-                  handleVoiceInputComplete(audioBlob);
-                }}
-                disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={!input.trim() || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSending ? (
-                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                ) : (
-                  <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Phase 54B: Luxury chat composer (hidden when dockComposer; AppDock shows it) */}
+      {!dockComposer && (
+        <ChatComposerBar
+          ref={composerRef}
+          value={input}
+          onChange={(v) => setInput(v)}
+          onSend={handleSend}
+          onMic={() => navigate("/tools/voice-checkin")}
+          onFaceScan={() => setFaceScanPromptOpen(true)}
+          disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
+          placeholder="Ask anything"
+          isSending={isSending}
+        />
+      )}
 
       {/* Phase 31: Face Scan Prompt Modal */}
       <FaceScanPrompt

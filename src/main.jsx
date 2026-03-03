@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext";
+import { StateEngineProvider } from "./context/StateEngineContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { WcOsProvider } from "./core/WcOsProvider";
 import { initTheme } from "@/theme/themeStore";
@@ -31,7 +32,9 @@ root.render(
     <ErrorBoundary showDetails={true}>
       <WcOsProvider>
         <AuthProvider>
-          <App />
+          <StateEngineProvider>
+            <App />
+          </StateEngineProvider>
         </AuthProvider>
       </WcOsProvider>
     </ErrorBoundary>

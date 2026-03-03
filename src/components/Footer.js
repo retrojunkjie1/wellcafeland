@@ -17,8 +17,8 @@ const Footer = () => (
               href="https://facebook.com/wellnesscafe"
               className="social-link"
               aria-label="Facebook"
-              target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => { e.preventDefault(); window.open(e.currentTarget.href, "_blank", "noopener,noreferrer"); }}
             >
               <svg
                 width="20"
@@ -33,8 +33,8 @@ const Footer = () => (
               href="https://instagram.com/wellnesscafe"
               className="social-link"
               aria-label="Instagram"
-              target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => { e.preventDefault(); window.open(e.currentTarget.href, "_blank", "noopener,noreferrer"); }}
             >
               <svg
                 width="20"
@@ -49,8 +49,8 @@ const Footer = () => (
               href="https://twitter.com/wellnesscafe"
               className="social-link"
               aria-label="Twitter"
-              target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => { e.preventDefault(); window.open(e.currentTarget.href, "_blank", "noopener,noreferrer"); }}
             >
               <svg
                 width="20"
@@ -65,8 +65,8 @@ const Footer = () => (
               href="https://linkedin.com/company/wellnesscafe"
               className="social-link"
               aria-label="LinkedIn"
-              target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => { e.preventDefault(); window.open(e.currentTarget.href, "_blank", "noopener,noreferrer"); }}
             >
               <svg
                 width="20"

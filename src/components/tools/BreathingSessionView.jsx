@@ -178,10 +178,10 @@ export const BreathingSessionView = ({
         voiceEnabled={voiceGuideEnabled}
         onToggleVoice={handleToggleVoice}
       >
-        <div className="flex flex-col items-center justify-center gap-6 overflow-hidden flex-1 min-h-0">
-          {/* Orb: 420–520px responsive, premium centerpiece */}
+        <div className="flex flex-col items-center justify-center gap-6 overflow-hidden flex-1 min-h-0 w-full">
+          {/* Orb: 420–520px responsive, premium centerpiece — aspect container clips overflow */}
           <div
-            className="relative flex aspect-square w-[min(90vw,420px)] sm:w-[min(85vw,520px)] max-w-[520px] items-center justify-center overflow-hidden"
+            className="relative flex aspect-square w-[min(90vw,420px)] sm:w-[min(85vw,520px)] max-w-[520px] items-center justify-center overflow-hidden shrink-0"
             style={{
               transform: `scale(${getScale()})`,
               opacity: getOpacity(),

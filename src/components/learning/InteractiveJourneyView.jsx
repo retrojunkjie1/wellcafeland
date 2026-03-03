@@ -1,11 +1,13 @@
 // Phase 46 — Interactive Journey View
 // Luxury, cinematic, multi-layer learning OS
+// Phase 53C2: PageHeader spine, Core Perspectives strip edge fades
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ChevronRight, ChevronsDownUp, Sparkles } from "lucide-react";
 import { getTileIcons } from "@/engines/learningPaths/tileIconMap";
 import { useNavigate } from "react-router-dom";
 import BackButton from "@/components/system/BackButton";
+import PageHeader from "@/components/system/PageHeader";
 
 import { getTopic, getTopicList } from "@/engines/learningPaths/learningPathsEngine";
 import {
@@ -106,52 +108,44 @@ export default function InteractiveJourneyView({ topicId }) {
     );
   }
 
+  const topicPill = (
+    <div className="relative" ref={topicDropdownRef}>
+      <button
+        type="button"
+        onClick={() => setTopicDropdown(!topicDropdown)}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/70 border border-slate-700/70 text-xs text-slate-200 hover:border-amber-400/60 hover:text-amber-200 transition-all"
+      >
+        <ChevronsDownUp className="h-3.5 w-3.5" />
+        {topic.title}
+      </button>
+      {topicDropdown && (
+        <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 border border-slate-700/70 rounded-xl shadow-2xl backdrop-blur-xl z-20 max-h-[60vh] overflow-y-auto">
+          {topicsList.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => {
+                navigate(`/tools/recovery.${t.id}`);
+                setTopicDropdown(false);
+              }}
+              className="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:text-amber-100 hover:bg-slate-800/60 transition-colors first:rounded-t-xl last:rounded-b-xl"
+            >
+              {t.title}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="px-4 py-6 max-w-4xl mx-auto space-y-6">
-      {/* Header Row */}
-      <div className="flex items-center justify-between">
-        <BackButton to="/tools" />
-
-        {/* Topic Dropdown */}
-        <div className="relative" ref={topicDropdownRef}>
-          <button
-            type="button"
-            onClick={() => setTopicDropdown(!topicDropdown)}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/70 border border-slate-700/70 text-xs text-slate-200 hover:border-amber-400/60 hover:text-amber-200 transition-all"
-          >
-            <ChevronsDownUp className="h-3.5 w-3.5" />
-            {topic.title}
-          </button>
-
-          {topicDropdown && (
-            <div className="absolute right-0 mt-2 w-64 bg-slate-900/95 border border-slate-700/70 rounded-xl shadow-2xl backdrop-blur-xl z-20 max-h-[60vh] overflow-y-auto">
-              {topicsList.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => {
-                    navigate(`/tools/recovery.${t.id}`);
-                    setTopicDropdown(false);
-                  }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:text-amber-100 hover:bg-slate-800/60 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                >
-                  {t.title}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Title */}
-      <div>
-        <h1 className="text-xl sm:text-2xl text-amber-50 font-light tracking-wide">
-          {topic.title}
-        </h1>
-        {topic.subtitle && (
-          <p className="text-sm text-slate-300 max-w-2xl mt-1">{topic.subtitle}</p>
-        )}
-      </div>
+      <PageHeader
+        title={topic.title}
+        subtitle={topic.subtitle || ""}
+        leftSlot={<BackButton to="/tools" />}
+        rightSlot={topicPill}
+      />
 
       {/* Tile Selector - Creative Menu Format */}
       <section className="relative">
@@ -162,13 +156,13 @@ export default function InteractiveJourneyView({ topicId }) {
           <p className="text-xs text-slate-500">{tiles.length} tiles</p>
         </div>
 
-        {/* Scrollable Container — subtle fade edges, dark scrollbar if visible */}
+        {/* Scrollable Container — dark scrollbar, edge fades, no white overlay */}
         <div className="relative group/scroll">
-          <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-slate-950 to-transparent pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-slate-950 to-transparent pointer-events-none z-10" />
+          <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-slate-950/90 to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-slate-950/90 to-transparent pointer-events-none z-10" />
           <div
             ref={scrollContainerRef}
-            className="no-scrollbar flex gap-3 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory"
+            className="os-scrollbar flex gap-3 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory"
           >
             {tiles.map((tile, index) => {
               const tileIcons = getTileIcons(topicId, tile.id);

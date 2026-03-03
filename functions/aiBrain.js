@@ -11,13 +11,8 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// Firestore timestamp helper (admin v13+)
-let FieldValue;
-try {
-  ({ FieldValue } = require("firebase-admin/firestore"));
-} catch (e) {
-  FieldValue = null;
-}
+// Firestore timestamp helper (admin v13+) — never crash on telemetry
+const { FieldValue } = require("firebase-admin/firestore");
 const serverTimestampSafe = () => {
   try {
     if (FieldValue && typeof FieldValue.serverTimestamp === "function") return FieldValue.serverTimestamp();
@@ -613,9 +608,17 @@ async function handleSession(req, res) {
     const body = typeof req.body === "string" ? safeJsonParse(req.body, {}) : req.body || {};
     const correlationId = body.correlationId || `srv_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+    console.log("[aiSession] auth_header_present", Boolean(req.headers?.authorization));
+
     const token = getBearerToken(req);
     if (!token) {
-      return res.status(401).json({ ok: false, code: "AUTH_REQUIRED", message: "Auth required" });
+      return res.status(401).json({
+        ok: false,
+        code: "AUTH_REQUIRED",
+        error: "AUTH_REQUIRED",
+        message: "Please sign in to continue.",
+        correlationId,
+      });
     }
 
     try {
@@ -640,7 +643,13 @@ async function handleSession(req, res) {
         };
       }
     } catch (e) {
-      return res.status(401).json({ ok: false, code: "AUTH_INVALID", message: "Invalid auth token" });
+      return res.status(401).json({
+        ok: false,
+        code: "AUTH_INVALID",
+        error: "AUTH_INVALID",
+        message: "Your session expired. Please sign in again.",
+        correlationId,
+      });
     }
 
     const userId = req.user?.uid || body.userId || "unknown";
@@ -672,7 +681,7 @@ async function handleSession(req, res) {
       }));
     }
 
-    // Handle telemetry mode
+    // Handle telemetry mode — non-fatal, never throw
     if (mode === "telemetry") {
       const event = body.event || {};
       try {
@@ -683,8 +692,8 @@ async function handleSession(req, res) {
         });
         return res.status(200).json({ ok: true });
       } catch (err) {
-        console.error("Telemetry save error:", err);
-        return res.status(200).json({ ok: true }); // Don't fail the request
+        console.warn("[telemetry] save_failed", { message: err?.message || String(err) });
+        return res.status(200).json({ ok: true });
       }
     }
 

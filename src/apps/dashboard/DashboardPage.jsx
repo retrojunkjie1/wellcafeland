@@ -1,9 +1,8 @@
 // src/apps/dashboard/DashboardPage.jsx
 
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useOSStore } from "@/stores/useOSStore";
-import SignalHeader from "@/components/dashboard/SignalHeader";
 import PageHeader from "@/components/system/PageHeader";
 import BackButton from "@/components/system/BackButton";
 import SectionTabs from "@/components/system/SectionTabs";
@@ -24,6 +23,24 @@ import TrajectoryGraph from "@/components/dashboard/TrajectoryGraph";
 import QuickActions from "@/components/dashboard/QuickActions";
 
 import DashboardDetailsSheet from "@/components/dashboard/DashboardDetailsSheet";
+
+const MOMENTS_ACTIONS = [
+  { label: "Talk to WellnessCafe", to: "/chat" },
+  { label: "Open Tools", to: "/tools" },
+  { label: "Open Profile Settings", to: "/profile" },
+];
+
+const formatLastActive = (messages) => {
+  const last = messages?.length > 0 ? messages[messages.length - 1] : null;
+  const ts = last?.timestamp || last?.createdAt || Date.now();
+  const diff = Math.floor((Date.now() - ts) / 60000);
+  if (diff < 1) return "Just now";
+  if (diff < 60) return `${diff}m ago`;
+  const h = Math.floor(diff / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return d === 1 ? "Yesterday" : new Date(ts).toLocaleDateString();
+};
 
 
 
@@ -141,80 +158,111 @@ const DashboardPage = () => {
 
   const tabs = [{ id: "moments", label: "Moments" }, { id: "insights", label: "Insights" }, { id: "signals", label: "Signals" }];
 
+  const lastActiveLabel = formatLastActive(messages);
+
   return (
     <div className="mx-auto w-full max-w-5xl flex flex-col px-4 pb-6 pt-4 sm:px-6 lg:px-0 overflow-x-hidden">
       <PageHeader
         title="Signals & Moments"
-        subtitle="Your emotional patterns and check-ins"
+        subtitle="Your check-ins, patterns, and system signals."
         leftSlot={<BackButton to="/" />}
+        rightSlot={
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+            {lastActiveLabel}
+          </span>
+        }
       />
       <div className="mb-4 mt-2">
-        <SignalHeader />
-      </div>
-      <div className="mb-4">
         <SectionTabs tabs={tabs} activeId={activeView} onChange={setActiveView} />
       </div>
 
       {activeView === "moments" && (
         <div className="flex-1 space-y-4">
-          <NotReadyCard
-            title="Today's Moments"
-            body="Your check-ins, reflections, and practices will appear here. This module is being brought online safely."
-            actions={[{ label: "Start a check-in", to: "/tools" }, { label: "Talk to WellnessCafe", to: "/chat" }]}
-          />
+          <div className="flex flex-col items-center">
+            <NotReadyCard
+              title="Today's Moments"
+              body="Your check-ins, reflections, and practices will appear here. This module is being brought online safely."
+              actions={MOMENTS_ACTIONS}
+            />
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link to="/chat" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                Start Chat
+              </Link>
+              <Link to="/tools" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                Tools
+              </Link>
+              <Link to="/explore" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                Explore
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
       {activeView === "insights" && (
         <div className="flex-1 space-y-4">
-          <NotReadyCard
-            title="Weekly Insights"
-            body="As you log more moments, we'll surface patterns here: emotional trends, trigger clusters, and gentle suggestions."
-            actions={[{ label: "Start a check-in", to: "/tools" }, { label: "Talk to WellnessCafe", to: "/chat" }]}
-          />
+          <div className="flex flex-col items-center">
+            <NotReadyCard
+              title="Weekly Insights"
+              body="As you log more moments, we'll surface patterns here: emotional trends, trigger clusters, and gentle suggestions."
+              actions={MOMENTS_ACTIONS}
+            />
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Link to="/chat" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                Start Chat
+              </Link>
+              <Link to="/tools" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                Tools
+              </Link>
+              <Link to="/explore" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                Explore
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 
 
 
       {activeView === "signals" && (
-
         <div className="flex-1 space-y-4 overflow-visible">
-
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center">
+              <NotReadyCard
+                title="Signals"
+                body="Your emotional patterns and check-ins will appear here once you start chatting or using tools."
+                actions={MOMENTS_ACTIONS}
+              />
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Link to="/chat" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                  Start Chat
+                </Link>
+                <Link to="/tools" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                  Tools
+                </Link>
+                <Link to="/explore" className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/80 hover:bg-white/10 transition">
+                  Explore
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
           {/* Emotion + Risk */}
-
           <div className="grid gap-3 md:grid-cols-2">
-
             <button
-
               type="button"
-
               onClick={() => openDetail("emotion")}
-
               className="text-left"
-
             >
-
               <EmotionStrip lastEmotion={lastMessageWithEmotion?.emotion} />
-
             </button>
-
-
-
             <button
-
               type="button"
-
               onClick={() => openDetail("risk")}
-
               className="text-left"
-
             >
-
               <RiskStrip risk={lastRisk?.risk} />
-
             </button>
-
           </div>
 
 
@@ -323,9 +371,9 @@ const DashboardPage = () => {
               </div>
             </div>
           </section>
-
+            </>
+          )}
         </div>
-
       )}
 
 

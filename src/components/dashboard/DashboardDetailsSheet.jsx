@@ -1,20 +1,14 @@
 // src/components/dashboard/DashboardDetailsSheet.jsx
 
-import React from "react";
+import React, { useEffect } from "react";
 import { GentleSuggestionsStrip } from "./GentleSuggestionsStrip";
-
-
+import { useSheet } from "@/context/SheetContext";
 
 const basePanelClass =
-
-  "fixed inset-x-0 bottom-0 z-30 mx-auto max-w-xl rounded-t-3xl border border-white/10 bg-slate-900/95 px-4 pb-6 pt-4 shadow-[0_-18px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-transform";
-
-
+  "fixed inset-x-0 bottom-0 z-40 mx-auto max-w-xl rounded-t-3xl border border-white/10 bg-slate-900/95 px-4 pb-6 pt-4 shadow-[0_-18px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl transition-transform";
 
 const DashboardDetailsSheet = ({
-
   detail,
-
   onClose,
 
   emotionMessage,
@@ -32,10 +26,15 @@ const DashboardDetailsSheet = ({
   hasMoments,
 
 }) => {
+  const { openSheet, closeSheet } = useSheet();
+  const isOpen = Boolean(detail);
+
+  useEffect(() => {
+    if (isOpen) openSheet();
+    return () => closeSheet();
+  }, [isOpen, openSheet, closeSheet]);
 
   if (!detail) return null;
-
-
 
   const { type } = detail;
 
@@ -473,7 +472,7 @@ const DashboardDetailsSheet = ({
 
   return (
 
-    <div className="fixed inset-0 z-30 flex items-end justify-center pointer-events-none">
+    <div className="fixed inset-0 z-40 flex items-end justify-center pointer-events-none">
 
       {/* Backdrop */}
 
