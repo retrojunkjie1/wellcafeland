@@ -1,0 +1,22 @@
+{
+  "phase": "55A.2",
+  "title": "Control Surface Cleanup",
+  "day": "Day 1",
+  "focus": [
+    "Enforce One Surface Rule across app routes",
+    "Remove duplicate mic/tools/real-help surfaces",
+    "Fix stacked docks / overlap and z-index order"
+  ],
+  "verify": [
+    "npm run phase55a:chatActions:verify",
+    "npm run dev"
+  ],
+  "manualTests": [
+    "Chat: only one mic surface; no duplicated Speak/Tools/Real Help controls",
+    "Home/Explore/Daily/Directory/Tools/Crisis/Account: no duplicated action bars; nav does not stack with composer",
+    "Tool overlays (breathing knob etc): close/back works and UI stack is correct"
+  ],
+  "notes": [
+    "This file is the only daily edit point. Generator renders CURRENT_PHASE.md."
+  ]
+}
