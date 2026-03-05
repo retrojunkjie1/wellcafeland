@@ -1,6 +1,7 @@
 {
   "phase": "55A.2",
   "title": "Control Surface Cleanup",
+  "status": "COMPLETE",
   "day": "Day 1",
   "focus": [
     "Enforce One Surface Rule across app routes",
@@ -17,6 +18,7 @@
     "Tool overlays (breathing knob etc): close/back works and UI stack is correct"
   ],
   "notes": [
-    "This file is the only daily edit point. Generator renders CURRENT_PHASE.md."
+    "Phase 55A.2 closed out. Tag: phase-55a2-complete.",
+    "BottomRail slot-aware (Dock + Nav); chat = Nav only with single card (composer + nav)."
   ]
 }
