@@ -1,4 +1,6 @@
 {
+  "active_phase": "55",
+  "valid_today": "2026-02-07",
   "phase": "55A.2",
   "title": "Control Surface Cleanup",
   "status": "COMPLETE",
@@ -17,6 +19,7 @@
     "Home/Explore/Daily/Directory/Tools/Crisis/Account: no duplicated action bars; nav does not stack with composer",
     "Tool overlays (breathing knob etc): close/back works and UI stack is correct"
   ],
+  "blocked_work": [],
   "notes": [
     "Phase 55A.2 closed out. Tag: phase-55a2-complete.",
     "BottomRail slot-aware (Dock + Nav); chat = Nav only with single card (composer + nav)."

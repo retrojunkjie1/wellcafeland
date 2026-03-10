@@ -1,12 +1,33 @@
 # WELLNESSCAFE — CURRENT PHASE
 
-Status: **COMPLETE**  
-Current Phase: **55A.2 — Control Surface Cleanup**  
-Day: **Day 1**
+Active phase: **Phase 55 — Stabilization**  
+Status: **55A.2 complete**; stabilization ongoing  
+Current objective: Harden chat, voice, and experience surfaces; no regressions.
 
 --------------------------------------------------
 
-## Today's focus
+## Allowed work
+- Bug fixes and stability for Phase 55A/B scope
+- Voice/audio feedback and spoken guidance (Phase 56 Day 3 style)
+- Verification script and manual checklist alignment
+- Documentation and runbook updates
+
+## Prohibited work
+- New docks or duplicate bottom bars
+- Auth gating for crisis/support access
+- Large new features outside CURRENT_PHASE focus
+- Removing or bypassing verification gates
+
+--------------------------------------------------
+
+## Verification expectations
+- Phase verification scripts (e.g. phase55a:chatActions:verify, phase56.verify) must pass
+- npm run dev must run without error
+- Manual UI checklist in this file must pass before phase closeout
+
+--------------------------------------------------
+
+## Today's focus (reference)
 - Enforce One Surface Rule across app routes
 - Remove duplicate mic/tools/real-help surfaces
 - Fix stacked docks / overlap and z-index order
