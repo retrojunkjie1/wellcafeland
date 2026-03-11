@@ -16,6 +16,10 @@ import { KillSwitchGate } from "@/components/routing/KillSwitchGate";
 import GodEyeDrawer from "@/components/os/GodEyeDrawer";
 import { EmulatorStatusPill } from "@/components/system/EmulatorStatusPill";
 import AppTopBar from "@/components/system/AppTopBar";
+import DockWithVoice from "@/components/interaction/DockWithVoice";
+import BottomRail, { railNavClass, railCardClass } from "@/components/layout/BottomRail";
+import { AudioProvider } from "@/experience/audio/AudioProvider";
+import { VoiceSessionProvider } from "@/experience/voice/VoiceSessionProvider";
 
 const TABS = [
   { id: "home", label: "Home", path: "/", icon: Home },
@@ -26,6 +30,7 @@ const TABS = [
 ];
 
 const isChatRoute = (path) => path === "/" || path.startsWith("/chat");
+const isToolDetailRoute = (path) => path.startsWith("/tools/") && path.split("/").filter(Boolean).length > 1;
 
 export default function ExperienceShell() {
   const location = useLocation();
@@ -44,6 +49,11 @@ export default function ExperienceShell() {
   const authReady = !authLoading && !identity.isLoading;
   const isGuest = authReady && !isAuthenticated && identity.mode === "guest";
   const chatRoute = isChatRoute(location.pathname);
+  const toolDetailRoute = isToolDetailRoute(location.pathname);
+  const showUnifiedDock = !chatRoute && !toolDetailRoute;
+  const showBottomNav = !toolDetailRoute;
+  const showBottomRail = showUnifiedDock || showBottomNav;
+  const enableExperienceProviders = !chatRoute && !toolDetailRoute;
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -63,9 +73,11 @@ export default function ExperienceShell() {
 
   const mainPadBottom = chatRoute
     ? "calc(var(--wc-composer-h, 84px) + var(--wc-bottom-nav-h, 72px) + env(safe-area-inset-bottom))"
-    : "calc(var(--wc-bottom-nav-h, 72px) + env(safe-area-inset-bottom))";
+    : showBottomRail
+      ? "calc(var(--wc-bottom-nav-h, 72px) + 64px + 12px + env(safe-area-inset-bottom))"
+      : "calc(120px + env(safe-area-inset-bottom))";
 
-  return (
+  const shellContent = (
     <div
       className="flex flex-col overflow-hidden bg-slate-950 text-white wc-app-shell"
       style={{ height: "100dvh" }}
@@ -86,34 +98,78 @@ export default function ExperienceShell() {
         </NavigationProvider>
       </main>
 
-      {/* ComposerDock slot — ChatPanel portals into #wc-composer-dock when on chat */}
-      {chatRoute && <div id="wc-composer-dock" data-wc-composer-dock="1" className="wc-composer-dock" />}
-
-      {/* BottomNav — fixed once */}
-      <nav
-        className="fixed left-0 right-0 bottom-0 border-t border-white/10 bg-white/5 backdrop-blur-xl px-2 z-50"
-        style={{ height: "var(--wc-bottom-nav-h, 72px)", paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <div className="mx-auto flex max-w-3xl justify-between items-center h-full min-h-0 py-1.5">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = isActivePath(tab.path);
-            return (
-              <button
-                key={tab.id}
-                onClick={() => navigate(tab.path)}
-                className={`flex flex-col items-center gap-0.5 h-11 min-w-11 rounded-xl text-[10px] transition ${active ? "bg-amber-400/10 text-amber-200" : "text-white/40 hover:text-white/60"}`}
+      {/* Phase 55A.2: BottomRail — slot-aware: Dock (optional) + Nav; chat = Nav only */}
+      {showBottomRail && (
+        <BottomRail>
+          {!chatRoute && showUnifiedDock && (
+            <BottomRail.Dock>
+              <DockWithVoice />
+            </BottomRail.Dock>
+          )}
+          <BottomRail.Nav>
+            {chatRoute ? (
+              <div className={`${railCardClass} flex flex-col overflow-hidden`}>
+                <div id="wc-composer-dock" data-wc-composer-dock="1" className="w-full wc-composer-in-rail flex-shrink-0" />
+                <nav
+                  className="flex justify-between items-center h-14 min-h-[var(--wc-bottom-nav-h,72px)] px-2 py-1.5 border-t border-white/10"
+                  style={{ minHeight: "var(--wc-bottom-nav-h, 72px)" }}
+                  aria-label="Main navigation"
+                >
+                  {TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = isActivePath(tab.path);
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => navigate(tab.path)}
+                        className={`flex flex-col items-center gap-0.5 h-11 min-w-11 rounded-xl text-[10px] transition ${active ? "bg-amber-400/10 text-amber-200" : "text-white/40 hover:text-white/60"}`}
+                      >
+                        <Icon className={`h-5 w-5 ${active ? "text-amber-300" : "text-white/50"}`} />
+                        <span className="leading-tight">{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            ) : (
+              <nav
+                className={`${railNavClass} flex justify-between items-center h-14 min-h-[var(--wc-bottom-nav-h,72px)] px-2 py-1.5`}
+                style={{ minHeight: "var(--wc-bottom-nav-h, 72px)" }}
+                aria-label="Main navigation"
               >
-                <Icon className={`h-5 w-5 ${active ? "text-amber-300" : "text-white/50"}`} />
-                <span className="leading-tight">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const active = isActivePath(tab.path);
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => navigate(tab.path)}
+                      className={`flex flex-col items-center gap-0.5 h-11 min-w-11 rounded-xl text-[10px] transition ${active ? "bg-amber-400/10 text-amber-200" : "text-white/40 hover:text-white/60"}`}
+                    >
+                      <Icon className={`h-5 w-5 ${active ? "text-amber-300" : "text-white/50"}`} />
+                      <span className="leading-tight">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            )}
+          </BottomRail.Nav>
+        </BottomRail>
+      )}
 
       <EmulatorStatusPill />
       <GodEyeDrawer />
     </div>
   );
+
+  if (enableExperienceProviders) {
+    return (
+      <AudioProvider>
+        <VoiceSessionProvider>
+          {shellContent}
+        </VoiceSessionProvider>
+      </AudioProvider>
+    );
+  }
+  return shellContent;
 }

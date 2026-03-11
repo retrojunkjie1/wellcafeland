@@ -18,15 +18,26 @@ export default function NotReadyCard({ title = DEFAULT_TITLE, body = DEFAULT_BOD
       <h2 className="text-lg font-medium text-white mb-2">{title}</h2>
       <p className="text-sm text-slate-300/80 leading-relaxed mb-6">{body}</p>
       <div className="flex flex-wrap gap-2">
-        {acts.map((a) => (
-          <Link
-            key={a.to}
-            to={a.to}
-            className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition"
-          >
-            {a.label}
-          </Link>
-        ))}
+        {acts.map((a, i) =>
+          a.onClick ? (
+            <button
+              key={a.label + i}
+              type="button"
+              onClick={a.onClick}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition"
+            >
+              {a.label}
+            </button>
+          ) : (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/90 hover:bg-white/10 transition"
+            >
+              {a.label}
+            </Link>
+          )
+        )}
       </div>
     </div>
   );

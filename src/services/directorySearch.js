@@ -8,6 +8,7 @@
 import { logDebug } from "@/lib/debug";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
 import { buildApiUrl } from "@/services/apiBase";
+import { getAuthHeaders } from "@/services/aiSessionClient";
 import { listResources } from "@/data/resources";
 
 function getEndpoint() {
@@ -216,9 +217,10 @@ async function searchDirectoryImpl({
     }
 
     try {
+      const authHeaders = await getAuthHeaders();
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           query: String(query).trim(),
           domain: domain || "",

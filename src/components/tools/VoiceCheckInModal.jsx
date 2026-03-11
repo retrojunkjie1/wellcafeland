@@ -62,8 +62,23 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const recordingTimeRef = useRef(0);
+  const canvasRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   const stopRecording = useCallback(() => {
+    if (animationFrameRef.current != null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    try {
+      if (audioContextRef.current?.state !== "closed") {
+        audioContextRef.current?.close();
+      }
+    } catch (_) {}
+    audioContextRef.current = null;
+    analyserRef.current = null;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -168,6 +183,38 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
     }
   }, [onComplete]);
 
+  const drawWaveform = useCallback(() => {
+    const canvas = canvasRef.current;
+    const analyser = analyserRef.current;
+    if (!canvas || !analyser) return;
+    const parent = canvas.parentElement;
+    if (parent && canvas.width !== parent.offsetWidth) {
+      canvas.width = parent.offsetWidth || 280;
+      canvas.height = 64;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const data = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(data);
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.fillStyle = "rgba(15,23,42,0.6)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(245,158,11,0.8)";
+    ctx.beginPath();
+    const step = w / data.length;
+    const mid = h / 2;
+    for (let i = 0; i < data.length; i++) {
+      const x = i * step;
+      const y = (data[i] / 128) * mid * 0.8 + mid;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    animationFrameRef.current = requestAnimationFrame(drawWaveform);
+  }, []);
+
   const attemptGetUserMedia = useCallback(async () => {
     setErrorMessage(null);
     try {
@@ -176,6 +223,14 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+      analyserRef.current = analyser;
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
@@ -191,11 +246,12 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
+      drawWaveform();
     } catch (err) {
       console.error("Failed to start recording:", err);
       setErrorMessage(getMicErrorMessage(err));
     }
-  }, [handleProcessCheckIn]);
+  }, [handleProcessCheckIn, drawWaveform]);
 
   const startRecording = useCallback(async () => {
     setErrorMessage(null);
@@ -239,13 +295,13 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
         </p>
 
         {showDevLanNote && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs text-amber-200/90">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs text-amber-200/90 max-w-sm mx-auto mb-6">
             Dev: Mic may be blocked on LAN (HTTP). Use http://127.0.0.1:5173 for local testing.
           </div>
         )}
 
         {errorMessage && (
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 max-w-sm mx-auto mb-6">
             <p className="text-sm text-amber-200 mb-3">{errorMessage}</p>
             <div className="flex flex-wrap gap-2">
               {!isSecureContextOk() && isLanHost() && (
@@ -278,22 +334,34 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
         <div className="flex flex-col items-center justify-center min-h-[180px]">
           {isRecording ? (
             <>
-              <div className="text-center mb-6">
-                <div className="text-3xl font-medium text-white mb-2">{recordingTime}s</div>
-                <div className="text-sm text-white/50">Recording...</div>
-                {recordingTime < 3 && (
-                  <div className="text-xs text-yellow-400 mt-2">Keep going...</div>
-                )}
+              <div className="w-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-4 space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-medium text-white mb-1">{recordingTime}s</div>
+                  <div className="text-sm text-white/50">Recording...</div>
+                  {recordingTime < 3 && (
+                    <div className="text-xs text-yellow-400 mt-1">Keep going...</div>
+                  )}
+                </div>
+                <div className="w-full">
+                  <canvas
+                    ref={canvasRef}
+                    width={280}
+                    height={64}
+                    className="w-full h-16 rounded-xl bg-slate-900/50 border border-white/10 block"
+                  />
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onMouseUp={stopRecording}
+                    onTouchEnd={stopRecording}
+                    className="h-20 w-20 rounded-full bg-red-400/20 border-4 border-red-400 flex items-center justify-center hover:bg-red-400/30 transition"
+                  >
+                    <MicOff className="h-8 w-8 text-red-400" />
+                  </button>
+                </div>
+                <p className="text-center text-sm text-white/50">Release to stop</p>
               </div>
-              <button
-                type="button"
-                onMouseUp={stopRecording}
-                onTouchEnd={stopRecording}
-                className="h-20 w-20 rounded-full bg-red-400/20 border-4 border-red-400 flex items-center justify-center hover:bg-red-400/30 transition"
-              >
-                <MicOff className="h-8 w-8 text-red-400" />
-              </button>
-              <p className="text-sm text-white/50 mt-4">Release to stop</p>
             </>
           ) : processing ? (
             <div className="text-center">
@@ -348,9 +416,9 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
                   e.preventDefault();
                   startRecording();
                 }}
-                className="h-20 w-20 rounded-full bg-amber-400/20 border-4 border-amber-400 flex items-center justify-center hover:bg-amber-400/30 transition"
+                className="mx-auto mt-6 w-20 h-20 rounded-full border border-amber-400/70 bg-amber-400/10 shadow-[0_0_0_6px_rgba(245,158,11,0.10)] flex items-center justify-center active:scale-[0.99]"
               >
-                <Mic className="h-8 w-8 text-amber-400" />
+                <Mic className="w-7 h-7 text-amber-400 opacity-90" />
               </button>
               <p className="text-sm text-white/50 mt-4">Press and hold to record</p>
             </div>

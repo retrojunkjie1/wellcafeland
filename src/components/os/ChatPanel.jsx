@@ -13,11 +13,17 @@ import MessageBubble from "./MessageBubble";
 import ToolBlock from "./ToolBlock";
 import WelcomeScreen from "./WelcomeScreen";
 import DirectoryResultBlock from "./DirectoryResultBlock";
+import DirectoryResultsPanel from "@/components/directory/DirectoryResultsPanel";
 import IntentRenderer from "@/core/intent/IntentRenderer";
 import InAppWebView from "@/components/InAppWebView";
 import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
+import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
+import { makeLivingMeta, detectRoleIntent, safeApproachForRole, pickVariantText } from "@/lib/living";
+import { useLivingSession } from "@/hooks/useLivingSession";
+import { offlineRespond, advancedSupportContractOffline } from "@/services/offlineGuide";
+import { getPref, setPref } from "@/services/sessionPrefs";
 // Removed: using aiClient instead
 import { determineGuideResponse } from "@/services/decisionEngine";
 import {
@@ -55,8 +61,28 @@ import FaceScanPrompt from "./FaceScanPrompt";
 import { logDebug } from "@/lib/debug";
 import ThreadCueBar from "./ThreadCueBar";
 import ChatComposerBar from "@/components/system/ChatComposerBar";
+import ChatDock from "@/components/system/ChatDock";
 import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
+import { planResponse } from "@/engines/trust/responsePlanner";
+import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
+import { getSupportFallbackGuidance } from "@/lib/support/fallback";
+import GroundingModal from "@/components/chat/GroundingModal";
+import ThinkingOverlay from "@/components/presence/ThinkingOverlay";
+import useAutoSpeak from "@/components/presence/useAutoSpeak";
+import ComposerPresenceControls from "./ComposerPresenceControls";
+import {parseExperienceSignal} from "@/core/experience/experienceSignal";
+
+// Phase 54K: simple hash for variation (no deps)
+function wcHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  }
+  return h.toString(16);
+}
+
+const STYLE_HINTS_54K = ["warm_concise", "coach", "clinical_calm", "grounded_spiritual"];
 
 const TOOL_NAMES = {
   breathing: "Breathing Exercise",
@@ -184,12 +210,38 @@ function detectDirectoryQuery(text) {
   return null;
 }
 
+// Phase 54M/54N: Router intent — stable labels: ALWAYS_ON_SUPPORT, DIRECTORY, RESTRICTED, UNKNOWN. Only RESTRICTED can show sign-in.
+const ALWAYS_ON_SUPPORT_PHRASES = [
+  "therapy", "counselor", "counseling", "talk to someone", "need help", "overwhelmed",
+  "traumatized", "anxious", "anxiety", "depressed", "depression", "grief", "grieving",
+  "cravings", "someone to talk", "emotional support", "mental health",
+];
+const RESTRICTED_PHRASES = [
+  "book", "schedule", "appointment", "pay", "message", "connect me to a therapist",
+  "connect me to a practitioner", "want to book", "make an appointment",
+];
+
+function classifyRouteIntent(text, isDirectory) {
+  if (isDirectory) return "DIRECTORY";
+  const lower = (text || "").toLowerCase().trim();
+  if (RESTRICTED_PHRASES.some((p) => lower.includes(p))) return "RESTRICTED";
+  if (ALWAYS_ON_SUPPORT_PHRASES.some((p) => lower.includes(p))) return "ALWAYS_ON_SUPPORT";
+  return "UNKNOWN";
+}
+
+// Phase 54M: Replacement for "Please sign in to continue" — title, body, and action labels
+const SIGNIN_ALTERNATIVE_TITLE = "I can help right now.";
+const SIGNIN_ALTERNATIVE_BODY =
+  "Share your city or state if you'd like (optional). What kind of therapy or support are you looking for—e.g. trauma, addiction, anxiety, or grief? I can guide you.";
+
 // Helper: Convert base64 to Blob
 const ChatPanel = () => {
   const navigate = useNavigate();
-  const { messages, addMessage, injectToolIntoChat, openWorkspace } = useOSStore();
+  const { messages, addMessage, updateLastAssistantMessage, injectToolIntoChat, openWorkspace } = useOSStore();
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
+  const living = useLivingSession();
+  const roleSetThisTurnRef = useRef(false);
   const { ingestUserDraft, pushAction, initThread } = useContinuityStore();
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
@@ -198,7 +250,17 @@ const ChatPanel = () => {
   const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const [voiceCheckInModalOpen, setVoiceCheckInModalOpen] = useState(false);
+  const [pending, setPending] = useState(null);
+  const pendingPlanRef = useRef(null);
+  const pendingStartMsRef = useRef(null);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
+  const [expandedMessageIds, setExpandedMessageIds] = useState({});
+  const [speakError, setSpeakError] = useState(null);
+  const [groundingModalOpen, setGroundingModalOpen] = useState(false);
+  const [overlayTick, setOverlayTick] = useState(0);
+  const composerRef = useRef(null);
+  const [composerH, setComposerH] = useState(0);
+  const COMPOSER_MARGIN = 16;
   const [webViewUrl, setWebViewUrl] = useState(null);
   const [webViewTitle, setWebViewTitle] = useState("");
   const messagesEndRef = useRef(null);
@@ -208,12 +270,53 @@ const ChatPanel = () => {
   const lastUnsentMessageRef = useRef(null);
   const abortControllerRef = useRef(null);
   const lastUserMessageRef = useRef(null);
+  // Phase 54N: Last turn snapshot for Retry (re-run sendToAI with new turnId/variationSeed)
+  const lastTurnRef = useRef(null);
+  // Phase 55A: Identity pills only when value changes (reduce noise)
+  const lastIdentityRef = useRef(null);
   // Connection state machine: idle → sending → awaiting_response → resolved → error
   const connectionStateRef = useRef("idle");
   const lastErrorMessageRef = useRef(null);
+  const lastHashesRef = useRef([]); // Phase 54K: last 6 text hashes + ts for anti-repeat
   const offlineMessageQueueRef = useRef([]); // Message queue for offline sends
   const ingestDebounceRef = useRef(null);
   useEffect(() => { initThread(); }, [initThread]);
+
+  const { autoSpeakEnabled, setAutoSpeakEnabled } = useAutoSpeak({ messages, pending });
+
+  const speakLastAssistant = React.useCallback(() => {
+    if (pending) return;
+    const last = [...(messages || [])].reverse().find((m) => m.role === "assistant" && m.content);
+    if (!last) return;
+    try {
+      window.speechSynthesis?.cancel?.();
+      const u = new SpeechSynthesisUtterance(String(last.content));
+      u.rate = 1;
+      u.pitch = 1;
+      window.speechSynthesis?.speak?.(u);
+    } catch (e) {}
+  }, [messages, pending]);
+
+  useEffect(() => {
+    if (!pending) return;
+    const t = setInterval(() => setOverlayTick((v) => v + 1), 100);
+    return () => clearInterval(t);
+  }, [pending]);
+
+  const thoughtMsForOverlay = pending?.startedAt != null ? Math.max(0, Date.now() - pending.startedAt) : 0;
+
+  useEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const h = Math.ceil(entries?.[0]?.contentRect?.height || 0);
+      if (h) setComposerH(h);
+    });
+    ro.observe(el);
+    const initial = Math.ceil(el.getBoundingClientRect().height || 0);
+    if (initial) setComposerH(initial);
+    return () => ro.disconnect();
+  }, []);
   
   // Hard reset fallback: Reset conversation state only (not auth/identity)
   const resetConversationState = React.useCallback(() => {
@@ -386,11 +489,158 @@ const ChatPanel = () => {
             console.warn("[ChatPanel] Failed to compute tone profile for send:", err);
           }
 
+          // Soft router: directory intent — try tool first, fall back to AI if empty/fail (Phase 54G)
+          let directoryFallback = false;
+          const directoryQueries = detectDirectoryQuery(text);
+          if (directoryQueries) {
+            try {
+              const searchResponse = await searchResources({
+                query: directoryQueries.query,
+                domain: directoryQueries.domain,
+              });
+              if (searchResponse?.ok && searchResponse?.results?.length > 0) {
+                addMessage("assistant", {
+                  role: "assistant",
+                  type: "assistant_text",
+                  text: "I found a few resources that might help. Here are some options:",
+                  content: "I found a few resources that might help. Here are some options:",
+                  timestamp: Date.now(),
+                  meta: {
+                    kind: "directory_results",
+                    domain: directoryQueries.domain,
+                    query: directoryQueries.query,
+                    results: searchResponse.results,
+                  },
+                });
+                connectionStateRef.current = "idle";
+                setIsSending(false);
+                setThinking(false);
+                return;
+              }
+              if (searchResponse?.ok && (!searchResponse.results || searchResponse.results.length === 0)) {
+                // No transient message; AI response will be the final message for this turn
+              }
+            } catch (_) {}
+            directoryFallback = true;
+          }
+
+          // Phase 54M/54N: Route intent (ALWAYS_ON_SUPPORT, DIRECTORY, RESTRICTED, UNKNOWN). Only RESTRICTED can show sign-in.
+          const routeIntent = classifyRouteIntent(text, !!directoryQueries);
+          lastTurnRef.current = { text, routeIntent };
+
+          // Trust layer: plan (for reasoning envelope on success); then single pending indicator (Phase 54J)
+          const startMs = Date.now();
+          pendingStartMsRef.current = startMs;
+          let plan;
+          try {
+            plan = await planResponse({ userText: text });
+          } catch (e) {
+            plan = { reply: { id: "pending", text: "", mode: "chat" }, reasoning: { role: "default", depth: "standard", safety: { risk: "low", crisis: false, disclaimers: [] }, checks: ["scope limits"], summary: ["Identify ask", "Offer next action"], confidence: 3, latencyMs: 0 } };
+          }
+          pendingPlanRef.current = plan;
+          const pendingId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : "wc_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+          setPending({ id: pendingId, startedAt: startMs, label: "Thinking", intent: directoryFallback ? "directory" : "chat", text });
+
+          // Phase 54I: Role intent — persist (approach shown on final message when showApproach)
+          const roleHit = detectRoleIntent(text);
+          if (roleHit?.confidence >= 0.8) {
+            living.setRole(roleHit.role);
+            roleSetThisTurnRef.current = true;
+          }
+
+        // Guest safe mode: try token with short wait (anonymous sign-in); if none, show helpful message (no dead-end)
+        const authHeaders = await getAuthHeadersWithTimeout(2000);
+        if (!authHeaders.Authorization) {
+          connectionStateRef.current = "idle";
+          setPending(null);
+          // Phase 54M/54N: RESTRICTED is the only intent that shows sign-in CTA; ALWAYS_ON_SUPPORT/DIRECTORY get guidance
+          if (routeIntent === "RESTRICTED") {
+            const signInMessageText = `${SIGNIN_ALTERNATIVE_TITLE}\n\n${SIGNIN_ALTERNATIVE_BODY}`;
+            addMessage("assistant", normalizeMessage({
+              role: "assistant",
+              type: "assistant_text",
+              text: signInMessageText,
+              content: signInMessageText,
+              timestamp: Date.now(),
+              meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
+              actions: [
+                { label: "Continue with guidance", action: "continue_guidance" },
+                { label: "Open Directory", action: "open_directory" },
+                { label: "Sign in", action: "sign_in" },
+              ],
+            }));
+          } else {
+            const isDirectoryOrBasicNeeds = directoryQueries != null || directoryFallback;
+            const crisisHint = /hurt myself|suicid|kill myself|end it|988|emergency/i.test((text || "").trim());
+            const offlineContent =
+              routeIntent === "ALWAYS_ON_SUPPORT" || routeIntent === "DIRECTORY"
+                ? advancedSupportContractOffline(text)
+                : isDirectoryOrBasicNeeds
+                  ? offlineRespond(text, { intent: "directory", crisis: crisisHint })
+                  : (() => {
+                      const n = Number(typeof sessionStorage !== "undefined" ? sessionStorage.getItem("wc_offline_n") || "0" : "0");
+                      if (typeof sessionStorage !== "undefined") sessionStorage.setItem("wc_offline_n", String(n + 1));
+                      return pickVariantText({ intent: "offline_support", key: (text || "").toLowerCase().trim(), n });
+                    })();
+            addMessage("assistant", normalizeMessage({
+              role: "assistant",
+              type: "assistant_text",
+              text: offlineContent,
+              content: offlineContent,
+              timestamp: Date.now(),
+              meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
+              actions: [
+                { label: "Retry", action: "retry" },
+                { label: "Open Real Help", action: "open_tools" },
+                { label: "Continue offline", action: "offline" },
+              ],
+            }));
+          }
+          setIsSending(false);
+          setThinking(false);
+          return;
+        }
+
         // Update state: sending → awaiting_response
         connectionStateRef.current = "awaiting_response";
 
-        // Call backend via robust AI client
+        // Call backend via robust AI client (Phase 54I + 54K: living meta, variation, anti-repeat)
         const { callAI } = await import("@/services/aiClient");
+        const livingMeta = makeLivingMeta({ text, sessionId: living.sessionId, role: living.role, turnId: living.nextTurnId() });
+        const turnId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+        const textHash = wcHash((text || "").trim().toLowerCase());
+        const variationSeed = (Date.now() + parseInt(textHash.slice(0, 6), 16)) % 1000000;
+        const detectedIntent = directoryQueries ? "directory" : null;
+        const intent =
+          routeIntent === "ALWAYS_ON_SUPPORT"
+            ? "always_on_support"
+            : routeIntent === "DIRECTORY"
+              ? (directoryFallback ? "directory_fallback" : "directory")
+              : detectedIntent || "general";
+        const styleHints54K = [STYLE_HINTS_54K[variationSeed % STYLE_HINTS_54K.length]];
+
+        lastHashesRef.current = [...lastHashesRef.current, { hash: textHash, ts: Date.now() }].slice(-6);
+        const now = Date.now();
+        const sixtySec = 60 * 1000;
+        const recentSame = lastHashesRef.current.filter((e) => e.hash === textHash && now - e.ts < sixtySec);
+        const repeatCount = recentSame.length;
+        const nudgeMeta = repeatCount >= 2 ? { nudge: "user_repeated_prompt", repeatCount } : {};
+
+        let repeatCountDir = 0;
+        if (directoryFallback && typeof sessionStorage !== "undefined") {
+          const lastKey = sessionStorage.getItem("wc_last_key");
+          const lastTs = parseInt(sessionStorage.getItem("wc_last_key_ts") || "0", 10);
+          const fiveMin = 5 * 60 * 1000;
+          if (String(livingMeta.variationKey) === lastKey && (Date.now() - lastTs) < fiveMin) {
+            repeatCountDir = parseInt(sessionStorage.getItem("wc_last_key_count") || "0", 10) + 1;
+            sessionStorage.setItem("wc_last_key_count", String(repeatCountDir));
+          } else {
+            sessionStorage.setItem("wc_last_key", String(livingMeta.variationKey));
+            sessionStorage.setItem("wc_last_key_ts", String(Date.now()));
+            sessionStorage.setItem("wc_last_key_count", "0");
+          }
+        }
+        const showApproach = roleSetThisTurnRef.current || /how (are|you're) (thinking|approaching)/i.test(text) || /analy(z|s)e deeply/i.test(text);
         const res = await callAI("aiSession", {
           messages: messageHistory,
           mode,
@@ -403,6 +653,29 @@ const ChatPanel = () => {
             humanMode: currentHumanMode,
             toneProfile: currentToneProfile,
             phrasingStyle: currentPhrasingStyle,
+            seed: livingMeta.seed,
+            turnId,
+            variationSeed,
+            intent,
+            styleHints: styleHints54K,
+            avoidRepeat: true,
+            lastUserTextHash: textHash,
+            ...nudgeMeta,
+            thoughtMs: livingMeta.thoughtMs,
+            role: livingMeta.role,
+            variationKey: livingMeta.variationKey,
+            ...(routeIntent === "ALWAYS_ON_SUPPORT"
+              ? {
+                  responseContract: "ADVANCED_SUPPORT_V1",
+                  contractSections: ["reflect", "clarify", "steps", "options", "safety"],
+                  maxClarify: 2,
+                }
+              : {}),
+            ...(directoryFallback ? {
+              directoryFallback: true,
+              fallbackHint: "Tool directory search failed or returned no results; provide best-effort general guidance (food/housing/treatment) and ask for city/state to refine. Be warm and actionable.",
+              repeatCount: repeatCountDir,
+            } : {}),
           },
         }, abortControllerRef.current);
 
@@ -427,7 +700,7 @@ const ChatPanel = () => {
         }
 
         if (!res.ok) {
-          // Cleanup AbortController
+          setPending(null);
           abortControllerRef.current = null;
           connectionStateRef.current = "error";
 
@@ -435,32 +708,14 @@ const ChatPanel = () => {
           if (directToolRequest) {
             const { validateToolId } = await import("@/utils/toolRouter");
             if (validateToolId(directToolRequest)) {
-              // Attempt to open tool first
               const toolMessage = await injectToolIntoChat(directToolRequest, {});
-              
-              // TRUTH-GATE: Only promise tool opening if it actually opened
               if (toolMessage) {
-                addMessage("assistant", {
-                  type: "system",
-                  content: `I'm having trouble connecting right now, but I can still help. I've opened the ${TOOL_NAMES[directToolRequest] || directToolRequest} tool for you.`,
-                });
+                addMessage("assistant", normalizeMessage({ role: "assistant", type: "system", content: `I'm having trouble connecting right now, but I can still help. I've opened the ${TOOL_NAMES[directToolRequest] || directToolRequest} tool for you.`, meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
               } else {
-                // Tool failed to open - don't promise it
-                addMessage("assistant", {
-                  type: "assistant_text",
-                  text: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
-                  content: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
-                  timestamp: Date.now(),
-                });
+                addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_text", text: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.", content: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.", timestamp: Date.now(), meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
               }
             } else {
-              // Tool not available - show safe fallback
-              addMessage("assistant", {
-                type: "assistant_text",
-                text: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
-                content: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
-                timestamp: Date.now(),
-              });
+              addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_text", text: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.", content: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.", timestamp: Date.now(), meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
             }
             connectionStateRef.current = "idle";
             isSendingRef.current = false;
@@ -468,36 +723,48 @@ const ChatPanel = () => {
             setThinking(false);
             return;
           }
-          
-          // Queue message if offline, otherwise show error
+
           const isActuallyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
           if (isActuallyOffline) {
             offlineMessageQueueRef.current.push(text);
             setOfflineQueueLength((n) => n + 1);
-            addMessage("assistant", {
-              type: "assistant_text",
-              text: "Connection lost. Your message will be sent when you're back online. Tap Retry to send now.",
-              content: "Connection lost. Your message will be sent when you're back online.",
-              timestamp: Date.now(),
-            });
+            addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_text", text: "Connection lost. Your message will be sent when you're back online. Tap Retry to send now.", content: "Connection lost. Your message will be sent when you're back online.", timestamp: Date.now(), meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
           } else {
-          // Guard: Only show error message once per failure (debounce duplicates)
-          const errorMessage = res.error || "Still here with you. Tap send to continue.";
-          if (lastErrorMessageRef.current !== errorMessage) {
-            lastErrorMessageRef.current = errorMessage;
-            addMessage("assistant", {
-              type: "assistant_text",
-              text: errorMessage,
-              content: errorMessage,
-              timestamp: Date.now(),
-              // Add action buttons for error recovery
-              actions: [
-                { label: "Retry", action: "retry" },
-                { label: "Continue offline", action: "offline" },
-                { label: "Open tools", action: "open_tools" },
-              ],
-            });
-          }
+            // Phase 54J/54M/54N: ALWAYS_ON_SUPPORT and DIRECTORY never show "Please sign in"; only RESTRICTED can prompt sign-in. On fail use ADVANCED_SUPPORT_V1 contract.
+            const isBasicNeeds = directoryFallback || (directoryQueries != null) || routeIntent === "ALWAYS_ON_SUPPORT" || routeIntent === "DIRECTORY";
+            const is401SignIn = res.status === 401 && (res.error || "").includes("Please sign in");
+            const useOfflineMessage = isBasicNeeds;
+            const useSignInAlternative = is401SignIn && !useOfflineMessage;
+            const displayText = useOfflineMessage
+              ? advancedSupportContractOffline(text)
+              : useSignInAlternative
+                ? `${SIGNIN_ALTERNATIVE_TITLE}\n\n${SIGNIN_ALTERNATIVE_BODY}`
+                : (res.error || "Still here with you. Tap send to continue.");
+            const displayActions = useSignInAlternative
+              ? [
+                  { label: "Continue with guidance", action: "continue_guidance" },
+                  { label: "Open Directory", action: "open_directory" },
+                  { label: "Sign in", action: "sign_in" },
+                ]
+              : [
+                  { label: "Retry", action: "retry" },
+                  { label: "Continue offline", action: "offline" },
+                  { label: "Open tools", action: "open_tools" },
+                ];
+            if (!useOfflineMessage && !useSignInAlternative && lastErrorMessageRef.current === displayText) {
+              // Skip duplicate error bubble
+            } else {
+              if (!useOfflineMessage && !useSignInAlternative) lastErrorMessageRef.current = displayText;
+              addMessage("assistant", normalizeMessage({
+                role: "assistant",
+                type: "assistant_text",
+                text: displayText,
+                content: displayText,
+                timestamp: Date.now(),
+                meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
+                actions: displayActions,
+              }));
+            }
           }
           connectionStateRef.current = "idle";
           isSendingRef.current = false;
@@ -506,8 +773,9 @@ const ChatPanel = () => {
           return;
         }
 
-        // Success: Clear error message ref
+        // Success: Clear error message ref and pending indicator (Phase 54J)
         lastErrorMessageRef.current = null;
+        setPending(null);
 
         // Clear last message on success
         lastUnsentMessageRef.current = null;
@@ -525,26 +793,49 @@ const ChatPanel = () => {
           console.warn("[ChatPanel] Failed to apply phrasing to response:", err);
         }
 
+        // Phase 55A.2: Experience signals — strip [[EXPERIENCE]] block, merge into meta
+        const {cleanText: experienceCleanText, signal: experienceSignal} = parseExperienceSignal(processedText);
+        const displayText = experienceSignal != null ? experienceCleanText : processedText;
+        const nextMetaFromSignal = {};
+        if (experienceSignal?.suggestGrounding) nextMetaFromSignal.suggestGrounding = true;
+        if (experienceSignal?.video) nextMetaFromSignal.video = experienceSignal.video;
+        if (experienceSignal?.toolRoute) nextMetaFromSignal.toolRoute = experienceSignal.toolRoute;
+
         // Text response with intent and links (Prompt-Native Spine)
         const lastMsgIntent = res.intent && typeof res.intent === "object" ? res.intent : null;
         const lastMsgLinks = Array.isArray(res.links) ? res.links : [];
-        const storedMsg = {
+        const doneMs = Date.now();
+        const envelope = pendingPlanRef.current;
+        // Phase 55A: truthful thinking — MessageBubble shows "Thought for Xs" only when thoughtMs>=250
+        const thoughtMsRes = res.meta?.thoughtMs ?? livingMeta.thoughtMs ?? (pendingStartMsRef.current != null ? doneMs - pendingStartMsRef.current : null);
+        const patch = {
+          role: "assistant",
           type: "assistant_text",
-          text: processedText,
-          content: processedText,
-          timestamp: Date.now(),
+          text: displayText,
+          content: displayText,
+          timestamp: doneMs,
           intent: lastMsgIntent,
           links: lastMsgLinks,
+          reasoning: envelope?.reasoning,
+          meta: {
+            pending: false,
+            startMs: pendingStartMsRef.current,
+            doneMs,
+            thoughtMs: thoughtMsRes,
+            ...nextMetaFromSignal,
+            ...(showApproach ? { approach: safeApproachForRole(living.role || "coach") } : {}),
+          },
         };
+        roleSetThisTurnRef.current = false;
         if (import.meta.env.DEV && typeof window !== "undefined") {
-          window.__wcLastAssistantMessage = storedMsg;
+          window.__wcLastAssistantMessage = patch;
           console.debug("[ChatPanel] assistantMessage", {
-            textLength: (processedText || "").length,
+            textLength: (displayText || "").length,
             intentType: lastMsgIntent?.type || null,
             linksLength: lastMsgLinks.length,
           });
         }
-        addMessage("assistant", storedMsg);
+        addMessage("assistant", normalizeMessage(patch));
 
         // Tool policy: ONLY intent.type === "tool.run" opens tools. tool.suggest = chips only (IntentRenderer).
         const intentType = lastMsgIntent?.type;
@@ -654,111 +945,14 @@ const ChatPanel = () => {
           return;
         }
 
-        // Skip directory navigation when backend already returned directory.search intent (results in chat)
+        // Directory intent already handled earlier (soft router: try tool then AI fallback). IntentRenderer still shows directory.search from backend when present.
         const hasDirectoryIntent = lastMsgIntent?.type === "directory.search";
         if (hasDirectoryIntent) {
-          // IntentRenderer will show results; do not navigate away
-        } else {
-        // Check for real help queries (Phase 12) — only when backend did not return directory intent
-        const directoryQueries = detectDirectoryQuery(text);
-        if (directoryQueries) {
-          // Determine priority/category from query
-          let priority = directoryQueries.priority || "programs";
-          let category = null;
-          
-          const lowerText = text.toLowerCase();
-          
-          // Map to Real Help categories
-          if (lowerText.includes("food") || lowerText.includes("hungry") || lowerText.includes("meal") || 
-              lowerText.includes("food bank") || lowerText.includes("groceries")) {
-            priority = "food";
-            category = "food";
-          } else if (lowerText.includes("housing") || lowerText.includes("place to stay") || 
-                     lowerText.includes("sober living") || lowerText.includes("shelter") ||
-                     lowerText.includes("homeless")) {
-            priority = "housing";
-            category = "housing";
-          } else if (lowerText.includes("funding") || lowerText.includes("grant") || 
-                     lowerText.includes("financial help") || lowerText.includes("money")) {
-            priority = "funding";
-            category = "grants";
-          } else if (lowerText.includes("treatment") || lowerText.includes("detox") || 
-                     lowerText.includes("rehab") || lowerText.includes("recovery program")) {
-            priority = "programs";
-            category = "treatment";
-          }
-          
-          // TRUTH-GATE: Navigate to Real Help with pre-filled search
-          // Only show "opening" message if navigation actually happens
-          setTimeout(() => {
-            try {
-              const targetUrl = `/assistance?priority=${priority}${category ? `&category=${category}` : ""}${directoryQueries.query ? `&query=${encodeURIComponent(directoryQueries.query)}` : ""}`;
-              navigate(targetUrl);
-              
-              // Only add message after navigation succeeds
-              addMessage("assistant", {
-                type: "system",
-                content: "I've opened Real Help for you. Here you can find verified resources.",
-              });
-            } catch (navErr) {
-              // Navigation failed - don't promise it
-              console.warn("[ChatPanel] Navigation to Real Help failed:", navErr);
-              addMessage("assistant", {
-                type: "assistant_text",
-                text: "I can help you find resources. You can navigate to the Real Help section from the sidebar.",
-                content: "I can help you find resources. You can navigate to the Real Help section from the sidebar.",
-                timestamp: Date.now(),
-              });
-            }
-          }, 300);
-          return;
-        }
-
-        // Check for directory search queries (unreachable if directoryQueries navigated above)
-        if (directoryQueries) {
-          setTimeout(async () => {
-            try {
-              // Use searchResources (Firebase Function + fallback)
-              const searchResponse = await searchResources({
-                query: directoryQueries.query,
-                domain: directoryQueries.domain,
-              });
-              
-              if (searchResponse.ok && searchResponse.results && searchResponse.results.length > 0) {
-                // Add assistant message first
-                addMessage("assistant", "I found a few resources that might help. Here are some options:");
-                
-                // Add directory results block
-                const directoryMessage = {
-                  id: `directory-${Date.now()}`,
-                  role: "directory",
-                  type: "directory_results",
-                  domain: directoryQueries.domain,
-                  query: directoryQueries.query,
-                  results: searchResponse.results,
-                  timestamp: Date.now(),
-                };
-                addMessage("directory", JSON.stringify(directoryMessage));
-                
-                // Offer to open full directory
-                addMessage("assistant", {
-                  type: "system",
-                  content: `Would you like to open the full ${directoryQueries.domain} directory to see more results?`,
-                });
-              } else {
-                // If no results, suggest opening the directory workspace
-                const errorMsg = searchResponse.error || "No results found";
-                addMessage("assistant", `I couldn't find specific results for "${directoryQueries.query}". ${errorMsg.includes("too many") ? "The search service is busy. " : ""}Would you like me to open the full directory so you can search more broadly?`);
-              }
-            } catch (err) {
-              console.error("Directory search failed:", err);
-              addMessage("assistant", "I had trouble searching the directory. Please try opening it directly from the sidebar.");
-            }
-          }, 500);
-        }
+          // IntentRenderer will show results; nothing more to do
         }
       } catch (innerErr) {
         console.error("[ChatPanel] Inner sendToAI error:", innerErr);
+        setPending(null);
         connectionStateRef.current = "error";
         // Cleanup on inner error
         if (abortControllerRef.current) {
@@ -808,6 +1002,7 @@ const ChatPanel = () => {
       }
     } catch (err) {
       console.error("[ChatPanel] sendToAI error:", err);
+      setPending(null);
       connectionStateRef.current = "error";
       // Cleanup AbortController on any error
       if (abortControllerRef.current) {
@@ -844,6 +1039,7 @@ const ChatPanel = () => {
         });
       } catch {}
     } finally {
+      setPending(null);
       connectionStateRef.current = "idle";
       isSendingRef.current = false;
       setIsSending(false);
@@ -1112,21 +1308,26 @@ const ChatPanel = () => {
     const prefsOn = (typeof localStorage !== "undefined" && localStorage.getItem("wc_tool_suggestions") !== "off");
     const lastAt = parseInt(localStorage?.getItem("wc_last_tool_suggested_at") || "0", 10);
     const cooldownOk = Date.now() - lastAt >= 3 * 60 * 1000;
+    const suppressGrounding = getPref("grounding_suggest_disabled", false) || (typeof localStorage !== "undefined" && localStorage.getItem("wc_suppress_grounding_suggest") === "1");
     if (recommendation && prefsOn && cooldownOk) {
-      setTimeout(() => {
-        try {
-          localStorage?.setItem("wc_last_tool_suggested_at", String(Date.now()));
-        } catch {}
-        const recommendationMessage = normalizeMessage({
-          id: `recommendation-${Date.now()}`,
-          role: "assistant",
-          type: "recommendation",
-          content: recommendation.reason || "Try a short practice?",
-          suggestion: recommendation,
-          timestamp: Date.now(),
-        });
-        addMessage("assistant", recommendationMessage);
-      }, 1000);
+      if (recommendation.toolId === "grounding" && suppressGrounding) {
+        // Skip adding grounding CTA when user disabled it
+      } else {
+        setTimeout(() => {
+          try {
+            localStorage?.setItem("wc_last_tool_suggested_at", String(Date.now()));
+          } catch {}
+          const recommendationMessage = normalizeMessage({
+            id: `recommendation-${Date.now()}`,
+            role: "assistant",
+            type: "recommendation",
+            content: recommendation.reason || "Try a short practice?",
+            suggestion: recommendation,
+            timestamp: Date.now(),
+          });
+          addMessage("assistant", recommendationMessage);
+        }, 1000);
+      }
     }
     
     // Phase 26: Optional gentle redirect after light topics
@@ -1188,27 +1389,145 @@ const ChatPanel = () => {
     }
   };
 
+  const retryLastTurn = React.useCallback(() => {
+    const text = lastTurnRef.current?.text ?? lastUserMessageRef.current;
+    if (text && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
+      lastErrorMessageRef.current = null;
+      const store = useOSStore.getState();
+      const msgs = store.messages || [];
+      const filtered = msgs.filter((m) => !(m.actions?.length > 0 && m.role === "assistant"));
+      if (filtered.length < msgs.length) store.setMessages(filtered);
+      sendToAI(text);
+    }
+  }, [sendToAI]);
+
   const handleMessageAction = React.useCallback((action, msg) => {
     if (action === "retry") {
-      const text = lastUserMessageRef.current || (typeof msg?.content === "string" ? msg.content : msg?.content?.content) || "";
-      if (text && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
-        lastErrorMessageRef.current = null;
-        const store = useOSStore.getState();
-        const msgs = store.messages || [];
-        const filtered = msgs.filter((m) => !(m.actions?.length > 0 && m.role === "assistant"));
-        if (filtered.length < msgs.length) store.setMessages(filtered);
-        sendToAI(text);
-      }
-    } else if (action === "open_tools") {
-      navigate("/tools");
-    } else if (action === "offline") {
+      retryLastTurn();
+    } else if (action === "open_tools" || action === "open_directory") {
+      navigate("/assistance");
+    } else if (action === "sign_in") {
+      navigate("/login");
+    } else if (action === "continue_guidance" || action === "offline") {
       const text = lastUserMessageRef.current;
       if (text) {
+        const routeIntent = lastTurnRef.current?.routeIntent;
+        const reply = routeIntent === "ALWAYS_ON_SUPPORT" ? advancedSupportContractOffline(text) : offlineRespond(text, { intent: "directory" });
+        addMessage("assistant", normalizeMessage({
+          role: "assistant",
+          type: "assistant_text",
+          text: reply,
+          content: reply,
+          timestamp: Date.now(),
+          meta: { pending: false },
+        }));
         offlineMessageQueueRef.current.push(text);
         setOfflineQueueLength((n) => n + 1);
       }
     }
-  }, [navigate, sendToAI]);
+  }, [navigate, retryLastTurn, addMessage]);
+
+  const handleCopyMessage = React.useCallback((messageOrContent) => {
+    const content = typeof messageOrContent === "string" ? messageOrContent : (messageOrContent?.content ?? messageOrContent?.text ?? "");
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText && content) {
+      navigator.clipboard.writeText(typeof content === "string" ? content : "");
+    }
+  }, []);
+
+  const handleSaveMessage = React.useCallback((message) => {
+    const text = typeof message?.content === "string" ? message.content : message?.text || "";
+    if (!text) return;
+    const timestamp = Date.now();
+    const payload = { id: message?.id || `saved-${timestamp}`, role: message?.role ?? "assistant", text, timestamp };
+    const saveToLocal = () => {
+      try {
+        const list = JSON.parse(localStorage.getItem("wc_saved_messages") || "[]");
+        list.push(payload);
+        localStorage.setItem("wc_saved_messages", JSON.stringify(list));
+      } catch {}
+    };
+    if (identity?.userId && identity.mode === "account") {
+      import("firebase/firestore").then(({ collection, addDoc }) => {
+        import("@/firebase").then(({ db }) => {
+          addDoc(collection(db, "users", identity.userId, "savedMessages"), payload).catch(saveToLocal);
+        }).catch(saveToLocal);
+      }).catch(saveToLocal);
+    } else {
+      saveToLocal();
+    }
+  }, [identity?.userId, identity?.mode]);
+
+  const handleSpeakMessage = React.useCallback((message) => {
+    const text = typeof message?.content === "string" ? message.content : message?.text || "";
+    if (!text) return;
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setSpeakError("Speech isn't available on this device.");
+      if (typeof window !== "undefined") setTimeout(() => setSpeakError(null), 3000);
+      return;
+    }
+    setSpeakError(null);
+    try {
+      window.speechSynthesis.cancel();
+    } catch {}
+    const u = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(u);
+  }, []);
+
+  const handleExpandMessage = React.useCallback((message) => {
+    const id = message?.id;
+    if (id == null) return;
+    setExpandedMessageIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
+
+  const handleOpenTools = React.useCallback(() => {
+    navigate("/tools");
+  }, [navigate]);
+
+  const handleOpenRealHelp = React.useCallback(async () => {
+    try {
+      navigate("/assistance");
+    } catch (e) {
+      const guidance = getSupportFallbackGuidance();
+      addMessage("assistant", normalizeMessage({
+        role: "assistant",
+        type: "assistant_text",
+        text: guidance,
+        content: guidance,
+        timestamp: Date.now(),
+        meta: { kind: "support_fallback" },
+      }));
+    }
+  }, [navigate, addMessage]);
+
+  const handleContinueOffline = React.useCallback((msg) => {
+    const text = lastUserMessageRef.current || (typeof msg?.content === "string" ? msg.content : msg?.text) || "";
+    if (!text) return;
+    const routeIntent = lastTurnRef.current?.routeIntent;
+    const reply = routeIntent === "ALWAYS_ON_SUPPORT" ? advancedSupportContractOffline(text) : offlineRespond(text, { intent: "directory" });
+    addMessage("assistant", normalizeMessage({
+      role: "assistant",
+      type: "assistant_text",
+      text: reply,
+      content: reply,
+      timestamp: Date.now(),
+      meta: { pending: false },
+    }));
+    offlineMessageQueueRef.current.push(text);
+    setOfflineQueueLength((n) => n + 1);
+  }, [addMessage]);
+
+  const chatActionHandlers = {
+    onRetry: retryLastTurn,
+    onOpenTools: handleOpenTools,
+    onOpenRealHelp: handleOpenRealHelp,
+    onOpenToolRoute: (route) => route && navigate(route),
+    onContinueOffline: handleContinueOffline,
+    onCopy: handleCopyMessage,
+    onSave: handleSaveMessage,
+    onSpeak: typeof window !== "undefined" && window.speechSynthesis ? handleSpeakMessage : undefined,
+    onExpand: handleExpandMessage,
+    expandedMessageIds,
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-950">
@@ -1220,6 +1539,13 @@ const ChatPanel = () => {
       
       {/* Phase 54B: Thread continuity cue */}
       <ThreadCueBar onContinue={() => textareaRef.current?.focus()} />
+
+      {/* Phase 54N: Speak fallback message when TTS unavailable */}
+      {speakError && (
+        <div className="px-4 py-2 text-center text-sm text-amber-400/90 bg-amber-500/10 border-b border-amber-500/20">
+          {speakError}
+        </div>
+      )}
       
       {/* Welcome Screen (before conversation starts) */}
       {!hasStarted && (
@@ -1427,21 +1753,26 @@ const ChatPanel = () => {
             const prefsOn = (typeof localStorage !== "undefined" && localStorage.getItem("wc_tool_suggestions") !== "off");
             const lastAt = parseInt(localStorage?.getItem("wc_last_tool_suggested_at") || "0", 10);
             const cooldownOk = Date.now() - lastAt >= 3 * 60 * 1000;
+            const suppressGroundingWelcome = getPref("grounding_suggest_disabled", false) || (typeof localStorage !== "undefined" && localStorage.getItem("wc_suppress_grounding_suggest") === "1");
             if (recommendation && prefsOn && cooldownOk) {
-              setTimeout(() => {
-                try {
-                  localStorage?.setItem("wc_last_tool_suggested_at", String(Date.now()));
-                } catch {}
-                const recommendationMessage = normalizeMessage({
-                  id: `recommendation-${Date.now()}`,
-                  role: "assistant",
-                  type: "recommendation",
-                  content: recommendation.reason || "Try a short practice?",
-                  suggestion: recommendation,
-                  timestamp: Date.now(),
-                });
-                addMessage("assistant", recommendationMessage);
-              }, 1000);
+              if (recommendation.toolId === "grounding" && suppressGroundingWelcome) {
+                // Skip grounding CTA when disabled
+              } else {
+                setTimeout(() => {
+                  try {
+                    localStorage?.setItem("wc_last_tool_suggested_at", String(Date.now()));
+                  } catch {}
+                  const recommendationMessage = normalizeMessage({
+                    id: `recommendation-${Date.now()}`,
+                    role: "assistant",
+                    type: "recommendation",
+                    content: recommendation.reason || "Try a short practice?",
+                    suggestion: recommendation,
+                    timestamp: Date.now(),
+                  });
+                  addMessage("assistant", recommendationMessage);
+                }, 1000);
+              }
             }
             
             await sendToAI(action);
@@ -1449,10 +1780,10 @@ const ChatPanel = () => {
         />
       )}
 
-      {/* Messages Area */}
+      {/* Messages Area — Phase 55A: bottom padding so content is not hidden behind composer */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: "calc(var(--wc-composer-h, 84px) + var(--wc-bottom-nav-h, 72px) + env(safe-area-inset-bottom))" }}>
+          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: composerH + COMPOSER_MARGIN }}>
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
               <div className="mb-8 text-center animate-fade-in">
@@ -1463,20 +1794,66 @@ const ChatPanel = () => {
               </div>
             )}
             <div className="space-y-6">
-              {messages.map((msg) => {
+              {messages
+                .filter((m) => !(m?.meta?.kind === "thinking_placeholder" || (typeof m?.content === "string" && m.content.trim() === "Thinking…")))
+                .map((msg) => {
                 if (msg.role === "tool") {
                   return <ToolBlock key={msg.id} tool={msg} />;
                 }
                 if (msg.role === "directory") {
                   return <DirectoryResultBlock key={msg.id} message={msg.content} />;
                 }
-                
+                if (msg.role === "assistant" && msg.meta?.kind === "directoryResults") {
+                  return (
+                    <div key={msg.id} className="flex items-start gap-2 sm:gap-4 animate-fade-in">
+                      <div className="flex-shrink-0">
+                        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/10 flex items-center justify-center">
+                          <span className="text-[10px] sm:text-xs font-medium text-white">SG</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0 max-w-[46rem]">
+                        {msg.text ? (
+                          <p className="text-sm text-white/80 mb-3">{msg.text}</p>
+                        ) : null}
+                        <DirectoryResultsPanel
+                          domain={msg.meta.domain}
+                          query={msg.meta.query}
+                          results={msg.meta.results}
+                          onOpenDirectory={() => navigate("/assistance")}
+                          onAskLocation={() => addMessage("assistant", { type: "system", content: "What's your city or state? Reply with your city or state for better results." })}
+                          onSaveItem={() => {}}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+                if (msg.role === "assistant" && msg.meta?.kind === "directoryEmpty") {
+                  return (
+                    <div key={msg.id} className="flex items-start gap-2 sm:gap-4 animate-fade-in">
+                      <div className="flex-shrink-0">
+                        <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/10 flex items-center justify-center">
+                          <span className="text-[10px] sm:text-xs font-medium text-white">SG</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0 max-w-[46rem]">
+                        <DirectoryResultsPanel
+                          domain={msg.meta.domain}
+                          query={msg.meta.query}
+                          results={[]}
+                          onOpenDirectory={() => navigate("/assistance")}
+                          onAskLocation={() => addMessage("assistant", { type: "system", content: "What's your city or state? Reply with your city or state for better results." })}
+                          onSaveItem={() => {}}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
                 // Handle multimodal assistant messages
                 if (msg.role === "assistant" && msg.type) {
                   if (msg.type === "assistant_audio") {
                     return (
                       <div key={msg.id} className="space-y-2 animate-fade-in">
-                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} />
+                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} {...chatActionHandlers} />
                         {msg.audioUrl && (
                           <div className="ml-0 sm:ml-12 w-full sm:w-auto">
                             <VoiceResponse text={msg.text || msg.content} audioUrl={msg.audioUrl} />
@@ -1488,7 +1865,7 @@ const ChatPanel = () => {
                   if (msg.type === "assistant_video") {
                     return (
                       <div key={msg.id} className="space-y-2 animate-fade-in">
-                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} />
+                        <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} {...chatActionHandlers} />
                         {msg.videoUrl && (
                           <div className="ml-0 sm:ml-12 w-full max-w-full sm:max-w-2xl">
                             <VideoGuidance
@@ -1501,36 +1878,34 @@ const ChatPanel = () => {
                       </div>
                     );
                   }
-                  // Phase 21: Handle recommendation messages with improved UI
+                  // Phase 21 + 54L + 55A: Recommendation (grounding) CTA — hide if disabled, wire Open / Not now / Don't suggest again
+                  const groundingSuppressKey = "wc_grounding_suppress";
+                  const suppressGroundingSuggest = getPref("grounding_suggest_disabled", false) || safeLocalStorage.get("wc_suppress_grounding_suggest") === "1" || safeLocalStorage.get(groundingSuppressKey) === "1";
                   if (msg.type === "recommendation" && msg.suggestion) {
-                    const toolName = TOOL_NAMES[msg.suggestion.toolId] || msg.suggestion.toolId;
+                    if (msg.suggestion.toolId === "grounding" && suppressGroundingSuggest) return null;
+                    const toolId = msg.suggestion.toolId;
+                    const toolName = TOOL_NAMES[toolId] || toolId;
                     const handleOpenSuggestedTool = (suggestion) => {
-                      if (suggestion?.toolId) {
+                      if (suggestion?.toolId === "grounding") {
+                        setGroundingModalOpen(true);
+                      } else if (suggestion?.toolId) {
                         injectToolIntoChat(suggestion.toolId, {});
                       }
                     };
                     const dismissSuggestion = (messageId) => {
-                      // Remove the recommendation message from the store
                       const currentMessages = useOSStore.getState().messages;
                       const filteredMessages = currentMessages.filter(m => m.id !== messageId);
                       useOSStore.setState({ messages: filteredMessages });
-                      
-                      // Also update the current chat
                       const currentChatId = useOSStore.getState().currentChatId;
                       const chats = useOSStore.getState().chats;
                       const updatedChats = chats.map(chat => {
                         if (chat.id === currentChatId) {
-                          return {
-                            ...chat,
-                            messages: filteredMessages,
-                            updatedAt: Date.now(),
-                          };
+                          return { ...chat, messages: filteredMessages, updatedAt: Date.now() };
                         }
                         return chat;
                       });
                       useOSStore.setState({ chats: updatedChats });
                     };
-                    
                     return (
                       <div key={msg.id} className="flex items-start gap-2 sm:gap-4 animate-fade-in">
                         <div className="flex-shrink-0">
@@ -1565,7 +1940,9 @@ const ChatPanel = () => {
                                 type="button"
                                 className="px-3 py-1.5 text-xs rounded-lg text-white/50 hover:text-white/70 transition"
                                 onClick={() => {
-                                  try { localStorage.setItem("wc_tool_suggestions", "off"); } catch {}
+                                  setPref("grounding_suggest_disabled", true);
+                                  try { localStorage.setItem("wc_suppress_grounding_suggest", "1"); } catch {}
+                                  safeLocalStorage.set(groundingSuppressKey, "1");
                                   dismissSuggestion(msg.id);
                                 }}
                               >
@@ -1582,14 +1959,17 @@ const ChatPanel = () => {
                 // Phase 19: Add EmotionalSignalBar to user messages
                 // Phase 27: Add HUD components under user messages
                 if (msg.role === "user") {
+                  const prevId = lastIdentityRef.current;
+                  const idChanged = !prevId || (msg.identity && (prevId.tensionScore !== msg.identity?.tensionScore || prevId.summaryTag !== msg.identity?.summaryTag));
+                  if (msg.identity && idChanged) lastIdentityRef.current = { tensionScore: msg.identity?.tensionScore, summaryTag: msg.identity?.summaryTag };
                   return (
                     <div key={msg.id} className="space-y-2">
-                      <MessageBubble message={msg} onAction={handleMessageAction} />
-                      <EmotionalSignalBar 
-                        emotion={msg.emotion} 
+                      <MessageBubble message={msg} onAction={handleMessageAction} {...chatActionHandlers} />
+                      <EmotionalSignalBar
+                        emotion={msg.emotion}
                         triggers={msg.triggers}
                         risk={msg.risk}
-                        identity={msg.identity}
+                        identity={idChanged ? msg.identity : null}
                       />
                       {/* Phase 27: Emotional HUD - Micro-components */}
                       {(msg.emotion || msg.triggers || msg.risk || msg.trajectory) && (
@@ -1607,7 +1987,7 @@ const ChatPanel = () => {
                 // Default: MessageBubble + IntentRenderer when intent present
                 return (
                   <div key={msg.id} className="space-y-2">
-                    <MessageBubble message={msg} onAction={handleMessageAction} />
+                    <MessageBubble message={msg} onAction={handleMessageAction} {...chatActionHandlers} />
                     {msg.intent && (() => {
                       if (msg.intent?.type === "directory.search") {
                         logDebug("ChatPanel", {
@@ -1642,13 +2022,13 @@ const ChatPanel = () => {
                   </div>
                 );
               })}
-              {isThinking && (
+              {pending != null && (
                 <div className="flex items-start gap-3 animate-fade-in">
                   <div className="flex-1">
                     <div className="inline-block max-w-[85%] rounded-2xl bg-white/5 p-4">
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin text-wcGold" />
-                        <span className="text-base text-white/60">Listening…</span>
+                        <span className="text-base text-white/60">{pending.label ?? "Thinking"}</span>
                       </div>
                     </div>
                   </div>
@@ -1688,24 +2068,36 @@ const ChatPanel = () => {
         </div>
       )}
 
-      {/* Phase 55: ComposerDock — portal into shell when dock exists */}
+      {/* Phase 54D: ChatDock wraps composer — portal into shell when dock exists */}
       {(() => {
         const composerEl = (
-          <ChatComposerBar
-              value={input}
-              onChange={(v) => {
-                setInput(v);
-                clearTimeout(ingestDebounceRef.current);
-                ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
-              }}
-              onSend={handleSend}
-              onMic={() => setVoiceCheckInModalOpen(true)}
-              onFaceScan={() => setFaceScanPromptOpen(true)}
-              disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-              isSending={isSending}
-              inputRef={textareaRef}
-              placeholder="Ask anything"
-            />
+          <div ref={composerRef}>
+            <ChatDock>
+              <div className="flex items-end gap-2 w-full">
+                <ComposerPresenceControls
+                  pending={!!pending}
+                  onSpeakLast={speakLastAssistant}
+                  autoSpeakEnabled={autoSpeakEnabled}
+                  onToggleAutoSpeak={(v) => setAutoSpeakEnabled(!!v)}
+                />
+                <ChatComposerBar
+                  value={input}
+                  onChange={(v) => {
+                    setInput(v);
+                    clearTimeout(ingestDebounceRef.current);
+                    ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
+                  }}
+                  onSend={handleSend}
+                  onMic={() => setVoiceCheckInModalOpen(true)}
+                  onFaceScan={() => setFaceScanPromptOpen(true)}
+                  disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
+                  isSending={isSending}
+                  inputRef={textareaRef}
+                  placeholder="Ask anything"
+                />
+              </div>
+            </ChatDock>
+          </div>
         );
         const dock = typeof document !== "undefined" ? document.getElementById("wc-composer-dock") : null;
         if (dock) {
@@ -1726,6 +2118,10 @@ const ChatPanel = () => {
         onClose={() => setFaceScanPromptOpen(false)}
         onStartScan={handleFaceScan}
       />
+
+      <GroundingModal open={groundingModalOpen} onClose={() => setGroundingModalOpen(false)} />
+
+      <ThinkingOverlay show={!!pending && thoughtMsForOverlay >= 250} seconds={(thoughtMsForOverlay || 0) / 1000} />
 
       {/* In-app link preview (resource.preview intent) */}
       {webViewUrl && (

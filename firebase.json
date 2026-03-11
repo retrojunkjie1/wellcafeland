@@ -4,6 +4,9 @@
     "runtime": "nodejs20"
   },
   "emulators": {
+    "hub": {
+      "port": 4400
+    },
     "functions": {
       "host": "127.0.0.1",
       "port": 5001

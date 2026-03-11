@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WellnessCafe Pod Task Packet",
+  "description": "Schema for a single work packet produced by the Work Packet Generator and consumed by execution tools (Cursor, n8n) and QA Sentinel.",
+  "type": "object",
+  "required": ["packet_id", "created_at", "active_phase", "task_scope", "verification"],
+  "properties": {
+    "packet_id": {
+      "type": "string",
+      "description": "Unique identifier for this packet (e.g. UUID or run-id + sequence)."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when packet was generated."
+    },
+    "active_phase": {
+      "type": "string",
+      "description": "Current phase from steward context (e.g. 55, 55A)."
+    },
+    "task_scope": {
+      "type": "object",
+      "description": "What to do; must align with allowed work.",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "focus_items": { "type": "array", "items": { "type": "string" } },
+        "allowed_work": { "type": "array", "items": { "type": "string" } },
+        "prohibited_work": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "description": "Commands and checks QA Sentinel must run.",
+      "properties": {
+        "scripts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "e.g. ['npm run phase55a:chatActions:verify', 'npm run phase56.verify']"
+        },
+        "manual_checklist": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "context_slice": {
+      "type": "object",
+      "description": "Optional subset of steward context relevant to this task (references or excerpts)."
+    },
+    "approval_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, Approval Gate must pause before execution or before marking complete."
+    }
+  }
+}

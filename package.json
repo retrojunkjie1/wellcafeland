@@ -9,6 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy:check": "node scripts/check-deploy.js",
+    "steward:build": "node scripts/build_steward_context.mjs",
+    "pod:verify": "node scripts/pod/verify_pod_context.mjs",
     "deploy": "npm run predeploy:check && firebase deploy --only hosting",
     "grant:admin": "node scripts/grantAdmin.cjs",
     "grant:admin:aleggi": "node scripts/grantAdmin.cjs aleggi007@gmail.com",
@@ -53,6 +55,7 @@
     "phase54m:router:verify": "node scripts/phase54m.router.verify.mjs",
     "phase54n:actions:verify": "node scripts/phase54n.actions.verify.mjs",
     "phase55a:chatActions:verify": "node scripts/phase55a.chatActions.verify.mjs",
+    "phase56:verify": "node scripts/phase56.verify.mjs",
     "current:phase": "node scripts/currentPhase.generate.mjs",
     "repo:audit": "sh scripts/repo-audit.sh"
   },

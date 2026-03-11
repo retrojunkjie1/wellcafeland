@@ -6,6 +6,9 @@ import React, { useEffect, useState, useRef } from "react";
 import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import { useSmartNav } from "@/navigation/useSmartNav";
 import { speakText, unlockAudio, stopSpeaking, getDiagnostics } from "@/utils/voiceGuide";
+import { runBreathingScheduler, createBreathingScheduler } from "@/experience/audio/breathingProgram";
+import { useAudio } from "@/experience/audio/AudioProvider";
+import { useSpokenGuidance } from "@/experience/audio/useSpokenGuidance";
 
 export const BreathingSessionView = ({
   isActive,
@@ -14,14 +17,21 @@ export const BreathingSessionView = ({
   voiceEnabled = false, // Voice guide option
 }) => {
   const { back } = useSmartNav();
+  const audio = useAudio();
+  const { playGuidance } = useSpokenGuidance();
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [phase, setPhase] = useState("idle");
+  const [audioPhase, setAudioPhase] = useState(null);
+  const [cycleCount, setCycleCount] = useState(0);
   const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(voiceEnabled);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const audioRef = useRef(null);
   const speechRef = useRef(null);
   const cycleCountRef = useRef(0);
+  const schedulerRef = useRef(null);
+  const ambienceRef = useRef(null);
+  const hasStartedOnceRef = useRef(false);
 
   // Voice guide using voiceGuide module
   const speakPhase = React.useCallback(async (phaseName, count) => {
@@ -42,6 +52,81 @@ export const BreathingSessionView = ({
       await speakText(instruction, { rate: 0.85, pitch: 1.0, volume: 0.8 });
     }
   }, [voiceGuideEnabled, audioUnlocked]);
+
+  // Phase 56 Day 2: single guided breathing scheduler + ambience. No double-start; cleanup on stop/unmount.
+  useEffect(() => {
+    if (!isActive) {
+      if (schedulerRef.current) {
+        schedulerRef.current.stop();
+        schedulerRef.current = null;
+      }
+      try {
+        audio?.stopAll?.();
+      } catch (e) {}
+      if (ambienceRef.current) {
+        try {
+          ambienceRef.current.pause();
+        } catch (e) {}
+        ambienceRef.current = null;
+      }
+      setAudioPhase(null);
+      setCycleCount(0);
+      hasStartedOnceRef.current = false;
+      return;
+    }
+    if (schedulerRef.current) return;
+    try {
+      playGuidance("breathing_intro");
+    } catch (e) {}
+    const onTick = (p) => {
+      setAudioPhase(p);
+      if (p === "inhale") {
+        if (hasStartedOnceRef.current) setCycleCount((c) => c + 1);
+        hasStartedOnceRef.current = true;
+      }
+    };
+    if (audio) {
+      const s = createBreathingScheduler({ audio, onTick });
+      schedulerRef.current = s;
+      s.start();
+      try {
+        audio.play("ambience_soft", { loop: true, volume: 0.15 });
+      } catch (e) {}
+    } else {
+      const playCue = ({ phase: p, path: pathUrl }) => {
+        onTick(p);
+        try {
+          const a = new Audio(pathUrl);
+          a.volume = 0.4;
+          a.play().catch(() => {});
+        } catch (e) {}
+      };
+      const stopFn = runBreathingScheduler(undefined, playCue);
+      schedulerRef.current = { start: () => {}, stop: () => { stopFn(); schedulerRef.current = null; } };
+      try {
+        const amb = new Audio("/audio/ambience_soft.mp3");
+        amb.loop = true;
+        amb.volume = 0.15;
+        amb.play().catch(() => {});
+        ambienceRef.current = amb;
+      } catch (e) {}
+    }
+    return () => {
+      if (schedulerRef.current) {
+        schedulerRef.current.stop();
+        schedulerRef.current = null;
+      }
+      try {
+        audio?.stopAll?.();
+      } catch (e) {}
+      if (ambienceRef.current) {
+        try {
+          ambienceRef.current.pause();
+        } catch (e) {}
+        ambienceRef.current = null;
+      }
+    };
+  }, [isActive, audio, playGuidance]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -126,17 +211,19 @@ export const BreathingSessionView = ({
     };
   }, [isActive, pattern, onCycleComplete, voiceGuideEnabled]);
 
+  const displayPhase = audioPhase ?? phase;
   const getScale = () => {
     if (!isActive) return 1;
-    if (phase === "inhale") return 1.4;
-    if (phase === "exhale") return 0.75;
+    if (displayPhase === "inhale" || displayPhase === "hold1") return 1.4;
+    if (displayPhase === "exhale") return 0.75;
+    if (displayPhase === "hold" || displayPhase === "hold2") return 1.0;
     return 1.0;
   };
 
   const getOpacity = () => {
     if (!isActive) return 0.6;
-    if (phase === "inhale") return 1.0;
-    if (phase === "exhale") return 0.85;
+    if (displayPhase === "inhale" || displayPhase === "hold1") return 1.0;
+    if (displayPhase === "exhale") return 0.85;
     return 0.9;
   };
 
@@ -170,9 +257,9 @@ export const BreathingSessionView = ({
 
       {/* Luxury Orb zone - premium design with depth */}
       <div className="flex flex-col items-center justify-center gap-6 overflow-visible min-h-[60vh] py-12">
-        {/* Premium breathing orb with luxury materials */}
+        {/* Premium breathing orb with luxury materials — wrapper relative z-10 so rails/decor sit behind */}
         <div
-          className="relative flex aspect-square w-64 sm:w-80 items-center justify-center overflow-visible"
+          className="relative z-10 flex aspect-square w-64 sm:w-80 items-center justify-center overflow-visible"
           style={{
             transform: `scale(${getScale()})`,
             opacity: getOpacity(),
@@ -180,9 +267,9 @@ export const BreathingSessionView = ({
             filter: isActive ? "blur(0px)" : "blur(1px)",
           }}
         >
-          {/* Outer atmospheric glow - multi-layered luxury effect */}
+          {/* Outer atmospheric glow - behind orb (z-0) */}
           <div 
-            className="absolute inset-0 rounded-full blur-3xl opacity-60"
+            className="absolute inset-0 z-0 rounded-full blur-3xl opacity-60"
             style={{
               background: `radial-gradient(circle, 
                 rgba(251, 191, 36, 0.4) 0%, 
@@ -194,9 +281,9 @@ export const BreathingSessionView = ({
             }}
           />
           
-          {/* Secondary glow ring - depth and dimension */}
+          {/* Secondary glow ring - behind orb (z-0) */}
           <div 
-            className="absolute inset-[-20%] rounded-full blur-2xl opacity-40"
+            className="absolute inset-[-20%] z-0 rounded-full blur-2xl opacity-40"
             style={{
               background: `radial-gradient(circle, 
                 rgba(251, 191, 36, 0.3) 0%, 
@@ -207,9 +294,9 @@ export const BreathingSessionView = ({
             }}
           />
 
-          {/* Main luxury orb - premium glassmorphism with depth */}
+          {/* Main luxury orb - premium glassmorphism with depth (sits above glow stack) */}
           <div 
-            className="relative flex h-full w-full items-center justify-center rounded-full"
+            className="relative z-10 flex h-full w-full items-center justify-center rounded-full"
             style={{
               background: `radial-gradient(ellipse at 30% 30%,
                 rgba(255, 255, 255, 0.25) 0%,
@@ -245,16 +332,6 @@ export const BreathingSessionView = ({
               }}
             />
 
-            {/* Shimmer overlay - luxury animation */}
-            <div 
-              className="absolute inset-0 rounded-full opacity-30"
-              style={{
-                background: "linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.4) 45%, transparent 90%)",
-                backgroundSize: "200% 200%",
-                animation: isActive ? "luxuryShimmer 4s ease-in-out infinite" : "none",
-              }}
-            />
-
             {/* Central text content - premium typography */}
             <div className="relative z-10 flex flex-col items-center gap-2 text-center px-8">
               <span 
@@ -277,7 +354,7 @@ export const BreathingSessionView = ({
                   textShadow: "0 0 20px rgba(251, 191, 36, 0.4)",
                 }}
               >
-                {phase === "idle" ? "Ready" : phase.toUpperCase()}
+                {audioPhase !== null ? audioPhase : phase === "idle" ? "Ready" : phase.toUpperCase()}
               </span>
             </div>
 
@@ -311,6 +388,18 @@ export const BreathingSessionView = ({
             ))}
           </div>
         </div>
+
+        {/* Phase 56 Day 2: minimal phase indicator + optional cycle count */}
+        {isActive && audioPhase !== null && (
+          <div className="flex items-center justify-center gap-3 mt-2">
+            <span className="text-[11px] uppercase tracking-widest text-amber-200/90">
+              {audioPhase === "inhale" ? "Inhale" : audioPhase === "hold" ? "Hold" : "Exhale"}
+            </span>
+            {cycleCount > 0 && (
+              <span className="text-[10px] text-white/50">{cycleCount}</span>
+            )}
+          </div>
+        )}
 
         {/* Premium instruction text */}
         <p 
@@ -383,10 +472,6 @@ export const BreathingSessionView = ({
 
       {/* Luxury animations */}
       <style>{`
-        @keyframes luxuryShimmer {
-          0%, 100% { background-position: -200% center; }
-          50% { background-position: 200% center; }
-        }
         @keyframes luxuryPulse {
           0%, 100% { 
             opacity: 0.4; 

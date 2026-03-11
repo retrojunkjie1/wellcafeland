@@ -592,7 +592,7 @@ body {
 }
 /* brace-check: .wc-breath-circle span block closed */
 
-/* Phase 55: ComposerDock — fixed above bottom nav */
+/* Phase 55: ComposerDock — fixed above bottom nav (when NOT inside BottomRail) */
 .wc-composer-dock {
   position: fixed;
   left: 0;
@@ -603,4 +603,21 @@ body {
 }
 .wc-composer-dock > * {
   pointer-events: auto;
+}
+
+/* Phase 55A.2: Composer inside BottomRail — top section of single card (no gap, same width) */
+[data-wc-bottom-rail] .wc-composer-in-rail > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+  backdrop-filter: none;
+  box-shadow: none;
+  min-height: var(--wc-chat-dock-h, 88px);
+  padding: 0.75rem 1rem;
+  padding-bottom: 0.75rem;
 }

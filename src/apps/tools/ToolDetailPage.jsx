@@ -12,6 +12,7 @@ import { ToolsRegistry } from "@/engines/tools/ToolsRegistry";
 import { getToolById } from "@/tools/toolResolver";
 import { loadToolBySlug } from "@/services/toolLoader";
 import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
+import { AudioProvider } from "@/experience/audio/AudioProvider";
 import { ToolProtocolView } from "@/components/tools/ToolProtocolView";
 import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
 import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
@@ -21,6 +22,7 @@ import { getRecoveryBasicsContent, RECOVERY_BASICS_TOPICS } from "@/engines/educ
 import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView";
 import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
 import { logDebug } from "@/lib/debug";
+import NotReadyCard from "@/components/system/NotReadyCard";
 
 const ToolDetailPage = () => {
   const { toolId } = useParams();
@@ -96,15 +98,25 @@ const ToolDetailPage = () => {
     // Fallback to ToolsRegistry for legacy tools
     const registryTool = ToolsRegistry?.find((t) => t.id === decodedId) || null;
     if (registryTool) {
-      // Map tool IDs to sessionType for breathing and grounding tools
-      // Breathing tool MUST have sessionType for rendering
+      // Map tool IDs to sessionType; preserve registry sessionType (e.g. panic-reset -> panic)
       const sessionTypeMap = {
         breathing: "breathing",
         grounding: "grounding",
+        "panic-reset": "panic",
       };
       return {
         ...registryTool,
-        sessionType: sessionTypeMap[registryTool.id] || (registryTool.id === "breathing" ? "breathing" : null),
+        sessionType: sessionTypeMap[registryTool.id] ?? registryTool.sessionType ?? (registryTool.id === "breathing" ? "breathing" : null),
+      };
+    }
+    // Fallback: If tool ID is "panic-reset" but not found, create minimal meta so it never renders blank
+    if (decodedId === "panic-reset") {
+      return {
+        id: "panic-reset",
+        name: "Panic Reset",
+        description: "Emergency calm protocol for panic spikes",
+        category: "Emergency",
+        sessionType: "panic",
       };
     }
     // Fallback: If tool ID is "breathing" but not found, create minimal meta to ensure it renders
@@ -281,7 +293,7 @@ const ToolDetailPage = () => {
   // Wait for protocol load when we have a slug (avoids flash of wrong content)
   if (decodedId && !protocolToolLoaded) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center px-4">
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="text-sm text-slate-500">Loading…</div>
       </div>
     );
@@ -413,45 +425,64 @@ const ToolDetailPage = () => {
     );
   }
 
-  // Session-based tool view
+  // Session-based tool view (Phase 56: AudioProvider for breathing/audio-guided tools)
   if (toolMeta?.sessionType) {
     return (
-      <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
-        {/* subtle background particles */}
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute h-1 w-1 rounded-full bg-amber-300/30"
-              style={{
-                left: `${(i * 37) % 100}%`,
-                top: `${(i * 53) % 100}%`,
-                animation: `float-slow ${10 + (i % 6)}s ease-in-out infinite`,
-                animationDelay: `${i * 0.3}s`,
-              }}
-            />
-          ))}
-        </div>
+      <AudioProvider>
+        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+          {/* subtle background particles */}
+          <div className="pointer-events-none fixed inset-0 overflow-hidden">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute h-1 w-1 rounded-full bg-amber-300/30"
+                style={{
+                  left: `${(i * 37) % 100}%`,
+                  top: `${(i * 53) % 100}%`,
+                  animation: `float-slow ${10 + (i % 6)}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.3}s`,
+                }}
+              />
+            ))}
+          </div>
 
-        <ToolSessionLayout
-          tool={toolMeta}
-          darkMode={darkMode}
-          isActive={isSessionActive}
-          onStart={handleStartSession}
-          onEnd={handleEndSession}
-          onClose={() => navigate("/tools")}
-          metrics={metrics}
-          soundEnabled={soundEnabled}
-          onToggleSound={() => setSoundEnabled((v) => !v)}
-          onToggleTheme={() => setDarkMode((v) => !v)}
-        >
-          {renderSessionView()}
-        </ToolSessionLayout>
-      </div>
+          <ToolSessionLayout
+            tool={toolMeta}
+            darkMode={darkMode}
+            isActive={isSessionActive}
+            onStart={handleStartSession}
+            onEnd={handleEndSession}
+            onClose={() => navigate("/tools")}
+            metrics={metrics}
+            soundEnabled={soundEnabled}
+            onToggleSound={() => setSoundEnabled((v) => !v)}
+            onToggleTheme={() => setDarkMode((v) => !v)}
+          >
+            {renderSessionView()}
+          </ToolSessionLayout>
+        </div>
+      </AudioProvider>
     );
   }
 
-  // Fallback content view if only markdown defined
+  // Fallback content view if only markdown defined — or never-blank NotReadyCard if nothing to show
+  if (!content?.title && !content?.body) {
+    if (import.meta.env.DEV) {
+      console.debug("[PanicReset] render", { ready: false, loading: protocolToolLoaded, error: "no content" });
+    }
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <NotReadyCard
+          title="Panic Reset"
+          body="This calm-down tool is loading. You can try again or open Chat for support."
+          actions={[
+            { label: "Try again", onClick: () => navigate(decodedId ? `/tools/${encodeURIComponent(decodedId)}` : "/tools", { replace: true }) },
+            { label: "Use text instead", to: "/chat" },
+          ]}
+        />
+      </div>
+    );
+  }
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       {/* C1: Back button handled by OSPageChrome - no duplicate */}

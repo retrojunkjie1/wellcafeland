@@ -2,25 +2,20 @@
 // Welcome screen shown before conversation starts — clinically-guided luxury pathway layout
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useOSStore } from "@/stores/useOSStore";
 import Logo from "@/components/Logo";
 import PrimaryPathways from "@/apps/home/components/PrimaryPathways";
 
 const WelcomeScreen = ({ onAction }) => {
+  const navigate = useNavigate();
   const { messages } = useOSStore();
   const hasStarted = messages.length > 1; // More than welcome message
 
   if (hasStarted) return null;
 
   const handlePathwayClick = (pathwayId) => {
-    // TODO: wire navigation when handlers are implemented
-    const prompts = {
-      stabilize: "I need to stabilize right now",
-      process: "Help me process what I'm feeling",
-      "real-help": "I need real help — housing, treatment, or programs",
-      cravings: "I'm struggling with cravings",
-    };
-    onAction?.(prompts[pathwayId] ?? pathwayId);
+    navigate(`/session/${pathwayId}`);
   };
 
   return (

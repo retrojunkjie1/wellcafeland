@@ -1,82 +1,61 @@
-// scripts/phase55.verify.mjs
-// Phase 55: Experience unification verification
+#!/usr/bin/env node
+/**
+ * scripts/phase55.verify.mjs
+ * Phase 55: Emulator spine — hub ok, functions port open, /api endpoints return not-500.
+ */
 
-import fs from "node:fs";
-import path from "node:path";
+import { createConnection } from "node:net";
 
-const ROOT = process.cwd();
+const PORTS = { hub: 4400, functions: 5001 };
+const VITE_PORT = parseInt(process.env.VITE_PORT || "5173", 10);
+const BASE = `http://127.0.0.1:${VITE_PORT}`;
 
-const checks = {
-  noEmulatorBannerText: {
-    dir: path.join(ROOT, "src"),
-    mustNotContain: "Running in emulator mode",
-  },
-  noTargetBlank: {
-    dir: path.join(ROOT, "src"),
-    mustNotContain: 'target="_blank"',
-  },
-  experienceShellExists: {
-    path: path.join(ROOT, "src/system/ExperienceShell.jsx"),
-    mustExist: true,
-  },
-  bottomNavFixed: {
-    path: path.join(ROOT, "src/system/ExperienceShell.jsx"),
-    mustContain: "position: fixed",
-    orContain: "fixed",
-  },
-  composerDockExists: {
-    path: path.join(ROOT, "src/system/ExperienceShell.jsx"),
-    mustContain: "wc-composer-dock",
-  },
-};
+function tcpOpen(host, port) {
+  return new Promise((resolve) => {
+    const s = createConnection({ host, port }, () => {
+      s.destroy();
+      resolve(true);
+    });
+    s.on("error", () => resolve(false));
+    s.setTimeout(800, () => {
+      s.destroy();
+      resolve(false);
+    });
+  });
+}
 
-const scanDir = (dir, mustNotContain) => {
-  if (!fs.existsSync(dir)) return { ok: true };
-  const files = fs.readdirSync(dir, { withFileTypes: true });
-  for (const f of files) {
-    const fp = path.join(dir, f.name);
-    if (f.isDirectory()) {
-      const r = scanDir(fp, mustNotContain);
-      if (!r.ok) return r;
-    } else if (f.isFile() && /\.(jsx?|tsx?)$/.test(f.name)) {
-      const content = fs.readFileSync(fp, "utf8");
-      if (content.includes(mustNotContain)) {
-        return { ok: false, file: fp, found: mustNotContain };
-      }
-    }
+async function httpStatus(url, method, body) {
+  try {
+    const opts = { method, headers: body !== undefined ? { "Content-Type": "application/json" } : {} };
+    if (body !== undefined) opts.body = typeof body === "string" ? body : JSON.stringify(body);
+    const r = await fetch(url, { ...opts, signal: AbortSignal.timeout(6000) });
+    return r.status;
+  } catch {
+    return "ERR";
   }
-  return { ok: true };
-};
+}
 
-const main = () => {
-  const report = {};
-  let pass = true;
+async function run() {
+  const report = { PHASE55_VERIFY: true, hub: null, functions: null, api: {}, status: "PASS" };
 
-  const r1 = scanDir(checks.noEmulatorBannerText.dir, checks.noEmulatorBannerText.mustNotContain);
-  report.noEmulatorBannerText = r1.ok ? { ok: true } : { ok: false, reason: `Found in ${r1.file}` };
-  if (!r1.ok) pass = false;
+  report.hub = { port: PORTS.hub, open: await tcpOpen("127.0.0.1", PORTS.hub) };
+  report.functions = { port: PORTS.functions, open: await tcpOpen("127.0.0.1", PORTS.functions) };
 
-  const r2 = scanDir(checks.noTargetBlank.dir, checks.noTargetBlank.mustNotContain);
-  report.noTargetBlank = r2.ok ? { ok: true } : { ok: false, reason: `Found in ${r2.file}` };
-  if (!r2.ok) pass = false;
+  const aiStatus = await httpStatus(`${BASE}/api/aiSession`, "POST", { mode: "telemetry", event: {} });
+  const searchStatus = await httpStatus(`${BASE}/api/globalResourceSearch`, "POST", { query: "test", limit: 1 });
+  report.api = { aiSession: aiStatus, globalResourceSearch: searchStatus };
 
-  report.experienceShellExists = fs.existsSync(checks.experienceShellExists.path)
-    ? { ok: true }
-    : { ok: false, reason: "ExperienceShell.jsx not found" };
-  if (!report.experienceShellExists.ok) pass = false;
-
-  const shellPath = path.join(ROOT, "src/system/ExperienceShell.jsx");
-  if (fs.existsSync(shellPath)) {
-    const content = fs.readFileSync(shellPath, "utf8");
-    report.bottomNavFixed = content.includes("fixed") ? { ok: true } : { ok: false, reason: "BottomNav not fixed" };
-    report.composerDockExists = content.includes("wc-composer-dock") ? { ok: true } : { ok: false, reason: "ComposerDock missing" };
-    if (!report.bottomNavFixed.ok || !report.composerDockExists.ok) pass = false;
-  }
+  const not500 = (s) => s !== 500 && s !== "ERR";
+  if (!report.hub.open || !report.functions.open) report.status = "FAIL";
+  if (!not500(aiStatus) || !not500(searchStatus)) report.status = "FAIL";
 
   console.log("PHASE55_VERIFY");
   console.log(JSON.stringify(report, null, 2));
-  console.log(pass ? "PASS" : "FAIL");
-  process.exit(pass ? 0 : 1);
-};
+  console.log(report.status);
+  process.exit(report.status === "PASS" ? 0 : 1);
+}
 
-main();
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

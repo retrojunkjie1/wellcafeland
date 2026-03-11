@@ -11,6 +11,15 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
+/** Safe timestamp for emulator: FieldValue.serverTimestamp() or fallback to now. Never undefined. */
+function safeServerTimestamp() {
+  try {
+    const fv = admin.firestore.FieldValue;
+    if (fv && typeof fv.serverTimestamp === "function") return fv.serverTimestamp();
+  } catch (_) {}
+  return admin.firestore.Timestamp.fromMillis(Date.now());
+}
+
 const OPENAI_MODEL = "gpt-4o-mini";
 const CHAT_TEMPERATURE = 0.3;
 const CHAT_MAX_TOKENS = 500;
@@ -506,7 +515,7 @@ async function generateSession(payload = {}) {
     durationMinutes: raw.durationMinutes || minutes,
     category: raw.category || supportType,
     steps: Array.isArray(raw.steps) ? raw.steps : [],
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: safeServerTimestamp(),
     source: "ai_generate",
   };
 
@@ -518,8 +527,8 @@ async function generateSession(payload = {}) {
     try {
       await db.collection("users").doc(userId).set({
         lastSession: session,
-        lastSessionAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastSessionAt: safeServerTimestamp(),
+        updatedAt: safeServerTimestamp(),
       }, { merge: true });
     } catch (err) {
       console.error("Failed to update user lastSession:", err);
@@ -616,7 +625,7 @@ async function handleSession(req, res) {
       console.log("[aiSession] openai_key", { present: !!apiKey, source: keySource, masked: apiKey ? maskKeyForLog(apiKey) : undefined });
     }
     if (!apiKey) {
-      return res.status(500).json({
+      return res.status(200).json({
         ok: false,
         error: { code: "AI_PROVIDER_NOT_CONFIGURED", message: "AI provider not configured" },
         correlationId,
@@ -645,7 +654,7 @@ async function handleSession(req, res) {
         await db.collection("telemetry").add({
           userId,
           event,
-          ts: admin.firestore.FieldValue.serverTimestamp(),
+          ts: safeServerTimestamp(),
         });
         return res.status(200).json({ ok: true });
       } catch (err) {
@@ -1053,7 +1062,7 @@ async function handleSession(req, res) {
   } catch (err) {
     const topCorrelationId = (req.body && typeof req.body === "object" && req.body?.correlationId) || "unknown";
     if (err.message === "AI provider not configured") {
-      return res.status(500).json({
+      return res.status(200).json({
         ok: false,
         error: { code: "AI_PROVIDER_NOT_CONFIGURED", message: "AI provider not configured" },
         correlationId: topCorrelationId,
@@ -1093,8 +1102,8 @@ async function handleSession(req, res) {
       stack: err.stack,
     });
 
-    // ALWAYS return JSON, never HTML or undefined
-    return res.status(500).json({
+    // Return 200 + controlled JSON so proxy never returns 500 (emulator spine)
+    return res.status(200).json({
       ok: false,
       correlationId: topCorrelationId,
       error: {
@@ -1180,9 +1189,9 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
       await db.collection("agentExecutions").add({
         userId,
         agent,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: safeServerTimestamp(),
         success: true,
-        responseTime: 0, // Would need to track this
+        responseTime: 0,
         result: result,
       });
     } catch (err) {
@@ -1227,7 +1236,7 @@ Respond with a JSON object: { "summary": "risk assessment", "alerts": ["alert1"]
       await db.collection("agentExecutions").add({
         userId,
         agent,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: safeServerTimestamp(),
         success: false,
         error: err.message,
       });

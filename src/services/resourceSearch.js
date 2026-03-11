@@ -6,6 +6,7 @@
 import { globalWebSearch } from "./searchService";
 import { logError, logInfo, logWarn } from "@/services/logService";
 import { buildApiUrl } from "@/services/apiBase";
+import { getAuthHeaders } from "@/services/aiSessionClient";
 
 // Request deduplication cache
 const requestCache = new Map();
@@ -76,39 +77,49 @@ function normalizeSearchQuery(query, domain, region, category) {
 }
 
 /**
- * Map external search results to directory format
+ * Normalize a single raw backend result to stable UI shape (Phase 54H).
+ * Handles: {name,title}, {description,summary,blurb}, {phone,tel,contactPhone}, {url,website,link}, {city,state,address,location}, {tags,eligibility,category}.
+ */
+function normalizeResourceItem(raw, domain) {
+  if (!raw || typeof raw !== "object") return null;
+  const url = raw.url || raw.link || raw.website || raw.uri || "";
+  const title = raw.title || raw.name || raw.headline || "Untitled Resource";
+  const summary = raw.summary || raw.description || raw.snippet || raw.blurb || raw.abstract || "";
+  const phone = raw.phone || raw.tel || raw.contactPhone || raw.contact?.phone || null;
+  let source = raw.source || "Web";
+  try {
+    if (url) {
+      const urlObj = new URL(url);
+      source = urlObj.hostname.replace("www.", "");
+    }
+  } catch {}
+  const addr = raw.address && typeof raw.address === "object" ? raw.address : {};
+  const loc = raw.location && typeof raw.location === "object" ? raw.location : {};
+  const city = raw.city || addr.city || loc.city || "";
+  const state = raw.state || addr.state || raw.region || loc.state || "";
+  const locationLine = [city, state].filter(Boolean).join(", ") || (raw.address || raw.location ? String(raw.address || raw.location).slice(0, 80) : "Nationwide");
+  const tags = Array.isArray(raw.tags) ? raw.tags : Array.isArray(raw.eligibility) ? raw.eligibility : raw.category ? [raw.category] : [];
+  const id = raw.id || url || `res-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const normDomain = domain || raw.domain || "other";
+  return {
+    id,
+    title,
+    summary: String(summary).slice(0, 280),
+    domain: normDomain,
+    phone: phone ? String(phone).trim() : null,
+    url: url || null,
+    locationLine,
+    tags: tags.map((t) => (typeof t === "string" ? t : t?.label || String(t)).slice(0, 32)),
+    source: source || null,
+  };
+}
+
+/**
+ * Map external search results to directory format (uses normalizeResourceItem).
  */
 function mapResultsToDirectory(results, domain) {
   if (!Array.isArray(results)) return [];
-
-  return results.map((item, index) => {
-    const url = item.url || item.link || "";
-    let source = item.source || "Web";
-
-    try {
-      if (url) {
-        const urlObj = new URL(url);
-        source = urlObj.hostname.replace("www.", "");
-      }
-    } catch {
-      // Invalid URL, keep default source
-    }
-
-    return {
-      id: item.id || url || `result-${Date.now()}-${index}`,
-      title: item.title || item.name || item.headline || "Untitled Resource",
-      description: item.description || item.snippet || item.abstract || "",
-      url: url || item.link || item.uri || "",
-      source: source || item.source || "Web",
-      snippet: item.snippet || item.description || item.abstract || "",
-      domain: domain || item.domain || null,
-      region: item.region || item.location || item.address || null,
-      phone: item.phone || null,
-      address: item.address || item.location || null,
-      category: item.category || null,
-      tags: item.tags || [],
-    };
-  });
+  return results.map((item, index) => normalizeResourceItem(item, domain)).filter(Boolean);
 }
 
 /**
@@ -205,9 +216,10 @@ export async function searchResources({ query, domain, region, category }) {
     let liveResults = [];
     try {
       const endpoint = buildApiUrl("/globalResourceSearch");
+      const authHeaders = await getAuthHeaders();
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders },
         body: JSON.stringify({
           query,
           domain,
@@ -228,10 +240,14 @@ export async function searchResources({ query, domain, region, category }) {
       console.warn("Live resource search failed, using verified providers only:", err);
     }
 
-    // Return combined: verified first, then live results
+    // Normalize and return with meta (Phase 54H)
+    const domainNorm = domain || "other";
+    const allRaw = [...verifiedProviders, ...liveResults];
+    const results = allRaw.map((r, i) => normalizeResourceItem(r, domainNorm)).filter(Boolean);
     return {
       ok: true,
-      results: [...verifiedProviders, ...liveResults],
+      results,
+      meta: { domain: domainNorm, query: query || "" },
     };
   } catch (err) {
     console.warn("Provider search failed, falling back to legacy search:", err);
@@ -316,12 +332,13 @@ export async function searchResources({ query, domain, region, category }) {
     }
 
       if (fnResult.ok && fnResult.results.length > 0) {
-        // Already in directory format or close enough
+        const domainNorm = domain || "other";
         const result = {
           ok: true,
-          results: mapResultsToDirectory(fnResult.results, domain),
+          results: mapResultsToDirectory(fnResult.results, domainNorm),
           error: null,
           query: fnResult.query || normalizedQuery,
+          meta: { domain: domainNorm, query: fnResult.query || normalizedQuery },
         };
         
         // Observe search success (if intelligence engine available)
@@ -362,12 +379,14 @@ export async function searchResources({ query, domain, region, category }) {
         const fallbackResult = await globalWebSearch(simpleQuery, { limit: 10 });
         
         if (fallbackResult.ok && fallbackResult.results && fallbackResult.results.length > 0) {
-          const mappedResults = mapResultsToDirectory(fallbackResult.results, domain);
+          const domainNorm = domain || "other";
+          const mappedResults = mapResultsToDirectory(fallbackResult.results, domainNorm);
           const result = {
             ok: true,
             results: mappedResults,
             error: null,
             query: simpleQuery,
+            meta: { domain: domainNorm, query: simpleQuery },
           };
           
           requestCache.set(cacheKey, {
@@ -417,14 +436,13 @@ export async function searchResources({ query, domain, region, category }) {
         Array.isArray(searchResult.results) &&
         searchResult.results.length > 0
       ) {
-        const mappedResults = mapResultsToDirectory(
-          searchResult.results,
-          domain
-        );
+        const domainNorm = domain || "other";
+        const mappedResults = mapResultsToDirectory(searchResult.results, domainNorm);
         const result = {
           ok: true,
           results: mappedResults,
           error: null,
+          meta: { domain: domainNorm, query: normalizedQuery },
           query: normalizedQuery,
         };
         
@@ -454,15 +472,14 @@ export async function searchResources({ query, domain, region, category }) {
           Array.isArray(simpleResult.results) &&
           simpleResult.results.length > 0
         ) {
-          const mappedResults = mapResultsToDirectory(
-            simpleResult.results,
-            domain
-          );
+          const domainNorm = domain || "other";
+          const mappedResults = mapResultsToDirectory(simpleResult.results, domainNorm);
           const result = {
             ok: true,
             results: mappedResults,
             error: null,
             query: query.trim(),
+            meta: { domain: domainNorm, query: query.trim() },
           };
           
           // Cache the result

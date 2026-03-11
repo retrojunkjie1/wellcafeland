@@ -70,6 +70,15 @@ try {
   console.warn("[Startup] Telemetry initialization failed (non-blocking):", err);
 }
 
+// Auth provider for apiFetch (globalResourceSearch and other /api/*)
+try {
+  const { setApiAuthProvider } = await import("@/lib/apiHelpers");
+  const { getAuthHeaders } = await import("@/services/aiSessionClient");
+  setApiAuthProvider(() => getAuthHeaders());
+} catch (err) {
+  console.warn("[Startup] setApiAuthProvider failed (non-blocking):", err);
+}
+
 // Initialize core orchestrator: safety, policy, intelligence (must not throw)
 setTimeout(() => {
   try {

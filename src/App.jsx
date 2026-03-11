@@ -11,6 +11,7 @@ import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 import ExperienceShell from "./system/ExperienceShell";
 
 import HomePage from "./apps/core/HomePage";
+import GuidedEntrySessionPage from "./apps/core/GuidedEntrySessionPage";
 import ChatPage from "./apps/chat/ChatPage";
 import LivingGuidePage from "./apps/living/LivingGuidePage";
 // Phase 70: Route LivingGuidePageV3
@@ -57,6 +58,7 @@ const ExplorePage = lazy(() =>
 );
 import VoiceJournal from "./apps/tools/VoiceJournal";
 import VoiceCheckIn from "./apps/tools/VoiceCheckIn";
+import Grounding54321 from "./apps/tools/Grounding54321";
 
 import ProvidersPage from "./apps/providers/ProvidersPage";
 import ProviderDashboardPage from "./apps/provider/ProviderDashboardPage";
@@ -104,6 +106,7 @@ import { OverseerConsoleUltra } from "./apps/overseer/OverseerConsoleUltra";
 import ContentStudioPage from "./apps/admin/ContentStudioPage";
 import SeedDataPage from "./apps/admin/SeedDataPage";
 import AdminRoute from "./components/AdminRoute";
+import ToolRouteBoundary from "./components/system/ToolRouteBoundary";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
 import UnauthorizedPage from "./components/routing/UnauthorizedPage";
@@ -140,6 +143,7 @@ const App = () => {
             <Route path="/" element={<ChatPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/home" element={<HomePage />} />
+          <Route path="/session/:mode" element={<GuidedEntrySessionPage />} />
             <Route path="/explore" element={<ExplorePage />} />
           <Route path="/sequence/:id" element={<SequencePage />} />
           {/* Assistance — unified Find Help (housing, food, funding, programs, crisis) */}
@@ -167,12 +171,13 @@ const App = () => {
           <Route path="/recovery" element={<RecoveryPage />} />
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
-          <Route path="/tools" element={<ToolsPage />} />
+          <Route path="/tools" element={<ToolRouteBoundary><ToolsPage /></ToolRouteBoundary>} />
           {/* Phase 70: Route classic ToolsPage */}
-          <Route path="/tools/classic" element={<ToolsPageClassic />} />
-          <Route path="/tools/:toolId" element={<ToolDetailPage />} />
-          <Route path="/tools/voice-journal" element={<VoiceJournal />} />
-          <Route path="/tools/voice-checkin" element={<VoiceCheckIn />} />
+          <Route path="/tools/classic" element={<ToolRouteBoundary><ToolsPageClassic /></ToolRouteBoundary>} />
+          <Route path="/tools/:toolId" element={<ToolRouteBoundary><ToolDetailPage /></ToolRouteBoundary>} />
+          <Route path="/tools/voice-journal" element={<ToolRouteBoundary><VoiceJournal /></ToolRouteBoundary>} />
+          <Route path="/tools/voice-checkin" element={<ToolRouteBoundary><VoiceCheckIn /></ToolRouteBoundary>} />
+          <Route path="/tools/grounding/54321" element={<ToolRouteBoundary><Grounding54321 /></ToolRouteBoundary>} />
           <Route path="/support" element={<SupportHubPage />} />
           <Route path="/circles" element={<CirclesPage />} />
           <Route path="/circles/:circleId" element={<CircleDetailPage />} />

@@ -205,8 +205,13 @@ export const useOSStore = create((set, get) => ({
       if (content.crisisForecast) {
         msg.crisisForecast = content.crisisForecast;
       }
+      if (content.intent) msg.intent = content.intent;
+      if (content.links) msg.links = content.links;
+      if (content.actions) msg.actions = content.actions;
+      if (content.reasoning) msg.reasoning = content.reasoning;
+      if (content.meta) msg.meta = content.meta;
     }
-    
+
     // Phase 25: Normalize message before storing
     const normalizedMsg = normalizeMessage(msg);
     
@@ -246,6 +251,22 @@ export const useOSStore = create((set, get) => ({
       };
     });
     return normalizedMsg;
+  },
+
+  updateLastAssistantMessage: (patch) => {
+    set((state) => {
+      const messages = [...state.messages];
+      const idx = messages.map((m, i) => (m.role === "assistant" ? i : -1)).filter((i) => i >= 0).pop();
+      if (idx == null) return state;
+      const prev = messages[idx];
+      const updated = normalizeMessage({ ...prev, ...patch });
+      messages[idx] = updated;
+      const updatedChats = state.chats.map((chat) =>
+        chat.id === state.currentChatId ? { ...chat, messages, updatedAt: Date.now() } : chat
+      );
+      saveChats(updatedChats);
+      return { messages, chats: updatedChats };
+    });
   },
 
   // Workspace actions

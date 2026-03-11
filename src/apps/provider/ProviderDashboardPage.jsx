@@ -125,7 +125,7 @@ const ProviderDashboardPage = () => {
                     <div
                       key={client.clientId}
                       className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition cursor-pointer"
-                      onClick={() => navigate(`/provider/client/${client.clientId}`)}
+                      onClick={() => navigate(`/provider/clients/${client.clientId}`)}
                     >
                       <div className="text-sm font-medium text-white">{client.alias}</div>
                       <div className="text-xs text-white/50 capitalize mt-1">

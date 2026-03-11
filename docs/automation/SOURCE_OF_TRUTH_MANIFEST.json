@@ -1,0 +1,61 @@
+{
+  "manifest_version": "1.0",
+  "steward_context_version": "1.0",
+  "generated_by": "WellnessCafe Development Steward — constitutional governance layer",
+  "required_documents": [
+    {
+      "key": "MASTER_VISION_BLUEPRINT",
+      "path": "docs/architecture/MASTER_VISION_BLUEPRINT.md",
+      "type": "markdown",
+      "required": true,
+      "must_be_non_empty": true,
+      "parse_json": false
+    },
+    {
+      "key": "CURSOR_MEMORY",
+      "path": "docs/architecture/CURSOR_MEMORY.md",
+      "type": "markdown",
+      "required": true,
+      "must_be_non_empty": true,
+      "parse_json": false
+    },
+    {
+      "key": "DEFINITION_OF_DONE",
+      "path": "docs/architecture/DEFINITION_OF_DONE.md",
+      "type": "markdown",
+      "required": true,
+      "must_be_non_empty": true,
+      "parse_json": false
+    },
+    {
+      "key": "PHASE_ROADMAP",
+      "path": "docs/roadmap/PHASE_ROADMAP.md",
+      "type": "markdown",
+      "required": true,
+      "must_be_non_empty": true,
+      "parse_json": false
+    },
+    {
+      "key": "CURRENT_PHASE",
+      "path": "docs/runtime/CURRENT_PHASE.md",
+      "type": "markdown",
+      "required": true,
+      "must_be_non_empty": true,
+      "parse_json": false
+    },
+    {
+      "key": "TODAY_JSON",
+      "path": "docs/runtime/TODAY.json",
+      "type": "json",
+      "required": true,
+      "must_be_non_empty": true,
+      "parse_json": true
+    }
+  ],
+  "freshness_policy": {
+    "max_context_age_minutes": 60,
+    "fail_closed_if_stale": true,
+    "fail_closed_if_missing": true,
+    "fail_closed_if_invalid": true
+  }
+}
