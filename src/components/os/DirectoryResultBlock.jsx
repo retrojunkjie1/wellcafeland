@@ -4,6 +4,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { MapPin, ExternalLink, ArrowRight, FileText } from "lucide-react";
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const DirectoryResultBlock = ({ message }) => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const DirectoryResultBlock = ({ message }) => {
   const routeDomainMap = {
     housing: "housing",
     government_assistance: "assistance",
+    "food.essentials": "assistance",
     grants: "grants",
     programs: "programs",
     providers: "providers",
@@ -51,7 +54,7 @@ const DirectoryResultBlock = ({ message }) => {
             {(backendDomain === "providers") && "Therapists, coaches, and guides"}
             {(backendDomain === "housing") && "Housing and sober living options"}
             {(backendDomain === "grants") && "Grants and funding opportunities"}
-            {(backendDomain === "government_assistance" || backendDomain === "assistance") && "Government assistance programs"}
+            {(backendDomain === "government_assistance" || backendDomain === "assistance" || backendDomain === "food.essentials") && "Food, assistance, and support programs"}
             {(backendDomain === "hotlines") && "Crisis support and hotlines"}
             {(backendDomain === "programs") && "Support programs and groups"}
           </div>
@@ -68,7 +71,7 @@ const DirectoryResultBlock = ({ message }) => {
               <div className="flex-1 min-w-0">
                 <button
                   type="button"
-                  onClick={() => navigate(`/directory/${routeDomain}/${encodeURIComponent(item.id || item.url)}`)}
+                  onClick={() => navigate(`/resources/${encodeURIComponent(item.id || item.url)}`)}
                   className="text-sm font-medium text-white hover:underline block mb-1 text-left"
                 >
                   {item.title}
@@ -92,21 +95,22 @@ const DirectoryResultBlock = ({ message }) => {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {item.url && (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0 rounded-lg p-1.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
-                    title="Visit site"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
+                {item.url && (() => {
+                  const href = normalizeExternalUrl(item.url);
+                  if (!href) return null;
+                  return (
+                    <OpenInAppButton
+                      url={href}
+                      title={item.title}
+                      className="flex-shrink-0 rounded-lg p-1.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" title="Visit site" />
+                    </OpenInAppButton>
+                  );
+                })()}
                 <button
                   type="button"
-                  onClick={() => navigate(`/directory/${routeDomain}/${encodeURIComponent(item.id || item.url)}`)}
+                  onClick={() => navigate(`/resources/${encodeURIComponent(item.id || item.url)}`)}
                   className="flex-shrink-0 rounded-lg p-1.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition"
                   title="View details"
                 >
@@ -121,7 +125,7 @@ const DirectoryResultBlock = ({ message }) => {
       {results.length > 3 && (
         <button
           type="button"
-          onClick={() => navigate(`/directory/${routeDomain}?q=${encodeURIComponent(query)}`)}
+          onClick={() => navigate(`/resources?type=${routeDomain}${query ? `&q=${encodeURIComponent(query)}` : ""}`)}
           className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition"
         >
           View full directory ({results.length} results)

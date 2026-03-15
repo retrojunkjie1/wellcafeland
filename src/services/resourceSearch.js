@@ -5,11 +5,8 @@
 
 import { globalWebSearch } from "./searchService";
 import { logError, logInfo, logWarn } from "@/services/logService";
-
-// Prefer explicit URL in production, but allow override via env for local/dev
-const FUNCTION_URL =
-  import.meta.env.VITE_FIREBASE_FUNCTIONS_URL ||
-  "https://us-central1-wellnesscafelanding.cloudfunctions.net";
+import { buildApiUrl } from "@/services/apiBase";
+import { getAuthHeaders } from "@/services/aiSessionClient";
 
 // Request deduplication cache
 const requestCache = new Map();
@@ -33,6 +30,7 @@ function normalizeSearchQuery(query, domain, region, category) {
     programs: ["recovery programs", "IOP", "PHP", "rehab", "support groups"],
     providers: ["therapist", "counselor", "recovery coach"],
     hotlines: ["crisis hotline", "suicide prevention", "helpline"],
+    "food.essentials": ["food bank", "food pantry", "SNAP", "WIC", "meal program", "soup kitchen", "grocery assistance"],
   };
 
   const queryLower = searchQuery.toLowerCase();
@@ -79,46 +77,56 @@ function normalizeSearchQuery(query, domain, region, category) {
 }
 
 /**
- * Map external search results to directory format
+ * Normalize a single raw backend result to stable UI shape (Phase 54H).
+ * Handles: {name,title}, {description,summary,blurb}, {phone,tel,contactPhone}, {url,website,link}, {city,state,address,location}, {tags,eligibility,category}.
+ */
+function normalizeResourceItem(raw, domain) {
+  if (!raw || typeof raw !== "object") return null;
+  const url = raw.url || raw.link || raw.website || raw.uri || "";
+  const title = raw.title || raw.name || raw.headline || "Untitled Resource";
+  const summary = raw.summary || raw.description || raw.snippet || raw.blurb || raw.abstract || "";
+  const phone = raw.phone || raw.tel || raw.contactPhone || raw.contact?.phone || null;
+  let source = raw.source || "Web";
+  try {
+    if (url) {
+      const urlObj = new URL(url);
+      source = urlObj.hostname.replace("www.", "");
+    }
+  } catch {}
+  const addr = raw.address && typeof raw.address === "object" ? raw.address : {};
+  const loc = raw.location && typeof raw.location === "object" ? raw.location : {};
+  const city = raw.city || addr.city || loc.city || "";
+  const state = raw.state || addr.state || raw.region || loc.state || "";
+  const locationLine = [city, state].filter(Boolean).join(", ") || (raw.address || raw.location ? String(raw.address || raw.location).slice(0, 80) : "Nationwide");
+  const tags = Array.isArray(raw.tags) ? raw.tags : Array.isArray(raw.eligibility) ? raw.eligibility : raw.category ? [raw.category] : [];
+  const id = raw.id || url || `res-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const normDomain = domain || raw.domain || "other";
+  return {
+    id,
+    title,
+    summary: String(summary).slice(0, 280),
+    domain: normDomain,
+    phone: phone ? String(phone).trim() : null,
+    url: url || null,
+    locationLine,
+    tags: tags.map((t) => (typeof t === "string" ? t : t?.label || String(t)).slice(0, 32)),
+    source: source || null,
+  };
+}
+
+/**
+ * Map external search results to directory format (uses normalizeResourceItem).
  */
 function mapResultsToDirectory(results, domain) {
   if (!Array.isArray(results)) return [];
-
-  return results.map((item, index) => {
-    const url = item.url || item.link || "";
-    let source = item.source || "Web";
-
-    try {
-      if (url) {
-        const urlObj = new URL(url);
-        source = urlObj.hostname.replace("www.", "");
-      }
-    } catch {
-      // Invalid URL, keep default source
-    }
-
-    return {
-      id: item.id || url || `result-${Date.now()}-${index}`,
-      title: item.title || item.name || item.headline || "Untitled Resource",
-      description: item.description || item.snippet || item.abstract || "",
-      url: url || item.link || item.uri || "",
-      source: source || item.source || "Web",
-      snippet: item.snippet || item.description || item.abstract || "",
-      domain: domain || item.domain || null,
-      region: item.region || item.location || item.address || null,
-      phone: item.phone || null,
-      address: item.address || item.location || null,
-      category: item.category || null,
-      tags: item.tags || [],
-    };
-  });
+  return results.map((item, index) => normalizeResourceItem(item, domain)).filter(Boolean);
 }
 
 /**
  * Call the Firebase Function for global resource search
  */
 async function callFunctionSearch({ query, domain, region, category }) {
-  const endpoint = `${FUNCTION_URL}/globalResourceSearch`;
+  const endpoint = buildApiUrl("/globalResourceSearch");
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s
 
@@ -199,6 +207,53 @@ async function callFunctionSearch({ query, domain, region, category }) {
  * 2) If that fails, fallback to client-side RapidAPI
  */
 export async function searchResources({ query, domain, region, category }) {
+  // Combine verified providers with live search results (Phase 4)
+  try {
+    const { searchProviders } = await import("./providerService");
+    const verifiedProviders = await searchProviders({ query, category: domain, regionKey: region });
+    
+    // Call live resource search function (globalResourceSearch)
+    let liveResults = [];
+    try {
+      const endpoint = buildApiUrl("/globalResourceSearch");
+      const authHeaders = await getAuthHeaders();
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify({
+          query,
+          domain,
+          region,
+          category,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Results are already normalized with verification status from backend
+        liveResults = data.results || [];
+      } else {
+        // Graceful fallback: use verified providers only
+        console.warn("Live resource search failed, using verified providers only:", response.status);
+      }
+    } catch (err) {
+      // Graceful fallback: use verified providers only
+      console.warn("Live resource search failed, using verified providers only:", err);
+    }
+
+    // Normalize and return with meta (Phase 54H)
+    const domainNorm = domain || "other";
+    const allRaw = [...verifiedProviders, ...liveResults];
+    const results = allRaw.map((r, i) => normalizeResourceItem(r, domainNorm)).filter(Boolean);
+    return {
+      ok: true,
+      results,
+      meta: { domain: domainNorm, query: query || "" },
+    };
+  } catch (err) {
+    console.warn("Provider search failed, falling back to legacy search:", err);
+  }
+
+  // Legacy search fallback
   if (!query || !query.trim()) {
     return {
       ok: false,
@@ -277,12 +332,13 @@ export async function searchResources({ query, domain, region, category }) {
     }
 
       if (fnResult.ok && fnResult.results.length > 0) {
-        // Already in directory format or close enough
+        const domainNorm = domain || "other";
         const result = {
           ok: true,
-          results: mapResultsToDirectory(fnResult.results, domain),
+          results: mapResultsToDirectory(fnResult.results, domainNorm),
           error: null,
           query: fnResult.query || normalizedQuery,
+          meta: { domain: domainNorm, query: fnResult.query || normalizedQuery },
         };
         
         // Observe search success (if intelligence engine available)
@@ -323,12 +379,14 @@ export async function searchResources({ query, domain, region, category }) {
         const fallbackResult = await globalWebSearch(simpleQuery, { limit: 10 });
         
         if (fallbackResult.ok && fallbackResult.results && fallbackResult.results.length > 0) {
-          const mappedResults = mapResultsToDirectory(fallbackResult.results, domain);
+          const domainNorm = domain || "other";
+          const mappedResults = mapResultsToDirectory(fallbackResult.results, domainNorm);
           const result = {
             ok: true,
             results: mappedResults,
             error: null,
             query: simpleQuery,
+            meta: { domain: domainNorm, query: simpleQuery },
           };
           
           requestCache.set(cacheKey, {
@@ -378,14 +436,13 @@ export async function searchResources({ query, domain, region, category }) {
         Array.isArray(searchResult.results) &&
         searchResult.results.length > 0
       ) {
-        const mappedResults = mapResultsToDirectory(
-          searchResult.results,
-          domain
-        );
+        const domainNorm = domain || "other";
+        const mappedResults = mapResultsToDirectory(searchResult.results, domainNorm);
         const result = {
           ok: true,
           results: mappedResults,
           error: null,
+          meta: { domain: domainNorm, query: normalizedQuery },
           query: normalizedQuery,
         };
         
@@ -415,15 +472,14 @@ export async function searchResources({ query, domain, region, category }) {
           Array.isArray(simpleResult.results) &&
           simpleResult.results.length > 0
         ) {
-          const mappedResults = mapResultsToDirectory(
-            simpleResult.results,
-            domain
-          );
+          const domainNorm = domain || "other";
+          const mappedResults = mapResultsToDirectory(simpleResult.results, domainNorm);
           const result = {
             ok: true,
             results: mappedResults,
             error: null,
             query: query.trim(),
+            meta: { domain: domainNorm, query: query.trim() },
           };
           
           // Cache the result
@@ -443,7 +499,7 @@ export async function searchResources({ query, domain, region, category }) {
       const result = {
         ok: false,
         results: [],
-        error: "External search is unavailable right now. You can still talk with your guide and we'll help you think through options.",
+        error: "External search is currently disabled. You can still talk with your guide and we'll help you think through options. To enable external search, contact your administrator.",
         query: normalizedQuery,
       };
       

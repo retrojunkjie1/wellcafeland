@@ -4,10 +4,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { withFrom } from "@/navigation/linkState";
-import { Search, MapPin, Tag, ExternalLink, Heart, FileText, Loader2 } from "lucide-react";
-import { searchResources } from "@/services/resourceSearch";
+import { Search, ExternalLink, Heart, Loader2 } from "lucide-react";
+import { searchDirectory } from "@/services/directorySearch";
 import { saveFavoriteResource } from "@/services/directoryService";
+import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 import PageHeader from "@/components/navigation/PageHeader";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const DOMAIN_CONFIG = {
   providers: {
@@ -83,20 +85,24 @@ const DirectoryWorkspace = () => {
 
   const [query, setQuery] = useState(defaultQueries[domain] || "");
   const [results, setResults] = useState([]);
+  const [nextPageToken, setNextPageToken] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [actualQuery, setActualQuery] = useState(""); // The query that was actually searched
+  const [actualQuery, setActualQuery] = useState("");
   const [filters, setFilters] = useState({
     region: "",
     category: "",
     type: "",
   });
-  const debounceRef = useRef(null);
-  const abortControllerRef = useRef(null);
-  const lastRequestTimeRef = useRef(0);
-  const pendingRequestRef = useRef(null);
-  const COOLDOWN_MS = 1500; // 1.5 seconds between searches (reduced from 2s)
+  const debounceRef = useRef(null)
+  const abortControllerRef = useRef(null)
+  const scrollContainerRef = useRef(null)
+  const lastRequestTimeRef = useRef(0)
+  const pendingRequestRef = useRef(null)
+  const DEBOUNCE_MS = 600;
+  const MIN_QUERY_LEN = 3;
 
   const config = DOMAIN_CONFIG[domain] || DOMAIN_CONFIG.providers;
 
@@ -116,122 +122,131 @@ const DirectoryWorkspace = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain]);
 
-  // Search handler with rate limiting
-  const handleSearch = async (searchQuery = query, isInitial = false) => {
-    const trimmed = searchQuery?.trim() || query.trim();
-    if (!trimmed && !isInitial) return;
+  // Map directorySearch item to UI shape
+  const toUIItem = (item) => ({
+    id: item.id,
+    title: item.title,
+    url: item.website || item.url,
+    source: item.source,
+    description: item.summary || item.description || "",
+    snippet: item.summary || item.description || "",
+    verified: item.verified,
+  });
 
-    // Rate limiting: check cooldown period (skip for initial search)
-    if (!isInitial) {
-      const now = Date.now();
-      const timeSinceLastRequest = now - lastRequestTimeRef.current;
-      
-      if (timeSinceLastRequest < COOLDOWN_MS) {
-        const remainingTime = COOLDOWN_MS - timeSinceLastRequest;
-        console.log(`[DirectoryWorkspace] Rate limit: waiting ${remainingTime}ms before next search`);
-        return; // Skip this search request
-      }
+  const handleSearch = async (searchQuery = query, isInitial = false, pageToken = null, forceImmediate = false) => {
+    const trimmed = (searchQuery?.trim() || query.trim()).trim()
+    if (!trimmed && !isInitial) return
 
-      // Check if there's already a pending request with the same query
-      if (pendingRequestRef.current === trimmed && loading) {
-        console.log("[DirectoryWorkspace] Duplicate request skipped:", trimmed);
-        return;
-      }
-    }
+    if (!isInitial && !pageToken && !forceImmediate && trimmed.length < MIN_QUERY_LEN) return
 
-    // Cancel previous request
     if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+      abortControllerRef.current.abort()
     }
 
-    setLoading(true);
-    setError(null);
-    setHasSearched(true);
-    abortControllerRef.current = new AbortController();
-    pendingRequestRef.current = trimmed;
-    lastRequestTimeRef.current = Date.now();
+    const isLoadMore = !!pageToken
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setError(null);
+      setHasSearched(true);
+    }
+    abortControllerRef.current = new AbortController()
+    pendingRequestRef.current = trimmed
+    lastRequestTimeRef.current = Date.now()
 
     try {
-      const { ok, results: searchResults, error: searchError, query: actualQueryUsed } = await searchResources({
+      const { ok, items, nextPageToken: nextToken, error: searchError } = await searchDirectory({
         query: trimmed,
         domain: backendDomain,
-        region: filters.region === "All regions" || filters.region === "" ? undefined : filters.region,
+        location: filters.region === "All regions" || filters.region === "" ? undefined : filters.region,
         category: filters.category === "All categories" || filters.category === "" ? undefined : filters.category,
-      });
+        pageToken: pageToken || undefined,
+        limit: 20,
+        signal: abortControllerRef.current?.signal,
+      })
 
-      if (abortControllerRef.current.signal.aborted) {
-        return;
-      }
+      if (abortControllerRef.current?.signal?.aborted) return;
+
+      const uiItems = (items || []).map(toUIItem);
 
       if (!ok) {
-        setError(searchError || "Couldn't load results.");
-        setResults(searchResults || []);
-        setActualQuery(actualQueryUsed || trimmed);
+        if (!isLoadMore) {
+          setError(searchError || "Search is temporarily unavailable. Try again.");
+          setResults([]);
+        }
+        setActualQuery(trimmed);
       } else {
-        setResults(searchResults || []);
-        setActualQuery(actualQueryUsed || trimmed);
-        setError(null);
+        if (isLoadMore) {
+          setResults((prev) => {
+            const seen = new Set(prev.map((r) => r.id));
+            const appended = uiItems.filter((r) => !seen.has(r.id));
+            return [...prev, ...appended];
+          });
+        } else {
+          setResults(uiItems);
+          setError(null);
+        }
+        setNextPageToken(nextToken || null);
+        setActualQuery(trimmed);
       }
     } catch (err) {
-      if (!abortControllerRef.current.signal.aborted) {
-        console.error("Search error:", err);
-        setError("An unexpected error occurred. Please try again.");
+      if (!abortControllerRef.current?.signal?.aborted && !isLoadMore) {
+        setError("Search is temporarily unavailable. Try again.");
         setResults([]);
       }
     } finally {
-      if (!abortControllerRef.current.signal.aborted) {
+      if (!abortControllerRef.current?.signal?.aborted) {
         setLoading(false);
+        setLoadingMore(false);
         pendingRequestRef.current = null;
       }
     }
   };
 
-  // Debounced search on query change
-  useEffect(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+  const loadMoreRef = useRef(null);
+  loadMoreRef.current = () => {
+    if (!nextPageToken || loadingMore || loading) return;
+    handleSearch(query, false, nextPageToken);
+  };
 
-    // Only auto-search if user has typed something (not on initial mount)
-    // Skip if already loading to prevent duplicate requests
-    if (query && hasSearched && !loading) {
-      debounceRef.current = setTimeout(() => {
-        handleSearch(query, false);
-      }, 500);
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = el;
+      if (scrollHeight - scrollTop - clientHeight < 200) {
+        loadMoreRef.current?.();
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Debounced search on query change (600ms, min 3 chars)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    const trimmed = (query || "").trim()
+    if (trimmed.length >= MIN_QUERY_LEN && hasSearched && !loading) {
+      debounceRef.current = setTimeout(() => handleSearch(query, false), DEBOUNCE_MS)
     }
 
     return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  // Search when filters change (with rate limiting)
-  useEffect(() => {
-    if (hasSearched && query && !loading) {
-      // Add a delay to batch filter changes and avoid rapid-fire requests
-      const filterTimeout = setTimeout(() => {
-        // Check if enough time has passed since last request
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastRequestTimeRef.current;
-        
-        if (timeSinceLastRequest >= COOLDOWN_MS) {
-          handleSearch(query, false);
-        } else {
-          // Wait for remaining cooldown time
-          const remainingTime = COOLDOWN_MS - timeSinceLastRequest;
-          setTimeout(() => {
-            handleSearch(query, false);
-          }, remainingTime);
-        }
-      }, 500); // Increased delay to batch filter changes
-      
-      return () => clearTimeout(filterTimeout);
+      if (debounceRef.current) clearTimeout(debounceRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.region, filters.category, filters.type]);
+  }, [query])
+
+  // Search when filters change (debounced)
+  useEffect(() => {
+    const trimmed = (query || "").trim()
+    if (hasSearched && trimmed.length >= MIN_QUERY_LEN && !loading) {
+      const filterTimeout = setTimeout(() => handleSearch(query, false, null, true), DEBOUNCE_MS)
+      return () => clearTimeout(filterTimeout)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.region, filters.category, filters.type])
 
   const handleSaveFavorite = async (item) => {
     try {
@@ -266,8 +281,8 @@ const DirectoryWorkspace = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSearch(query, false);
+                  e.preventDefault()
+                  handleSearch(query, false, null, true)
                 }
               }}
               placeholder={domain === "housing" ? "e.g., sober living in Colorado, housing in Denver…" : "Search by name, region, or type…"}
@@ -275,7 +290,7 @@ const DirectoryWorkspace = () => {
             />
             <button
               type="button"
-              onClick={() => handleSearch(query, false)}
+              onClick={() => handleSearch(query, false, null, true)}
               disabled={loading || !query.trim()}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -303,7 +318,7 @@ const DirectoryWorkspace = () => {
             <option value="Texas">Texas</option>
           </select>
 
-          {config.categories.length > 0 && (
+          {config?.categories?.length > 0 && (
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
@@ -318,7 +333,7 @@ const DirectoryWorkspace = () => {
             </select>
           )}
 
-          {config.types.length > 0 && (
+          {config?.types?.length > 0 && (
             <div className="flex items-center gap-2">
               {config.types.map((type) => (
                 <button
@@ -345,14 +360,12 @@ const DirectoryWorkspace = () => {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6 w-full">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 sm:py-6 w-full">
         {error && (
-          <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
-            <p className="text-sm text-red-300">{error}</p>
+          <div className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+            <p className="text-sm text-amber-200">{error}</p>
             {actualQuery && (
-              <p className="mt-1 text-xs text-red-400/70">
-                Searched for: "{actualQuery}"
-              </p>
+              <p className="mt-1 text-xs text-amber-300/70">Searched for: &quot;{actualQuery}&quot;</p>
             )}
           </div>
         )}
@@ -377,11 +390,10 @@ const DirectoryWorkspace = () => {
         ) : hasSearched && results.length === 0 && !error ? (
           <div className="text-center py-12 px-4">
             <p className="text-sm sm:text-base text-white/60">
-              No results found for{" "}
-              <span className="font-medium text-white/80">"{actualQuery || query}"</span>.
+              No matches yet. Try broadening filters.
             </p>
             <p className="text-xs sm:text-sm text-white/50 mt-3">
-              Try another search
+              Try another search or adjust region/category
             </p>
           </div>
         ) : results.length > 0 ? (
@@ -422,21 +434,28 @@ const DirectoryWorkspace = () => {
                     >
                       <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
-                    {item.url && (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-lg p-2 sm:p-2.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition min-h-[48px] min-w-[48px] flex items-center justify-center"
-                        title="Visit site"
-                      >
-                        <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </a>
-                    )}
+                    {item.url && (() => {
+                      const href = normalizeExternalUrl(item.url);
+                      if (!href) return null;
+                      return (
+                        <OpenInAppButton
+                          url={href}
+                          title={item.title}
+                          className="rounded-lg p-2 sm:p-2.5 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition min-h-[48px] min-w-[48px] flex items-center justify-center"
+                        >
+                          <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5" title="Visit site" />
+                        </OpenInAppButton>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
             ))}
+            {loadingMore && (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-white/50" />
+              </div>
+            )}
           </div>
         ) : !hasSearched ? (
           <div className="text-center py-12 px-4">

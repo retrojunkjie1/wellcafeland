@@ -25,10 +25,12 @@ const CirclesPage = () => {
         listCircles(),
         getUserCircles(),
       ]);
-      setCircles(allCircles);
-      setUserCircles(myCircles.map(c => c.id));
+      setCircles(Array.isArray(allCircles) ? allCircles : []);
+      setUserCircles(Array.isArray(myCircles) ? myCircles.map((c) => c.id) : []);
     } catch (err) {
       console.error("Failed to load circles:", err);
+      setCircles([]);
+      setUserCircles([]);
     } finally {
       setLoading(false);
     }

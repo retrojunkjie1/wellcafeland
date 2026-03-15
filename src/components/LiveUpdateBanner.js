@@ -47,7 +47,7 @@ const LiveUpdateBanner = () => {
           <a
             href={announcement.link}
             className="banner-link"
-            target="_blank"
+           
             rel="noopener noreferrer"
           >
             Learn More

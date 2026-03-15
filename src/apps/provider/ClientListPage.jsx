@@ -102,7 +102,7 @@ const ClientListPage = () => {
                   <tr
                     key={client.id}
                     className="border-b border-white/5 hover:bg-white/5 transition cursor-pointer"
-                    onClick={() => navigate(`/provider/client/${client.id}`)}
+                    onClick={() => navigate(`/provider/clients/${client.id}`)}
                   >
                     <td className="py-3 px-4 text-white font-medium">{client.alias}</td>
                     <td className="py-3 px-4">

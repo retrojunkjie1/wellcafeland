@@ -22,7 +22,7 @@ const ASSISTANCE_CATEGORIES = [
     label: "Food Assistance",
     icon: UtensilsCrossed,
     description: "Food banks, meal programs, SNAP benefits, and nutrition support",
-    path: "/directory/assistance",
+    path: "/resources?type=assistance",
     domain: "assistance",
     category: "food",
   },
@@ -31,7 +31,7 @@ const ASSISTANCE_CATEGORIES = [
     label: "Grants & Funding",
     icon: DollarSign,
     description: "Financial assistance, grants, and funding for recovery and wellness",
-    path: "/directory/grants",
+    path: "/resources?type=grants",
     domain: "grants",
   },
   {
@@ -39,7 +39,7 @@ const ASSISTANCE_CATEGORIES = [
     label: "Housing Help",
     icon: Home,
     description: "Sober living, transitional housing, emergency shelter, and housing assistance",
-    path: "/directory/housing",
+    path: "/resources?type=housing",
     domain: "housing",
   },
   {
@@ -47,7 +47,7 @@ const ASSISTANCE_CATEGORIES = [
     label: "Emergency Support",
     icon: Phone,
     description: "24/7 crisis hotlines, emergency services, and immediate support",
-    path: "/directory/hotlines",
+    path: "/resources?type=hotlines",
     domain: "hotlines",
   },
   {
@@ -55,7 +55,7 @@ const ASSISTANCE_CATEGORIES = [
     label: "Local Resources",
     icon: MapPin,
     description: "Find resources near you - support groups, clinics, community centers",
-    path: "/directory/programs",
+    path: "/resources?type=programs",
     domain: "programs",
   },
 ];
@@ -67,7 +67,7 @@ const AssistancePage = () => {
     if (category.path) {
       navigate(category.path);
     } else {
-      navigate(`/directory/${category.domain}`);
+      navigate(`/resources?type=${category.domain}`);
     }
   };
 
@@ -142,7 +142,7 @@ const AssistancePage = () => {
         <div className="grid gap-3 sm:grid-cols-2">
           <button
             type="button"
-            onClick={() => navigate("/directory/providers")}
+            onClick={() => navigate("/resources?type=providers")}
             className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:bg-white/10 transition"
           >
             <Users className="h-5 w-5 text-white/60" />

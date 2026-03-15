@@ -1,34 +1,36 @@
-// src/firebase.js
 // Firebase initialization and exports
+// Centralized config from src/config/firebaseConfig.js
 
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-
-// Firebase configuration
-// These should be set via environment variables or Firebase SDK auto-config
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "wellnesscafelanding",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
-};
+import {initializeApp} from "firebase/app"
+import {getAuth,connectAuthEmulator} from "firebase/auth"
+import {getFirestore,connectFirestoreEmulator} from "firebase/firestore"
+import {getFunctions,connectFunctionsEmulator} from "firebase/functions"
+import {firebaseConfig} from "./config/firebaseConfig"
 
 // Initialize Firebase
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (error) {
-  console.error("Firebase initialization error:", error);
-  // Re-throw if Firebase is required
-  throw error;
+let app
+try{
+  app=initializeApp(firebaseConfig)
+}catch(error){
+  console.error("Firebase initialization error:",error)
+  throw error
 }
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Initialize App Check (safe, production-only)
+import {initAppCheck} from "./firebase/appCheck"
+initAppCheck(app)
 
-// Export app for advanced usage
-export default app;
+// Services
+export const auth=getAuth(app)
+export const db=getFirestore(app)
+export const functions=getFunctions(app)
+
+// Emulator wiring (only when VITE_USE_EMULATORS === "true")
+if (import.meta.env.VITE_USE_EMULATORS === "true") {
+  connectFirestoreEmulator(db, "127.0.0.1", 8081);
+  connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+  console.debug("[Firebase] emulators", { firestore: "127.0.0.1:8081", functions: "127.0.0.1:5001", auth: "127.0.0.1:9099" });
+}
+
+export default app

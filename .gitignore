@@ -15,11 +15,16 @@ dist-ssr
 
 # Environment variables - NEVER COMMIT THESE
 .env
+.env.*
+!.env.example
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .env.*.local
+
+# Firebase local config
+.runtimeconfig.json
 
 # Editor directories and files
 .vscode/*
@@ -36,8 +41,10 @@ dist-ssr
 .vite
 .turbo
 .next
+.nuxt
 out
 build
+coverage
 
 # OS files
 Thumbs.db
@@ -48,15 +55,21 @@ Thumbs.db
 *.key
 *.cert
 secrets/
-.secrets
+.secrets/
+*.privatekey.json
+serviceAccount*.json
 
 # Firebase
 .firebase/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+firebase-export/
+emulator-data/
 
 # Temporary files
 *.tmp
 *.temp
 .cache
+tmp/
+temp/

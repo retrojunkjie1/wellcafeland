@@ -17,7 +17,7 @@ const Footer = () => (
               href="https://facebook.com/wellnesscafe"
               className="social-link"
               aria-label="Facebook"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -33,7 +33,7 @@ const Footer = () => (
               href="https://instagram.com/wellnesscafe"
               className="social-link"
               aria-label="Instagram"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -49,7 +49,7 @@ const Footer = () => (
               href="https://twitter.com/wellnesscafe"
               className="social-link"
               aria-label="Twitter"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -65,7 +65,7 @@ const Footer = () => (
               href="https://linkedin.com/company/wellnesscafe"
               className="social-link"
               aria-label="LinkedIn"
-              target="_blank"
+             
               rel="noopener noreferrer"
             >
               <svg
@@ -86,13 +86,13 @@ const Footer = () => (
               <h4>Services</h4>
               <ul>
                 <li>
-                  <Link to="/acuwellness">Acuwellness</Link>
+                  <Link to="/tools">Acuwellness</Link>
                 </li>
                 <li>
-                  <Link to="/yoga">Yoga</Link>
+                  <Link to="/tools">Yoga</Link>
                 </li>
                 <li>
-                  <Link to="/spiritual">Spiritual</Link>
+                  <Link to="/living">Spiritual</Link>
                 </li>
                 <li>
                   <Link to="/recovery">Recovery</Link>
@@ -131,7 +131,7 @@ const Footer = () => (
                   <Link to="/providers">Directory</Link>
                 </li>
                 <li>
-                  <Link to="/providers/apply">Join Network</Link>
+                  <Link to="/assistance">Join Network</Link>
                 </li>
                 <li>
                   <button className="footer-link-button">Admin Verify</button>

@@ -103,8 +103,17 @@ export function getPhrasingStyle(toneProfile) {
   }
 }
 
+// Phase 2C: Only add opener when baseText is very short (<40 chars); use rotation pool
+const OPENER_POOL = [
+  "I'm here with you.",
+  "Let's take this one moment at a time.",
+  "I hear you.",
+];
+let openerPoolIdx = 0;
+
 /**
  * Build assistant response with phrasing style applied.
+ * Phase 2C: Stop always prepending opener; only add when baseText < 40 chars.
  * @param {string} baseText
  * @param {Object} phrasingStyle
  * @param {string} [phrasingStyle.opener]
@@ -122,13 +131,15 @@ export function buildAssistantResponse(baseText, phrasingStyle) {
       return baseText;
     }
 
-    const opener = phrasingStyle.opener || "";
     const softener = phrasingStyle.softener || "";
     const closer = phrasingStyle.closer || "";
-
     const parts = [];
 
-    if (opener) {
+    // Phase 2C: Only prepend opener when assistantText is very short (<40 chars)
+    const trimmed = baseText.trim();
+    if (trimmed.length < 40) {
+      const opener = phrasingStyle.opener || OPENER_POOL[openerPoolIdx % OPENER_POOL.length];
+      openerPoolIdx += 1;
       parts.push(opener);
     }
 

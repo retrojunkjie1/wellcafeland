@@ -1,9 +1,10 @@
 
 // src/apps/dashboard/SessionsAdminPage.jsx
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { trackPageView, trackAction } from "../../services/telemetry";
+import React, { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { trackPageView, trackAction } from "../../services/telemetry"
+import { callAiSession } from "@/services/aiSessionClient"
 
 const SessionsAdminPage = () => {
   const navigate = useNavigate();
@@ -23,19 +24,7 @@ const SessionsAdminPage = () => {
       setLoading(true);
       setError(null);
 
-      const res = await fetch("/aiSession", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "templates",
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Status ${res.status}`);
-      }
-
-      const data = await res.json();
+      const data = await callAiSession({ mode: "templates" });
       const list =
         data.templates ||
         data.sessions ||
@@ -45,7 +34,7 @@ const SessionsAdminPage = () => {
       setTemplates(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error("Admin templates load error:", err);
-      setError("Could not load sessions. Try again in a moment.");
+      setError(err.code === "AUTH_REQUIRED" ? "Please sign in to continue." : "Could not load sessions. Try again in a moment.");
     } finally {
       setLoading(false);
     }

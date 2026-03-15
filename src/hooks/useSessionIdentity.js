@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { safeUUID } from "../utils/uuid";
 
 const GUEST_ID_KEY = "wc_guest_id";
 
@@ -12,7 +13,7 @@ function getOrCreateGuestId() {
   
   let guestId = sessionStorage.getItem(GUEST_ID_KEY);
   if (!guestId) {
-    guestId = crypto.randomUUID();
+    guestId = safeUUID();
     sessionStorage.setItem(GUEST_ID_KEY, guestId);
   }
   return guestId;
@@ -20,7 +21,7 @@ function getOrCreateGuestId() {
 
 export function useSessionIdentity() {
   const [identity, setIdentity] = useState({
-    mode: "loading", // "guest" | "account"
+    mode: "loading", // "guest" | "account" | "loading"
     userId: null,
     isLoading: true,
     isProvider: false,
@@ -49,6 +50,32 @@ export function useSessionIdentity() {
         });
       }, 0);
       return;
+    }
+
+    // Auth state is source of truth - sync immediately on mount
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      // User exists, set to account mode immediately (will be updated by onAuthStateChanged)
+      setIdentity((prev) => ({
+        ...prev,
+        mode: "account",
+        userId: currentUser.uid,
+        isLoading: true, // Still loading role details
+      }));
+    } else {
+      // No user, set to guest mode immediately
+      const guestId = getOrCreateGuestId();
+      setIdentity({
+        mode: "guest",
+        userId: guestId,
+        isLoading: false,
+        isProvider: false,
+        isAdmin: false,
+        providerId: null,
+        orgId: null,
+        role: "client",
+        roles: [],
+      });
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -124,6 +151,7 @@ export function useSessionIdentity() {
         });
       } else {
         // Guest mode - generate or retrieve session guestId
+        // Auth state is source of truth: if user is null, we are in guest mode
         const guestId = getOrCreateGuestId();
         setIdentity({
           mode: "guest",
@@ -141,6 +169,18 @@ export function useSessionIdentity() {
 
     return () => unsubscribe();
   }, []);
+
+  // Debug logging (dev only)
+  useEffect(() => {
+    if (import.meta.env.DEV && !identity.isLoading) {
+      console.debug("[useSessionIdentity] Identity state:", {
+        mode: identity.mode,
+        userId: identity.userId?.substring(0, 8) + "...",
+        isProvider: identity.isProvider,
+        isAdmin: identity.isAdmin,
+      });
+    }
+  }, [identity.mode, identity.userId, identity.isProvider, identity.isAdmin, identity.isLoading]);
 
   return identity;
 }

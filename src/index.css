@@ -4,6 +4,11 @@
 @tailwind utilities;
 
 :root {
+  /* Phase 53C: App shell reserved space */
+  --wc-bottom-nav-h: 72px;
+  --wc-emulator-banner-h: 0;
+  /* Phase 55: Composer dock height */
+  --wc-composer-h: 84px;
   --background: 225 55% 4%;
   --foreground: 210 40% 98%;
   --card: 225 55% 6%;
@@ -371,4 +376,248 @@ body {
   .preserve-3d {
     transform-style: preserve-3d;
   }
+}
+
+/* Phase 54C: Safe area utilities for bottom nav + composer */
+.wc-safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.wc-safe-bottom-lg {
+  padding-bottom: max(28px, env(safe-area-inset-bottom));
+}
+.wc-safe-inset-bottom {
+  bottom: max(0px, env(safe-area-inset-bottom));
+}
+/* Phase 54C2: Global safe-area shell utilities */
+.wc-shell-pad-bottom {
+  padding-bottom: calc(var(--wc-bottom-nav-h) + var(--wc-emulator-banner-h) + env(safe-area-inset-bottom));
+}
+.wc-fixed-emulator {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--wc-emulator-banner-h);
+  z-index: 40;
+}
+.wc-fixed-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--wc-bottom-nav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 30;
+}
+
+/* Global app header — sticky, safe-area, no overlap */
+.wc-global-header {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* AppTopBar — single header, no overlap */
+.wc-topbar {
+  padding-top: env(safe-area-inset-top);
+}
+.wc-topbar__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0.375rem 1rem;
+  min-height: 48px;
+}
+.wc-topbar__left {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wc-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: min(520px, 44vw);
+  flex-shrink: 0;
+}
+.wc-topbar__right > * {
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 44px;
+  min-width: 44px;
+}
+.wc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  overflow: hidden;
+}
+.wc-chip .wc-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 779px) {
+  .wc-topbar__subtitle { opacity: 0.6; }
+}
+@media (max-width: 639px) {
+  .wc-topbar__subtitle { display: none; }
+  .wc-chip--guest .wc-chip-label { display: none; }
+}
+
+/* PageHeader: stable right-rail, no overlap */
+.wc-page-header {
+  padding-top: env(safe-area-inset-top);
+  min-height: 44px;
+}
+.wc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: min(520px, 40vw);
+}
+.wc-header-right > * {
+  min-height: 44px;
+  min-width: 44px;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Chip utility for right-rail items — calm, minimal */
+.wc-header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+  overflow: hidden;
+}
+.wc-header-chip .wc-header-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Emotion chip: collapse to icon-only below 780px */
+@media (max-width: 779px) {
+  .wc-header-chip--emotion .wc-header-chip-label { display: none; }
+}
+/* Guest label: hide below 640px, keep dot/pill */
+@media (max-width: 639px) {
+  .wc-header-chip--guest .wc-header-chip-label { display: none; }
+}
+
+/* Phase 53C: App shell — reserves space for fixed nav + emulator banner */
+.wc-app-shell {
+  min-height: 100svh;
+  padding-bottom: calc(var(--wc-bottom-nav-h) + env(safe-area-inset-bottom) + var(--wc-emulator-banner-h));
+}
+.wc-app-shell.wc-emulator-active {
+  --wc-emulator-banner-h: 34px;
+}
+
+/* Phase 53: NotReady + LuxuryBreathing */
+.wc-notready {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.wc-notready-card {
+  text-align: center;
+  max-width: 24rem;
+}
+.wc-notready-card h2 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.5rem;
+}
+.wc-notready-card p {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.6);
+}
+.wc-breathing {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.wc-breath-circle {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  transition: transform 4s ease-in-out, opacity 1s ease;
+  background: radial-gradient(circle, rgba(245,213,128,0.15) 0%, transparent 70%);
+  border: 2px solid rgba(245,213,128,0.3);
+}
+.wc-breath-circle.inhale {
+  transform: scale(1.15);
+  opacity: 1;
+}
+.wc-breath-circle.exhale {
+  transform: scale(0.9);
+  opacity: 0.9;
+}
+.wc-breath-circle span {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.85);
+}
+/* brace-check: .wc-breath-circle span block closed */
+
+/* Phase 55: ComposerDock — fixed above bottom nav (when NOT inside BottomRail) */
+.wc-composer-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--wc-bottom-nav-h, 72px) + env(safe-area-inset-bottom));
+  z-index: 45;
+  pointer-events: none;
+}
+.wc-composer-dock > * {
+  pointer-events: auto;
+}
+
+/* Phase 55A.2: Composer inside BottomRail — top section of single card (no gap, same width) */
+[data-wc-bottom-rail] .wc-composer-in-rail > * {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+  backdrop-filter: none;
+  box-shadow: none;
+  min-height: var(--wc-chat-dock-h, 88px);
+  padding: 0.75rem 1rem;
+  padding-bottom: 0.75rem;
 }

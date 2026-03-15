@@ -6,6 +6,7 @@ import { Search, MapPin, Phone, ExternalLink, AlertCircle, Loader2 } from "lucid
 import { searchResources } from "@/services/resourceSearch";
 import { searchSupportResources, getResourcesByLocation } from "@/lib/searchEngine";
 import { REGIONS } from "@/lib/supportDatabase";
+import OpenInAppButton from "@/components/OpenInAppButton";
 
 const SupportSearchModule = ({ module }) => {
   const { label } = module.payload;
@@ -252,15 +253,14 @@ const SupportSearchModule = ({ module }) => {
                     </div>
                   )}
                   {(result.link || result.url) && (
-                    <a
-                      href={result.link || result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <OpenInAppButton
+                      url={result.link || result.url}
+                      title={result.name || "Visit Website"}
                       className="flex items-center gap-2 text-xs font-medium text-wcGold hover:text-amber-300 transition"
                     >
                       <ExternalLink className="h-4 w-4" />
                       Visit Website
-                    </a>
+                    </OpenInAppButton>
                   )}
                 </div>
               </div>

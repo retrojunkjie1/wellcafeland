@@ -135,7 +135,7 @@ const SeedDataPage = () => {
             <div className="rounded-xl border border-white/10 bg-white/5 p-6">
               <h3 className="text-base font-semibold text-white mb-3">Next Steps</h3>
               <ul className="text-sm text-white/70 space-y-2">
-                <li>• Visit the <a href="/workspace/real-help" className="text-wcGold hover:underline">Real Help Workspace</a> to see the seeded data</li>
+                <li>• Visit the <a href="/assistance" className="text-wcGold hover:underline">Real Help Workspace</a> to see the seeded data</li>
                 <li>• Test search functionality with queries like "sober living California"</li>
                 <li>• Try filtering by region and category</li>
                 <li>• Test saving favorites and viewing details</li>

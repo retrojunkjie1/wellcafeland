@@ -10,7 +10,10 @@ import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
 import { ToolsRegistry } from "@/engines/tools/ToolsRegistry";
 import { getToolById } from "@/tools/toolResolver";
+import { loadToolBySlug } from "@/services/toolLoader";
 import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
+import { AudioProvider } from "@/experience/audio/AudioProvider";
+import { ToolProtocolView } from "@/components/tools/ToolProtocolView";
 import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
 import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
 import { PanicResetSessionView } from "@/components/tools/PanicResetSessionView";
@@ -18,6 +21,8 @@ import { useTopicMemory } from "@/hooks/useTopicMemory";
 import { getRecoveryBasicsContent, RECOVERY_BASICS_TOPICS } from "@/engines/education/recoveryBasicsEngine";
 import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView";
 import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
+import { logDebug } from "@/lib/debug";
+import NotReadyCard from "@/components/system/NotReadyCard";
 
 const ToolDetailPage = () => {
   const { toolId } = useParams();
@@ -32,6 +37,8 @@ const ToolDetailPage = () => {
   }, [toolId]);
 
   const [toolMeta, setToolMeta] = useState(null);
+  const [protocolTool, setProtocolTool] = useState(null);
+  const [protocolToolLoaded, setProtocolToolLoaded] = useState(false);
   const [content, setContent] = useState(null);
   const [recoveryBasicsContent, setRecoveryBasicsContent] = useState(null);
   const [learningTopicId, setLearningTopicId] = useState(null); // Phase 45: Learning paths
@@ -53,7 +60,28 @@ const ToolDetailPage = () => {
     return () => clearInterval(id);
   }, [isSessionActive]);
 
+  // Load protocol tool (Firestore + seed) for Daily Practice slugs
+  useEffect(() => {
+    if (!decodedId) {
+      setProtocolToolLoaded(true);
+      return;
+    }
+    setProtocolToolLoaded(false);
+    let cancelled = false;
+    loadToolBySlug(decodedId).then((loaded) => {
+      if (cancelled) return;
+      setProtocolToolLoaded(true);
+      if (loaded && Array.isArray(loaded.steps) && loaded.steps.length > 0) {
+        setProtocolTool(loaded);
+      } else {
+        setProtocolTool(null);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [decodedId]);
+
   // load tool metadata from registry or toolResolver (Phase 59B)
+  // Breathing tool MUST always render (offline-safe, no dependencies)
   const loadedToolMeta = useMemo(() => {
     // First try toolResolver (includes Healer Toolkit tools)
     const resolvedTool = getToolById(decodedId);
@@ -64,16 +92,56 @@ const ToolDetailPage = () => {
         name: resolvedTool.title,
         description: resolvedTool.summary,
         category: resolvedTool.category,
-        sessionType: null, // Healer tools don't have sessionType yet
+        sessionType: resolvedTool.id === "breathing" ? "breathing" : null, // Ensure breathing has sessionType
       };
     }
     // Fallback to ToolsRegistry for legacy tools
-    return ToolsRegistry?.find((t) => t.id === decodedId) || null;
+    const registryTool = ToolsRegistry?.find((t) => t.id === decodedId) || null;
+    if (registryTool) {
+      // Map tool IDs to sessionType; preserve registry sessionType (e.g. panic-reset -> panic)
+      const sessionTypeMap = {
+        breathing: "breathing",
+        grounding: "grounding",
+        "panic-reset": "panic",
+      };
+      return {
+        ...registryTool,
+        sessionType: sessionTypeMap[registryTool.id] ?? registryTool.sessionType ?? (registryTool.id === "breathing" ? "breathing" : null),
+      };
+    }
+    // Fallback: If tool ID is "panic-reset" but not found, create minimal meta so it never renders blank
+    if (decodedId === "panic-reset") {
+      return {
+        id: "panic-reset",
+        name: "Panic Reset",
+        description: "Emergency calm protocol for panic spikes",
+        category: "Emergency",
+        sessionType: "panic",
+      };
+    }
+    // Fallback: If tool ID is "breathing" but not found, create minimal meta to ensure it renders
+    if (decodedId === "breathing") {
+      return {
+        id: "breathing",
+        name: "Breathing Exercises",
+        description: "4-7-8, Box, and Coherent breathing to calm your nervous system.",
+        category: "body-breath",
+        sessionType: "breathing", // Critical: must have sessionType to render
+      };
+    }
+    return null;
   }, [decodedId]);
 
   useEffect(() => {
     setToolMeta(loadedToolMeta);
-  }, [loadedToolMeta]);
+    if (loadedToolMeta) {
+      logDebug("Tool", {
+        toolId: loadedToolMeta.id,
+        sessionType: loadedToolMeta.sessionType,
+        decodedId,
+      });
+    }
+  }, [loadedToolMeta, decodedId]);
 
   // Phase 45: Check if this is a learning path topic
   useEffect(() => {
@@ -180,9 +248,32 @@ const ToolDetailPage = () => {
   ];
 
   const renderSessionView = () => {
-    if (!toolMeta?.sessionType) return null;
+    // Phase 4: Breathing tool MUST always render (offline-safe, no dependencies)
+    // Ensure breathing tools always get sessionType
+    let sessionType = toolMeta?.sessionType;
+    if (!sessionType) {
+      // Map by category first
+      if (toolMeta?.category === "breathing") {
+        sessionType = "breathing";
+      } else if (decodedId === "breathing" || decodedId?.includes("breathing")) {
+        sessionType = "breathing";
+      }
+    }
+    // Guard: Always render breathing tool even if metadata is incomplete
+    if (!sessionType && (decodedId === "breathing" || decodedId?.includes("breathing"))) {
+      // Force breathing type if ID matches
+      return (
+        <BreathingSessionView
+          isActive={isSessionActive}
+          onCycleComplete={() => setCycles((prev) => prev + 1)}
+          pattern={[4, 0, 6, 0]}
+          voiceEnabled={false}
+        />
+      );
+    }
+    if (!sessionType) return null;
 
-    switch (toolMeta.sessionType) {
+    switch (sessionType) {
       case "breathing":
         return (
           <BreathingSessionView
@@ -198,6 +289,24 @@ const ToolDetailPage = () => {
         return null;
     }
   };
+
+  // Wait for protocol load when we have a slug (avoids flash of wrong content)
+  if (decodedId && !protocolToolLoaded) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="text-sm text-slate-500">Loading…</div>
+      </div>
+    );
+  }
+
+  // Protocol tools (seed/Firestore): step-by-step Daily Practice
+  if (protocolTool && Array.isArray(protocolTool.steps) && protocolTool.steps.length > 0) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white">
+        <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
+      </div>
+    );
+  }
 
   // Phase 46: Interactive Journey (luxury multi-layer learning OS)
   if (!isSessionTool && learningTopicId) {
@@ -244,8 +353,48 @@ const ToolDetailPage = () => {
     );
   }
 
-  // If no session metadata is found, but content exists → fallback to markdown view
+  // If no session metadata is found, but content exists → check if it's breathing content
+  // For breathing content, show interactive orb + voice guide option
   if (!isSessionTool && content) {
+    const isBreathingContent = decodedId === "breathing" || 
+                                 decodedId === "tool.breathing.basic1" ||
+                                 decodedId?.includes("breathing") ||
+                                 content.title?.toLowerCase().includes("breathing") ||
+                                 content.tags?.includes("breathing");
+    
+    if (isBreathingContent) {
+      // Show interactive breathing view with orb and voice guide
+      return (
+        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+          <ToolSessionLayout
+            tool={{
+              id: "breathing",
+              name: content.title || "Breathing Reset",
+              description: content.body?.split("\n")[0] || "Calm your nervous system",
+              sessionType: "breathing",
+            }}
+            darkMode={darkMode}
+            isActive={isSessionActive}
+            onStart={handleStartSession}
+            onEnd={handleEndSession}
+            onClose={() => navigate("/tools")}
+            metrics={metrics}
+            soundEnabled={soundEnabled}
+            onToggleSound={() => setSoundEnabled((v) => !v)}
+            onToggleTheme={() => setDarkMode((v) => !v)}
+          >
+            <BreathingSessionView
+              isActive={isSessionActive}
+              onCycleComplete={() => setCycles((prev) => prev + 1)}
+              pattern={[4, 0, 6, 0]} // 4-6 breathing: inhale 4, exhale 6, no holds
+              voiceEnabled={soundEnabled} // Use soundEnabled state for voice guide
+            />
+          </ToolSessionLayout>
+        </div>
+      );
+    }
+    
+    // Non-breathing content: standard markdown view
     return (
       <div className="mx-auto max-w-3xl px-4 py-6">
         {/* C1: Back button handled by OSPageChrome - no duplicate */}
@@ -254,12 +403,16 @@ const ToolDetailPage = () => {
     );
   }
 
-  // If neither session nor content found
-  if (!toolMeta && !content && !recoveryBasicsContent && !learningTopicId) {
+  // Tool not found: calm page with slug and CTA
+  const nothingToShow = protocolToolLoaded && !protocolTool && !toolMeta && !content && !recoveryBasicsContent && !learningTopicId;
+  if (nothingToShow) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
-        <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300">
-          This tool could not be found.{" "}
+        <div className="rounded-3xl bg-slate-900/80 px-6 py-5 text-center text-sm text-slate-300 max-w-md">
+          <p className="mb-2">Tool not found.</p>
+          {decodedId && (
+            <p className="text-xs text-slate-500 mb-4 font-mono">Requested: {decodedId}</p>
+          )}
           <button
             type="button"
             onClick={() => navigate("/tools")}
@@ -272,45 +425,64 @@ const ToolDetailPage = () => {
     );
   }
 
-  // Session-based tool view
+  // Session-based tool view (Phase 56: AudioProvider for breathing/audio-guided tools)
   if (toolMeta?.sessionType) {
     return (
-      <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
-        {/* subtle background particles */}
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute h-1 w-1 rounded-full bg-amber-300/30"
-              style={{
-                left: `${(i * 37) % 100}%`,
-                top: `${(i * 53) % 100}%`,
-                animation: `float-slow ${10 + (i % 6)}s ease-in-out infinite`,
-                animationDelay: `${i * 0.3}s`,
-              }}
-            />
-          ))}
-        </div>
+      <AudioProvider>
+        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+          {/* subtle background particles */}
+          <div className="pointer-events-none fixed inset-0 overflow-hidden">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute h-1 w-1 rounded-full bg-amber-300/30"
+                style={{
+                  left: `${(i * 37) % 100}%`,
+                  top: `${(i * 53) % 100}%`,
+                  animation: `float-slow ${10 + (i % 6)}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.3}s`,
+                }}
+              />
+            ))}
+          </div>
 
-        <ToolSessionLayout
-          tool={toolMeta}
-          darkMode={darkMode}
-          isActive={isSessionActive}
-          onStart={handleStartSession}
-          onEnd={handleEndSession}
-          onClose={() => navigate("/tools")}
-          metrics={metrics}
-          soundEnabled={soundEnabled}
-          onToggleSound={() => setSoundEnabled((v) => !v)}
-          onToggleTheme={() => setDarkMode((v) => !v)}
-        >
-          {renderSessionView()}
-        </ToolSessionLayout>
-      </div>
+          <ToolSessionLayout
+            tool={toolMeta}
+            darkMode={darkMode}
+            isActive={isSessionActive}
+            onStart={handleStartSession}
+            onEnd={handleEndSession}
+            onClose={() => navigate("/tools")}
+            metrics={metrics}
+            soundEnabled={soundEnabled}
+            onToggleSound={() => setSoundEnabled((v) => !v)}
+            onToggleTheme={() => setDarkMode((v) => !v)}
+          >
+            {renderSessionView()}
+          </ToolSessionLayout>
+        </div>
+      </AudioProvider>
     );
   }
 
-  // Fallback content view if only markdown defined
+  // Fallback content view if only markdown defined — or never-blank NotReadyCard if nothing to show
+  if (!content?.title && !content?.body) {
+    if (import.meta.env.DEV) {
+      console.debug("[PanicReset] render", { ready: false, loading: protocolToolLoaded, error: "no content" });
+    }
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <NotReadyCard
+          title="Panic Reset"
+          body="This calm-down tool is loading. You can try again or open Chat for support."
+          actions={[
+            { label: "Try again", onClick: () => navigate(decodedId ? `/tools/${encodeURIComponent(decodedId)}` : "/tools", { replace: true }) },
+            { label: "Use text instead", to: "/chat" },
+          ]}
+        />
+      </div>
+    );
+  }
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       {/* C1: Back button handled by OSPageChrome - no duplicate */}

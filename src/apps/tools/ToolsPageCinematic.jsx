@@ -19,6 +19,7 @@ import { CategoryChips } from "@/components/explore/CategoryChips";
 import { ToolCard } from "@/components/explore/ToolCard";
 import { allTools } from "@/tools/toolResolver";
 import { featureFlags } from "@/config/featureFlags";
+import RouteGuard from "@/components/system/RouteGuard";
 
 const ToolsPageCinematic = () => {
   const navigate = useNavigate();
@@ -128,20 +129,21 @@ const ToolsPageCinematic = () => {
   }, [selectedCategory]);
 
   return (
-    <CinematicContainer theme="calm">
+    <RouteGuard ready={true}>
+      <CinematicContainer theme="calm">
       {/* Phase 60 Ultra: Ambient Orbs Background */}
       <AmbientOrbs density="low" />
       
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-4 space-y-5">
         {/* Header */}
-        <header className="text-center space-y-4 pt-8">
+        <header className="text-center space-y-2 pt-2">
           <p className="text-xs uppercase tracking-[0.3em] text-amber-400/80 font-medium">
             Luxury Wellness Tools
           </p>
-          <h1 className="text-4xl sm:text-5xl font-light tracking-wide text-white">
+          <h1 className="text-2xl sm:text-3xl font-light tracking-wide text-white">
             Daily Practice
           </h1>
-          <p className="text-white/60 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xs text-white/60 max-w-2xl mx-auto leading-relaxed">
             Breathwork, grounding, journaling, micro-rituals, and nervous-system
             resets designed for recovery in motion.
           </p>
@@ -161,36 +163,21 @@ const ToolsPageCinematic = () => {
           onSelect={setSelectedCategory}
         />
 
-        {/* Phase 60 Ultra: Luxury Tool Cards Grid */}
-        {toolsForCategory.length === 0 ? (
+        {/* Phase 60 Ultra: Luxury Tool List */}
+        {toolsForCategory && toolsForCategory.length > 0 ? (
+          <div className="space-y-1.5">
+            {toolsForCategory.map((tool) => (
+              <ToolCard key={tool.id} tool={tool} variant="list" />
+            ))}
+          </div>
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl border border-white/10 bg-white/5 px-4 py-8 text-center text-sm text-white/60 backdrop-blur-md"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-center text-xs text-white/60 backdrop-blur-md"
           >
-            No tools are registered in this category yet. This simply means
-            this area of the OS is still being stocked, not that anything is
-            wrong with you.
+            No tools in this category yet. Select another category or check back later as we add more tools.
           </motion.div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {toolsForCategory.map((tool) => (
-              <ToolCard key={tool.id} tool={tool} />
-            ))}
-          </div>
-        )}
-
-        {/* Legacy empty state - keeping for backward compatibility */}
-        {toolsForCategory.length === 0 && filteredTools.length === 0 && (
-          <div className="
-            bg-white/[0.05] backdrop-blur-sm
-            border border-white/10
-            rounded-2xl p-12 text-center
-          ">
-            <p className="text-white/60">
-              No tools found in this category.
-            </p>
-          </div>
         )}
 
         {/* Guided Practices Section */}
@@ -198,17 +185,17 @@ const ToolsPageCinematic = () => {
           <section className="
             bg-white/[0.05] backdrop-blur-xl
             border border-white/10
-            rounded-2xl p-6 sm:p-8
+            rounded-xl p-4 sm:p-5
           ">
-            <div className="mb-6">
-              <h2 className="text-2xl font-light text-white mb-2">
+            <div className="mb-3">
+              <h2 className="text-lg font-light text-white mb-1">
                 Guided Practices
               </h2>
-              <p className="text-white/60 text-sm">
+              <p className="text-white/60 text-xs">
                 Step-by-step content for deeper exploration
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
               {toolContent.map((item) => (
                 <button
                   key={item.id}
@@ -216,12 +203,12 @@ const ToolsPageCinematic = () => {
                   className="
                     text-left rounded-xl
                     bg-white/[0.05] border border-white/10
-                    p-4
+                    p-3
                     hover:bg-white/[0.08] hover:border-amber-400/20
                     transition-all duration-300
                   "
                 >
-                  <div className="text-sm font-medium text-white mb-2">
+                  <div className="text-xs font-medium text-white mb-1">
                     {item.title}
                   </div>
                   {item.tags?.length > 0 && (
@@ -243,6 +230,7 @@ const ToolsPageCinematic = () => {
         )}
       </div>
     </CinematicContainer>
+    </RouteGuard>
   );
 };
 

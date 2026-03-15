@@ -45,36 +45,28 @@ export default function EmotionalSignalBar({ emotion, triggers, risk, identity }
         )}
       </div>
 
-      {/* Phase 28: Identity fracture HUD (subtle, non-clinical) */}
-      {identity && (identity.roles?.length || identity.summaryTag || typeof identity.tensionScore === "number") && (
-        <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-xs text-white/50">
-          {Array.isArray(identity.roles) && identity.roles.slice(0, 2).map((role, idx) => (
-            <span
-              key={`${role}-${idx}`}
-              className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-white/70"
-            >
-              Role pattern: {role.replace(/_/g, " ")}
+      {/* Phase 54L: Max 2 pills — primary currentState, secondary trend only if present */}
+      {(emotion || identity) && (() => {
+        const pills = [];
+        if (emotion?.label) {
+          pills.push(
+            <span key="currentState" className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-white/70 capitalize">
+              {emotion.label}
             </span>
-          ))}
-
-          {typeof identity.tensionScore === "number" && (
-            <span className="rounded-full bg-white/5 px-2 py-0.5">
-              Identity tension:{" "}
-              {identity.tensionScore >= 0.66
-                ? "High"
-                : identity.tensionScore >= 0.33
-                ? "Medium"
-                : "Low"}
+          );
+        }
+        const trend = identity && typeof identity.tensionScore === "number"
+          ? (identity.tensionScore >= 0.66 ? "worsening" : identity.tensionScore >= 0.33 ? "mixed" : "improving")
+          : null;
+        if (trend && pills.length < 2) {
+          pills.push(
+            <span key="trend" className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-white/60">
+              {trend}
             </span>
-          )}
-
-          {identity.summaryTag && (
-            <span className="rounded-full bg-white/5 px-2 py-0.5">
-              Story tag: {identity.summaryTag.replace(/_/g, " ")}
-            </span>
-          )}
-        </div>
-      )}
+          );
+        }
+        return pills.length > 0 ? <div className="flex flex-wrap items-center gap-1 text-[10px] sm:text-xs text-white/50">{pills.slice(0, 2)}</div> : null;
+      })()}
     </div>
   );
 }

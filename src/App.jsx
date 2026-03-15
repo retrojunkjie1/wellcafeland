@@ -2,28 +2,45 @@
 
 import React, { useEffect, Suspense, lazy } from "react";
 
-import {BrowserRouter, Routes, Route, Navigate} from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from "react-router-dom";
+import Loading from "./components/Loading";
+import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 
-import OSLayout from "./layouts/OSLayout";
+import ExperienceShell from "./system/ExperienceShell";
 
 import HomePage from "./apps/core/HomePage";
+import GuidedEntrySessionPage from "./apps/core/GuidedEntrySessionPage";
 import ChatPage from "./apps/chat/ChatPage";
 import LivingGuidePage from "./apps/living/LivingGuidePage";
 // Phase 70: Route LivingGuidePageV3
 import { LivingGuidePageV3 } from "./apps/living/LivingGuidePageV3";
 import SequencePage from "./apps/sequences/SequencePage";
-// Assistance Hub (real-world help)
-import AssistanceHubPage from "./apps/assistance/AssistanceHubPage";
+// Unified Assistance (real-world help — one page, action-first)
 // Phase 70: Route unrouted pages
 import AssistancePage from "./apps/assistance/AssistancePage";
 import CommandConsolePage from "./apps/command/CommandConsolePage";
 import WorkspacePage from "./apps/workspace/WorkspacePage";
 import RealHelpWorkspace from "./apps/workspace/RealHelpWorkspace";
 import GuidePage from "./apps/guide/GuidePage";
-import DirectoryWorkspace from "./apps/directory/DirectoryWorkspace";
-import DirectoryDetailWorkspace from "./apps/directory/DirectoryDetailWorkspace";
+import ResourcesListPage from "./apps/resources/ResourcesListPage";
+import ResourcesDetailPage from "./apps/resources/ResourcesDetailPage";
+
+const RealHelpRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={`/assistance${search || ""}`} replace />;
+};
+
+const DirectoryRedirect = () => {
+  const { domain, id } = useParams();
+  const { search } = useLocation();
+  const q = new URLSearchParams(search);
+  const domainFromQuery = q.get("domain");
+  const typeParam = domain || domainFromQuery;
+  const to = id ? `/resources/${encodeURIComponent(id)}` : (typeParam ? `/resources?type=${typeParam}` : "/resources");
+  return <Navigate to={to} replace />;
+};
 
 import RecoveryPage from "./apps/recovery/RecoveryPage";
 import MilestonesPage from "./apps/milestones/MilestonesPage";
@@ -41,6 +58,7 @@ const ExplorePage = lazy(() =>
 );
 import VoiceJournal from "./apps/tools/VoiceJournal";
 import VoiceCheckIn from "./apps/tools/VoiceCheckIn";
+import Grounding54321 from "./apps/tools/Grounding54321";
 
 import ProvidersPage from "./apps/providers/ProvidersPage";
 import ProviderDashboardPage from "./apps/provider/ProviderDashboardPage";
@@ -77,6 +95,7 @@ import LoginPage from "./apps/auth/LoginPage";
 import SignupPage from "./apps/auth/SignupPage";
 
 import OnboardingPage from "./apps/onboarding/OnboardingPage";
+import PlanStartPage from "./apps/plan/PlanStartPage";
 
 import AdminConsolePage from "./apps/dashboard/AdminConsolePage";
 
@@ -87,9 +106,13 @@ import { OverseerConsoleUltra } from "./apps/overseer/OverseerConsoleUltra";
 import ContentStudioPage from "./apps/admin/ContentStudioPage";
 import SeedDataPage from "./apps/admin/SeedDataPage";
 import AdminRoute from "./components/AdminRoute";
+import ToolRouteBoundary from "./components/system/ToolRouteBoundary";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
 import UnauthorizedPage from "./components/routing/UnauthorizedPage";
+import { AdminGuard } from "./admin/AdminGuard";
+import { AdminShell } from "./admin/AdminShell";
+import { AdminPage } from "./admin/AdminPage";
 
 // Phase 13: Social & Circles imports
 import CirclesPage from "./apps/circles/CirclesPage";
@@ -108,35 +131,33 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Suspense
-        fallback={
-          <div className="min-h-screen flex items-center justify-center bg-black text-white text-sm">
-            Loading wellness tools…
-          </div>
-        }
-      >
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loading message="Loading…" /></div>}>
+        <RouteTracker />
         <Routes>
           {/* Preview - Standalone page, no layout */}
           <Route path="/preview/:token" element={<SessionPreviewPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
-          <Route element={<OSLayout />}>
+          <Route element={<ExperienceShell />}>
             {/* OS Routes */}
             <Route path="/" element={<ChatPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/home" element={<HomePage />} />
+          <Route path="/session/:mode" element={<GuidedEntrySessionPage />} />
             <Route path="/explore" element={<ExplorePage />} />
           <Route path="/sequence/:id" element={<SequencePage />} />
-          {/* Assistance Hub - Real-world help directory */}
-          <Route path="/assistance" element={<AssistanceHubPage />} />
+          {/* Assistance — unified Find Help (housing, food, funding, programs, crisis) */}
+          <Route path="/assistance" element={<RealHelpWorkspace />} />
           {/* Phase 70: Route unrouted AssistancePage */}
           <Route path="/assistance/request" element={<AssistancePage />} />
           <Route path="/command" element={<CommandConsolePage />} />
+          <Route path="/workspace/real-help" element={<RealHelpRedirect />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
-          <Route path="/workspace/real-help" element={<RealHelpWorkspace />} />
-          <Route path="/directory" element={<DirectoryWorkspace />} />
-          <Route path="/directory/:domain" element={<DirectoryWorkspace />} />
-          <Route path="/directory/:domain/:id" element={<DirectoryDetailWorkspace />} />
+          <Route path="/directory" element={<DirectoryRedirect />} />
+          <Route path="/directory/:domain" element={<DirectoryRedirect />} />
+          <Route path="/directory/:domain/:id" element={<DirectoryRedirect />} />
+          <Route path="/resources" element={<ResourcesListPage />} />
+          <Route path="/resources/:id" element={<ResourcesDetailPage />} />
           <Route path="/guide" element={<GuidePage />} />
           {/* Phase A1: Canonical /living route */}
           <Route path="/living" element={<LivingGuidePageV3 />} />
@@ -144,17 +165,19 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/plan/start" element={<PlanStartPage />} />
 
           {/* Public Routes - Accessible in guest mode */}
           <Route path="/recovery" element={<RecoveryPage />} />
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
-          <Route path="/tools" element={<ToolsPage />} />
+          <Route path="/tools" element={<ToolRouteBoundary><ToolsPage /></ToolRouteBoundary>} />
           {/* Phase 70: Route classic ToolsPage */}
-          <Route path="/tools/classic" element={<ToolsPageClassic />} />
-          <Route path="/tools/:toolId" element={<ToolDetailPage />} />
-          <Route path="/tools/voice-journal" element={<VoiceJournal />} />
-          <Route path="/tools/voice-checkin" element={<VoiceCheckIn />} />
+          <Route path="/tools/classic" element={<ToolRouteBoundary><ToolsPageClassic /></ToolRouteBoundary>} />
+          <Route path="/tools/:toolId" element={<ToolRouteBoundary><ToolDetailPage /></ToolRouteBoundary>} />
+          <Route path="/tools/voice-journal" element={<ToolRouteBoundary><VoiceJournal /></ToolRouteBoundary>} />
+          <Route path="/tools/voice-checkin" element={<ToolRouteBoundary><VoiceCheckIn /></ToolRouteBoundary>} />
+          <Route path="/tools/grounding/54321" element={<ToolRouteBoundary><Grounding54321 /></ToolRouteBoundary>} />
           <Route path="/support" element={<SupportHubPage />} />
           <Route path="/circles" element={<CirclesPage />} />
           <Route path="/circles/:circleId" element={<CircleDetailPage />} />
@@ -334,7 +357,7 @@ const App = () => {
 
           {/* Admin/Superadmin Routes - Hidden from public nav, accessible via direct URL */}
           <Route
-            path="/admin"
+            path="/admin/console"
             element={
               <RequireAuth>
                 <RequireAdmin>
@@ -429,6 +452,10 @@ const App = () => {
               </RequireAuth>
             }
           />
+
+          {/* Phase I: God-Eye Admin Dashboard - Parameterized routes must come LAST */}
+          <Route path="/admin/:section" element={<AdminPage />} />
+          <Route path="/admin" element={<AdminPage />} />
         </Route>
 
           <Route path="*" element={<UnauthorizedPage />} />

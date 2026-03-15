@@ -1,0 +1,129 @@
+[
+  {
+    "name": "Crisis Text Line",
+    "type": "crisis",
+    "category": "crisis",
+    "phone": "741741",
+    "address": "Text HOME to 741741",
+    "city": "",
+    "state": "US",
+    "zip": "",
+    "website": "https://www.crisistextline.org",
+    "tags": ["crisis", "24/7", "text", "national"],
+    "regionKey": "US-National",
+    "verification": {
+      "status": "verified",
+      "source": "staff",
+      "verifiedAt": "2025-01-27T00:00:00Z",
+      "verifiedBy": "system"
+    },
+    "publicNotes": "24/7 free crisis support via text message. Text HOME to 741741.",
+    "internalNotes": "National crisis text line - verified and reliable"
+  },
+  {
+    "name": "988 Suicide & Crisis Lifeline",
+    "type": "crisis",
+    "category": "crisis",
+    "phone": "988",
+    "address": "Dial 988",
+    "city": "",
+    "state": "US",
+    "zip": "",
+    "website": "https://988lifeline.org",
+    "tags": ["crisis", "24/7", "phone", "national", "suicide-prevention"],
+    "regionKey": "US-National",
+    "verification": {
+      "status": "verified",
+      "source": "staff",
+      "verifiedAt": "2025-01-27T00:00:00Z",
+      "verifiedBy": "system"
+    },
+    "publicNotes": "National 24/7 suicide and crisis lifeline. Dial 988 or chat online.",
+    "internalNotes": "Official national crisis line"
+  },
+  {
+    "name": "SAMHSA National Helpline",
+    "type": "treatment",
+    "category": "treatment",
+    "phone": "1-800-662-4357",
+    "address": "1-800-662-HELP",
+    "city": "",
+    "state": "US",
+    "zip": "",
+    "website": "https://www.samhsa.gov/find-help/national-helpline",
+    "tags": ["treatment", "referral", "national", "24/7", "free"],
+    "regionKey": "US-National",
+    "verification": {
+      "status": "verified",
+      "source": "staff",
+      "verifiedAt": "2025-01-27T00:00:00Z",
+      "verifiedBy": "system"
+    },
+    "publicNotes": "Free, confidential, 24/7 treatment referral and information service.",
+    "internalNotes": "SAMHSA official helpline"
+  },
+  {
+    "name": "National Alliance on Mental Illness (NAMI) Helpline",
+    "type": "treatment",
+    "category": "treatment",
+    "phone": "1-800-950-6264",
+    "address": "1-800-950-NAMI",
+    "city": "",
+    "state": "US",
+    "zip": "",
+    "website": "https://www.nami.org/help",
+    "tags": ["mental-health", "support", "information", "national"],
+    "regionKey": "US-National",
+    "verification": {
+      "status": "verified",
+      "source": "staff",
+      "verifiedAt": "2025-01-27T00:00:00Z",
+      "verifiedBy": "system"
+    },
+    "publicNotes": "Free peer support, information, and resources for mental health.",
+    "internalNotes": "NAMI official helpline"
+  },
+  {
+    "name": "211 Information & Referral",
+    "type": "information",
+    "category": "food",
+    "phone": "211",
+    "address": "Dial 211 or visit 211.org",
+    "city": "",
+    "state": "US",
+    "zip": "",
+    "website": "https://www.211.org",
+    "tags": ["food", "housing", "utilities", "referral", "local", "24/7"],
+    "regionKey": "US-National",
+    "verification": {
+      "status": "verified",
+      "source": "staff",
+      "verifiedAt": "2025-01-27T00:00:00Z",
+      "verifiedBy": "system"
+    },
+    "publicNotes": "Free, confidential information and referral service. Available in most areas. Connects you to local food banks, housing assistance, and other resources.",
+    "internalNotes": "211 is available in most US areas, provides local resource referrals"
+  },
+  {
+    "name": "Feeding America Network",
+    "type": "food",
+    "category": "food",
+    "phone": "",
+    "address": "National network - find local food bank",
+    "city": "",
+    "state": "US",
+    "zip": "",
+    "website": "https://www.feedingamerica.org/find-your-local-foodbank",
+    "tags": ["food", "food-bank", "hunger", "national-network"],
+    "regionKey": "US-National",
+    "verification": {
+      "status": "verified",
+      "source": "staff",
+      "verifiedAt": "2025-01-27T00:00:00Z",
+      "verifiedBy": "system"
+    },
+    "publicNotes": "National network of food banks. Use website to find your local food bank.",
+    "internalNotes": "Largest hunger-relief organization in US"
+  }
+]
+

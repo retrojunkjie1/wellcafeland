@@ -3,6 +3,28 @@
     "source": "functions",
     "runtime": "nodejs20"
   },
+  "emulators": {
+    "hub": {
+      "port": 4400
+    },
+    "functions": {
+      "host": "127.0.0.1",
+      "port": 5001
+    },
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8081
+    },
+    "auth": {
+      "host": "127.0.0.1",
+      "port": 9099
+    },
+    "ui": {
+      "enabled": true,
+      "host": "127.0.0.1",
+      "port": 4000
+    }
+  },
   "hosting": {
     "public": "dist",
     "ignore": [
@@ -10,9 +32,24 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.google.com https://www.recaptcha.net wss:; frame-src 'self' https://www.google.com https://www.recaptcha.net https:; object-src 'none'; base-uri 'self';"
+          }
+        ]
+      }
+    ],
     "rewrites": [
       {
-        "source": "/api/**",
+        "source": "/api/aiSession",
+        "function": "aiSession"
+      },
+      {
+        "source": "/api/globalResourceSearch",
         "function": "globalResourceSearch"
       },
       {
@@ -28,5 +65,8 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

@@ -1,12 +1,16 @@
 // src/components/tools/PanicResetSessionView.jsx
 // Emergency calm protocol session
 // Phase 37: Tool Sessions Activation Layer
+// Never blank: root has min-h so tool pages always show visible UI
 
 import React from "react";
 
 export const PanicResetSessionView = () => {
+  if (import.meta.env.DEV) {
+    console.debug("[PanicReset] render", { ready: true, loading: false, error: null });
+  }
   return (
-    <div className="flex w-full max-w-md flex-col gap-4 text-xs sm:text-sm text-amber-50/90">
+    <div className="flex min-h-[60vh] w-full max-w-md flex-col justify-center gap-4 text-xs sm:text-sm text-amber-50/90">
       <div className="rounded-2xl bg-red-500/10 px-4 py-3 border border-red-500/40">
         <p className="font-medium text-red-100">You are safe right now.</p>
         <p className="mt-1 text-red-50/80">

@@ -40,7 +40,7 @@ const SupportersStrip = () => {
             {supporter.website ? (
               <a
                 href={supporter.website}
-                target="_blank"
+               
                 rel="noopener noreferrer"
                 className="hover:text-white transition"
               >

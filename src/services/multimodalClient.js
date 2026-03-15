@@ -1,23 +1,9 @@
 // src/services/multimodalClient.js
 // Frontend client for multimodal wellness engine (OpenAI chat, TTS, STT)
 
-// Phase 61B: Endpoint resolution helpers
-function resolveFunctionsBaseUrl() {
-  const env = import.meta.env.VITE_FIREBASE_FUNCTIONS_URL;
-  if (env && typeof env === "string" && env.trim()) return env.trim();
+import { isDebugEnabled, logDebug } from "@/lib/debug";
 
-  const isLocalhost =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1";
-
-  if (isLocalhost) {
-    const projectId = "wellnesscafelanding";
-    const region = "us-central1";
-    return `http://localhost:5001/${projectId}/${region}`;
-  }
-
-  return "https://us-central1-wellnesscafelanding.cloudfunctions.net";
-}
+import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 
 function buildEndpoint(path) {
   const base = resolveFunctionsBaseUrl();
@@ -96,10 +82,11 @@ export async function guideEngine(query, options = {}) {
     }
     
     const endpoint = ENDPOINTS.chat();
-    
-    // Debug: Log resolved endpoint
-    console.log("[guideEngine] Resolved endpoint:", endpoint);
-    console.log("[guideEngine] VITE_FIREBASE_FUNCTIONS_URL:", import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set, using default)");
+    logDebug("Chat", {
+      endpoint,
+      functionsBaseUrl: resolveFunctionsBaseUrl(),
+      envSet: !!import.meta.env.VITE_FIREBASE_FUNCTIONS_URL,
+    });
     
     // Adjust mode based on preferences
     let adjustedMode = mode;
@@ -206,18 +193,37 @@ export async function guideEngine(query, options = {}) {
       }
     }
     
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(30000),
-    });
+    // Safari-compatible timeout: use AbortController instead of AbortSignal.timeout()
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      timeoutController.abort();
+    }, 15000); // Reduced to 15s max
+    
+    let res;
+    try {
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+        signal: timeoutController.signal,
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      if (fetchErr.name === "AbortError") {
+        return {
+          ok: false,
+          error: "Request timed out. Please try again.",
+        };
+      }
+      throw fetchErr;
+    }
 
-    // Debug: Log response status and headers
-    console.log("[guideEngine] Response status:", res.status, res.statusText);
-    console.log("[guideEngine] Response headers:", Object.fromEntries(res.headers.entries()));
+    if (isDebugEnabled()) {
+      logDebug("Chat", { responseStatus: res.status, statusText: res.statusText });
+    }
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
@@ -234,11 +240,8 @@ export async function guideEngine(query, options = {}) {
       return null;
     });
     
-    // Debug: Log response body (trimmed to 300 chars)
-    if (data) {
-      const dataStr = JSON.stringify(data);
-      const trimmedData = dataStr.length > 300 ? dataStr.substring(0, 300) + "..." : dataStr;
-      console.log("[guideEngine] Response body (trimmed):", trimmedData);
+    if (isDebugEnabled() && data) {
+      logDebug("Chat", { hasContent: !!data.content, hasAudio: !!data.audio, hasVideo: !!data.video });
     }
     
     if (!data) {
@@ -296,16 +299,12 @@ export async function guideEngine(query, options = {}) {
       },
     };
   } catch (err) {
-    // Debug: Comprehensive error logging
     const endpoint = ENDPOINTS.chat();
-    
-    console.error("[guideEngine] Request failed:", {
-      error: err,
-      message: err.message,
-      name: err.name,
-      stack: err.stack,
-      endpoint: endpoint,
-      envVar: import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || "(not set)",
+    logDebug("Chat", {
+      error: err.message,
+      errorName: err.name,
+      endpoint,
+      origin: typeof window !== "undefined" ? window.location.origin : null,
     });
     
     const isNetworkError = err.message?.includes("Failed to fetch") || 
@@ -313,17 +312,12 @@ export async function guideEngine(query, options = {}) {
                           err.name === "AbortError" ||
                           err.name === "TypeError";
     
-    // Additional debug for CORS issues
-    if (err.message?.includes("Failed to fetch") || err.message?.includes("CORS")) {
-      console.error("[guideEngine] CORS/Network issue detected. Endpoint:", endpoint);
-      console.error("[guideEngine] Check if endpoint allows origin:", window.location.origin);
-    }
-    
+    // PHASE H: Soft messaging
     return {
       ok: false,
       error: isNetworkError
         ? "Network connection failed. Please check your internet connection and try again."
-        : "Connection lost. I'm still here with you. Try again when you're ready.",
+        : "Still here with you. Tap send to continue.",
     };
   }
 }
@@ -337,11 +331,44 @@ export async function guideEngine(query, options = {}) {
  * Use this for chat flows that need audio/video support.
  * For simple text conversations, use guideEngine() instead.
  * 
- * @param {Object} params - { messages: Array<{role, content}>, metadata?: Object, mode?: string }
- * @returns {Promise<{ok: boolean, type: string, text?: string, audioUrl?: string, videoUrl?: string, raw?: Object}>}
+ * @param {Object} params - { messages: Array<{role, content}>, metadata?: Object, mode?: string, abortController?: AbortController, disconnectReason?: string }
+ * @returns {Promise<{ok: boolean, type: string, text?: string, audioUrl?: string, videoUrl?: string, raw?: Object, disconnectReason?: string}>}
  */
-export async function sendChatMultimodal({ messages = [], metadata = {}, mode = "chat" }) {
-  if (!messages || messages.length === 0) {
+// GOD-EYE V2: Track latency and network events
+let networkRetryCount = 0;
+const MAX_RETRIES = 3;
+const RETRY_DELAY_BASE = 1000; // 1 second
+const MAX_BACKOFF = 30000; // 30 seconds max
+
+// Exponential backoff helper
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Network state tracking
+let fetchFailureCount = 0;
+const FAILURE_WINDOW = 30000;
+
+// Check if actually offline vs slow
+async function checkOnline() {
+  if (!navigator.onLine) return false;
+  // Quick connectivity check - use AbortController for Safari compatibility
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch("/favicon.ico", { method: "HEAD", cache: "no-cache", signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function sendChatMultimodal({ messages = [], metadata = {}, mode = "chat", abortController = null, disconnectReason = null }) {
+  // PHASE H: Mobile chat resilience
+  // GOD-EYE V2: Network resilience
+  // Defensive: Ensure messages is valid array
+  if (!Array.isArray(messages) || messages.length === 0) {
     return {
       ok: false,
       type: "text",
@@ -351,72 +378,263 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
 
   const endpoint = ENDPOINTS.chat();
 
+  // PHASE H: iOS Safari visibility guard
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isMobile = isIOS || /Android/.test(navigator.userAgent);
+  
+  // PHASE H: Create AbortController if not provided, use mobile timeout
+  // Defensive: Ensure AbortController is available (Safari compatibility)
+  let controller;
   try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages,
-        mode,
-        metadata,
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => "Unknown error");
-      const safe = errorText?.slice(0, 400) || "Unknown error";
-      return {
-        ok: false,
-        type: "text",
-        status: res.status,
-        text: `Server error (${res.status}). ${safe}`,
-      };
-    }
-
-    const data = await res.json().catch(() => null);
-    if (!data) {
-      return {
-        ok: false,
-        type: "text",
-        text: "Invalid response from server. Please try again.",
-      };
-    }
-
-    // Convert base64 audio to blob URL if present
-    let audioUrl = null;
-    if (data.audio) {
-      try {
-        const audioBlob = base64ToBlob(data.audio, data.mimeType || "audio/mp3");
-        audioUrl = URL.createObjectURL(audioBlob);
-      } catch (err) {
-        console.error("Failed to create audio URL:", err);
-      }
-    }
-
-    return {
-      ok: true,
-      type: data.type || "text",
-      text: data.content || data.text || null,
-      audioUrl: audioUrl || null,
-      videoUrl: data.video || null,
-      raw: data,
-    };
+    controller = abortController || new AbortController();
   } catch (err) {
-    console.error("[sendChatMultimodal] Request failed:", err);
-    const isNetworkError = err.message?.includes("Failed to fetch") || 
-                          err.message?.includes("NetworkError") ||
-                          err.name === "AbortError";
-    return {
-      ok: false,
-      type: "text",
-      text: isNetworkError
-        ? "Network connection failed. Please check your internet connection and try again."
-        : "Connection lost. I'm still here with you. Try again when you're ready.",
-    };
+    // Fallback if AbortController not available (very old browsers)
+    console.warn("[sendChatMultimodal] AbortController not available, using fetch without abort");
+    controller = null;
   }
+  const timeoutDuration = Math.min(isMobile ? 8000 : 15000, 15000); // Cap at 15s max
+  let timeoutId = null;
+  let mobileTimeoutId = null;
+  let lastChunkTime = Date.now();
+
+  // PHASE H: Mobile timeout fallback - track last chunk time
+  const resetChunkTimer = () => {
+    lastChunkTime = Date.now();
+    if (mobileTimeoutId) {
+      clearTimeout(mobileTimeoutId);
+      mobileTimeoutId = null;
+    }
+    if (isMobile && controller) {
+      mobileTimeoutId = setTimeout(() => {
+        const elapsed = Date.now() - lastChunkTime;
+        if (elapsed >= 8000 && controller) {
+          try {
+            controller.abort();
+            disconnectReason = "mobile_timeout";
+          } catch (err) {
+            console.warn("[sendChatMultimodal] Failed to abort controller:", err);
+          }
+        }
+      }, 8000);
+    }
+  };
+
+  // GOD-EYE V2: Track request start time
+  const requestStart = Date.now();
+  let attemptCount = 0;
+  let lastError = null;
+
+  // Retry loop with exponential backoff
+  while (attemptCount < MAX_RETRIES) {
+    attemptCount++;
+    
+    // GOD-EYE V2: Check if actually offline before retrying
+    if (attemptCount > 1) {
+      const isOnline = await checkOnline();
+      if (!isOnline) {
+        // Actually offline - don't retry
+        return {
+          ok: false,
+          type: "text",
+          text: "Still here with you. Tap send to continue.",
+          disconnectReason: "offline",
+        };
+      }
+      
+      // Exponential backoff
+      const delay = RETRY_DELAY_BASE * Math.pow(2, attemptCount - 2);
+      await sleep(delay);
+    }
+
+    try {
+      // PHASE H: Prevent false disconnects
+      const fetchSignal = controller?.signal || null;
+      
+      // Create timeout for overall request
+      if (controller) {
+        timeoutId = setTimeout(() => {
+          if (controller && !controller.signal.aborted) {
+            try {
+              controller.abort();
+            } catch (err) {
+              console.warn("[sendChatMultimodal] Failed to abort on timeout:", err);
+            }
+          }
+        }, Math.min(timeoutDuration, 15000)); // Cap at 15s max
+      }
+
+      resetChunkTimer();
+
+      const fetchOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messages,
+          mode,
+          metadata,
+        }),
+      };
+      
+      // Only add signal if AbortController is available
+      if (fetchSignal) {
+        fetchOptions.signal = fetchSignal;
+      }
+
+      const res = await fetch(endpoint, fetchOptions);
+      
+      // GOD-EYE SUPREME: Record success
+      fetchFailureCount = 0;
+      
+      // GOD-EYE V2: Track latency on success
+      const requestDuration = Date.now() - requestStart;
+      try {
+        const { trackLatency, trackNetworkEvent } = await import("@/telemetry/telemetry");
+        trackLatency(requestDuration, endpoint);
+        trackNetworkEvent("request_success", { duration: requestDuration, endpoint, retries: attemptCount - 1 });
+      } catch {
+        // Telemetry not critical
+      }
+
+      // Clear timeouts on success
+      if (timeoutId) clearTimeout(timeoutId);
+      if (mobileTimeoutId) clearTimeout(mobileTimeoutId);
+      networkRetryCount = 0; // Reset on success
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => "Unknown error");
+        const safe = errorText?.slice(0, 400) || "Unknown error";
+        return {
+          ok: false,
+          type: "text",
+          status: res.status,
+          text: `Server error (${res.status}). ${safe}`,
+          disconnectReason: null,
+        };
+      }
+
+      const data = await res.json().catch(() => null);
+      if (!data) {
+        return {
+          ok: false,
+          type: "text",
+          text: "Invalid response from server. Please try again.",
+          disconnectReason: null,
+        };
+      }
+
+      // Convert base64 audio to blob URL if present
+      let audioUrl = null;
+      if (data.audio) {
+        try {
+          const audioBlob = base64ToBlob(data.audio, data.mimeType || "audio/mp3");
+          audioUrl = URL.createObjectURL(audioBlob);
+        } catch (err) {
+          console.error("Failed to create audio URL:", err);
+        }
+      }
+
+      return {
+        ok: true,
+        type: data.type || "text",
+        text: data.content || data.text || null,
+        audioUrl: audioUrl || null,
+        videoUrl: data.video || null,
+        raw: data,
+        disconnectReason: null,
+      };
+    } catch (err) {
+      // PHASE H: Prevent false disconnects - cleanup timeouts
+      if (timeoutId) clearTimeout(timeoutId);
+      if (mobileTimeoutId) clearTimeout(mobileTimeoutId);
+
+      lastError = err;
+      const isAborted = err.name === "AbortError";
+      const isNetworkError = err.message?.includes("Failed to fetch") || 
+                            err.message?.includes("NetworkError");
+      
+      // GOD-EYE SUPREME: Record failure for network state
+      if (isNetworkError && !isAborted) {
+        fetchFailureCount++;
+        setTimeout(() => {
+          fetchFailureCount = Math.max(0, fetchFailureCount - 1);
+        }, FAILURE_WINDOW);
+      }
+      
+      // GOD-EYE V2: Track network errors
+      try {
+        const { trackNetworkEvent } = await import("@/telemetry/telemetry");
+        trackNetworkEvent("request_error", {
+          level: "warn",
+          error: err.message,
+          endpoint,
+          retries: attemptCount - 1,
+          isAborted,
+          isNetworkError,
+          failureCount: fetchFailureCount,
+        });
+      } catch {
+        // Telemetry not critical
+      }
+
+      // Retry logic - only retry network errors, not aborts
+      // Exponential backoff with max cap
+      if (isNetworkError && !isAborted && attemptCount < MAX_RETRIES) {
+        const backoffDelay = Math.min(
+          RETRY_DELAY_BASE * Math.pow(2, attemptCount - 1),
+          MAX_BACKOFF
+        );
+        await sleep(backoffDelay);
+        continue;
+      }
+
+      // Don't retry if aborted or non-network error
+      break;
+    }
+  } // End retry loop
+
+  // If we get here, all retries failed or non-retryable error
+  const isAborted = lastError?.name === "AbortError";
+  const isNetworkError = lastError?.message?.includes("Failed to fetch") || 
+                        lastError?.message?.includes("NetworkError");
+  
+  // Determine connection state - ONLY use navigator.onLine for offline detection
+  // Do NOT equate fetch timeout, CSP violation, App Check failure, or AI error with offline
+  const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+  const isDegraded = fetchFailureCount >= 3;
+  
+  // Soft messaging - only show connection lost if truly offline
+  let messageText;
+  if (isOffline) {
+    messageText = "Still here with you. Tap send to continue.";
+  } else if (isAborted && (disconnectReason === "visibility" || disconnectReason === "mobile_timeout")) {
+    messageText = "Still here with you. Tap send to continue.";
+  } else {
+    messageText = "Still here with you. Tap send to continue.";
+  }
+
+  // Track network status
+  try {
+    const { trackNetworkEvent } = await import("@/telemetry/telemetry");
+    trackNetworkEvent("network_status", {
+      level: isOffline ? "warn" : isDegraded ? "warn" : "info",
+      state: isOffline ? "offline" : isDegraded ? "degraded" : "online",
+      failureCount: fetchFailureCount,
+    });
+  } catch {
+    // Telemetry not critical
+  }
+
+  return {
+    ok: false,
+    type: "text",
+    text: messageText,
+    disconnectReason: isAborted ? disconnectReason || "aborted" : 
+                     isOffline ? "offline" :
+                     isDegraded ? "degraded" :
+                     isNetworkError ? "network_error" : "unknown",
+  };
 }
 
 /**
@@ -431,7 +649,9 @@ export async function speakText(text, options = {}) {
   }
 
   try {
-    const res = await fetch(ENDPOINTS.tts(), {
+    const ttsEndpoint = ENDPOINTS.tts();
+    logDebug("TTS", { endpoint: ttsEndpoint, functionsBaseUrl: resolveFunctionsBaseUrl() });
+    const res = await fetch(ttsEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -440,7 +660,11 @@ export async function speakText(text, options = {}) {
         text: text.trim(),
         voice: options.voice || "alloy",
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: (() => {
+        const controller = new AbortController();
+        setTimeout(() => controller.abort(), 15000);
+        return controller.signal;
+      })(),
     });
 
     if (!res.ok) {
@@ -472,7 +696,7 @@ export async function speakText(text, options = {}) {
 
     return { ok: false, error: "No audio data received" };
   } catch (err) {
-    console.error("TTS request failed:", err);
+    logDebug("TTS", { error: err.message, endpoint: ENDPOINTS.tts() });
     const isNetworkError = err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
     return {
       ok: false,
@@ -513,7 +737,13 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
       audioData = audio;
     }
 
-    const res = await fetch(ENDPOINTS.stt(), {
+    // Safari-compatible timeout
+    const sttEndpoint = ENDPOINTS.stt();
+    logDebug("STT", { endpoint: sttEndpoint, functionsBaseUrl: resolveFunctionsBaseUrl() });
+    const sttController = new AbortController();
+    const sttTimeoutId = setTimeout(() => sttController.abort(), 30000);
+    
+    const res = await fetch(sttEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -522,8 +752,10 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
         audio: audioData,
         mimeType: audioMimeType,
       }),
-      signal: AbortSignal.timeout(30000),
+      signal: sttController.signal,
     });
+    
+    clearTimeout(sttTimeoutId);
 
     if (!res.ok) {
       const errorText = await res.text().catch(() => "Unknown error");
@@ -548,7 +780,7 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
       text: data.text || "",
     };
   } catch (err) {
-    console.error("STT request failed:", err);
+    logDebug("STT", { error: err.message, endpoint: ENDPOINTS.stt() });
     const isNetworkError = err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");
     return {
       ok: false,
@@ -617,33 +849,16 @@ export async function callWellnessChat({ messages, mode = "default" }) {
       console.log("[callWellnessChat] Multimodal endpoint failed, trying fallback:", multimodalErr.message);
     }
 
-    // Fallback to /aiSession (v1 function)
-    const fallbackUrl = import.meta.env.DEV 
-      ? "/aiSession"
-      : "https://us-central1-wellnesscafelanding.cloudfunctions.net/aiSession";
-    
-    const fallbackRes = await fetch(fallbackUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: userPrompt,
-        mode: "session",
-        context: messages.length > 1 
-          ? messages.slice(0, -1).map(m => `${m.role}: ${m.content}`).join("\n")
-          : "",
-      }),
+    // Fallback to /api/aiSession via centralized client
+    const { callAiSession } = await import("@/services/aiSessionClient");
+
+    const fallbackData = await callAiSession({
+      prompt: userPrompt,
+      mode: "session",
+      context: messages.length > 1
+        ? messages.slice(0, -1).map((m) => `${m.role}: ${m.content}`).join("\n")
+        : "",
     });
-
-    if (!fallbackRes.ok) {
-      return {
-        ok: false,
-        error: "I couldn't reach the wellness engine right now. Please try again in a moment.",
-      };
-    }
-
-    const fallbackData = await fallbackRes.json().catch(() => null);
     const reply = 
       fallbackData?.reply ||
       fallbackData?.choices?.[0]?.message?.content ||
@@ -659,9 +874,10 @@ export async function callWellnessChat({ messages, mode = "default" }) {
     };
   } catch (err) {
     console.error("Wellness chat request failed:", err);
+    // PHASE H: Soft messaging
     return {
       ok: false,
-      error: "Connection lost. I'm still here with you. Try again when you're ready.",
+      error: "Still here with you. Tap send to continue.",
     };
   }
 }

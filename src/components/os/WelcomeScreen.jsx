@@ -1,54 +1,48 @@
 // src/components/os/WelcomeScreen.jsx
-// Welcome screen shown before conversation starts (like ChatGPT home)
+// Welcome screen shown before conversation starts — clinically-guided luxury pathway layout
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useOSStore } from "@/stores/useOSStore";
 import Logo from "@/components/Logo";
-
-const QUICK_ACTIONS = [
-  "I need grounding right now",
-  "Help me process what I'm feeling",
-  "Guide me through a practice",
-  "I'm struggling with cravings",
-];
+import PrimaryPathways from "@/apps/home/components/PrimaryPathways";
 
 const WelcomeScreen = ({ onAction }) => {
+  const navigate = useNavigate();
   const { messages } = useOSStore();
   const hasStarted = messages.length > 1; // More than welcome message
 
   if (hasStarted) return null;
 
+  const handlePathwayClick = (pathwayId) => {
+    navigate(`/session/${pathwayId}`);
+  };
+
   return (
-    <div className="flex h-full items-center justify-center px-4">
-      <div className="mx-auto max-w-2xl text-center space-y-8">
-        {/* Logo */}
+    <div className="flex h-full items-center justify-center px-4 py-12">
+      <div className="mx-auto max-w-2xl w-full text-center space-y-12">
+        {/* Logo — WELLNESSCAFÉ headline */}
         <div className="flex justify-center">
           <Logo size="lg" showText={true} />
         </div>
 
-        {/* Welcome Message - Luxury typography */}
-        <div className="space-y-6">
-          <p className="text-xl font-light text-white/80 tracking-wide leading-relaxed max-w-xl mx-auto">
-            I'm here to walk with you. Tell me what's real for you right now, or choose a practice below.
+        {/* Hero subtext — calm, premium */}
+        <div className="space-y-2">
+          <p className="text-lg font-light text-white/80 tracking-wide leading-relaxed max-w-xl mx-auto">
+            Support that meets you where you are.
+          </p>
+          <p className="text-base font-light text-white/60 tracking-wide leading-relaxed max-w-xl mx-auto">
+            Tell me what's happening, or choose a path below.
           </p>
         </div>
 
-        {/* Quick Actions - Simple cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-8 max-w-2xl mx-auto">
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              key={action}
-              type="button"
-              onClick={() => onAction?.(action)}
-              className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 text-base text-white/90 transition hover:bg-white/10 hover:text-white hover:border-white/20 text-left"
-            >
-              {action}
-          </button>
-          ))}
+        {/* Primary Pathways — 2×2 clinically-guided grid */}
+        <div className="pt-4">
+          <PrimaryPathways onPathwayClick={handlePathwayClick} />
         </div>
 
-        {/* Guide Info - Simple presentation */}
-        <div className="pt-10 space-y-1">
+        {/* Guide presence — minimal */}
+        <div className="pt-8">
           <p className="text-sm text-white/50 font-light">
             Your guide is here, present with you
           </p>

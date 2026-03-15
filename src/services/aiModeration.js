@@ -39,13 +39,9 @@ Respond with JSON only:
       });
 
       if (!result.ok) {
-        // If moderation fails, default to blocking
+        // If moderation API fails (network, timeout, etc.), fail-open: allow the post
         logError("aiModeration", new Error("Moderation check failed"), { text });
-        return {
-          ok: false,
-          blocked: true,
-          suggestion: "This message could not be verified for safety. Please revise.",
-        };
+        return { ok: true, blocked: false };
       }
 
       // Parse AI response

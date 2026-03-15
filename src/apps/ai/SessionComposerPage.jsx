@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { trackPageView, trackAction } from "../../services/telemetry";
-import { apiFetch } from "../../lib/apiHelpers";
+import { callAiSession } from "@/services/aiSessionClient";
 
 const CATEGORIES = [
   { id: "grounding", label: "Grounding" },
@@ -42,23 +42,49 @@ const SessionComposerPage = () => {
         minutes,
       });
 
-      const response = await apiFetch("/aiSession", {
-        method: "POST",
-        body: {
-          mode: "generate_session",
-          supportType: category,
-          tone: tone,
-          minutes: minutes,
-          note: notes,
-        },
-      });
+      // Generate correlation ID for tracing
+      const correlationId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-      if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+      const data = await callAiSession({
+        mode: "generate_session",
+        supportType: category,
+        tone: tone,
+        minutes: minutes,
+        note: notes,
+        correlationId,
+      });
+      
+      // Parse standardized response schema
+      if (data.ok === false) {
+        // Error response
+        const errorText = data.message?.text || data.error?.message || "I'm having trouble building your session right now. Please try again in a moment.";
+        setError(errorText);
+        return;
       }
 
-      const data = await response.json();
-      const session = data.session || data;
+      // Success response - extract session from message.text or session object
+      let session = null;
+      
+      if (data.session) {
+        // Backward compatibility: session object exists
+        session = data.session;
+      } else if (data.message?.text) {
+        // New format: session content in message.text, metadata in message.meta
+        const meta = data.message.meta || {};
+        session = {
+          id: meta.sessionId,
+          title: meta.title || category,
+          durationMinutes: meta.durationMinutes || minutes,
+          category: meta.category || category,
+          // Parse text into structured format
+          opening: data.message.text.split("\n\n")[0] || "",
+          body: data.message.text.split("\n\n").slice(1) || [],
+          closing: "",
+        };
+      } else {
+        // Fallback
+        session = data;
+      }
 
       // Transform backend format to frontend format if needed
       if (session && session.steps && Array.isArray(session.steps)) {
@@ -70,14 +96,25 @@ const SessionComposerPage = () => {
           closing: session.steps[session.steps.length - 1]?.body || "",
         };
         setResult(transformed);
-      } else {
+      } else if (session.opening || session.body) {
+        // Already in frontend format
         setResult(session);
+      } else {
+        // Fallback: use text content
+        setResult({
+          opening: session.title || "",
+          body: [data.message?.text || JSON.stringify(session)],
+          closing: "",
+        });
       }
     } catch (err) {
       console.error("Generate session error:", err);
-      setError(
-        "We couldn't build your session right now. Try again in a moment."
-      );
+      const errorMessage = err.code === "AUTH_REQUIRED"
+        ? "Please sign in to continue."
+        : err.message?.includes("status")
+          ? "Connection issue. Please try again in a moment."
+          : "I'm having trouble building your session right now. Please try again in a moment.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -201,7 +238,7 @@ const SessionComposerPage = () => {
         </form>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="mb-6 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
             {error}
           </div>
         )}

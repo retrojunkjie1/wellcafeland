@@ -1,20 +1,58 @@
 // src/apps/ai/AssistantOrb.jsx
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { isDebugEnabled } from "@/lib/debug";
 import { useAIStore } from "./useAIStore";
 import { getLastSession } from "../../services/sessionHistory";
 
 const AssistantOrb = () => {
   const navigate = useNavigate();
-  const { toggleConsole, isThinking } = useAIStore();
+  const location = useLocation();
+  // Defensive: Ensure useAIStore doesn't crash orb if store fails
+  // Orb must NOT depend on chat success or tool session state
+  let toggleConsole = () => {};
+  let isThinking = false;
+  try {
+    const store = useAIStore();
+    toggleConsole = store?.toggleConsole || (() => {});
+    isThinking = store?.isThinking || false;
+  } catch (err) {
+    // Silently fail - orb must always render
+    toggleConsole = () => {};
+    isThinking = false;
+  }
+  
   const [lastSession, setLastSession] = useState(null);
+  // Phase 5: Debounce orb state updates - prevent thrashing
+  const [debouncedIsThinking, setDebouncedIsThinking] = useState(false);
+  const thinkingTimeoutRef = React.useRef(null);
+  
+  // Phase 5: Only update orb state when thinking actually changes
+  useEffect(() => {
+    if (thinkingTimeoutRef.current) {
+      clearTimeout(thinkingTimeoutRef.current);
+    }
+    thinkingTimeoutRef.current = setTimeout(() => {
+      setDebouncedIsThinking(isThinking);
+    }, 100); // 100ms debounce
+    
+    return () => {
+      if (thinkingTimeoutRef.current) {
+        clearTimeout(thinkingTimeoutRef.current);
+      }
+    };
+  }, [isThinking]);
 
   useEffect(() => {
-    // Initialize last session
+    // Initialize last session (must not throw)
     const loadSession = () => {
-      const sess = getLastSession();
-      setLastSession(sess);
+      try {
+        const sess = getLastSession();
+        setLastSession(sess);
+      } catch (err) {
+        console.warn("[AssistantOrb] Failed to load last session (non-blocking):", err);
+      }
     };
     
     loadSession();
@@ -57,12 +95,18 @@ const AssistantOrb = () => {
 
   return (
     <>
-      {/* Last session pill */}
+      {/* Last session pill - Stable positioning */}
       {lastSession && (
         <button
           type="button"
           onClick={handleRepeatFromOrb}
-          className="fixed right-6 bottom-24 z-40 max-w-[220px] truncate rounded-full border border-border bg-background/95 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm hover:bg-muted transition-colors"
+          className="fixed max-w-[220px] truncate rounded-full border border-border bg-background/95 px-3 py-1.5 text-[11px] text-muted-foreground shadow-sm hover:bg-muted transition-colors z-[9998]"
+          style={{
+            bottom: "calc(140px + env(safe-area-inset-bottom))",
+            right: "calc(16px + env(safe-area-inset-right))",
+            maxBottom: "calc(100vh - 160px)",
+            maxRight: "calc(100vw - 80px)",
+          }}
         >
           Last session ·{" "}
           <span className="font-medium text-foreground">
@@ -73,19 +117,38 @@ const AssistantOrb = () => {
         </button>
       )}
 
-      {/* Orb */}
+      {/* Orb - Stable positioning, deterministic, never drifts */}
       <button
         type="button"
         onClick={handleOpenConsole}
-        className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 shadow-lg hover:bg-amber-400 transition-colors"
+        className="fixed flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 shadow-lg hover:bg-amber-400 transition-transform hover:scale-105 active:scale-95 z-[9999] pointer-events-auto"
+        style={{
+          bottom: "calc(80px + env(safe-area-inset-bottom))",
+          right: "calc(16px + env(safe-area-inset-right))",
+          position: "fixed",
+          touchAction: "manipulation",
+        }}
         aria-label="Open Living Guide"
       >
-        {isThinking ? (
-          <div className="h-5 w-5 animate-ping rounded-full bg-black/60" />
+        {debouncedIsThinking ? (
+          <div className="h-5 w-5 animate-pulse rounded-full bg-black/60" />
         ) : (
           <span className="text-xl">💬</span>
         )}
       </button>
+
+      {/* wc_debug: orb state overlay (dev only) */}
+      {isDebugEnabled() && import.meta.env.DEV && (
+        <div
+          className="fixed z-[9997] rounded bg-black/80 px-2 py-1 text-[10px] font-mono text-amber-300 pointer-events-none"
+          style={{
+            bottom: "calc(180px + env(safe-area-inset-bottom))",
+            right: "calc(16px + env(safe-area-inset-right))",
+          }}
+        >
+          orb: open={String(location.pathname.startsWith("/chat"))} thinking={String(debouncedIsThinking)}
+        </div>
+      )}
     </>
   );
 };

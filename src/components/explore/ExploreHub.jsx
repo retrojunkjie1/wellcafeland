@@ -215,16 +215,16 @@ const ExploreHub = ({ isMobile = false, onClose }) => {
         isMobile ? "w-full" : "w-72"
       }`}
     >
-      <div className="border-b border-white/5 px-5 py-4">
-        <h2 className="text-sm font-semibold tracking-wide text-white">
+      <div className="border-b border-white/5 px-4 py-2.5">
+        <h2 className="text-xs font-semibold tracking-wide text-white">
           Explore
         </h2>
-        <p className="text-xs text-white/50 mt-1">
+        <p className="text-[11px] text-white/50 mt-0.5">
           Tools, support, and resources
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
         {EXPLORE_SECTIONS.map((section) => {
           const Icon = section.icon;
           return (
@@ -243,9 +243,9 @@ const ExploreHub = ({ isMobile = false, onClose }) => {
                       key={item.id}
                       type="button"
                       onClick={() => handleItemClick(item)}
-                      className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-white/80 transition hover:bg-white/5 hover:text-white"
+                      className="w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs text-white/70 transition hover:bg-white/5 hover:text-white/90"
                     >
-                      <ItemIcon className="h-4 w-4 text-white/50" />
+                      <ItemIcon className="h-4 w-4 text-white/40" />
                       <span>{item.label}</span>
                     </button>
                   );

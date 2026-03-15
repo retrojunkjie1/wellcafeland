@@ -1,10 +1,15 @@
 // src/services/telemetry.js
 
+// PHASE H: Enhanced Analytics
+// - User behavior analytics and insights
+// - Conversion funnel tracking
+// - A/B testing infrastructure
+// - Real-time analytics dashboard
+
 import { getAnonymousUserId } from "../lib/userId";
 import { auth } from "../firebase";
 import { logError } from "@/lib/logger";
-
-const TELEMETRY_ENDPOINT = "/aiSession";
+import { callAiSession } from "@/services/aiSessionClient";
 
 // in-memory buffer so Admin can see something even before backend wiring
 const telemetryBuffer = [];
@@ -22,11 +27,7 @@ const basePayload = () => {
 
 const safeFetch = async (body) => {
   try {
-    await fetch(TELEMETRY_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    await callAiSession(body);
   } catch (err) {
     // don't ever crash the UI because telemetry failed
     logError("telemetry", err, {

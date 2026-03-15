@@ -56,9 +56,8 @@ export const ROUTE_META = [
   // Workspace / Directory
   { pattern: "/workspace/real-help", title: "Real Help Workspace", parent: "/home", breadcrumb: true },
   { pattern: "/workspace/:id", title: "Workspace", parent: "/home", breadcrumb: true },
-  { pattern: "/directory", title: "Directory", parent: "/home", breadcrumb: false },
-  { pattern: "/directory/:domain", title: "Directory", parent: "/directory", breadcrumb: true },
-  { pattern: "/directory/:domain/:id", title: "Detail", parent: "/directory/:domain", breadcrumb: true },
+  { pattern: "/resources", title: "Resources", parent: "/home", breadcrumb: false },
+  { pattern: "/resources/:id", title: "Resource Detail", parent: "/resources", breadcrumb: true },
 
   // Profile / Settings
   { pattern: "/profile", title: "Profile", parent: "/home", breadcrumb: false },

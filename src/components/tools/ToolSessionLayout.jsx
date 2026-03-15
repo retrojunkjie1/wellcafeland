@@ -55,14 +55,14 @@ export const ToolSessionLayout = ({
           {isActive ? (
             <>
               <Pause size={18} />
-              <span>End Session</span>
+              <span>{tool?.sessionType === "breathing" ? "Stop" : "End Session"}</span>
             </>
           ) : (
             <>
               <Play size={18} />
               <span>
-                Begin Session
-                {tool.durationMinutes ? ` (${tool.durationMinutes} min)` : ""}
+                {tool?.sessionType === "breathing" ? "Start Breathing" : "Begin Session"}
+                {tool?.sessionType !== "breathing" && tool?.durationMinutes ? ` (${tool.durationMinutes} min)` : ""}
               </span>
             </>
           )}

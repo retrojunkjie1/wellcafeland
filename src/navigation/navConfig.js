@@ -53,10 +53,9 @@ export const ROUTE_META = [
   { pattern: "/workspace/:id", title: "Workspace", parent: "/home", rootFallback: "/home" },
   { pattern: "/workspace/real-help", title: "Real Help", parent: "/home", rootFallback: "/home" },
 
-  // Directory
-  { pattern: "/directory", title: "Directory", parent: "/home", rootFallback: "/home" },
-  { pattern: "/directory/:domain", title: "Directory", parent: "/directory", rootFallback: "/directory" },
-  { pattern: "/directory/:domain/:id", title: "Detail", parent: "/directory/:domain", rootFallback: "/directory" },
+  // Resources (canonical directory)
+  { pattern: "/resources", title: "Resources", parent: "/home", rootFallback: "/home" },
+  { pattern: "/resources/:id", title: "Resource Detail", parent: "/resources", rootFallback: "/resources" },
 
   // Circles
   { pattern: "/circles", title: "Circles", parent: "/home", rootFallback: "/home" },

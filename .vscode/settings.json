@@ -1,9 +1,0 @@
-{
-  "stylelint.validate": ["css", "scss"],
-  "stylelint.useWorkspaceDependencies": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.stylelint": "explicit"
-  },
-  "css.validate": false,
-  "scss.validate": false
-}

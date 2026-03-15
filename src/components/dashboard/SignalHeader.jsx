@@ -3,11 +3,11 @@
 
 import React from "react";
 import { useOSStore } from "@/stores/useOSStore";
-import { useSessionIdentity } from "@/hooks/useSessionIdentity";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SignalHeader() {
   const messages = useOSStore((state) => state.messages || []);
-  const identity = useSessionIdentity();
+  const { user } = useAuth();
 
   // Get last active timestamp from last message
   const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
@@ -25,18 +25,25 @@ export default function SignalHeader() {
     return new Date(timestamp).toLocaleDateString();
   };
 
-  // Get user ID (anonymous)
-  const userId = identity.userId || "guest";
+  // Get user display name - use AuthContext as source of truth
+  const getUserDisplay = () => {
+    if (user) {
+      if (user.displayName) return user.displayName;
+      if (user.email) return user.email.split("@")[0];
+      return "user";
+    }
+    return "guest";
+  };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-6 backdrop-blur-md shadow-wc-soft">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div className="glass-panel rounded-2xl border border-white/10 bg-white/5 p-3 md:p-4 backdrop-blur-md shadow-wc-soft">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-lg md:text-xl font-semibold text-white tracking-tight">
             Signals & Moments
           </h1>
-          <p className="text-xs text-white/50 mt-1 font-mono">
-            {userId.slice(0, 8)}...
+          <p className="text-xs text-white/50 mt-0.5">
+            {getUserDisplay()}
           </p>
         </div>
         <div className="text-right">

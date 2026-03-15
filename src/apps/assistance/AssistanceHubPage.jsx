@@ -26,7 +26,7 @@ const CARDS = [
     description: "Search for treatment funding, grants, and financial aid programs.",
     icon: Wallet,
     action: "navigate",
-    to: "/directory?domain=grants",
+    to: "/workspace/real-help?priority=funding",
   },
   {
     id: "programs",
@@ -34,7 +34,7 @@ const CARDS = [
     description: "Detox, residential, PHP, IOP, and outpatient programs.",
     icon: Hospital,
     action: "navigate",
-    to: "/directory?domain=programs",
+    to: "/workspace/real-help?priority=programs",
   },
   {
     id: "emergency",
@@ -50,7 +50,7 @@ const CARDS = [
     description: "Describe what you need and let WellnessCafe search across all categories.",
     icon: Search,
     action: "navigate",
-    to: "/workspace/real-help?priority=programs",
+    to: "/workspace/real-help",
   },
 ];
 
@@ -60,18 +60,18 @@ const AssistanceHubPage = () => {
 
   return (
     <div className="flex h-full flex-col bg-slate-950">
-      <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto w-full max-w-5xl px-4 py-4 sm:px-6 sm:py-5">
         {/* Header */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-6 sm:mb-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4 sm:mb-5">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-amber-200">
               <LifeBuoy className="h-3 w-3" />
               <span>Assistance Hub</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-light text-white">
+            <h1 className="text-xl sm:text-2xl font-light text-white">
               Real-world help, not just talk.
             </h1>
-            <p className="max-w-2xl text-sm sm:text-base text-white/60">
+            <p className="max-w-2xl text-xs sm:text-sm text-white/60">
               Housing, food, treatment, grants, and emergency support — all in one place.
               When life outside the app is loud, this is where WellnessCafe rolls up its sleeves.
             </p>
@@ -87,7 +87,7 @@ const AssistanceHubPage = () => {
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CARDS.map((card) => {
             const Icon = card.icon;
             return (
@@ -99,20 +99,20 @@ const AssistanceHubPage = () => {
                     navigate(card.to, withFrom(location));
                   }
                 }}
-                className="flex h-full flex-col items-start rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/95 p-4 text-left shadow-sm transition hover:border-amber-300/40 hover:shadow-[0_0_30px_-12px_rgba(251,191,36,0.4)]"
+                className="flex min-h-[88px] flex-col items-start rounded-xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/95 p-3 text-left shadow-sm transition hover:border-amber-300/40 hover:shadow-[0_0_30px_-12px_rgba(251,191,36,0.4)]"
               >
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/10 border border-amber-400/30">
+                <div className="mb-2 flex items-center gap-2.5 w-full">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/10 border border-amber-400/30 flex-shrink-0">
                     <Icon className="h-4 w-4 text-amber-300" />
                   </div>
-                  <h2 className="text-sm sm:text-base font-medium text-white">
+                  <h2 className="text-sm font-medium text-white truncate flex-1">
                     {card.title}
                   </h2>
                 </div>
-                <p className="mb-3 text-xs sm:text-sm text-white/60">
+                <p className="text-xs text-white/60 line-clamp-2 mb-auto">
                   {card.description}
                 </p>
-                <span className="mt-auto text-[11px] font-medium text-amber-300/90">
+                <span className="mt-2 text-[10px] font-medium text-amber-300/80 uppercase tracking-wider">
                   Open
                 </span>
               </button>
@@ -121,7 +121,7 @@ const AssistanceHubPage = () => {
         </div>
 
         {/* Hint about chat integration */}
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs sm:text-sm text-white/70">
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-white/70">
           You can also just type{" "}
           <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[11px]">
             "help me find housing"

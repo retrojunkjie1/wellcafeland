@@ -69,7 +69,7 @@ const NudgeStrip = () => {
         }
         break;
       case "open_directory":
-        navigate(actionPayload?.path || "/directory");
+        navigate(actionPayload?.path || "/resources");
         break;
       case "open_dashboard":
         navigate("/dashboard");

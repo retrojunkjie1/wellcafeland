@@ -363,10 +363,32 @@ export function enrichMessageWithIdentity(message) {
   }
 }
 
+const UNRELATED_PATTERNS = [
+  /\bquote(s)?\b/i, /\bstart\s*up\s*line(s)?\b/i, /\bpick\s*up\s*line(s)?\b/i,
+  /\bpickup\s*line(s)?\b/i, /\bjoke(s)?\b/i, /\bfunny\b/i, /\bline(s)?\s+for\b/i,
+];
+const URGE_SIGNALS = ["craving", "crave", "urge", "relapse", "i want to use", "can't stop", "about to", "using again", "want to use", "cant stop"];
+const BREATHING_SIGNALS = ["panic", "heart racing", "can't breathe", "overwhelmed", "anxious", "breathing", "breathe", "breath", "cant breathe", "overwhelm"];
+
+function isUnrelatedRequest(text) {
+  const t = (text || "").trim();
+  if (!t || t.length < 3) return false;
+  return UNRELATED_PATTERNS.some((p) => p.test(t));
+}
+
+function userMessageHasStrongSignal(text, toolId) {
+  const t = (text || "").toLowerCase().trim();
+  if (!t) return false;
+  if (toolId === "urge-surfing") return URGE_SIGNALS.some((s) => t.includes(s));
+  if (toolId === "breathing") return BREATHING_SIGNALS.some((s) => t.includes(s));
+  return true;
+}
+
 /**
  * Get recommended tool based on message, emotion, triggers, and risk
  * Phase 21: Enhanced with Human Map ontology
  * Phase 22: Expanded with deeper recommendation logic and nuanced mappings
+ * Phase 23: Relevance gating - only suggest when user message contains strong signals
  * @param {Object} params
  * @param {Object} params.message - Message object
  * @param {Object} params.emotion - Emotion analysis result
@@ -376,6 +398,9 @@ export function enrichMessageWithIdentity(message) {
  */
 export function getRecommendedTool({ message, emotion, triggers, risk }) {
   try {
+    const rawText = typeof message?.content === "string" ? message.content : message?.text || "";
+    if (isUnrelatedRequest(rawText)) return null;
+
     const _emotion = emotion || message?.emotion;
     const _triggers = triggers || [];
     const _risk = risk || { riskLevel: "low", reasons: [], domains: [] };
@@ -383,85 +408,57 @@ export function getRecommendedTool({ message, emotion, triggers, risk }) {
     const label = _emotion?.label || "";
     const intensity = _emotion?.intensity || 0;
 
-    // Priority 1: High-risk situations → grounding (safest, most stabilizing)
+    // Priority 1: High-risk situations → grounding (safest, most stabilizing; always offer)
     if (riskLevel === "high") {
-      return {
-        kind: "tool",
-        toolId: "grounding",
-        reason: "Based on what you just shared, we can try a grounding exercise to help you feel more stable.",
-      };
+      return { kind: "tool", toolId: "grounding", reason: "A short grounding practice might help you feel more stable." };
     }
 
-    // Priority 2: Cravings / relapse pressure → urge-surfing
-    if (_triggers.includes("cravings") || _triggers.includes("relapse_pressure") || _risk.domains?.includes("cravings")) {
-      return {
-        kind: "tool",
-        toolId: "urge-surfing",
-        reason: "Because you hinted at wanting relief or escape, we can surf the urge instead of fighting it.",
-      };
+    // Priority 2: Cravings / relapse pressure → urge-surfing (REQUIRE text signals)
+    if ((_triggers.includes("cravings") || _triggers.includes("relapse_pressure") || _risk.domains?.includes("cravings")) &&
+        userMessageHasStrongSignal(rawText, "urge-surfing")) {
+      return { kind: "tool", toolId: "urge-surfing", reason: "Try a 60s reset? Surf the urge instead of fighting it." };
     }
 
-    // Priority 3: Shame / self-worth collapse → self-surgeon (for narrative reframing)
-    if (_triggers.includes("shame") || _triggers.includes("self_worth_collapse") || label === "ashamed" || label === "humiliated") {
-      return {
-        kind: "tool",
-        toolId: "self-surgeon",
-        reason: "Because you're carrying heavy self-blame, we can gently explore and clean that narrative.",
-      };
+    // Priority 3: Shame / self-worth collapse → self-surgeon (require shame-related text)
+    if ((_triggers.includes("shame") || _triggers.includes("self_worth_collapse") || label === "ashamed" || label === "humiliated") &&
+        /shame|ashamed|self.?blame|worthless|stupid|failure/i.test(rawText)) {
+      return { kind: "tool", toolId: "self-surgeon", reason: "A short practice might help with that heavy feeling." };
     }
 
-    // Priority 4: Guilt → journaling (for processing and release)
-    if (_triggers.includes("guilt") || label === "guilty" || label === "regretful") {
-      return {
-        kind: "tool",
-        toolId: "journaling",
-        reason: "Because you mentioned guilt, we can try journaling to help you process these feelings.",
-      };
+    // Priority 4: Guilt → journaling (require guilt-related text)
+    if ((_triggers.includes("guilt") || label === "guilty" || label === "regretful") &&
+        /guilt|guilty|regret|sorry|wrong/i.test(rawText)) {
+      return { kind: "tool", toolId: "journaling", reason: "Journaling can help process these feelings." };
     }
 
-    // Priority 5: Anxiety / panic / fear → breathing (for nervous system regulation)
-    if (_triggers.includes("anxiety") || ["anxious", "panicked", "fearful", "stressed", "tense"].includes(label) || intensity >= 0.8) {
-      return {
-        kind: "tool",
-        toolId: "breathing",
-        reason: "Because your nervous system sounds under pressure, we can try a short breathing reset.",
-      };
+    // Priority 5: Anxiety / panic / fear → breathing (REQUIRE text signals)
+    if ((_triggers.includes("anxiety") || ["anxious", "panicked", "fearful", "stressed", "tense"].includes(label) || intensity >= 0.8) &&
+        userMessageHasStrongSignal(rawText, "breathing")) {
+      return { kind: "tool", toolId: "breathing", reason: "Try a 60s breathing reset?" };
     }
 
-    // Priority 6: Overwhelm / pressure stacking → grounding (for presence and stability)
-    if (_triggers.includes("overwhelm") || label === "overwhelmed" || _triggers.includes("pressure_stacking") || _triggers.includes("burnout")) {
-      return {
-        kind: "tool",
-        toolId: "grounding",
-        reason: "Because you're feeling overwhelmed, we can try a grounding exercise to help you feel more present.",
-      };
+    // Priority 6: Overwhelm / pressure stacking → grounding (REQUIRE text signals)
+    if ((_triggers.includes("overwhelm") || label === "overwhelmed" || _triggers.includes("pressure_stacking") || _triggers.includes("burnout")) &&
+        userMessageHasStrongSignal(rawText, "breathing")) {
+      return { kind: "tool", toolId: "grounding", reason: "A short grounding practice might help." };
     }
 
-    // Priority 7: Grief / loss → grounding (grief ritual tool mapped to grounding for body presence)
-    if (_triggers.includes("loss_grief") || label === "grieving" || label === "sad" || _triggers.includes("grief_waves")) {
-      return {
-        kind: "tool",
-        toolId: "grounding",
-        reason: "Because grief can pull you out of your body, we can try a short grounding practice to help you stay present with what you're feeling.",
-      };
+    // Priority 7: Grief / loss → grounding (require grief-related text)
+    if ((_triggers.includes("loss_grief") || label === "grieving" || label === "sad" || _triggers.includes("grief_waves")) &&
+        /grief|grieving|loss|lost\s+(him|her|them)|miss\s+(him|her|them)/i.test(rawText)) {
+      return { kind: "tool", toolId: "grounding", reason: "A short grounding practice might help you stay present." };
     }
 
-    // Priority 8: Loneliness / isolation → journaling (for connection and self-expression)
-    if (_triggers.includes("loneliness") || _triggers.includes("social_isolation") || label === "lonely" || label === "abandoned") {
-      return {
-        kind: "tool",
-        toolId: "journaling",
-        reason: "Because you mentioned feeling alone or unseen, we can create safe space on the page.",
-      };
+    // Priority 8: Loneliness / isolation → journaling (require loneliness-related text)
+    if ((_triggers.includes("loneliness") || _triggers.includes("social_isolation") || label === "lonely" || label === "abandoned") &&
+        /alone|lonely|isolat|abandon|no one|nobody/i.test(rawText)) {
+      return { kind: "tool", toolId: "journaling", reason: "Journaling can create safe space on the page." };
     }
 
-    // Priority 9: Identity confusion / existential fatigue → self-surgeon (identity reset tool mapped to self-surgeon)
-    if (_triggers.includes("identity_crisis") || _triggers.includes("purpose_confusion") || _triggers.includes("spiritual_emptiness") || label === "confused") {
-      return {
-        kind: "tool",
-        toolId: "self-surgeon",
-        reason: "Because you mentioned feeling lost or confused about who you are, we can explore that together.",
-      };
+    // Priority 9: Identity confusion → self-surgeon (require identity-related text)
+    if ((_triggers.includes("identity_crisis") || _triggers.includes("purpose_confusion") || _triggers.includes("spiritual_emptiness") || label === "confused") &&
+        /lost|confused|who am i|purpose|identity/i.test(rawText)) {
+      return { kind: "tool", toolId: "self-surgeon", reason: "We can explore that together." };
     }
 
     // Priority 10: Anger / frustration / resentment → breathing (anger channeling tool mapped to breathing for regulation)

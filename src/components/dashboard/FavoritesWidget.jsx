@@ -37,7 +37,7 @@ const FavoritesWidget = () => {
     } else if (favorite.type === "directory_resource") {
       const { domain, id } = favorite.ref || {};
       if (domain && id) {
-        navigate(`/directory/${domain}/${encodeURIComponent(id)}`);
+        navigate(`/resources/${encodeURIComponent(id)}`);
       }
     } else {
       // Default: open in chat

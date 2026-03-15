@@ -36,11 +36,11 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
             type="button"
             onClick={() => onSelect(cat)}
             className={[
-              'relative px-4 py-1.5 text-xs md:text-sm rounded-full border',
+              'relative px-3 py-1 text-[11px] rounded-full border',
               'transition-colors duration-200',
               isActive
                 ? 'border-amber-300/80 bg-amber-300/15 text-amber-100'
-                : 'border-white/15 bg-white/5 text-white/80 hover:bg-white/10',
+                : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10',
             ].join(' ')}
             whileTap={{ scale: 0.95 }}
           >

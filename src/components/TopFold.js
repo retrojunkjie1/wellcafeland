@@ -37,31 +37,31 @@ const TopFold = () => {
             <button onClick={() => navigate("/")}>Home</button>
           </li>
           <li>
-            <button onClick={() => navigate("/product")}>Product</button>
+            <button onClick={() => navigate("/tools")}>Product</button>
           </li>
           <li>
             <button onClick={() => navigate("/tools")}>Tools</button>
           </li>
           <li>
-            <button onClick={() => navigate("/events")}>Events</button>
+            <button onClick={() => navigate("/explore")}>Events</button>
           </li>
           <li>
-            <button onClick={() => navigate("/spiritual")}>Spiritual</button>
+            <button onClick={() => navigate("/living")}>Spiritual</button>
           </li>
           <li>
-            <button onClick={() => navigate("/blog")}>Blog</button>
+            <button onClick={() => navigate("/explore")}>Blog</button>
           </li>
         </ul>
         <div className="nav-buttons">
           <button
             className="nav-btn sign-in"
-            onClick={() => navigate("/signin")}
+            onClick={() => navigate("/login")}
           >
             Sign In
           </button>
           <button
             className="nav-btn download"
-            onClick={() => navigate("/product")}
+            onClick={() => navigate("/explore")}
           >
             Explore
           </button>
@@ -86,18 +86,18 @@ const TopFold = () => {
             <span className="feature-icon">🧠</span>
             <span>AI-Powered Recovery Support</span>
           </button>
-          <button className="feature-item" onClick={() => navigate("/yoga")}>
+          <button className="feature-item" onClick={() => navigate("/tools")}>
             <span className="feature-icon">🧘</span>
             <span>Guided Mindfulness & Yoga</span>
           </button>
           <button
             className="feature-item"
-            onClick={() => navigate("/acuwellness")}
+            onClick={() => navigate("/tools")}
           >
             <span className="feature-icon">🌿</span>
             <span>Acuwellness Integration</span>
           </button>
-          <button className="feature-item" onClick={() => navigate("/events")}>
+          <button className="feature-item" onClick={() => navigate("/explore")}>
             <span className="feature-icon">👥</span>
             <span>Community Events & Support</span>
           </button>
@@ -116,7 +116,7 @@ const TopFold = () => {
             <span className="stat-label">Success Rate</span>
           </div>
         </div>
-        <button className="topfold-btn" onClick={() => navigate("/product")}>
+        <button className="topfold-btn" onClick={() => navigate("/tools")}>
           Start Your Journey
         </button>
       </div>

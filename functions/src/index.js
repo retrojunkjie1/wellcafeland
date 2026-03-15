@@ -1,7 +1,7 @@
 /** * Firebase Functions Entry Point * Mixed v1 + v2 SAFE CONFIG */
 const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
-const functions = require("firebase-functions"); // v1 (legacy)
+const functions = require("firebase-functions/v1"); // v1 (Gen1 namespace)
 const axios = require("axios");
 
 // ---------------------------
@@ -11,10 +11,14 @@ const axios = require("axios");
 const { onClientUpdate } = require("./milestones/onClientUpdate");
 // Multimodal Wellness Engine (v2)
 const { chat, tts, stt } = require("./multimodal");
-// Global Resource Search (v2)
-const { globalResourceSearch: globalResourceSearchV2 } = require("./globalResourceSearch");
+// Global Resource Search (v2) - exported directly with secrets from globalResourceSearch.js
+const { globalResourceSearch } = require("./globalResourceSearch");
+const { buildClinicalPlan } = require("./buildClinicalPlan");
+// Link Preview (v2)
+const { linkPreview } = require("./linkPreview");
 // Legacy AI Brain (v1 – REQUIRED)
 const aiBrain = require("../aiBrain");
+const { setCorsHeaders } = require("../corsHelper");
 
 // ---------------------------
 // v2 FUNCTIONS (CORRECT)
@@ -54,35 +58,31 @@ exports.multimodalStt = onRequest(
   stt
 );
 
-exports.globalResourceSearch = onRequest(
-  {
-    region: "us-central1",
-    cors: true,
-    secrets: ["RAPIDAPI_KEY"],
-  },
-  globalResourceSearchV2
-);
+exports.globalResourceSearch = globalResourceSearch;
+
+exports.buildClinicalPlan = buildClinicalPlan;
+
+exports.linkPreview = linkPreview;
 
 // ---------------------------
 // v1 LEGACY FUNCTIONS (SAFE)
 // ---------------------------
-// ❌ DO NOT USE functions.region()
-// ✅ Region is inferred automatically in v1
-exports.aiSession = functions.https.onRequest(aiBrain.handleSession);
-exports.aiMedia = functions.https.onRequest(aiBrain.handleMedia);
+// NOTE: aiSession stays Gen1 to avoid blocked in-place Gen1→Gen2 upgrades. Use aiSessionV2 for Gen2 experiments.
+exports.aiSession = functions.region("us-central1").https.onRequest(async (req, res) => {
+  setCorsHeaders(req, res);
+  if (req.method === "OPTIONS") {
+    return res.status(204).send("");
+  }
+  return aiBrain.handleSession(req, res);
+});
+exports.aiMedia = functions.region("us-central1").https.onRequest(aiBrain.handleMedia);
 
 // ---------------------------
 // v1 GLOBAL RESOURCE SEARCH (LEGACY)
 // ---------------------------
 
-function setCorsHeaders(res) {
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
-}
-
 exports.globalResourceSearchV1 = functions.https.onRequest(async (req, res) => {
-  setCorsHeaders(res);
+  setCorsHeaders(req, res);
   if (req.method === "OPTIONS") {
     return res.status(204).send("");
   }

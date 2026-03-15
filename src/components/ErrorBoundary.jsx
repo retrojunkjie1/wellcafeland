@@ -25,6 +25,18 @@ class ErrorBoundary extends React.Component {
       error,
       errorInfo,
     });
+    
+    // GOD-EYE V2: Track error boundary errors
+    try {
+      import("@/telemetry/telemetry").then(({ trackError }) => {
+        trackError(error, {
+          errorBoundary: true,
+          componentStack: errorInfo.componentStack?.substring(0, 500) || null,
+        });
+      });
+    } catch {
+      // Telemetry not critical
+    }
   }
 
   handleReset = () => {
