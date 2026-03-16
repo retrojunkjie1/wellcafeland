@@ -27,5 +27,5 @@ jobs:
         continue-on-error: true
 
       - name: Install functions dependencies
-        if: hashFiles("functions/package.json") != ""
+        if: ${{ hashFiles('functions/package.json') != '' }}
         run: cd functions && npm ci
