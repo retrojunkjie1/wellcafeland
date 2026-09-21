@@ -1,4 +1,5 @@
 // src/apps/dashboard/AdminConsolePage.jsx
+// Updated with "Test Agent" button for Phase 1
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +46,9 @@ import {
   TrendingDown,
 } from "lucide-react";
 
+// NEW IMPORT - this is the only new import we added
+import callAgent from "../../ai/agents/agentClient";
+
 const AdminConsolePage = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(hasAdminSession());
@@ -57,6 +61,11 @@ const AdminConsolePage = () => {
     agentId: null,
     eventType: null,
   });
+
+  // NEW STATE for the Test Agent feature
+  const [testAgentId, setTestAgentId] = useState("");
+  const [testResult, setTestResult] = useState(null);
+  const [testLoading, setTestLoading] = useState(false);
 
   // Hooks
   const {
@@ -131,13 +140,12 @@ const AdminConsolePage = () => {
 
     try {
       const clientIds = allAssignments
-        .slice(0, 20) // Limit to 20 clients for performance
+        .slice(0, 20)
         .map((a) => a.clientId)
         .filter((id) => id);
 
       const results = await batchAnalyzeClients(clientIds, { days: 7 });
 
-      // Aggregate by risk level
       const riskLevelCounts = {
         low: 0,
         moderate: 0,
@@ -162,14 +170,13 @@ const AdminConsolePage = () => {
         }
       });
 
-      // Sort high-risk clients by score
       highRiskClients.sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
 
       setPrePopulationData({
         loading: false,
         data: {
           riskLevelCounts,
-          highRiskClients: highRiskClients.slice(0, 5), // Top 5
+          highRiskClients: highRiskClients.slice(0, 5),
           totalAnalyzed: results.length,
         },
         error: null,
@@ -184,14 +191,12 @@ const AdminConsolePage = () => {
     }
   }, [allAssignments]);
 
-  // Load on mount or when assignments change
   React.useEffect(() => {
     if (allAssignments && allAssignments.length > 0) {
       loadPopulationAnalysis();
     }
   }, [allAssignments, loadPopulationAnalysis]);
 
-  // Map store properties to component variables
   const heroEyebrow = config.homeHeroEyebrow;
   const heroHeadline = config.homeHeroHeadline;
   const heroBody = config.homeHeroBody;
@@ -204,7 +209,6 @@ const AdminConsolePage = () => {
 
   const healthSummary = getHealthSummary();
 
-  // Agent icons mapping
   const agentIcons = {
     seer: Eye,
     oracle: Flame,
@@ -244,6 +248,21 @@ const AdminConsolePage = () => {
       setUnlockBusy(false);
     }
   }
+
+  // NEW FUNCTION - This runs when you click "Test Agent"
+  const handleTestAgent = async () => {
+    if (!testAgentId) return;
+    setTestLoading(true);
+    setTestResult(null);
+    try {
+      const result = await callAgent(testAgentId, { test: true, timestamp: new Date().toISOString() });
+      setTestResult(result);
+    } catch (err) {
+      setTestResult({ error: err.message });
+    } finally {
+      setTestLoading(false);
+    }
+  };
 
   // 🔒 If not admin, show unlock screen
   if (!isAdmin) {
@@ -438,6 +457,38 @@ const AdminConsolePage = () => {
             </a>
           </div>
 
+          {/* NEW: Quick Agent Test Section */}
+          <div className="flex flex-wrap items-center gap-3 mb-4">
+            <select
+              value={testAgentId}
+              onChange={(e) => setTestAgentId(e.target.value)}
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm"
+            >
+              <option value="">Select agent to test…</option>
+              {agents.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+
+            <button
+              onClick={handleTestAgent}
+              disabled={!testAgentId || testLoading}
+              className="inline-flex items-center gap-2 rounded-md border border-amber-400/50 bg-amber-400/10 px-4 py-1.5 text-sm hover:bg-amber-400/20 disabled:opacity-50"
+            >
+              {testLoading ? "Calling…" : "Test Agent"}
+            </button>
+
+            {testResult && (
+              <div className="text-xs text-muted-foreground ml-2">
+                {testResult.error ? (
+                  <span className="text-destructive">Error: {testResult.error}</span>
+                ) : (
+                  <span>Response from {testResult.agentName} received</span>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-4">
             {agents.map((agent) => {
               const Icon = agentIcons[agent.id] || Activity;
@@ -524,7 +575,6 @@ const AdminConsolePage = () => {
               Live Event Stream
             </h2>
             <div className="flex items-center gap-2">
-              {/* Filters */}
               <div className="flex items-center gap-2">
                 <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                 <select
@@ -619,7 +669,6 @@ const AdminConsolePage = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Summary Stats */}
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="lux-card p-4 flex flex-col items-start">
                   <AlertTriangle className="h-5 w-5 text-amber-500 mb-2" />
@@ -653,7 +702,6 @@ const AdminConsolePage = () => {
                 </div>
               </div>
 
-              {/* Top Event Types */}
               {topEventTypes.length > 0 && (
                 <div className="lux-card p-4 space-y-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -682,7 +730,6 @@ const AdminConsolePage = () => {
                 </div>
               )}
 
-              {/* Daily Trend */}
               {dailyCounts.length > 0 && (
                 <div className="lux-card p-4 space-y-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -762,7 +809,6 @@ const AdminConsolePage = () => {
             </div>
           ) : prePopulationData.data ? (
             <div className="space-y-4">
-              {/* Risk Level Summary */}
               <div className="grid gap-4 md:grid-cols-4">
                 <div className={`lux-card p-4 flex flex-col items-start ${getRiskLevelColor("low").split(" ")[2]}`}>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -794,7 +840,6 @@ const AdminConsolePage = () => {
                 </div>
               </div>
 
-              {/* Top High-Risk Clients */}
               {prePopulationData.data.highRiskClients.length > 0 && (
                 <div className="lux-card p-4 space-y-3">
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -882,7 +927,6 @@ const AdminConsolePage = () => {
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {/* Feature Toggles */}
             <div className="lux-card p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <Sliders className="h-4 w-4 text-muted-foreground" />
@@ -898,13 +942,12 @@ const AdminConsolePage = () => {
                   >
                     <label className="text-xs text-foreground flex-1">
                       {feature
-                        .replace(/([A-Z])/g, " $1")
+                        .replace(/([A-Z])/g, " \$1")
                         .replace(/^./, (str) => str.toUpperCase())}
                     </label>
                     <button
                       type="button"
                       onClick={() => {
-                        // Throttle feature updates for performance
                         throttle(() => updateFeature(feature, !enabled), 150)();
                       }}
                       className={`relative h-6 w-11 rounded-full transition-colors ${
@@ -922,7 +965,6 @@ const AdminConsolePage = () => {
               </div>
             </div>
 
-            {/* Threshold Sliders */}
             <div className="lux-card p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -1007,7 +1049,6 @@ const AdminConsolePage = () => {
               </div>
             </div>
 
-            {/* Notification Rules (Towncrier) */}
             <div className="lux-card p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-muted-foreground" />
@@ -1034,7 +1075,7 @@ const AdminConsolePage = () => {
                           : "translate-x-0.5"
                       }`}
                     />
-                  </button>
+                    </button>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <label className="text-xs text-foreground">Risk Alerts</label>
@@ -1071,8 +1112,7 @@ const AdminConsolePage = () => {
                     }
                     className={`relative h-6 w-11 rounded-full transition-colors ${
                       systemSettings.notifications.sessionReminders
-                        ? "bg-emerald-500"
-                        : "bg-muted"
+                        ? "bg-emerald-500" : "bg-muted"
                     }`}
                   >
                     <div
@@ -1096,8 +1136,7 @@ const AdminConsolePage = () => {
                     }
                     className={`relative h-6 w-11 rounded-full transition-colors ${
                       systemSettings.notifications.streakMilestones
-                        ? "bg-emerald-500"
-                        : "bg-muted"
+                        ? "bg-emerald-500" : "bg-muted"
                     }`}
                   >
                     <div
@@ -1139,8 +1178,7 @@ const AdminConsolePage = () => {
                       }
                       className={`relative h-6 w-11 rounded-full transition-colors ${
                         systemSettings.notifications.quietHours.enabled
-                          ? "bg-emerald-500"
-                          : "bg-muted"
+                          ? "bg-emerald-500" : "bg-muted"
                       }`}
                     >
                       <div
@@ -1215,7 +1253,6 @@ const AdminConsolePage = () => {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 text-sm">
-            {/* Hero text config */}
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -1256,7 +1293,6 @@ const AdminConsolePage = () => {
               </div>
             </div>
 
-            {/* Hero buttons + card subtitles */}
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
