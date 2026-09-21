@@ -1,7 +1,7 @@
 // src/ai/agents/agentClient.js
 // Phase 25+ companion to agentRegistry.js
 // Provides a single, clean entry point for calling any registered agent.
-// Currently a placeholder — easy to wire to a real LLM later.
+// Currently a placeholder — easy to wire to a real LLM / fusion engine later.
 // NO side-effects, NO React imports.
 
 import { getAgentById } from "./agentRegistry";
@@ -21,7 +21,6 @@ export async function callAgent(agentId, payload = {}) {
   }
 
   if (!agent.enabledByDefault) {
-    // In a real system you could also check a runtime toggle from Firestore
     console.warn(`[agentClient] Agent "${agent.name}" is disabled by default`);
   }
 
