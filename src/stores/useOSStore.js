@@ -4,6 +4,7 @@
 
 import { create } from "zustand";
 import { normalizeMessage } from "@/core/system/messageNormalizer";
+import { ContextMemory } from "@/services/contextMemory";
 
 const MODES = {
   CHAT: "chat",
@@ -496,7 +497,7 @@ export const useOSStore = create((set, get) => ({
     interfaceDensity: "cozy",     // "cozy" | "compact"
 
     // Wellness & intelligence
-    allowEmotionFromChat: true,
+    allowEmotionFromChat: false,
     allowFaceSignals: false,
     trajectoryTrackingEnabled: true,
     recoveryMode: "standard",     // "gentle" | "standard" | "intensive"
@@ -570,8 +571,20 @@ export const useOSStore = create((set, get) => ({
       const settings = {
         ...state.settings,
         allowEmotionFromChat: Boolean(value),
+        ...(!value ? { allowFaceSignals: false } : {}),
       };
       saveLocalSettings(settings);
+      if (!value) {
+        const stripAnalysis = (message) => {
+          const { emotion, triggers, risk, trajectory, identity, relationship, humanMode, toneProfile, phrasingStyle, drift, crisisForecast, ...content } = message || {};
+          return content;
+        };
+        const messages = (state.messages || []).map(stripAnalysis);
+        const chats = (state.chats || []).map((chat) => ({ ...chat, messages: (chat.messages || []).map(stripAnalysis) }));
+        saveChats(chats);
+        ContextMemory.clearEmotionalAnalysis();
+        return { settings, messages, chats, lastEmotion: null, emotionalHistory: [], lastCrisisForecast: null };
+      }
       return { settings };
     }),
 
@@ -579,7 +592,7 @@ export const useOSStore = create((set, get) => ({
     set((state) => {
       const settings = {
         ...state.settings,
-        allowFaceSignals: Boolean(value),
+        allowFaceSignals: Boolean(value) && state.settings.allowEmotionFromChat === true,
       };
       saveLocalSettings(settings);
       return { settings };
@@ -592,7 +605,8 @@ export const useOSStore = create((set, get) => ({
         trajectoryTrackingEnabled: Boolean(value),
       };
       saveLocalSettings(settings);
-      return { settings };
+      if (!value) ContextMemory.clearEmotionalAnalysis();
+      return value ? { settings } : { settings, emotionalHistory: [], lastCrisisForecast: null };
     }),
 
   setRecoveryMode: (mode) =>
@@ -656,4 +670,3 @@ if (localSettings) {
 }
 
 export { MODES };
-

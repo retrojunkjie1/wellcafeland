@@ -10,22 +10,20 @@ import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
 
 import ExperienceShell from "./system/ExperienceShell";
 
-import HomePage from "./apps/core/HomePage";
-import GuidedEntrySessionPage from "./apps/core/GuidedEntrySessionPage";
-import ChatPage from "./apps/chat/ChatPage";
-import LivingGuidePage from "./apps/living/LivingGuidePage";
-// Phase 70: Route LivingGuidePageV3
-import { LivingGuidePageV3 } from "./apps/living/LivingGuidePageV3";
-import SequencePage from "./apps/sequences/SequencePage";
-// Unified Assistance (real-world help — one page, action-first)
-// Phase 70: Route unrouted pages
-import AssistancePage from "./apps/assistance/AssistancePage";
-import CommandConsolePage from "./apps/command/CommandConsolePage";
-import WorkspacePage from "./apps/workspace/WorkspacePage";
-import RealHelpWorkspace from "./apps/workspace/RealHelpWorkspace";
-import GuidePage from "./apps/guide/GuidePage";
-import ResourcesListPage from "./apps/resources/ResourcesListPage";
-import ResourcesDetailPage from "./apps/resources/ResourcesDetailPage";
+const HomePage = lazy(() => import("./apps/core/HomePage"));
+const DailyCheckInPage = lazy(() => import("./apps/core/DailyCheckInPage"));
+const GuidedEntrySessionPage = lazy(() => import("./apps/core/GuidedEntrySessionPage"));
+const ChatPage = lazy(() => import("./apps/chat/ChatPage"));
+const LivingGuidePage = lazy(() => import("./apps/living/LivingGuidePage"));
+const LivingGuidePageV3 = lazy(() => import("./apps/living/LivingGuidePageV3").then((module) => ({ default: module.LivingGuidePageV3 })));
+const SequencePage = lazy(() => import("./apps/sequences/SequencePage"));
+const AssistancePage = lazy(() => import("./apps/assistance/AssistancePage"));
+const CommandConsolePage = lazy(() => import("./apps/command/CommandConsolePage"));
+const WorkspacePage = lazy(() => import("./apps/workspace/WorkspacePage"));
+const RealHelpWorkspace = lazy(() => import("./apps/workspace/RealHelpWorkspace"));
+const GuidePage = lazy(() => import("./apps/guide/GuidePage"));
+const ResourcesListPage = lazy(() => import("./apps/resources/ResourcesListPage"));
+const ResourcesDetailPage = lazy(() => import("./apps/resources/ResourcesDetailPage"));
 
 const RealHelpRedirect = () => {
   const { search } = useLocation();
@@ -42,13 +40,12 @@ const DirectoryRedirect = () => {
   return <Navigate to={to} replace />;
 };
 
-import RecoveryPage from "./apps/recovery/RecoveryPage";
-import MilestonesPage from "./apps/milestones/MilestonesPage";
-import AgentsPage from "./apps/agents/AgentsPage";
+const RecoveryPage = lazy(() => import("./apps/recovery/RecoveryPage"));
+const MilestonesPage = lazy(() => import("./apps/milestones/MilestonesPage"));
+const AgentsPage = lazy(() => import("./apps/agents/AgentsPage"));
 
-import ToolsPage from "./apps/tools/ToolsPageCinematic";
-// Phase 70: Route classic ToolsPage
-import ToolsPageClassic from "./apps/tools/ToolsPage";
+const ToolsPage = lazy(() => import("./apps/tools/ToolsPageCinematic"));
+const ToolsPageClassic = lazy(() => import("./apps/tools/ToolsPage"));
 // Phase 61: Lazy-load luxury pages for better initial load performance
 const ToolDetailPage = lazy(() => import("./apps/tools/ToolDetailPage"));
 const ExplorePage = lazy(() => 
@@ -56,55 +53,54 @@ const ExplorePage = lazy(() =>
     default: module.ExplorePage 
   }))
 );
-import VoiceJournal from "./apps/tools/VoiceJournal";
-import VoiceCheckIn from "./apps/tools/VoiceCheckIn";
-import Grounding54321 from "./apps/tools/Grounding54321";
+const VoiceJournal = lazy(() => import("./apps/tools/VoiceJournal"));
+const VoiceCheckIn = lazy(() => import("./apps/tools/VoiceCheckIn"));
+const Grounding54321 = lazy(() => import("./apps/tools/Grounding54321"));
 
-import ProvidersPage from "./apps/providers/ProvidersPage";
-import ProviderDashboardPage from "./apps/provider/ProviderDashboardPage";
-import ProviderClientsPage from "./apps/provider/ProviderClientsPage";
-import ClientListPage from "./apps/provider/ClientListPage";
-import ClientDetailPage from "./apps/provider/ClientDetailPage";
-import ProviderMessagesPage from "./apps/provider/ProviderMessagesPage";
-import ProviderSchedulePage from "./apps/provider/ProviderSchedulePage";
-import ClinicalNoteEditor from "./apps/provider/ClinicalNoteEditor";
-import CarePlanEditor from "./apps/provider/CarePlanEditor";
-import ClientTimelinePage from "./apps/providers/ClientTimelinePage";
+const ProvidersPage = lazy(() => import("./apps/providers/ProvidersPage"));
+const ProviderDashboardPage = lazy(() => import("./apps/provider/ProviderDashboardPage"));
+const ProviderClientsPage = lazy(() => import("./apps/provider/ProviderClientsPage"));
+const ClientListPage = lazy(() => import("./apps/provider/ClientListPage"));
+const ClientDetailPage = lazy(() => import("./apps/provider/ClientDetailPage"));
+const ProviderMessagesPage = lazy(() => import("./apps/provider/ProviderMessagesPage"));
+const ProviderSchedulePage = lazy(() => import("./apps/provider/ProviderSchedulePage"));
+const ClinicalNoteEditor = lazy(() => import("./apps/provider/ClinicalNoteEditor"));
+const CarePlanEditor = lazy(() => import("./apps/provider/CarePlanEditor"));
+const ClientTimelinePage = lazy(() => import("./apps/providers/ClientTimelinePage"));
 
-import DashboardPage from "./apps/dashboard/DashboardPage";
-import ProfilePage from "./apps/profile/ProfilePage";
-import SupportHubPage from "./apps/support/SupportHubPage";
-import PreferencesPage from "./apps/settings/PreferencesPage";
-import WellnessSettingsPage from "./apps/settings/WellnessSettingsPage";
-import NotificationsSettingsPage from "./apps/settings/NotificationsSettingsPage";
-import PrivacySettingsPage from "./apps/settings/PrivacySettingsPage";
-import PrivacyPolicyPage from "./apps/legal/PrivacyPolicyPage";
-import TermsOfServicePage from "./apps/legal/TermsOfServicePage";
-import CookieNoticePage from "./apps/legal/CookieNoticePage";
+const DashboardPage = lazy(() => import("./apps/dashboard/DashboardPage"));
+const ProfilePage = lazy(() => import("./apps/profile/ProfilePage"));
+const SupportHubPage = lazy(() => import("./apps/support/SupportHubPage"));
+const PreferencesPage = lazy(() => import("./apps/settings/PreferencesPage"));
+const WellnessSettingsPage = lazy(() => import("./apps/settings/WellnessSettingsPage"));
+const NotificationsSettingsPage = lazy(() => import("./apps/settings/NotificationsSettingsPage"));
+const PrivacySettingsPage = lazy(() => import("./apps/settings/PrivacySettingsPage"));
+const PrivacyPolicyPage = lazy(() => import("./apps/legal/PrivacyPolicyPage"));
+const TermsOfServicePage = lazy(() => import("./apps/legal/TermsOfServicePage"));
+const CookieNoticePage = lazy(() => import("./apps/legal/CookieNoticePage"));
 
-import SessionsTemplatesPage from "./apps/ai/SessionsTemplatesPage";
-import SessionTemplateDetailPage from "./apps/ai/SessionTemplateDetailPage";
-import SessionPlayerPage from "./apps/ai/SessionPlayerPage";
-import SessionViewerPage from "./apps/ai/SessionViewerPage";
-import SessionComposerPage from "./apps/ai/SessionComposerPage";
-import SessionPreviewPage from "./apps/ai/SessionPreviewPage";
-import SessionsAdminPage from "./apps/dashboard/SessionsAdminPage";
+const SessionsTemplatesPage = lazy(() => import("./apps/ai/SessionsTemplatesPage"));
+const SessionTemplateDetailPage = lazy(() => import("./apps/ai/SessionTemplateDetailPage"));
+const SessionPlayerPage = lazy(() => import("./apps/ai/SessionPlayerPage"));
+const SessionViewerPage = lazy(() => import("./apps/ai/SessionViewerPage"));
+const SessionComposerPage = lazy(() => import("./apps/ai/SessionComposerPage"));
+const SessionPreviewPage = lazy(() => import("./apps/ai/SessionPreviewPage"));
+const SessionsAdminPage = lazy(() => import("./apps/dashboard/SessionsAdminPage"));
 
-import LoginPage from "./apps/auth/LoginPage";
+const LoginPage = lazy(() => import("./apps/auth/LoginPage"));
+const SignupPage = lazy(() => import("./apps/auth/SignupPage"));
 
-import SignupPage from "./apps/auth/SignupPage";
+const OnboardingPage = lazy(() => import("./apps/onboarding/OnboardingPage"));
+const PlanStartPage = lazy(() => import("./apps/plan/PlanStartPage"));
 
-import OnboardingPage from "./apps/onboarding/OnboardingPage";
-import PlanStartPage from "./apps/plan/PlanStartPage";
+const AdminConsolePage = lazy(() => import("./apps/dashboard/AdminConsolePage"));
 
-import AdminConsolePage from "./apps/dashboard/AdminConsolePage";
-
-import ThemeControlPanel from "./admin/ThemeControlPanel";
-import TemplatesManagerPage from "./apps/admin/TemplatesManagerPage";
-import OverseerConsolePage from "./apps/admin/OverseerConsolePage";
-import { OverseerConsoleUltra } from "./apps/overseer/OverseerConsoleUltra";
-import ContentStudioPage from "./apps/admin/ContentStudioPage";
-import SeedDataPage from "./apps/admin/SeedDataPage";
+const ThemeControlPanel = lazy(() => import("./admin/ThemeControlPanel"));
+const TemplatesManagerPage = lazy(() => import("./apps/admin/TemplatesManagerPage"));
+const OverseerConsolePage = lazy(() => import("./apps/admin/OverseerConsolePage"));
+const OverseerConsoleUltra = lazy(() => import("./apps/overseer/OverseerConsoleUltra").then((module) => ({ default: module.OverseerConsoleUltra })));
+const ContentStudioPage = lazy(() => import("./apps/admin/ContentStudioPage"));
+const SeedDataPage = lazy(() => import("./apps/admin/SeedDataPage"));
 import AdminRoute from "./components/AdminRoute";
 import ToolRouteBoundary from "./components/system/ToolRouteBoundary";
 import RequireAuth from "./components/routing/RequireAuth";
@@ -115,13 +111,13 @@ import { AdminShell } from "./admin/AdminShell";
 import { AdminPage } from "./admin/AdminPage";
 
 // Phase 13: Social & Circles imports
-import CirclesPage from "./apps/circles/CirclesPage";
-import CircleDetailPage from "./apps/circles/CircleDetailPage";
-import CircleThreadPage from "./apps/circles/CircleThreadPage";
-import CircleThreadCreation from "./apps/circles/CircleThreadCreation";
-import SocialFeedPage from "./apps/social/SocialFeedPage";
-import DirectMessagePage from "./apps/social/DirectMessagePage";
-import ConnectionsPage from "./apps/social/ConnectionsPage";
+const CirclesPage = lazy(() => import("./apps/circles/CirclesPage"));
+const CircleDetailPage = lazy(() => import("./apps/circles/CircleDetailPage"));
+const CircleThreadPage = lazy(() => import("./apps/circles/CircleThreadPage"));
+const CircleThreadCreation = lazy(() => import("./apps/circles/CircleThreadCreation"));
+const SocialFeedPage = lazy(() => import("./apps/social/SocialFeedPage"));
+const DirectMessagePage = lazy(() => import("./apps/social/DirectMessagePage"));
+const ConnectionsPage = lazy(() => import("./apps/social/ConnectionsPage"));
 
 const App = () => {
   // Initialize memory system (PHASE 44)
@@ -143,6 +139,7 @@ const App = () => {
             <Route path="/" element={<ChatPage />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/check-in" element={<DailyCheckInPage />} />
           <Route path="/session/:mode" element={<GuidedEntrySessionPage />} />
             <Route path="/explore" element={<ExplorePage />} />
           <Route path="/sequence/:id" element={<SequencePage />} />

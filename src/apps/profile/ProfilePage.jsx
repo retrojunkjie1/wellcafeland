@@ -3,47 +3,6 @@
 
 import React, { useEffect, useState } from "react";
 
-const CALMING_OPT_IN_KEY = "wc_calming_tools_opt_in"
-
-function CalmingToolsToggle() {
-  const [on, setOn] = useState(() => {
-    try {
-      return localStorage?.getItem(CALMING_OPT_IN_KEY) === "1"
-    } catch {
-      return false
-    }
-  })
-  const toggle = () => {
-    const next = !on
-    try {
-      localStorage?.setItem(CALMING_OPT_IN_KEY, next ? "1" : "0")
-    } catch {}
-    setOn(next)
-  }
-  return (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-white">Show calming tools suggestions</p>
-        <p className="text-xs text-white/60">
-          When on, you may see an inline suggestion (never a popup) after sharing. Default off.
-        </p>
-      </div>
-      <button
-        type="button"
-        onClick={toggle}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border transition-colors px-0.5 ${
-          on ? "border-amber-400/40 bg-amber-400/20" : "border-white/20 bg-white/5"
-        }`}
-        role="switch"
-        aria-checked={on}
-      >
-        <span className={`pointer-events-none inline-block h-5 w-5 shrink-0 rounded-full bg-white shadow transition-transform ${
-          on ? "translate-x-5" : "translate-x-0"
-        }`} />
-      </button>
-    </div>
-  )
-}
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
@@ -51,12 +10,14 @@ import { useAdminClaim } from "@/hooks/useAdminClaim";
 import { getTheme, setTheme } from "@/theme/themeStore";
 import { Moon, Sun, LogOut, User, Mail, Sparkles, Eye } from "lucide-react";
 import { trackPageView } from "../../services/telemetry";
+import { useOSStore } from "@/stores/useOSStore";
 
 const ProfilePage = () => {
   const { user, isAuthenticated, logout, role } = useAuth();
   const identity = useSessionIdentity();
   const navigate = useNavigate();
   const { adminReady, isAdmin } = useAdminClaim();
+  const setThemeMode = useOSStore((state) => state.setThemeMode);
 
   useEffect(() => {
     document.title = "Profile - WellnessCafe";
@@ -77,13 +38,19 @@ const ProfilePage = () => {
         setCurrent(getTheme());
       }
     };
+    const handleThemeChange = () => setCurrent(getTheme());
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("wc_theme_change", handleThemeChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("wc_theme_change", handleThemeChange);
+    };
   }, []);
 
   const toggleTheme = () => {
     const next = current === "dark" ? "light" : "dark";
     setTheme(next);
+    setThemeMode(next === "dark" ? "deep-night" : "dawn");
     setCurrent(next); // Update local state immediately
   };
 
@@ -133,19 +100,17 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* My Wellness Settings */}
+      {/* Wellness settings */}
       <section className="mt-6 glass-panel p-4 sm:p-6">
         <h2 className="text-sm sm:text-base font-medium text-white mb-1">
           My Wellness Settings
         </h2>
         <p className="text-xs sm:text-sm text-white/60 mb-4">
-          How fast we move, how deep we go, and how spiritual or clinical you want your experience to feel.
+          Choose your recovery support style and signal preferences.
         </p>
-        {/* Settings controls can be wired later to store */}
-        <p className="text-xs text-white/50">
-          (Controls coming online as we wire the store values. For now, you can simply know this is the home of your
-          personal OS tuning.)
-        </p>
+        <button type="button" onClick={() => navigate("/settings/wellness")} className="min-h-11 rounded-full border border-amber-200/20 px-4 text-sm text-amber-100/85 hover:bg-amber-100/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+          Open wellness settings
+        </button>
       </section>
 
       {/* Preferences */}
@@ -153,7 +118,6 @@ const ProfilePage = () => {
         <h2 className="text-xs uppercase tracking-[0.3em] text-white/50">
           Preferences
         </h2>
-        <CalmingToolsToggle />
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-white">Theme</p>
@@ -184,6 +148,10 @@ const ProfilePage = () => {
               </>
             )}
           </button>
+        </div>
+        <div className="grid gap-2 border-t border-white/10 pt-4 sm:grid-cols-2">
+          <button type="button" onClick={() => navigate("/settings/preferences")} className="min-h-11 rounded-xl border border-white/10 px-4 text-left text-sm text-white/80 hover:bg-white/5">Display preferences</button>
+          <button type="button" onClick={() => navigate("/settings/privacy")} className="min-h-11 rounded-xl border border-white/10 px-4 text-left text-sm text-white/80 hover:bg-white/5">Privacy settings</button>
         </div>
       </div>
 

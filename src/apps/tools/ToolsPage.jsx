@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { trackPageView } from "../../services/telemetry";
 import { CATEGORIES, getToolsByCategory } from "./toolsRegistry";
 import ToolCard from "./components/ToolCard";
-import PageHeader from "@/components/navigation/PageHeader";
 import { listContentSummaries } from "@/services/contentService";
 import { CONTENT_SECTIONS } from "@/content/contentRegistry";
 
@@ -30,17 +29,10 @@ const ToolsPage = () => {
 
   return (
     <div className="space-y-4">
-      <PageHeader 
-        title="Wellness Tools" 
-        subtitle="Breathwork, grounding, journaling, micro-rituals, and nervous-system resets"
-      />
       <header className="space-y-2">
         <p className="text-[11px] uppercase tracking-[0.35em] text-white/50">
           Daily practice
         </p>
-        <h1 className="text-2xl font-light tracking-wide text-white">
-          Wellness Tools
-        </h1>
         <p className="text-xs text-white/70">
           Breathwork, grounding, journaling, micro-rituals, and nervous-system
           resets designed for recovery in motion.

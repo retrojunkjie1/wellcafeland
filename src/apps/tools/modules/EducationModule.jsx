@@ -1,7 +1,7 @@
 // Phase 44 — Full Content Activation Patch
 // Replace your current "topics" page component with this implementation.
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 // --- Local narration hook (safe, no external imports) ----------------------
@@ -21,11 +21,11 @@ function useSimpleNarration() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const stop = () => {
+  const stop = React.useCallback(() => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     setIsSpeaking(false);
-  };
+  }, []);
 
   return { isSpeaking, speak, stop };
 }
@@ -179,6 +179,8 @@ const EducationModule = ({ onComplete, onCancel, _initialContext, isEmbedded = f
   const [soundEnabled, setSoundEnabled] = useState(true);
   const { isSpeaking, speak, stop } = useSimpleNarration();
 
+  useEffect(() => () => stop(), [stop]);
+
   const selectedTopic = useMemo(
     () => TOPICS.find((t) => t.id === selectedId) || TOPICS[0],
     [selectedId]
@@ -228,7 +230,7 @@ const EducationModule = ({ onComplete, onCancel, _initialContext, isEmbedded = f
             <button
               key={topic.id}
               type="button"
-              onClick={() => setSelectedId(topic.id)}
+              onClick={() => { stop(); setSelectedId(topic.id); }}
               className={[
                 "w-full rounded-full px-4 py-3 text-sm font-medium transition-all",
                 "border border-slate-700/70 shadow-sm",
@@ -264,6 +266,8 @@ const EducationModule = ({ onComplete, onCancel, _initialContext, isEmbedded = f
             <button
               type="button"
               onClick={handleToggleSound}
+              aria-label={soundEnabled ? "Turn read-aloud audio off" : "Turn read-aloud audio on"}
+              aria-pressed={soundEnabled}
               className="inline-flex items-center justify-center rounded-full p-2 bg-slate-900 border border-slate-700 hover:border-amber-400 transition-colors"
             >
               {soundEnabled ? (

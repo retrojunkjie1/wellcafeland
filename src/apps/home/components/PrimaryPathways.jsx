@@ -20,7 +20,7 @@ const PATHWAYS = [
   {
     id: "real-help",
     title: "I Need Real Help",
-    description: "Housing, treatment, funding, programs",
+    description: "Shelter, food, recovery homes, AA/NA, treatment, benefits",
     icon: ShieldCheck,
   },
   {
@@ -40,21 +40,13 @@ const PrimaryPathways = ({ onPathwayClick }) => {
       {PATHWAYS.map((pathway) => {
         const Icon = pathway.icon;
         const handleClick = () => {
-          // TODO: wire navigation when handlers are implemented
           onPathwayClick?.(pathway.id);
-        };
-        const handleKeyDown = (e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleClick();
-          }
         };
         return (
           <button
             key={pathway.id}
             type="button"
             onClick={handleClick}
-            onKeyDown={handleKeyDown}
             className={`${cardBase} w-full p-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
             aria-label={`${pathway.title}: ${pathway.description}`}
           >

@@ -20,6 +20,7 @@ import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
 import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
+import { callAI } from "@/services/aiClient";
 import { makeLivingMeta, detectRoleIntent, safeApproachForRole, pickVariantText } from "@/lib/living";
 import { useLivingSession } from "@/hooks/useLivingSession";
 import { offlineRespond, advancedSupportContractOffline } from "@/services/offlineGuide";
@@ -40,6 +41,8 @@ import {
   mergeEmotionChannels,
 } from "@/core/system/intelligenceEngine";
 import { computeEmotionalTrajectory } from "@/core/system/patternEngine";
+import { buildIdentitySnapshot } from "@/ai/human/identityModel";
+import { buildRelationshipSnapshot } from "@/ai/relationship/relationshipModel";
 import { normalizeMessage } from "@/core/system/messageNormalizer";
 import { getHumanMode } from "@/core/system/hmn";
 import { getToneProfile, shouldSoftRedirect } from "@/core/system/toneEngine";
@@ -101,9 +104,32 @@ const QUICK_PROMPTS = [
   "I need grounding",
 ];
 
+function directoryResponseIntro(domain, fallback) {
+  const needs = {
+    housing: "Here are starting points for shelter, housing, and recovery residences. Current openings and eligibility vary by location, so contact the provider to confirm details.",
+    "food.essentials": "Here are food access options, including local referrals and benefit information. Availability and application rules vary by state.",
+    programs: "Here are recovery and treatment support options. Meeting schedules and program openings can change; verify details with the local service.",
+    government_assistance: "Here are public benefit and practical assistance starting points. Eligibility and applications are handled locally or by your state.",
+    assistance: "Here are practical support pathways. Tell me your city or ZIP code and I can help narrow down local services.",
+  };
+  const intro = needs[domain] || "Here are a few resources that may help. Tell me your city or ZIP code and I can help narrow down local options.";
+  return fallback ? `${intro} These are curated starting points; they are not live vacancy or appointment listings.` : intro;
+}
+
 // Detect directory search queries from user input
 function detectDirectoryQuery(text) {
   const lowerText = text.toLowerCase();
+
+  // Route specific basic-needs and recovery requests before broad support intent.
+  const has = (...terms) => terms.some((term) => lowerText.includes(term));
+  if (has("aa meeting", "alcoholics anonymous", "find aa", "a.a.") || /\baa\b/.test(lowerText)) return { domain: "programs", query: text, priority: "programs" };
+  if (has("na meeting", "narcotics anonymous", "find na", "n.a.") || /\bna\b/.test(lowerText)) return { domain: "programs", query: text, priority: "programs" };
+  if (has("sober home", "sober homes", "soberhome", "sober living", "recovery residence", "recovery housing", "halfway house")) return { domain: "housing", query: text, priority: "housing" };
+  if (has("shelter", "homeless", "eviction", "place to stay", "emergency housing", "unsafe at home")) return { domain: "housing", query: text, priority: "housing" };
+  if (has("food", "hungry", "groceries", "food bank", "food pantry", "snap", "food stamps", "meal")) return { domain: "food.essentials", query: text, priority: "food" };
+  if (has("detox", "rehab", "treatment", "iop", "php", "recovery program", "substance use")) return { domain: "programs", query: text, priority: "programs" };
+  if (has("rent", "utility bill", "utilities", "medicaid", "benefits", "ebt", "government assistance", "financial assistance", "can't afford")) return { domain: "government_assistance", query: text, priority: "funding" };
+  if (has("211", "domestic violence", "human trafficking", "legal aid", "childcare", "transportation", "bus pass")) return { domain: "assistance", query: text, priority: "programs" };
 
   // Real Help detection (Phase 12)
   if (
@@ -133,7 +159,8 @@ function detectDirectoryQuery(text) {
       priority = "circles";
     }
     
-    return { domain: "real_help", query: text, priority };
+    const domain = priority === "housing" ? "housing" : priority === "funding" ? "grants" : priority === "food" ? "food.essentials" : "programs";
+    return { domain, query: text, priority };
   }
 
   // Food queries
@@ -237,7 +264,10 @@ const SIGNIN_ALTERNATIVE_BODY =
 // Helper: Convert base64 to Blob
 const ChatPanel = () => {
   const navigate = useNavigate();
-  const { messages, addMessage, updateLastAssistantMessage, injectToolIntoChat, openWorkspace } = useOSStore();
+  const { messages, addMessage, updateLastAssistantMessage, injectToolIntoChat, openWorkspace, settings } = useOSStore();
+  const allowEmotionAnalysis = settings?.allowEmotionFromChat === true;
+  const allowTrajectoryTracking = settings?.trajectoryTrackingEnabled === true;
+  const allowFaceSignals = settings?.allowFaceSignals === true;
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
   const living = useLivingSession();
@@ -248,6 +278,10 @@ const ChatPanel = () => {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
+
+  useEffect(() => {
+    if (!allowFaceSignals || !allowEmotionAnalysis) setPendingFaceEmotion(null);
+  }, [allowFaceSignals, allowEmotionAnalysis]);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const [voiceCheckInModalOpen, setVoiceCheckInModalOpen] = useState(false);
   const [pending, setPending] = useState(null);
@@ -454,7 +488,7 @@ const ChatPanel = () => {
           // Run decision engine to analyze emotional/spiritual state (optional, non-blocking)
           let decision = null;
           try {
-            decision = await determineGuideResponse(text);
+            decision = await determineGuideResponse(text, { allowEmotionAnalysis, trackEmotionalHistory: allowTrajectoryTracking });
           } catch (err) {
             console.warn("Decision engine failed, continuing without it:", err);
           }
@@ -474,11 +508,11 @@ const ChatPanel = () => {
           let currentToneProfile = null;
           let currentPhrasingStyle = null;
           try {
-            currentHumanMode = getHumanMode(text, {
+            currentHumanMode = allowEmotionAnalysis ? getHumanMode(text, {
               emotion: null,
               risk: null,
               triggers: [],
-            });
+            }) : "neutral";
             currentToneProfile = getToneProfile({
               humanMode: currentHumanMode,
               emotion: null,
@@ -502,14 +536,15 @@ const ChatPanel = () => {
                 addMessage("assistant", {
                   role: "assistant",
                   type: "assistant_text",
-                  text: "I found a few resources that might help. Here are some options:",
-                  content: "I found a few resources that might help. Here are some options:",
+                  text: directoryResponseIntro(directoryQueries.domain, searchResponse.fallback),
+                  content: directoryResponseIntro(directoryQueries.domain, searchResponse.fallback),
                   timestamp: Date.now(),
                   meta: {
-                    kind: "directory_results",
+                    kind: "directoryResults",
                     domain: directoryQueries.domain,
                     query: directoryQueries.query,
                     results: searchResponse.results,
+                    fallback: searchResponse.fallback === true,
                   },
                 });
                 connectionStateRef.current = "idle";
@@ -605,7 +640,6 @@ const ChatPanel = () => {
         connectionStateRef.current = "awaiting_response";
 
         // Call backend via robust AI client (Phase 54I + 54K: living meta, variation, anti-repeat)
-        const { callAI } = await import("@/services/aiClient");
         const livingMeta = makeLivingMeta({ text, sessionId: living.sessionId, role: living.role, turnId: living.nextTurnId() });
         const turnId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
         const textHash = wcHash((text || "").trim().toLowerCase());
@@ -1091,33 +1125,37 @@ const ChatPanel = () => {
       timestamp: Date.now(),
     };
     
-    let enrichedMessage = enrichMessageWithEmotion(userMessage);
+    let enrichedMessage = allowEmotionAnalysis ? enrichMessageWithEmotion(userMessage) : userMessage;
     
     // Phase 31: Merge face emotion if available
-    if (pendingFaceEmotion) {
+    if (pendingFaceEmotion && allowFaceSignals && allowEmotionAnalysis) {
       enrichedMessage.emotion = mergeEmotionChannels(enrichedMessage.emotion, pendingFaceEmotion);
       setPendingFaceEmotion(null); // Reset after use
     }
     
     // Phase 17: Analyze signals (triggers + risk)
-    const signals = analyzeMessageSignals(enrichedMessage);
+    const signals = analyzeMessageSignals(enrichedMessage, { includeTriggers: allowEmotionAnalysis });
     enrichedMessage.triggers = signals.triggers;
     enrichedMessage.risk = signals.risk;
 
     // Phase 28: Identity fracture modeling
-    const identityEnriched = enrichMessageWithIdentity(enrichedMessage);
-    enrichedMessage.identity = identityEnriched.identity;
+    if (allowEmotionAnalysis) {
+      const identityEnriched = enrichMessageWithIdentity(enrichedMessage);
+      enrichedMessage.identity = identityEnriched.identity;
+    }
     
     // Phase 29: Relationship Stress Mapping
-    const withRelationship = enrichMessageWithRelationship(enrichedMessage);
-    enrichedMessage.relationship = withRelationship.relationship;
+    if (allowEmotionAnalysis) {
+      const withRelationship = enrichMessageWithRelationship(enrichedMessage);
+      enrichedMessage.relationship = withRelationship.relationship;
+    }
     
     // Phase 25: Human Mode Navigator (HMN)
-    const humanMode = getHumanMode(text, {
+    const humanMode = allowEmotionAnalysis ? getHumanMode(text, {
       emotion: enrichedMessage.emotion,
       risk: signals.risk,
       triggers: signals.triggers,
-    });
+    }) : "neutral";
     enrichedMessage.humanMode = humanMode;
     
     // Phase 27: Store humanMode in UI state
@@ -1141,7 +1179,7 @@ const ChatPanel = () => {
     // Phase 28: Behavioral Drift Engine (BDE)
     try {
       const recentMessages = useOSStore.getState().messages.slice(-10);
-      const drift = analyzeDriftSnapshot(recentMessages);
+      const drift = allowTrajectoryTracking ? analyzeDriftSnapshot(recentMessages) : null;
       if (drift) {
         enrichedMessage.drift = drift;
       }
@@ -1189,6 +1227,7 @@ const ChatPanel = () => {
     const setLastRiskEvent = useOSStore.getState().setLastRiskEvent;
     
     if (enrichedMessage.emotion) setLastEmotion(enrichedMessage.emotion);
+    else if (!allowEmotionAnalysis) setLastEmotion(null);
     if (enrichedMessage.risk?.riskLevel === "high") setLastRiskEvent(enrichedMessage.risk);
     
     // Phase 24: Emotional Graph Engine - compute trajectory
@@ -1197,7 +1236,7 @@ const ChatPanel = () => {
       const risk = enrichedMessage.risk || null;
       const triggers = Array.isArray(enrichedMessage.triggers) ? enrichedMessage.triggers : [];
 
-      if (emotion && typeof emotion.intensity === "number") {
+      if (allowTrajectoryTracking && emotion && typeof emotion.intensity === "number") {
         // 1) Append emotional snapshot
         const snapshot = {
           id: enrichedMessage.id,
@@ -1233,11 +1272,12 @@ const ChatPanel = () => {
 
     // Phase 28: Append identity snapshot (best-effort, non-blocking)
     try {
-      const { buildIdentitySnapshot } = await import("@/ai/human/identityModel");
-      const identitySnapshot = buildIdentitySnapshot(enrichedMessage);
-      const store = useOSStore.getState();
-      if (typeof store.appendIdentitySnapshot === "function") {
-        store.appendIdentitySnapshot(identitySnapshot);
+      if (allowEmotionAnalysis) {
+        const identitySnapshot = buildIdentitySnapshot(enrichedMessage);
+        const store = useOSStore.getState();
+        if (typeof store.appendIdentitySnapshot === "function") {
+          store.appendIdentitySnapshot(identitySnapshot);
+        }
       }
     } catch (err) {
       console.warn("[ChatPanel] Failed to append identity snapshot:", err);
@@ -1246,8 +1286,7 @@ const ChatPanel = () => {
     // Phase 29: Store relationship snapshot if available
     try {
       const store = useOSStore.getState();
-      if (store.appendRelationshipSnapshot && enrichedMessage.relationship) {
-        const { buildRelationshipSnapshot } = await import("@/ai/relationship/relationshipModel");
+      if (allowEmotionAnalysis && store.appendRelationshipSnapshot && enrichedMessage.relationship) {
         const snapshot = buildRelationshipSnapshot(enrichedMessage);
         store.appendRelationshipSnapshot(snapshot);
         store.setLastRelationshipSnapshot(snapshot);
@@ -1262,18 +1301,20 @@ const ChatPanel = () => {
       const emotionalHistory = (store.emotionalHistory || []).slice();
       const lastRelationshipSnapshot = store.lastRelationshipSnapshot || null;
 
-      const crisisForecast = computeCrisisForecast({
+      const crisisForecast = allowTrajectoryTracking ? computeCrisisForecast({
         emotionalHistory,
         lastEmotion: enrichedMessage.emotion || null,
         lastRisk: enrichedMessage.risk || null,
         lastRelationship: lastRelationshipSnapshot,
-      });
+      }) : null;
 
       enrichedMessage.crisisForecast = crisisForecast;
 
       const setLastCrisisForecast = store.setLastCrisisForecast;
-      if (typeof setLastCrisisForecast === "function") {
+      if (allowTrajectoryTracking && typeof setLastCrisisForecast === "function") {
         setLastCrisisForecast(crisisForecast);
+      } else if (!allowTrajectoryTracking && typeof setLastCrisisForecast === "function") {
+        setLastCrisisForecast(null);
       }
     } catch (err) {
       console.warn("[ChatPanel] Failed to compute crisis forecast:", err);
@@ -1364,6 +1405,7 @@ const ChatPanel = () => {
 
   // Phase 31: Face scan handler
   const handleFaceScan = async () => {
+    if (!allowFaceSignals || !allowEmotionAnalysis) return;
     try {
       const faceEmotion = await getFaceEmotionSnapshot({ seconds: 5 });
       if (faceEmotion) {
@@ -1559,17 +1601,17 @@ const ChatPanel = () => {
               timestamp: Date.now(),
             };
             
-            const enrichedMessage = enrichMessageWithEmotion(userMessage);
-            const signals = analyzeMessageSignals(enrichedMessage);
+            const enrichedMessage = allowEmotionAnalysis ? enrichMessageWithEmotion(userMessage) : userMessage;
+            const signals = analyzeMessageSignals(enrichedMessage, { includeTriggers: allowEmotionAnalysis });
             enrichedMessage.triggers = signals.triggers;
             enrichedMessage.risk = signals.risk;
             
             // Phase 25: Human Mode Navigator (HMN)
-            const humanMode = getHumanMode(action, {
+            const humanMode = allowEmotionAnalysis ? getHumanMode(action, {
               emotion: enrichedMessage.emotion,
               risk: signals.risk,
               triggers: signals.triggers,
-            });
+            }) : "neutral";
             enrichedMessage.humanMode = humanMode;
             
             // Phase 27: Store humanMode in UI state
@@ -1591,17 +1633,21 @@ const ChatPanel = () => {
             enrichedMessage.phrasingStyle = phrasingStyle;
 
             // Phase 28: Identity fracture modeling
-            const identityEnriched = enrichMessageWithIdentity(enrichedMessage);
-            enrichedMessage.identity = identityEnriched.identity;
+            if (allowEmotionAnalysis) {
+              const identityEnriched = enrichMessageWithIdentity(enrichedMessage);
+              enrichedMessage.identity = identityEnriched.identity;
+            }
             
             // Phase 29: Relationship Stress Mapping
-            const withRelationship = enrichMessageWithRelationship(enrichedMessage);
-            enrichedMessage.relationship = withRelationship.relationship;
+            if (allowEmotionAnalysis) {
+              const withRelationship = enrichMessageWithRelationship(enrichedMessage);
+              enrichedMessage.relationship = withRelationship.relationship;
+            }
             
             // Phase 28: Behavioral Drift Engine (BDE)
             try {
               const recentMessages = useOSStore.getState().messages.slice(-10);
-              const drift = analyzeDriftSnapshot(recentMessages);
+              const drift = allowTrajectoryTracking ? analyzeDriftSnapshot(recentMessages) : null;
               if (drift) {
                 enrichedMessage.drift = drift;
               }
@@ -1634,6 +1680,7 @@ const ChatPanel = () => {
             const setLastRiskEvent = useOSStore.getState().setLastRiskEvent;
             
             if (enrichedMessage.emotion) setLastEmotion(enrichedMessage.emotion);
+            else if (!allowEmotionAnalysis) setLastEmotion(null);
             if (enrichedMessage.risk?.riskLevel === "high") setLastRiskEvent(enrichedMessage.risk);
             
             // Phase 24: Emotional Graph Engine - compute trajectory
@@ -1642,7 +1689,7 @@ const ChatPanel = () => {
               const risk = enrichedMessage.risk || null;
               const triggers = Array.isArray(enrichedMessage.triggers) ? enrichedMessage.triggers : [];
 
-              if (emotion && typeof emotion.intensity === "number") {
+              if (allowTrajectoryTracking && emotion && typeof emotion.intensity === "number") {
                 // 1) Append emotional snapshot
                 const snapshot = {
                   id: enrichedMessage.id,
@@ -1678,11 +1725,12 @@ const ChatPanel = () => {
 
             // Phase 28: Append identity snapshot (best-effort, non-blocking)
             try {
-              const { buildIdentitySnapshot } = await import("@/ai/human/identityModel");
-              const identitySnapshot = buildIdentitySnapshot(enrichedMessage);
-              const store = useOSStore.getState();
-              if (typeof store.appendIdentitySnapshot === "function") {
-                store.appendIdentitySnapshot(identitySnapshot);
+              if (allowEmotionAnalysis) {
+                const identitySnapshot = buildIdentitySnapshot(enrichedMessage);
+                const store = useOSStore.getState();
+                if (typeof store.appendIdentitySnapshot === "function") {
+                  store.appendIdentitySnapshot(identitySnapshot);
+                }
               }
             } catch (err) {
               console.warn("[ChatPanel] Failed to append identity snapshot (welcome):", err);
@@ -1691,8 +1739,7 @@ const ChatPanel = () => {
             // Phase 29: Store relationship snapshot if available
             try {
               const store = useOSStore.getState();
-              if (store.appendRelationshipSnapshot && enrichedMessage.relationship) {
-                const { buildRelationshipSnapshot } = await import("@/ai/relationship/relationshipModel");
+              if (allowEmotionAnalysis && store.appendRelationshipSnapshot && enrichedMessage.relationship) {
                 const snapshot = buildRelationshipSnapshot(enrichedMessage);
                 store.appendRelationshipSnapshot(snapshot);
                 store.setLastRelationshipSnapshot(snapshot);
@@ -1707,18 +1754,20 @@ const ChatPanel = () => {
               const emotionalHistory = (store.emotionalHistory || []).slice();
               const lastRelationshipSnapshot = store.lastRelationshipSnapshot || null;
 
-              const crisisForecast = computeCrisisForecast({
+              const crisisForecast = allowTrajectoryTracking ? computeCrisisForecast({
                 emotionalHistory,
                 lastEmotion: enrichedMessage.emotion || null,
                 lastRisk: enrichedMessage.risk || null,
                 lastRelationship: lastRelationshipSnapshot,
-              });
+              }) : null;
 
               enrichedMessage.crisisForecast = crisisForecast;
 
               const setLastCrisisForecast = store.setLastCrisisForecast;
-              if (typeof setLastCrisisForecast === "function") {
+              if (allowTrajectoryTracking && typeof setLastCrisisForecast === "function") {
                 setLastCrisisForecast(crisisForecast);
+              } else if (!allowTrajectoryTracking && typeof setLastCrisisForecast === "function") {
+                setLastCrisisForecast(null);
               }
             } catch (err) {
               console.warn("[ChatPanel] Failed to compute crisis forecast (welcome action):", err);
@@ -2089,7 +2138,7 @@ const ChatPanel = () => {
                   }}
                   onSend={handleSend}
                   onMic={() => setVoiceCheckInModalOpen(true)}
-                  onFaceScan={() => setFaceScanPromptOpen(true)}
+                  onFaceScan={allowFaceSignals && allowEmotionAnalysis ? () => setFaceScanPromptOpen(true) : undefined}
                   disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
                   isSending={isSending}
                   inputRef={textareaRef}
@@ -2137,4 +2186,3 @@ const ChatPanel = () => {
 };
 
 export default ChatPanel;
-

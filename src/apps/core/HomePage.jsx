@@ -17,9 +17,9 @@ import {
   Flame,
   Calendar,
   ChevronDown,
+  HeartPulse,
 } from "lucide-react";
 import { trackPageView } from "../../services/telemetry";
-import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import Logo from "@/components/Logo";
 import { listResources } from "@/data/resources";
 import { ensureDevAuth } from "@/dev/ensureAuth";
@@ -27,11 +27,10 @@ import { getLastSession, getStreakStats } from "@/services/sessionHistory";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const identity = useSessionIdentity();
   const [hasResources, setHasResources] = useState(null);
   const [showStabilizers, setShowStabilizers] = useState(false);
-  const [lastSession, setLastSession] = useState(null);
-  const [streak, setStreak] = useState(0);
+  const [lastSession] = useState(() => getLastSession());
+  const [streak] = useState(() => getStreakStats()?.currentStreak || 0);
 
   useEffect(() => {
     document.title = "WellnessCafe - Home";
@@ -55,12 +54,6 @@ const HomePage = () => {
         .catch(() => setHasResources(false));
     };
     run();
-  }, []);
-
-  useEffect(() => {
-    setLastSession(getLastSession());
-    const stats = getStreakStats();
-    setStreak(stats?.currentStreak || 0);
   }, []);
 
   const tileBase =
@@ -123,6 +116,26 @@ const HomePage = () => {
               <p className="text-xs text-white/50 truncate">Breathing, grounding, journaling</p>
             </div>
           </div>
+        </button>
+      </section>
+
+      {/* A clear, low-pressure entry to the daily check-in */}
+      <section className="rounded-xl border border-wcGold/20 bg-wcGold/[0.045] p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex items-start gap-3">
+          <div className="rounded-lg bg-wcGold/15 p-2.5 text-wcGold">
+            <HeartPulse className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="text-sm font-medium text-white">Daily check-in</h2>
+            <p className="mt-1 text-xs leading-5 text-white/55">Take a quiet moment to notice how you’re doing. Skip anything you don’t want to answer.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/check-in")}
+          className="mt-3 w-full rounded-lg border border-wcGold/30 px-4 py-2.5 text-sm font-medium text-wcGold transition hover:bg-wcGold/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold sm:mt-0 sm:w-auto sm:shrink-0"
+        >
+          Begin check-in
         </button>
       </section>
 

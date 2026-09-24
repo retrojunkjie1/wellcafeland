@@ -10,8 +10,11 @@ import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
 import { ToolsRegistry } from "@/engines/tools/ToolsRegistry";
 import { getToolById } from "@/tools/toolResolver";
-import { loadToolBySlug } from "@/services/toolLoader";
+import { getDailyPracticeToolById } from "@/tools/toolsBridge";
+import { getToolById as getClientFacingTool } from "./toolsRegistry";
+import { getSeedToolBySlug, loadToolBySlug } from "@/services/toolLoader";
 import { ToolSessionLayout } from "@/components/tools/ToolSessionLayout";
+import ToolModuleSession from "@/components/tools/ToolModuleSession";
 import { AudioProvider } from "@/experience/audio/AudioProvider";
 import { ToolProtocolView } from "@/components/tools/ToolProtocolView";
 import { BreathingSessionView } from "@/components/tools/BreathingSessionView";
@@ -23,6 +26,42 @@ import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView
 import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
 import { logDebug } from "@/lib/debug";
 import NotReadyCard from "@/components/system/NotReadyCard";
+import GroundingTool from "./modules/GroundingTool";
+import JournalingTool from "./modules/JournalingTool";
+import BodyScanTool from "./modules/BodyScanTool";
+import SelfSurgeonTool from "./modules/SelfSurgeonTool";
+import EducationModule from "./modules/EducationModule";
+import UrgeSurfingTool from "./modules/UrgeSurfingTool";
+import MeditationTool from "./modules/MeditationTool";
+import AcuwellnessTool from "./modules/AcuwellnessTool";
+import AffirmationsTool from "./modules/AffirmationsTool";
+
+const MODULE_TOOLS = {
+  grounding: GroundingTool,
+  "body-scan": BodyScanTool,
+  journaling: JournalingTool,
+  "self-surgeon": SelfSurgeonTool,
+  education: EducationModule,
+  "urge-surfing": UrgeSurfingTool,
+  cravings: UrgeSurfingTool,
+  "emotion-regulator": SelfSurgeonTool,
+  "shame-release": SelfSurgeonTool,
+  meditation: MeditationTool,
+  "sleep-reset": MeditationTool,
+  acuwellness: AcuwellnessTool,
+  affirmations: AffirmationsTool,
+  "panic-reset": PanicResetSessionView,
+};
+
+const MODULE_TOOL_TYPES = {
+  grounding: "grounding",
+  "body-scan": "body-scan",
+  journaling: "journaling",
+  "self-surgeon": "self-surgeon",
+  education: "education",
+  "urge-surfing": "urge-surfing",
+  meditation: "meditation",
+};
 
 const ToolDetailPage = () => {
   const { toolId } = useParams();
@@ -45,20 +84,8 @@ const ToolDetailPage = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [cycles, setCycles] = useState(0);
-  const [sessionSeconds, setSessionSeconds] = useState(0);
-  const [coherence, setCoherence] = useState(0);
-
-  // session timer
-  useEffect(() => {
-    if (!isSessionActive) return;
-    const id = setInterval(() => {
-      setSessionSeconds((prev) => prev + 1);
-      // Light coherence growth
-      setCoherence((prev) => Math.min(100, prev + 1));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [isSessionActive]);
+  const [moduleCompleted, setModuleCompleted] = useState(false);
+  const [breathingPattern, setBreathingPattern] = useState([4, 0, 6, 0]);
 
   // Load protocol tool (Firestore + seed) for Daily Practice slugs
   useEffect(() => {
@@ -66,15 +93,19 @@ const ToolDetailPage = () => {
       setProtocolToolLoaded(true);
       return;
     }
-    setProtocolToolLoaded(false);
+    const localSeedTool = getSeedToolBySlug(decodedId);
+    const localPracticeTool = getDailyPracticeToolById(decodedId);
+    const localTool = localSeedTool || localPracticeTool;
+    setProtocolTool(localTool);
+    setProtocolToolLoaded(true);
+    setModuleCompleted(false);
+    if (!localSeedTool) return;
+
     let cancelled = false;
     loadToolBySlug(decodedId).then((loaded) => {
       if (cancelled) return;
-      setProtocolToolLoaded(true);
       if (loaded && Array.isArray(loaded.steps) && loaded.steps.length > 0) {
         setProtocolTool(loaded);
-      } else {
-        setProtocolTool(null);
       }
     });
     return () => { cancelled = true; };
@@ -127,6 +158,13 @@ const ToolDetailPage = () => {
         description: "4-7-8, Box, and Coherent breathing to calm your nervous system.",
         category: "body-breath",
         sessionType: "breathing", // Critical: must have sessionType to render
+      };
+    }
+    const clientTool = getClientFacingTool(decodedId);
+    if (clientTool) {
+      return {
+        ...clientTool,
+        sessionType: MODULE_TOOL_TYPES[decodedId] || null,
       };
     }
     return null;
@@ -215,17 +253,8 @@ const ToolDetailPage = () => {
 
   const isSessionTool = !!toolMeta?.sessionType;
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
   const handleStartSession = () => {
     setIsSessionActive(true);
-    setSessionSeconds(0);
-    setCycles(0);
-    setCoherence(0);
     // Phase 37: hook SoundscapeEngine here later
   };
 
@@ -233,19 +262,6 @@ const ToolDetailPage = () => {
     setIsSessionActive(false);
     // Phase 37: stop soundscape if integrated
   };
-
-  const metrics = [
-    { label: "Time", value: formatTime(sessionSeconds) },
-    { label: "Cycles", value: cycles },
-    {
-      label: "Coherence",
-      value: isSessionActive ? `${coherence}%` : "—",
-    },
-    {
-      label: "Calm Score",
-      value: isSessionActive ? `${Math.min(100, Math.round(sessionSeconds * 1.5))}%` : "—",
-    },
-  ];
 
   const renderSessionView = () => {
     // Phase 4: Breathing tool MUST always render (offline-safe, no dependencies)
@@ -276,10 +292,27 @@ const ToolDetailPage = () => {
     switch (sessionType) {
       case "breathing":
         return (
+          <div className="space-y-5">
+            <fieldset disabled={isSessionActive} className="space-y-3">
+              <legend className="text-sm text-white/70">Choose a comfortable pace</legend>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {[
+                  { label: "Gentle 4–6", pattern: [4, 0, 6, 0] },
+                  { label: "Box · includes holds", pattern: [4, 4, 4, 4] },
+                  { label: "4–7–8 · includes a long hold", pattern: [4, 7, 8, 0] },
+                ].map((option) => (
+                  <button key={option.label} type="button" aria-pressed={breathingPattern.join() === option.pattern.join()} onClick={() => setBreathingPattern(option.pattern)} className="min-h-11 rounded-xl border border-white/15 px-3 py-2 text-left text-sm text-white/80 hover:bg-white/5 aria-pressed:border-amber-200/50 aria-pressed:text-amber-100 disabled:opacity-50">
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <p className="text-xs leading-relaxed text-white/50">Follow your natural breath if counting or holding does not feel comfortable. Stop if you feel unwell.</p>
           <BreathingSessionView
             isActive={isSessionActive}
-            onCycleComplete={() => setCycles((prev) => prev + 1)}
+            pattern={breathingPattern}
           />
+          </div>
         );
       case "grounding":
         return <GroundingSessionView activeIndex={0} />;
@@ -305,6 +338,27 @@ const ToolDetailPage = () => {
       <div className="min-h-screen bg-slate-950 text-white">
         <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
       </div>
+    );
+  }
+
+  const DirectToolModule = MODULE_TOOLS[decodedId];
+  if (DirectToolModule && toolMeta) {
+    const onCloseModule = () => navigate("/tools");
+    return (
+      <ToolModuleSession
+        title={toolMeta.name || toolMeta.title}
+        description={toolMeta.description || toolMeta.summary}
+        onClose={onCloseModule}
+        completed={moduleCompleted}
+      >
+        <DirectToolModule
+          tool={toolMeta}
+          topic={decodedId === "education" ? null : undefined}
+          onComplete={() => setModuleCompleted(true)}
+          onCancel={onCloseModule}
+          isEmbedded
+        />
+      </ToolModuleSession>
     );
   }
 
@@ -378,7 +432,6 @@ const ToolDetailPage = () => {
             onStart={handleStartSession}
             onEnd={handleEndSession}
             onClose={() => navigate("/tools")}
-            metrics={metrics}
             soundEnabled={soundEnabled}
             onToggleSound={() => setSoundEnabled((v) => !v)}
             onToggleTheme={() => setDarkMode((v) => !v)}
@@ -453,7 +506,6 @@ const ToolDetailPage = () => {
             onStart={handleStartSession}
             onEnd={handleEndSession}
             onClose={() => navigate("/tools")}
-            metrics={metrics}
             soundEnabled={soundEnabled}
             onToggleSound={() => setSoundEnabled((v) => !v)}
             onToggleTheme={() => setDarkMode((v) => !v)}

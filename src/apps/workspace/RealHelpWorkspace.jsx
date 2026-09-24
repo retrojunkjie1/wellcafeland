@@ -24,6 +24,21 @@ const DOMAIN_TO_PRIORITY = {
   programs: "programs",
 };
 
+function toCuratedWorkspaceResource(resource, domain) {
+  return {
+    id: `curated:${domain}:${resource.id}`,
+    name: resource.name,
+    title: resource.name,
+    description: resource.description,
+    website: resource.link,
+    url: resource.link,
+    phone: resource.phone || null,
+    source: resource.source,
+    curated: true,
+    verification: { status: "curated" },
+  };
+}
+
 const RealHelpWorkspace = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -88,38 +103,19 @@ const RealHelpWorkspace = () => {
       
       if (activeTab === "housing") {
         curated = await listHousingProviders({ region: region || undefined });
+        if (!curated.length) curated = getCuratedFallback("housing", query).map((item) => toCuratedWorkspaceResource(item, "housing"));
       } else if (activeTab === "funding") {
         curated = await listGrants({ region: region || undefined });
+        if (!curated.length) curated = getCuratedFallback("grants", query).map((item) => toCuratedWorkspaceResource(item, "grants"));
       } else if (activeTab === "programs") {
         curated = await listSupportPrograms({ region: region || undefined });
+        if (!curated.length) curated = getCuratedFallback("programs", query).map((item) => toCuratedWorkspaceResource(item, "programs"));
       } else if (activeTab === "circles") {
         curated = await listCircles();
       } else if (activeTab === "food") {
-        curated = getCuratedFallback("food.essentials", query).map((r) => ({
-          id: r.id,
-          name: r.name,
-          title: r.name,
-          description: r.description,
-          website: r.link,
-          url: r.link,
-          phone: r.phone,
-          source: r.source,
-          verification: r.verified ? { status: "verified" } : { status: "external" },
-          curated: true,
-        }));
+        curated = getCuratedFallback("food.essentials", query).map((item) => toCuratedWorkspaceResource(item, "food.essentials"));
       } else if (activeTab === "emergency") {
-        curated = getCuratedFallback("hotlines", query).map((r) => ({
-          id: r.id,
-          name: r.name,
-          title: r.name,
-          description: r.description,
-          website: r.link,
-          url: r.link,
-          phone: r.phone,
-          source: r.source,
-          verification: r.verified ? { status: "verified" } : { status: "external" },
-          curated: true,
-        }));
+        curated = getCuratedFallback("hotlines", query).map((item) => toCuratedWorkspaceResource(item, "hotlines"));
       }
 
       if (signal.aborted || reqId !== requestIdRef.current) return;
@@ -354,7 +350,7 @@ const RealHelpWorkspace = () => {
                       {(item.curated || item.verification?.status === "verified") && (
                         <span className="text-xs px-2 py-1 rounded-full bg-wcGold/20 text-wcGold border border-wcGold/30 whitespace-nowrap flex items-center gap-1">
                           <CheckCircle className="h-3 w-3" />
-                          Verified
+                          {item.curated ? "Curated source" : "Verified listing"}
                           {item.verification?.verifiedAt && (
                             <span className="text-wcGold/70 text-[10px]">
                               {new Date(item.verification.verifiedAt.toDate?.() || item.verification.verifiedAt).toLocaleDateString()}
@@ -469,4 +465,3 @@ const RealHelpWorkspace = () => {
 };
 
 export default RealHelpWorkspace;
-

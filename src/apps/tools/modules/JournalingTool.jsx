@@ -12,9 +12,9 @@ import { logToolUsage } from "@/services/toolTelemetry";
 const JOURNAL_MODES = [
   {
     id: "dump",
-    name: "Dump what's in your head",
-    description: "Get it all out. No filter, no judgment.",
-    placeholder: "Write whatever comes to mind...",
+    name: "Open reflection",
+    description: "Write as much or as little as feels useful. You can skip anything.",
+    placeholder: "Start anywhere, or leave this blank...",
   },
   {
     id: "gratitude",
@@ -24,9 +24,9 @@ const JOURNAL_MODES = [
   },
   {
     id: "fear",
-    name: "Fear and honesty",
-    description: "What are you afraid of? What's the truth you're avoiding?",
-    placeholder: "What fears or truths are you holding?",
+    name: "What feels present",
+    description: "Notice what is here, at your own pace. You do not need to solve it now.",
+    placeholder: "What feels present for you?",
   },
   {
     id: "reflection",
@@ -40,6 +40,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   const [selectedMode, setSelectedMode] = useState(null);
   const [text, setText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [startTime] = useState(() => Date.now());
   const identity = useSessionIdentity();
 
@@ -85,9 +86,10 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   };
 
   const handleSave = async () => {
-    if (!text.trim() || !selectedMode) return;
+    if (!text.trim() || !selectedMode || isSaving) return;
 
     setIsSaving(true);
+    setSaveError("");
     const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
     const entry = {
       userId: getUserId(),
@@ -99,18 +101,18 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
     };
 
     // Try Firestore first, fallback to localStorage
-    let saved = false;
+    let savedTo = "";
     if (db && identity.mode === "account") {
-      saved = await saveToFirestore(entry);
+      if (await saveToFirestore(entry)) savedTo = "account";
     }
     
-    if (!saved) {
-      saved = saveToLocalStorage(entry);
+    if (!savedTo && saveToLocalStorage(entry)) {
+      savedTo = "this browser";
     }
 
     setIsSaving(false);
 
-    if (saved) {
+    if (savedTo) {
       const endTime = Date.now();
       const durationSeconds = Math.floor((endTime - startTime) / 1000);
 
@@ -123,7 +125,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
           modeName: selectedMode.name,
           wordCount,
           timestamp: Date.now(),
-          savedTo: saved ? (db && identity.mode === "account" ? "firestore" : "localStorage") : "none",
+          savedTo,
         },
         durationSeconds
       );
@@ -140,6 +142,8 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
       }).catch(err => console.warn("Tool telemetry failed:", err));
 
       safeComplete(onComplete, result);
+    } else {
+      setSaveError("This entry could not be saved. Your writing is still here; try again or copy it before leaving.");
     }
   };
 
@@ -172,7 +176,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
               <button
                 key={mode.id}
                 type="button"
-                onClick={() => setSelectedMode(mode)}
+              onClick={() => { setSelectedMode(mode); setSaveError(""); }}
                 className="w-full rounded-lg border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 transition"
               >
                 <h4 className="text-base font-medium text-white mb-1">{mode.name}</h4>
@@ -190,6 +194,18 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
 
   return (
     <div className="space-y-6">
+      <div className="rounded-lg border border-amber-200/15 bg-amber-100/[0.04] p-4 text-sm leading-relaxed text-white/65" role="note">
+        {identity.mode === "account" && db
+          ? "Entries are saved to your account when available. If that save is unavailable, this browser is used instead. Only write details you are comfortable storing here."
+          : "Entries are saved in this browser on this device. They are not synced to an account. Avoid writing details you would not want stored on a shared device."}
+      </div>
+      <button
+        type="button"
+        onClick={() => { setSelectedMode(null); setSaveError(""); }}
+        className="min-h-11 rounded-lg px-3 text-sm text-white/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
+      >
+        Change prompt
+      </button>
       {!isEmbedded && onCancel && (
         <div className="flex items-center justify-between">
           <div>
@@ -210,16 +226,20 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
       )}
 
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-4">
+        <label htmlFor="journal-entry" className="sr-only">Journal entry</label>
         <textarea
+          id="journal-entry"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value.slice(0, 10000))}
           placeholder={selectedMode.placeholder}
           rows={12}
+          maxLength={10000}
+          aria-describedby="journal-count"
           className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none resize-none"
         />
         
         <div className="flex items-center justify-between">
-          <span className="text-sm text-white/50">{wordCount} words</span>
+          <span id="journal-count" className="text-sm text-white/50">{wordCount} words · {text.length}/10,000 characters</span>
           <button
             type="button"
             onClick={handleSave}
@@ -231,6 +251,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
           </button>
         </div>
       </div>
+      {saveError && <p role="alert" className="text-sm text-rose-200">{saveError}</p>}
     </div>
   );
 };

@@ -3,8 +3,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { trackPageView } from "../../services/telemetry";
-import { Phone, Heart, Building2, BookOpen } from "lucide-react";
-import PageHeader from "@/components/navigation/PageHeader";
+import { Phone, Heart, Building2 } from "lucide-react";
 
 const SUPPORT_TO_DIRECTORY = {
   crisis: "/resources?type=hotlines",
@@ -55,37 +54,18 @@ const SupportHubPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <PageHeader 
-        title="Find Support" 
-        subtitle="Hotlines • Assistance • Recovery Resources"
-      />
       <div className="lux-shell py-10 space-y-8 flex-1">
-        {/* Header */}
-        <header className="space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-            Support & Resources
-          </p>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-            Find Support
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-xl">
-            Hotlines • Assistance • Recovery Resources
-          </p>
-        </header>
-
         {/* Support Cards Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {supportCards.map((card) => {
             const Icon = card.icon;
             const path = SUPPORT_TO_DIRECTORY[card.id];
             return (
-              <div
+              <button
                 key={card.id}
-                role={path ? "button" : undefined}
-                tabIndex={path ? 0 : undefined}
-                onClick={path ? () => navigate(path) : undefined}
-                onKeyDown={path ? (e) => e.key === "Enter" && navigate(path) : undefined}
-                className={`lux-card p-6 border-2 ${card.borderColor} ${card.bgColor} transition-all ${path ? "cursor-pointer hover:scale-[1.02] hover:shadow-lg" : ""}`}
+                type="button"
+                onClick={() => navigate(path)}
+                className={`lux-card w-full p-6 text-left border-2 ${card.borderColor} ${card.bgColor} transition-all cursor-pointer hover:scale-[1.02] hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200`}
               >
                 <div className="flex items-start gap-4">
                   <div className={`${card.color} flex-shrink-0`}>
@@ -96,35 +76,17 @@ const SupportHubPage = () => {
                     <p className="text-sm text-muted-foreground leading-relaxed">
                       {card.description}
                     </p>
-                    {card.comingSoon && (
-                      <span className="inline-block mt-3 text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                        Coming Soon
-                      </span>
-                    )}
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
 
-        {/* Coming Soon Notice */}
-        <div className="lux-card p-6 border border-border/50 bg-muted/30">
-          <div className="flex items-start gap-3">
-            <BookOpen className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-semibold mb-1">More Resources Coming Soon</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                We're building a comprehensive directory of crisis hotlines, local recovery resources, 
-                government assistance programs, and support networks. This will be available during Launch Prep.
-              </p>
-            </div>
-          </div>
-        </div>
+        <p className="text-xs text-muted-foreground">For immediate danger, contact local emergency services. The resources directory includes curated national options when live local listings are unavailable.</p>
       </div>
     </div>
   );
 };
 
 export default SupportHubPage;
-

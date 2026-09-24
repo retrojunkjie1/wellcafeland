@@ -6,6 +6,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import seedTools from "@/data/tools.seed.json";
+import { getDailyPracticeToolById } from "@/tools/toolsBridge";
 
 const TOOLS_COLLECTION = "tools";
 
@@ -51,10 +52,18 @@ export async function loadToolBySlug(slug) {
     }
     return { ...fromSeed, id: fromSeed.slug ?? trimmed };
   }
+  const fromPracticeRegistry = getDailyPracticeToolById(trimmed);
+  if (fromPracticeRegistry) return { ...fromPracticeRegistry, slug: trimmed };
   if (TOOL_LOADER_DEBUG) {
     console.debug("[toolLoader] not found", { slug: trimmed });
   }
   return null;
+}
+
+export function getSeedToolBySlug(slug) {
+  if (!slug || typeof slug !== "string") return null;
+  const tool = seedTools.find((item) => (item.slug || item.id) === slug.trim());
+  return tool ? { ...tool, id: tool.slug ?? slug.trim() } : null;
 }
 
 /**

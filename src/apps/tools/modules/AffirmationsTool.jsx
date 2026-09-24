@@ -23,15 +23,16 @@ const AffirmationsTool = ({ tool }) => {
   const handleGenerate = async () => {
     setIsGenerating(true);
     setError(null);
-    trackAction("tool_affirmations_generate", {
-      toolId: tool.id,
-      concernType: selectedConcern,
-    });
+    setAffirmations([]);
+      trackAction("tool_affirmations_generate", {
+        toolId: tool.id,
+      });
 
     try {
       const response = await callAgent("healer_spiritual", {
         mode: "affirmations",
         concernType: selectedConcern,
+        instruction: "Offer a few optional, grounded phrases. Avoid guarantees, assumptions about safety, spiritual claims, or pressure; each phrase should be easy to ignore or adapt.",
       });
 
       if (response && response.reply) {
@@ -54,17 +55,18 @@ const AffirmationsTool = ({ tool }) => {
           setAffirmations(sentences.slice(0, 10));
         }
 
-        // Log usage
+        const generatedCount = lines.length > 0 ? Math.min(lines.length, 10) : text.split(/[.!?]+/).filter((line) => line.trim().length > 10).length;
+
+        // Log usage without including the selected health concern.
         const now = new Date().getTime();
-        await logToolUsage(tool.id, {
+        logToolUsage(tool.id, {
           startedAt: now,
           completedAt: now,
           durationMs: 0,
-          concernType: selectedConcern,
           context: {
-            count: affirmations.length,
+            count: generatedCount,
           },
-        });
+        }).catch((err) => console.warn("Affirmations telemetry failed:", err));
       } else {
         setError("Could not generate affirmations. Please try again.");
       }
@@ -83,12 +85,15 @@ const AffirmationsTool = ({ tool }) => {
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           What do you need support with?
         </h3>
+        <p className="text-xs leading-relaxed text-muted-foreground">Your selected category is sent to generate phrases. Keep only what feels right; you can ignore or change any phrase.</p>
         <div className="flex flex-wrap gap-2">
           {CONCERN_TYPES.map((concern) => (
             <button
               key={concern.id}
-              type="button"
+                type="button"
               onClick={() => setSelectedConcern(concern.id)}
+              disabled={isGenerating}
+                aria-pressed={selectedConcern === concern.id}
               className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
                 selectedConcern === concern.id
                   ? "border-foreground bg-foreground text-background"
@@ -115,14 +120,14 @@ const AffirmationsTool = ({ tool }) => {
 
       {/* Error Message */}
       {error && (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* Affirmations List */}
       {affirmations.length > 0 && (
-        <div className="lux-card p-4 space-y-3">
+        <div className="lux-card p-4 space-y-3" aria-live="polite">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Your Affirmations
           </h3>
@@ -139,6 +144,7 @@ const AffirmationsTool = ({ tool }) => {
               </li>
             ))}
           </ul>
+          <p className="text-xs text-muted-foreground">These are suggestions, not facts or instructions.</p>
         </div>
       )}
     </div>
@@ -146,4 +152,3 @@ const AffirmationsTool = ({ tool }) => {
 };
 
 export default AffirmationsTool;
-

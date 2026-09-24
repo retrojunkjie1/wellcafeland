@@ -77,10 +77,10 @@ export function computeRiskScore({ text, emotion, triggers }) {
  * @param {Object} message
  * @returns {{ triggers:string[], risk:{riskLevel:string, reasons:string[], domains:string[]} }}
  */
-export function analyzeMessageSignalsSafe(message) {
+export function analyzeMessageSignalsSafe(message, { includeTriggers = true } = {}) {
   try {
     const { text, emotion } = extractSignalPrimitives(message);
-    const triggers = getTriggerDomains(text);
+    const triggers = includeTriggers ? getTriggerDomains(text) : [];
     const risk = computeRiskScore({ text, emotion, triggers });
 
     return { triggers, risk };

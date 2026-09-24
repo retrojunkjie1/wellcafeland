@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GroundingSessionView } from "@/components/tools/GroundingSessionView";
-import { ArrowLeft } from "lucide-react";
 
 export default function Grounding54321() {
   const navigate = useNavigate();
@@ -12,17 +11,9 @@ export default function Grounding54321() {
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-6">
       <div className="max-w-md mx-auto">
-        <button
-          type="button"
-          onClick={() => navigate("/tools")}
-          className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm mb-6"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to tools
-        </button>
         <h1 className="text-xl font-medium text-white mb-2">5-4-3-2-1 Grounding</h1>
         <p className="text-sm text-white/60 mb-6">
-          Name five things you notice with each sense. Take your time.
+          Optional sensory prompts. Move at your own pace, skip any sense, or stop whenever you choose.
         </p>
         <GroundingSessionView activeIndex={activeIndex} />
         <div className="mt-6 flex gap-2">

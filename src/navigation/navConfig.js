@@ -36,6 +36,7 @@ export const ROUTE_META = [
 
   // Tools
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", rootFallback: "/tools" },
+  { pattern: "/tools/grounding/54321", title: "5–4–3–2–1 Grounding", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", rootFallback: "/tools" },
@@ -162,4 +163,3 @@ export function isRootRoute(pathname) {
   if (pathname === "/") return true;
   return ROOT_SET.has(pathname);
 }
-

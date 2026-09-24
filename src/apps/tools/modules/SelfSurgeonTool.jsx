@@ -10,25 +10,25 @@ const SELF_SURGEON_STEPS = [
   {
     id: "situation",
     question: "What happened?",
-    prompt: "Describe the situation or event that's troubling you. Be specific and honest.",
-    placeholder: "What happened that's causing you distress?",
+    prompt: "Share only what feels manageable. A few words or no response is okay.",
+    placeholder: "You can leave this blank or start with a few words...",
   },
   {
     id: "story",
     question: "What story are you telling yourself?",
-    prompt: "Notice the narrative you're creating about this situation. What judgments or harsh thoughts are present?",
-    placeholder: "What harsh or critical thoughts are you having about this?",
+    prompt: "If you want, notice any thoughts or interpretations that came up.",
+    placeholder: "What thoughts have come up? (Optional)",
   },
   {
     id: "friend",
     question: "What would you say to a friend?",
-    prompt: "If a close friend came to you with this same situation, what would you tell them?",
+    prompt: "If it feels useful, consider what you might say to someone you care about.",
     placeholder: "What would you say to someone you care about in this situation?",
   },
   {
     id: "reframe",
     question: "What is a kinder reframe?",
-    prompt: "Based on what you'd tell a friend, what's a more compassionate way to view this?",
+    prompt: "Is there another perspective that feels a little kinder or more balanced? You do not need to find one.",
     placeholder: "How can you offer yourself the same kindness?",
   },
 ];
@@ -44,13 +44,11 @@ const SelfSurgeonTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
   const handleResponseChange = (stepId, value) => {
     setResponses((prev) => ({
       ...prev,
-      [stepId]: value.trim(),
+      [stepId]: value,
     }));
   };
 
   const handleNext = () => {
-    if (!responses[currentStep.id]?.trim()) return;
-    
     if (currentStepIndex < SELF_SURGEON_STEPS.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
@@ -99,8 +97,6 @@ const SelfSurgeonTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
     safeCancel(onCancel);
   }, [onCancel]);
 
-  const canProceed = responses[currentStep.id]?.trim();
-
   return (
     <div className="space-y-6">
       {!isEmbedded && onCancel && (
@@ -119,7 +115,7 @@ const SelfSurgeonTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
       {/* Instructions */}
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
         <p className="text-base text-white/70">
-          Explore what's present with curiosity and compassion. There's no right or wrong answer.
+          Move at your own pace. Each prompt is optional; skip any that do not feel right.
         </p>
         <p className="text-sm text-white/50">
           Step {currentStepIndex + 1} of {SELF_SURGEON_STEPS.length}
@@ -134,10 +130,13 @@ const SelfSurgeonTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
         </div>
 
         <textarea
+          id={`inquiry-${currentStep.id}`}
           value={responses[currentStep.id] || ""}
           onChange={(e) => handleResponseChange(currentStep.id, e.target.value)}
           placeholder={currentStep.placeholder}
           rows={8}
+          maxLength={5000}
+          aria-label={currentStep.question}
           className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none resize-none"
         />
 
@@ -156,10 +155,9 @@ const SelfSurgeonTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
           <button
             type="button"
             onClick={handleNext}
-            disabled={!canProceed}
             className="rounded-lg bg-white/10 px-4 sm:px-6 py-3 sm:py-2.5 text-sm sm:text-base font-medium text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
           >
-            {isLast ? "Complete" : "Next →"}
+            {isLast ? "Finish reflection" : "Continue"}
           </button>
         </div>
       </div>

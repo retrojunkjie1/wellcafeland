@@ -4,6 +4,8 @@
 import { isDebugEnabled, logDebug } from "@/lib/debug";
 
 import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { observe, interpret, adapt, optimize } from "@/core/system/intelligenceEngine";
+import { trackLatency, trackNetworkEvent } from "@/telemetry/telemetry";
 
 function buildEndpoint(path) {
   const base = resolveFunctionsBaseUrl();
@@ -98,7 +100,6 @@ export async function guideEngine(query, options = {}) {
     
     // Observe user message before sending (if intelligence engine available)
     try {
-      const { observe } = await import("@/core/system/intelligenceEngine");
       observe({
         type: "chat",
         data: {
@@ -113,7 +114,6 @@ export async function guideEngine(query, options = {}) {
 
     // Get intelligence interpretation (if available)
     try {
-      const { interpret, adapt } = await import("@/core/system/intelligenceEngine");
       const { SystemMemory } = await import("@/core/system/systemMemory");
       
       const userText = query || (messageHistory[messageHistory.length - 1]?.content || "");
@@ -258,7 +258,6 @@ export async function guideEngine(query, options = {}) {
     let systemState = {};
     
     try {
-      const { optimize } = await import("@/core/system/intelligenceEngine");
       const { SystemMemory } = await import("@/core/system/systemMemory");
       
       systemState = SystemMemory.getSystemState();
@@ -490,7 +489,6 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
       // GOD-EYE V2: Track latency on success
       const requestDuration = Date.now() - requestStart;
       try {
-        const { trackLatency, trackNetworkEvent } = await import("@/telemetry/telemetry");
         trackLatency(requestDuration, endpoint);
         trackNetworkEvent("request_success", { duration: requestDuration, endpoint, retries: attemptCount - 1 });
       } catch {
@@ -564,7 +562,6 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
       
       // GOD-EYE V2: Track network errors
       try {
-        const { trackNetworkEvent } = await import("@/telemetry/telemetry");
         trackNetworkEvent("request_error", {
           level: "warn",
           error: err.message,
@@ -616,7 +613,6 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
 
   // Track network status
   try {
-    const { trackNetworkEvent } = await import("@/telemetry/telemetry");
     trackNetworkEvent("network_status", {
       level: isOffline ? "warn" : isDegraded ? "warn" : "info",
       state: isOffline ? "offline" : isDegraded ? "degraded" : "online",

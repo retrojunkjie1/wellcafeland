@@ -51,21 +51,21 @@ const ToolCard = ({ tool, variant = "list" }) => {
       <button
         type="button"
         onClick={handleOpenInWorkspace}
-        className="glass-panel w-full flex items-center gap-3 px-3 py-2.5 transition hover:border-white/20 hover:bg-white/8 text-left group"
+        className="glass-panel group flex w-full items-start gap-3 px-3 py-3 text-left transition hover:border-white/20 hover:bg-white/8 sm:items-center"
       >
         <div className="text-lg text-white/60 flex-shrink-0 group-hover:text-white/80 transition">{tool.icon}</div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 mb-0.5">
-            <h3 className="text-sm font-medium text-white truncate">{tool.name}</h3>
+          <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h3 className="min-w-0 max-w-full text-sm font-medium leading-snug text-white [overflow-wrap:anywhere]">{tool.name}</h3>
             <span className="text-[9px] uppercase tracking-wider text-white/35 flex-shrink-0">
               {tool.intensity || "LOW"}
             </span>
           </div>
-          <p className="text-xs text-white/55 leading-relaxed line-clamp-1">
+          <p className="text-xs leading-relaxed text-white/55 line-clamp-2">
             {truncatedDescription}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="hidden shrink-0 items-center gap-2 md:flex">
           <span className="text-[10px] text-white/40">{categoryLabels[tool.category] || tool.category}</span>
           {tool.duration && (
             <span className="text-[10px] text-white/40">• {tool.duration}</span>
@@ -123,4 +123,3 @@ const ToolCard = ({ tool, variant = "list" }) => {
 };
 
 export default ToolCard;
-

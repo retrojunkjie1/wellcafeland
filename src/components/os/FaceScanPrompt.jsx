@@ -29,7 +29,7 @@ export default function FaceScanPrompt({ open, onClose, onStartScan }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-white/20 bg-slate-900 p-6 shadow-xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="face-scan-title" className="relative w-full max-w-md rounded-2xl border border-white/20 bg-slate-900 p-6 shadow-xl">
         {/* Close button */}
         <button
           type="button"
@@ -42,9 +42,9 @@ export default function FaceScanPrompt({ open, onClose, onStartScan }) {
 
         {/* Content */}
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-white">Face Expression Scan</h3>
+          <h3 id="face-scan-title" className="text-xl font-semibold text-white">Face Expression Scan</h3>
           <p className="text-sm text-white/70">
-            We'll analyze your facial expression for 5 seconds to better understand your emotional state.
+            With your permission, WellnessCafe analyzes a brief camera sample to estimate an emotional signal.
           </p>
 
           {/* Privacy assurances */}
@@ -52,19 +52,19 @@ export default function FaceScanPrompt({ open, onClose, onStartScan }) {
             <div className="flex items-start gap-2">
               <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-400" />
               <p className="text-xs text-white/60">
-                <strong className="text-white/80">We do not store video.</strong> All processing happens on your device.
+                <strong className="text-white/80">Frames are processed in this browser.</strong> The scan does not upload camera video.
               </p>
             </div>
             <div className="flex items-start gap-2">
               <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-400" />
               <p className="text-xs text-white/60">
-                <strong className="text-white/80">All scans stay on your device.</strong> No frames are sent to any server.
+                <strong className="text-white/80">A derived signal may be attached to your next chat message.</strong> It can be included with chat history and may shape the response.
               </p>
             </div>
             <div className="flex items-start gap-2">
               <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-400" />
               <p className="text-xs text-white/60">
-                <strong className="text-white/80">Camera access is temporary.</strong> The camera stops immediately after scanning.
+                <strong className="text-white/80">Camera access is temporary.</strong> The camera stops after scanning. Cancel if you do not want to share this signal.
               </p>
             </div>
           </div>
@@ -93,4 +93,3 @@ export default function FaceScanPrompt({ open, onClose, onStartScan }) {
     </div>
   );
 }
-

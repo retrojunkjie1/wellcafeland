@@ -6,9 +6,40 @@
 
 import {collection,query,where,orderBy,limit,startAfter,getDocs,getDoc,doc} from "firebase/firestore"
 import {db} from "@/firebase"
+import {CURATED_BY_DOMAIN} from "@/lib/directoryCuratedFallback"
 
 const COLLECTION="resources"
 const PAGE_SIZE=20
+
+function curatedResources(){
+  return Object.entries(CURATED_BY_DOMAIN).flatMap(([type,resources]) =>
+    resources.map((resource) => ({
+      id:`curated:${type}:${resource.id}`,
+      title:resource.name,
+      type,
+      tags:[type],
+      verified:resource.verified === true,
+      description:resource.description || "",
+      source:resource.source || "",
+      curated:true,
+      contact:{url:resource.link || null,phone:resource.phone || null},
+      location:null,
+      updatedAt:null,
+    }))
+  )
+}
+
+function filterCuratedResources({type,tag,verified}){
+  return curatedResources().filter((resource) =>
+    (!type || resource.type === type) &&
+    (!tag || resource.tags.includes(tag)) &&
+    (verified == null || resource.verified === verified)
+  )
+}
+
+function getCuratedResourceById(id){
+  return curatedResources().find((resource) => resource.id === id) || null
+}
 
 function normalizeBool(value){
   if(value===true) return true
@@ -21,7 +52,7 @@ function normalizeBool(value){
  * @param {{type?:string,verified?:boolean|null,tag?:string,startAfterDoc?:import("firebase/firestore").DocumentSnapshot|null,mode?:"indexed"}} opts
  */
 export async function listResources(opts={}){
-  if(!db) return {items:[],nextDoc:null,error:"Database not configured"}
+  if(!db) return {items:filterCuratedResources(opts),nextDoc:null,error:null,fallback:true}
 
   try{
     const {type,tag,startAfterDoc}=opts
@@ -45,10 +76,10 @@ export async function listResources(opts={}){
     const items=snap.docs.map((d) => ({id:d.id,...d.data()}))
     const nextDoc=snap.docs.length===PAGE_SIZE ? snap.docs[snap.docs.length-1] : null
 
-    return {items,nextDoc,error:null}
+    return {items,nextDoc,error:null,fallback:false}
   }catch(err){
     console.error("[resources] list error:",err)
-    return {items:[],nextDoc:null,error:err.message||"Failed to load"}
+    return {items:filterCuratedResources(opts),nextDoc:null,error:null,fallback:true}
   }
 }
 
@@ -57,7 +88,10 @@ export async function listResources(opts={}){
  * Note: For large datasets, move facets to a dedicated doc (e.g. meta/resourceFacets).
  */
 export async function getResourceFilters(){
-  if(!db) return {types:[],tags:[]}
+  if(!db){
+    const resources=curatedResources()
+    return {types:[...new Set(resources.map((resource)=>resource.type))].sort(),tags:[...new Set(resources.flatMap((resource)=>resource.tags))].sort(),fallback:true}
+  }
 
   try{
     const snap=await getDocs(query(collection(db,COLLECTION),orderBy("updatedAt","desc"),limit(200)))
@@ -71,9 +105,10 @@ export async function getResourceFilters(){
       if(Array.isArray(d2?.tags)) d2.tags.forEach((t) => tags.add(t))
     })
 
-    return {types:Array.from(types).sort(),tags:Array.from(tags).sort()}
+    return {types:Array.from(types).sort(),tags:Array.from(tags).sort(),fallback:false}
   }catch{
-    return {types:[],tags:[]}
+    const resources=curatedResources()
+    return {types:[...new Set(resources.map((resource)=>resource.type))].sort(),tags:[...new Set(resources.flatMap((resource)=>resource.tags))].sort(),fallback:true}
   }
 }
 
@@ -81,7 +116,9 @@ export async function getResourceFilters(){
  * Get single resource by id
  */
 export async function getResource(id){
-  if(!db || !id) return null
+  if(!id) return null
+  if(String(id).startsWith("curated:")) return getCuratedResourceById(id)
+  if(!db) return null
   try{
     const d=await getDoc(doc(db,COLLECTION,id))
     return d.exists() ? {id:d.id,...d.data()} : null

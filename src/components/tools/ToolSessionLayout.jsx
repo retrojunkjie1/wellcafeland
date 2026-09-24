@@ -4,10 +4,7 @@
 // C1: Immersive session layout - no header overlay, floating back handled by BreathingSessionView
 
 import React from "react";
-import { X, Volume2, VolumeX, Moon, Sun, Pause, Play } from "lucide-react";
-
-// C1: Use same constant as OSLayout for consistency
-const BOTTOM_NAV_HEIGHT = 88;
+import { Play, Square } from "lucide-react";
 
 export const ToolSessionLayout = ({
   tool,
@@ -29,13 +26,20 @@ export const ToolSessionLayout = ({
   const textSub = darkMode ? "text-slate-400" : "text-slate-600";
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 animate-[slide-up_0.45s_ease-out]" style={{ paddingBottom: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))` }}>
+    <div className="relative z-30 mx-auto w-full max-w-2xl px-3 pb-28 pt-2 sm:px-4">
       <div
-        className={`mx-auto mb-6 max-w-2xl rounded-3xl border-2 backdrop-blur-xl shadow-2xl p-6 sm:p-8 ${bgPanel}`}
+        className={`mb-6 rounded-3xl border-2 backdrop-blur-xl shadow-2xl p-4 sm:p-8 ${bgPanel}`}
       >
+        {tool?.name && (
+          <header className="mb-3 text-center">
+            <h1 className={`text-lg font-medium ${textMain}`}>{tool.name}</h1>
+            {tool.description && <p className={`mx-auto mt-1 max-w-md text-xs leading-relaxed ${textSub}`}>{tool.description}</p>}
+          </header>
+        )}
+
         {/* Main content area - full width for breathing sessions */}
-        <div className="mb-5">
-          <div className="flex items-center justify-center overflow-visible min-h-[60vh]">{children}</div>
+        <div className="mb-4">
+          <div className="flex min-h-0 items-center justify-center overflow-visible">{children}</div>
         </div>
 
         {/* Session CTA */}
@@ -54,7 +58,7 @@ export const ToolSessionLayout = ({
         >
           {isActive ? (
             <>
-              <Pause size={18} />
+              <Square size={16} aria-hidden="true" />
               <span>{tool?.sessionType === "breathing" ? "Stop" : "End Session"}</span>
             </>
           ) : (
@@ -71,4 +75,3 @@ export const ToolSessionLayout = ({
     </div>
   );
 };
-

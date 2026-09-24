@@ -315,8 +315,8 @@ export function enrichMessageWithEmotion(message) {
  * @param {Object} message - Message object (should have content and optionally emotion)
  * @returns {Object} { triggers, risk }
  */
-export function analyzeMessageSignals(message) {
-  return analyzeMessageSignalsSafe(message);
+export function analyzeMessageSignals(message, options) {
+  return analyzeMessageSignalsSafe(message, options);
 }
 
 /**
@@ -956,4 +956,3 @@ export default {
   mergeEmotionChannels,
   SYSTEM_STATES,
 };
-

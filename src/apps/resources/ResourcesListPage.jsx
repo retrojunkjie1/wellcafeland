@@ -6,7 +6,6 @@ import {useNavigate,useSearchParams} from "react-router-dom"
 import {listResources,getResourceFilters} from "@/data/resources"
 import {ensureDevAuth} from "@/dev/ensureAuth"
 import Loading from "@/components/Loading"
-import PageHeader from "@/components/navigation/PageHeader"
 import {ExternalLink,MapPin,CheckCircle} from "lucide-react"
 import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 import OpenInAppButton from "@/components/OpenInAppButton";
@@ -21,6 +20,7 @@ const ResourcesListPage=() => {
   const [loading,setLoading]=useState(true)
   const [loadingMore,setLoadingMore]=useState(false)
   const [error,setError]=useState(null)
+  const [showingCurated,setShowingCurated]=useState(false)
   const [nextDoc,setNextDoc]=useState(null)
   const [authReady,setAuthReady]=useState(!NEED_DEV_AUTH)
 
@@ -44,7 +44,7 @@ const ResourcesListPage=() => {
     setError(null)
 
     try{
-      const {items:data,nextDoc:next,error:err}=await listResources({
+      const {items:data,nextDoc:next,error:err,fallback=false}=await listResources({
         type:typeFilter||undefined,
         verified:verifiedParam,
         tag:tagFilter||undefined,
@@ -58,6 +58,7 @@ const ResourcesListPage=() => {
         return
       }
 
+      setShowingCurated(fallback)
       setItems((prev) => (append ? [...prev,...data] : data))
       setNextDoc(next)
     }catch(err){
@@ -86,9 +87,12 @@ const ResourcesListPage=() => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
-      <PageHeader title="Resources" subtitle="Verified recovery and wellness resources" />
-
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+        {showingCurated && (
+          <div className="mb-4 rounded-xl border border-amber-200/15 bg-amber-100/[0.04] px-4 py-3 text-xs leading-relaxed text-white/65" role="status">
+            Showing a small offline list of curated resources because the live directory is unavailable. Availability and eligibility can change; confirm details with each organization.
+          </div>
+        )}
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           <select
@@ -142,17 +146,20 @@ const ResourcesListPage=() => {
           <>
             <div className="space-y-3">
               {items.map((r) => (
-                <div
+                <article
                   key={r.id}
-                  onClick={() => navigate(`/resources/${r.id}`)}
-                  className="rounded-lg border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition cursor-pointer"
+                  className="rounded-lg border border-white/10 bg-white/5 p-4 transition hover:bg-white/[0.07]"
                 >
                   <div className="flex justify-between items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-white">{r.title}</h3>
+                      <h3 className="font-medium text-white">
+                        <button type="button" onClick={() => navigate(`/resources/${encodeURIComponent(r.id)}`)} className="text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
+                          {r.title}
+                        </button>
+                      </h3>
 
                       {r.type && (
-                        <span className="text-xs text-white/50">{r.type}</span>
+                        <span className="text-xs capitalize text-white/50">{r.type.replaceAll(".", " · ").replaceAll("_", " ")}</span>
                       )}
 
                       {r.location?.region && (
@@ -180,7 +187,7 @@ const ResourcesListPage=() => {
                       </OpenInAppButton>
                     )}
                   </div>
-                </div>
+                </article>
               ))}
             </div>
 

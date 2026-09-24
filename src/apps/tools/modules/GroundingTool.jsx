@@ -23,7 +23,7 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
   const handleResponseChange = (senseId, value) => {
     setResponses((prev) => ({
       ...prev,
-      [senseId]: value.trim(),
+      [senseId]: value,
     }));
   };
 
@@ -32,16 +32,17 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
     const durationSeconds = Math.floor((endTime - startTime) / 1000);
     
     // Determine most helpful sense (first one with a substantial response)
-    const helpfulSense = GROUNDING_STEPS.find(
+    const helpfulSense = mostHelpfulSense || GROUNDING_STEPS.find(
       step => responses[step.sense]?.trim() && responses[step.sense].trim().length > 10
-    )?.sense || GROUNDING_STEPS[0].sense;
+    )?.sense || null;
 
     const result = createToolResult(
       "grounding_54321",
       "5-4-3-2-1 Grounding",
-      `Completed grounding exercise using all 5 senses. Most helpful: ${GROUNDING_STEPS.find(s => s.sense === helpfulSense)?.sense || "sight"}`,
+      `Ended the grounding exercise after visiting ${currentStep + 1} of ${GROUNDING_STEPS.length} steps.${helpfulSense ? ` Most helpful: ${helpfulSense}.` : ""}`,
       {
-        stepsCompleted: GROUNDING_STEPS.length,
+        stepsCompleted: GROUNDING_STEPS.filter((step) => responses[step.sense]?.trim()).length,
+        stepsVisited: currentStep + 1,
         responses: Object.keys(responses).reduce((acc, sense) => {
           if (responses[sense]?.trim()) {
             acc[sense] = responses[sense].trim();
@@ -60,13 +61,14 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
       completedAt: endTime,
       durationMs: durationSeconds * 1000,
       context: {
-        stepsCompleted: GROUNDING_STEPS.length,
+        stepsCompleted: GROUNDING_STEPS.filter((step) => responses[step.sense]?.trim()).length,
+        stepsVisited: currentStep + 1,
         mostHelpfulSense: helpfulSense,
       },
     }).catch(err => console.warn("Tool telemetry failed:", err));
 
     safeComplete(onComplete, result);
-  }, [startTime, responses, onComplete]);
+  }, [startTime, responses, mostHelpfulSense, currentStep, onComplete]);
 
   const handleCancel = useCallback(() => {
     safeCancel(onCancel);
@@ -81,9 +83,6 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
   }, [currentStep, handleComplete]);
 
   const currentStepData = GROUNDING_STEPS[currentStep];
-  const allCompleted = GROUNDING_STEPS.every((step) => responses[step.sense]?.trim());
-  const canProceed = responses[currentStepData.sense]?.trim();
-
   return (
     <div className="space-y-6">
       {!isEmbedded && onCancel && (
@@ -102,11 +101,20 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
       {/* Instructions */}
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
         <p className="text-base text-white/70">
-          Name things you can observe with each sense. This brings you back to the present moment.
+          If it feels useful, notice something around you with this sense. You can leave the response blank, skip any step, or stop at any time.
         </p>
         <p className="text-sm text-white/50">
           Step {currentStep + 1} of {GROUNDING_STEPS.length}
         </p>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="text-sm text-white/65 underline underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold"
+          >
+            Stop practice
+          </button>
+        )}
       </div>
 
       {/* Current Step */}
@@ -120,12 +128,13 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
           </div>
         </div>
 
-        <p className="text-sm sm:text-base text-white/80 break-words">{currentStepData.prompt}</p>
+        <p className="text-sm sm:text-base text-white/80 break-words">{currentStepData.prompt}, if you want to</p>
 
         <textarea
           value={responses[currentStepData.sense] || ""}
           onChange={(e) => handleResponseChange(currentStepData.sense, e.target.value)}
-          placeholder={`List ${currentStepData.count} things...`}
+          placeholder="Optional reflection"
+          aria-label={`Optional reflection for ${currentStepData.sense}`}
           rows={4}
           className="w-full rounded-lg border border-white/10 bg-white/5 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none resize-none break-words"
         />
@@ -133,10 +142,9 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
         <button
           type="button"
           onClick={handleNext}
-          disabled={!canProceed}
-          className="w-full rounded-lg bg-white/10 px-4 py-3 sm:py-2.5 text-sm sm:text-base font-medium text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
+          className="w-full rounded-lg bg-white/10 px-4 py-3 sm:py-2.5 text-sm sm:text-base font-medium text-white transition hover:bg-white/20 min-h-[48px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold"
         >
-          {currentStep < GROUNDING_STEPS.length - 1 ? "Next →" : "Complete"}
+          {currentStep < GROUNDING_STEPS.length - 1 ? "Continue" : "Finish for now"}
         </button>
       </div>
 
@@ -157,7 +165,7 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
       </div>
 
       {/* Optional Reflection (on last step) */}
-      {allCompleted && currentStep === GROUNDING_STEPS.length - 1 && (
+      {currentStep === GROUNDING_STEPS.length - 1 && (
         <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-3 animate-fade-in">
           <p className="text-base text-white/80">
             Which sense was most helpful for grounding you?

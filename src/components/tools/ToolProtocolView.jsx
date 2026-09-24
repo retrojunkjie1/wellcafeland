@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { logToolSessionBegin, logToolSessionComplete } from "@/services/toolSessionLogger";
 
-const CRISIS_MESSAGE = `Not medical advice. If you are in danger or considering self-harm, call local emergency services or 988 in the U.S.`;
+const CRISIS_MESSAGE = "This is a self-guided practice, not emergency care. If you are in immediate danger, contact local emergency services.";
 
 export function ToolProtocolView({ tool, onClose }) {
   const navigate = useNavigate();
@@ -34,21 +34,17 @@ export function ToolProtocolView({ tool, onClose }) {
   };
 
   const handleComplete = async () => {
-    try {
-      await logToolSessionComplete({
-        slug: tool.slug || tool.id,
-        distressBefore: distressBefore ?? undefined,
-        distressAfter: distressAfter ?? undefined,
-        completed: true,
-      });
-    } catch (e) {
-      if (import.meta.env.DEV) console.debug("[ToolProtocolView] log complete", e?.message);
-    }
+    void logToolSessionComplete({
+      slug: tool.slug || tool.id,
+      distressBefore: distressBefore ?? undefined,
+      distressAfter: distressAfter ?? undefined,
+      completed: true,
+    }).catch(() => {});
     onClose?.();
     navigate("/tools");
   };
 
-  const handleSkipComplete = () => {
+  const handleStop = () => {
     logToolSessionComplete({
       slug: tool.slug || tool.id,
       distressBefore: distressBefore ?? undefined,
@@ -59,27 +55,41 @@ export function ToolProtocolView({ tool, onClose }) {
     navigate("/tools");
   };
 
+  const handleSkipStep = () => {
+    if (isLastStep) {
+      setShowCompleteForm(true);
+      return;
+    }
+    setStepIndex((index) => Math.min(steps.length - 1, index + 1));
+  };
+
   if (!tool) return null;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
       {/* Clinical safety banner */}
       <div className="rounded-xl border border-amber-400/30 bg-amber-400/[0.06] px-4 py-3">
-        <p className="text-xs text-amber-200/90 leading-relaxed">{CRISIS_MESSAGE}</p>
-        <button
-          type="button"
-          onClick={() => setCrisisExpanded(!crisisExpanded)}
-          className="mt-2 text-xs font-medium text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline"
-        >
-          {crisisExpanded ? "Hide" : "Crisis"} resources
-        </button>
-        {crisisExpanded && (
-          <div className="mt-2 text-xs text-white/80 space-y-1">
-            <p>988 Suicide & Crisis Lifeline (U.S.) — call or text</p>
-            <p>Crisis Text Line — text HOME to 741741</p>
-            <p>Local emergency services for immediate danger</p>
+          <p className="text-xs text-amber-200/90 leading-relaxed">{CRISIS_MESSAGE}</p>
+          <button
+            type="button"
+            aria-expanded={crisisExpanded}
+            aria-controls="tool-crisis-resources"
+            onClick={() => setCrisisExpanded(!crisisExpanded)}
+            className="mt-2 text-xs font-medium text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline"
+          >
+            {crisisExpanded ? "Hide" : "Need live support?"}
+          </button>
+          {crisisExpanded && (
+          <div id="tool-crisis-resources" className="mt-2 space-y-1 text-xs text-white/80">
+            <p>In the U.S. and its territories, call or text 988 for emotional crisis support.</p>
+            <div className="flex flex-wrap gap-3">
+              <a className="underline underline-offset-2" href="tel:988">Call 988</a>
+              <a className="underline underline-offset-2" href="sms:988">Text 988</a>
+              <a className="underline underline-offset-2" href="https://988lifeline.org/get-help/" target="_blank" rel="noreferrer">988 Lifeline website</a>
+            </div>
+            <p>For immediate danger, contact local emergency services.</p>
           </div>
-        )}
+          )}
       </div>
 
       {/* Header */}
@@ -135,19 +145,19 @@ export function ToolProtocolView({ tool, onClose }) {
       {!sessionStarted ? (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 text-center">
           <p className="text-sm text-white/70 mb-4">
-            This protocol has {steps.length} steps. Take your time. You can stop at any moment.
+            This practice has {steps.length} optional steps. Take your time. You can skip a step or stop whenever you want.
           </p>
           <button
             type="button"
             onClick={handleBegin}
             className="rounded-xl bg-amber-500/20 border border-amber-400/40 px-6 py-3 text-sm font-medium text-amber-200 hover:bg-amber-500/30 transition"
           >
-            Begin
+            Begin practice
           </button>
         </div>
       ) : !showCompleteForm ? (
         <div className="space-y-4">
-          <div className="rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-5">
+          <div role="status" aria-live="polite" aria-atomic="true" className="rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-5">
             <p className="text-[10px] uppercase tracking-wider text-amber-400/70 mb-1">
               Step {stepIndex + 1} of {steps.length}
             </p>
@@ -158,7 +168,7 @@ export function ToolProtocolView({ tool, onClose }) {
             )}
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
@@ -167,52 +177,70 @@ export function ToolProtocolView({ tool, onClose }) {
             >
               Previous
             </button>
-            {isLastStep ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setShowCompleteForm(true)}
-                className="rounded-lg bg-amber-500/20 border border-amber-400/40 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
+                onClick={handleSkipStep}
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
               >
-                Complete
+                Skip this step
               </button>
-            ) : (
+              {isLastStep ? (
+                <button
+                  type="button"
+                  onClick={() => setShowCompleteForm(true)}
+                  className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
+                >
+                  Finish practice
+                </button>
+              ) : (
               <button
                 type="button"
                 onClick={() => setStepIndex((i) => Math.min(steps.length - 1, i + 1))}
-                className="rounded-lg bg-amber-500/20 border border-amber-400/40 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
+                className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
               >
                 Next
               </button>
-            )}
+              )}
+            </div>
           </div>
+          <button type="button" onClick={handleStop} className="text-xs text-white/50 underline underline-offset-2 hover:text-white/80">Stop practice and leave</button>
         </div>
       ) : (
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
-          <h3 className="text-sm font-medium text-white">How are you now?</h3>
+          <h3 className="text-sm font-medium text-white">Would you like to check in?</h3>
+          <p className="text-xs leading-relaxed text-white/55">These ratings are optional. If you enter them, they are saved with this practice record. You can finish without sharing a rating.</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-white/60 mb-1">Distress before (0–10)</label>
+              <label htmlFor="distress-before" className="block text-xs text-white/60 mb-1">Before this practice (0–10)</label>
               <input
+                id="distress-before"
                 type="number"
                 min={0}
                 max={10}
+                inputMode="numeric"
+                aria-describedby="distress-rating-help"
                 value={distressBefore ?? ""}
-                onChange={(e) => setDistressBefore(e.target.value === "" ? null : parseInt(e.target.value, 10))}
+                onChange={(e) => setDistressBefore(e.target.value === "" ? null : Math.min(10, Math.max(0, parseInt(e.target.value, 10) || 0)))}
                 className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white"
               />
             </div>
             <div>
-              <label className="block text-xs text-white/60 mb-1">Distress after (0–10)</label>
+              <label htmlFor="distress-after" className="block text-xs text-white/60 mb-1">Now (0–10)</label>
               <input
+                id="distress-after"
                 type="number"
                 min={0}
                 max={10}
+                inputMode="numeric"
+                aria-describedby="distress-rating-help"
                 value={distressAfter ?? ""}
-                onChange={(e) => setDistressAfter(e.target.value === "" ? null : parseInt(e.target.value, 10))}
+                onChange={(e) => setDistressAfter(e.target.value === "" ? null : Math.min(10, Math.max(0, parseInt(e.target.value, 10) || 0)))}
                 className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white"
               />
             </div>
           </div>
+          <p id="distress-rating-help" className="text-xs text-white/45">0 means no distress; 10 means the most intense distress you can imagine.</p>
           <div className="flex gap-3">
             <button
               type="button"
@@ -223,10 +251,10 @@ export function ToolProtocolView({ tool, onClose }) {
             </button>
             <button
               type="button"
-              onClick={handleSkipComplete}
+              onClick={handleComplete}
               className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
             >
-              Skip
+              Finish without ratings
             </button>
           </div>
         </div>

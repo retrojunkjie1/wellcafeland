@@ -7,6 +7,8 @@ import { globalWebSearch } from "./searchService";
 import { logError, logInfo, logWarn } from "@/services/logService";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAuthHeaders } from "@/services/aiSessionClient";
+import { observe } from "@/core/system/intelligenceEngine";
+import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
 
 // Request deduplication cache
 const requestCache = new Map();
@@ -120,6 +122,23 @@ function normalizeResourceItem(raw, domain) {
 function mapResultsToDirectory(results, domain) {
   if (!Array.isArray(results)) return [];
   return results.map((item, index) => normalizeResourceItem(item, domain)).filter(Boolean);
+}
+
+function curatedResults(domain, query) {
+  const queryText = String(query || "").toLowerCase();
+  const searchText = domain === "programs" && /\baa\b|alcoholics anonymous|a\.a\./.test(queryText)
+    ? "Alcoholics Anonymous"
+    : domain === "programs" && /\bna\b|narcotics anonymous|n\.a\./.test(queryText)
+      ? "Narcotics Anonymous"
+      : query;
+  return getCuratedFallback(domain, searchText).map((item) => normalizeResourceItem({
+    ...item,
+    title: item.name,
+    summary: item.description,
+    url: item.link,
+    tags: [domain, "curated national resource"],
+    id: `curated:${domain}:${item.id}`,
+  }, domain));
 }
 
 /**
@@ -243,10 +262,13 @@ export async function searchResources({ query, domain, region, category }) {
     // Normalize and return with meta (Phase 54H)
     const domainNorm = domain || "other";
     const allRaw = [...verifiedProviders, ...liveResults];
-    const results = allRaw.map((r, i) => normalizeResourceItem(r, domainNorm)).filter(Boolean);
+    const liveNormalized = allRaw.map((r) => normalizeResourceItem(r, domainNorm)).filter(Boolean);
+    const results = liveNormalized.length ? liveNormalized : curatedResults(domainNorm, query);
     return {
-      ok: true,
+      ok: results.length > 0,
       results,
+      fallback: liveNormalized.length === 0 && results.length > 0,
+      error: results.length ? null : "Live search is unavailable. Share your city or ZIP code and I can help you choose the right local service to contact.",
       meta: { domain: domainNorm, query: query || "" },
     };
   } catch (err) {
@@ -320,7 +342,6 @@ export async function searchResources({ query, domain, region, category }) {
       // Observe search failure (if intelligence engine available)
       try {
         const { SystemMemory } = await import("@/core/system/systemMemory");
-        const { observe } = await import("@/core/system/intelligenceEngine");
         SystemMemory.setLastSearchFailure(normalizedQuery, err);
         observe({
           type: "search_failure",
@@ -344,7 +365,6 @@ export async function searchResources({ query, domain, region, category }) {
         // Observe search success (if intelligence engine available)
         try {
           const { SystemMemory } = await import("@/core/system/systemMemory");
-          const { observe } = await import("@/core/system/intelligenceEngine");
           SystemMemory.setLastSearchSuccess(normalizedQuery, result.results);
           observe({
             type: "search_success",
@@ -496,10 +516,12 @@ export async function searchResources({ query, domain, region, category }) {
       // Graceful degradation: Show helpful message instead of hard error
       logWarn("resourceSearch", "No search results found", { query: normalizedQuery, domain });
 
+      const fallbackResults = curatedResults(domain || "hotlines", query);
       const result = {
-        ok: false,
-        results: [],
-        error: "External search is currently disabled. You can still talk with your guide and we'll help you think through options. To enable external search, contact your administrator.",
+        ok: fallbackResults.length > 0,
+        results: fallbackResults,
+        fallback: fallbackResults.length > 0,
+        error: fallbackResults.length ? null : "Live search is unavailable. Share your city or ZIP code and I can help you choose the right local service to contact.",
         query: normalizedQuery,
       };
       
@@ -513,12 +535,12 @@ export async function searchResources({ query, domain, region, category }) {
       return result;
     } catch (err) {
       console.error("[resourceSearch] Fallback search error:", err);
+      const fallbackResults = curatedResults(domain || "hotlines", query);
       const result = {
-        ok: false,
-        results: [],
-        error: `Search error: ${
-          err.message || "Please try again in a moment."
-        }`,
+        ok: fallbackResults.length > 0,
+        results: fallbackResults,
+        fallback: fallbackResults.length > 0,
+        error: fallbackResults.length ? null : "Live search is unavailable. Share your city or ZIP code and I can help you choose the right local service to contact.",
         query: normalizedQuery,
       };
       

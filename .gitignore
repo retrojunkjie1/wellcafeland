@@ -71,5 +71,6 @@ emulator-data/
 *.tmp
 *.temp
 .cache
+.npm-cache/
 tmp/
 temp/

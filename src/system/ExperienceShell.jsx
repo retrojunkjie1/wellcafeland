@@ -20,6 +20,8 @@ import DockWithVoice from "@/components/interaction/DockWithVoice";
 import BottomRail, { railNavClass, railCardClass } from "@/components/layout/BottomRail";
 import { AudioProvider } from "@/experience/audio/AudioProvider";
 import { VoiceSessionProvider } from "@/experience/voice/VoiceSessionProvider";
+import { useOSStore } from "@/stores/useOSStore";
+import { setTheme } from "@/theme/themeStore";
 
 const TABS = [
   { id: "home", label: "Home", path: "/", icon: Home },
@@ -30,16 +32,32 @@ const TABS = [
 ];
 
 const isChatRoute = (path) => path === "/" || path.startsWith("/chat");
-const isToolDetailRoute = (path) => path.startsWith("/tools/") && path.split("/").filter(Boolean).length > 1;
+const isToolDetailRoute = (path) =>
+  path.startsWith("/tools/") &&
+  path !== "/tools/classic" &&
+  path.split("/").filter(Boolean).length > 1;
 
 export default function ExperienceShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const identity = useSessionIdentity();
+  const themeMode = useOSStore((state) => state.settings.themeMode);
+  const interfaceDensity = useOSStore((state) => state.settings.interfaceDensity);
 
   useUserSettings();
   useSessionMemory();
+
+  useEffect(() => {
+    if (themeMode === "system") {
+      const media = window.matchMedia("(prefers-color-scheme: light)");
+      const applySystemTheme = () => setTheme(media.matches ? "light" : "dark");
+      applySystemTheme();
+      media.addEventListener?.("change", applySystemTheme);
+      return () => media.removeEventListener?.("change", applySystemTheme);
+    }
+    setTheme(themeMode === "dawn" ? "light" : "dark");
+  }, [themeMode]);
 
   useEffect(() => {
     navPush(location.pathname);
@@ -88,7 +106,7 @@ export default function ExperienceShell() {
       {/* MainSurface */}
       <main
         className="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
-        style={{ backgroundColor: "var(--wc-glass)", padding: "24px", paddingBottom: mainPadBottom }}
+        style={{ backgroundColor: "var(--wc-glass)", padding: interfaceDensity === "compact" ? "16px" : "24px", paddingBottom: mainPadBottom }}
       >
         <NavigationProvider>
           <OSPageChrome />

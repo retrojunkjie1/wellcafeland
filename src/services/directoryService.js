@@ -5,6 +5,11 @@
 import { collection, query, getDocs, orderBy, limit, doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "@/firebase";
 import { getAnonymousUserId } from "@/lib/userId";
+import { searchResources } from "./resourceSearch";
+import { getHousingProvider } from "./housingService";
+import { getGrant } from "./grantsService";
+import { getSupportProgram } from "./supportProgramsService";
+import { getCircle } from "./circlesService";
 
 const MIN_RESULTS = 5;
 const DOMAINS = ["providers", "housing", "grants", "assistance", "hotlines", "programs", "government_assistance"];
@@ -259,7 +264,6 @@ export async function searchDirectory({ domain, query: searchQuery = "", filters
       }
       
       // Import searchResources from resourceSearch (which uses Firebase Function + fallback)
-      const { searchResources } = await import("./resourceSearch");
       const searchResponse = await searchResources({
         query: searchTerm.trim(),
         domain,
@@ -312,7 +316,6 @@ export async function getDirectoryItem(domain, id) {
   // Phase 12: Try specialized services for new domains
   if (domain === "housing") {
     try {
-      const { getHousingProvider } = await import("./housingService");
       const item = await getHousingProvider(decodedId);
       if (item) {
         return {
@@ -338,7 +341,6 @@ export async function getDirectoryItem(domain, id) {
 
   if (domain === "grants") {
     try {
-      const { getGrant } = await import("./grantsService");
       const item = await getGrant(decodedId);
       if (item) {
         return {
@@ -361,7 +363,6 @@ export async function getDirectoryItem(domain, id) {
 
   if (domain === "programs" || domain === "assistance") {
     try {
-      const { getSupportProgram } = await import("./supportProgramsService");
       const item = await getSupportProgram(decodedId);
       if (item) {
         return {
@@ -384,7 +385,6 @@ export async function getDirectoryItem(domain, id) {
 
   if (domain === "circles") {
     try {
-      const { getCircle } = await import("./circlesService");
       const item = await getCircle(decodedId);
       if (item) {
         return {

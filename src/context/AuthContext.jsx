@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { logTelemetry, trackAuthStateChange } from "@/telemetry/telemetry";
 
 const AuthContext = createContext(null);
 
@@ -86,7 +87,6 @@ export const AuthProvider = ({ children }) => {
         
         // Log user creation
         try {
-          const { logTelemetry } = await import("@/telemetry/telemetry");
           logTelemetry("user_created", {
             level: "info",
             uid: firebaseUser.uid,
@@ -138,7 +138,6 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       // Track auth state change
       try {
-        const { trackAuthStateChange } = await import("@/telemetry/telemetry");
         const state = firebaseUser ? "signed_in" : "signed_out";
         trackAuthStateChange(state, {
           uid: firebaseUser?.uid || null,
@@ -168,7 +167,6 @@ export const AuthProvider = ({ children }) => {
           // Log telemetry for admin access
           if (isAdminClaim) {
             try {
-              const { logTelemetry } = await import("@/telemetry/telemetry");
               logTelemetry("admin_access", {
                 level: "info",
                 action: "auth_state_change",
@@ -221,4 +219,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

@@ -5,7 +5,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, MicOff, Loader2, CheckCircle, X } from "lucide-react";
-import { detectEmotionFromText, transcribeAudio, guideEngine } from "@/services/multimodalClient";
+import { detectEmotionFromText, transcribeAudio } from "@/services/multimodalClient";
+import { callAgent } from "@/agents/aiAgents";
 
 const isSecureContextOk = () => {
   if (typeof window === "undefined") return false;
@@ -24,7 +25,7 @@ const isDevLanBaseUrl = () => {
   return /^https?:\/\/192\.168\./.test(base) || /^192\.168\./.test(base);
 };
 
-const TEXT_FALLBACK_PREFILL = "You don't have to explain—just tell me what's happening right now, in one breath.";
+const TEXT_FALLBACK_PREFILL = "You don't have to explain everything—share only what feels comfortable.";
 
 function getMicErrorMessage(err) {
   const name = err?.name || "";
@@ -57,11 +58,13 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [serviceConsent, setServiceConsent] = useState(false);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const recordingTimeRef = useRef(0);
+  const discardRecordingRef = useRef(false);
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -92,12 +95,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => {
-          const next = prev + 1;
-          recordingTimeRef.current = next;
-          if (next >= 19) stopRecording();
-          return next;
-        });
+        const next = Math.min(recordingTimeRef.current + 1, 20);
+        recordingTimeRef.current = next;
+        setRecordingTime(next);
+        if (next >= 20) stopRecording();
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -110,13 +111,19 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
     };
   }, [isRecording, stopRecording]);
 
+  useEffect(() => {
+    if (!open) {
+      discardRecordingRef.current = true;
+      stopRecording();
+    }
+    return () => {
+      discardRecordingRef.current = true;
+      stopRecording();
+    };
+  }, [open, stopRecording]);
+
   const handleProcessCheckIn = useCallback(async (blob) => {
     const duration = recordingTimeRef.current;
-    if (duration < 3) {
-      setErrorMessage("Please record at least 3 seconds for a meaningful check-in.");
-      return;
-    }
-
     setProcessing(true);
     setErrorMessage(null);
     try {
@@ -139,21 +146,25 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
 
       let groundingSuggestion = "";
       if (emotion.emotionalState === "anxious" && emotion.intensity >= 3) {
-        groundingSuggestion = "Take 3 deep breaths. Name 5 things you can see around you.";
+        groundingSuggestion = "If it feels useful, notice a neutral object nearby or let your breath stay natural. You can skip either.";
       } else if (emotion.emotionalState === "craving") {
-        groundingSuggestion = "This urge will pass. You're safe right now. What's one thing you can do to stay grounded?";
+        groundingSuggestion = "You can pause, choose any support that feels right, or contact someone you trust. This practice cannot predict what happens next.";
       } else if (emotion.emotionalState === "overwhelmed") {
-        groundingSuggestion = "You're doing your best. Can you name one small thing that's okay right now?";
+        groundingSuggestion = "Take this at your own pace. A small next step—or stopping here—is okay.";
       } else if (emotion.emotionalState === "grounded") {
-        groundingSuggestion = "You're in a good space. What's one thing you're grateful for in this moment?";
+        groundingSuggestion = "Notice what feels supportive, if anything, and choose whether you want to continue.";
       } else {
         groundingSuggestion = "Thank you for checking in. You're here, and that matters.";
       }
 
-      const aiResponse = await guideEngine(transcriptText, { mode: "default" });
+      const aiResponse = await callAgent("oracle", {
+        mode: "voice_check_in_reflection",
+        transcript: transcriptText,
+        instruction: "Offer one brief, non-diagnostic, optional reflection. Do not infer immediate safety or prescribe breathing.",
+      });
 
       setResponse({
-        text: aiResponse.ok ? aiResponse.content : groundingSuggestion,
+        text: aiResponse?.reply || groundingSuggestion,
         grounding: groundingSuggestion,
       });
 
@@ -217,6 +228,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
 
   const attemptGetUserMedia = useCallback(async () => {
     setErrorMessage(null);
+    if (!serviceConsent) {
+      setErrorMessage("Choose whether to send your audio for transcription and response before recording.");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -240,9 +255,11 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
-        handleProcessCheckIn(blob);
+        if (!discardRecordingRef.current) handleProcessCheckIn(blob);
       };
 
+      discardRecordingRef.current = false;
+      recordingTimeRef.current = 0;
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
@@ -251,7 +268,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
       console.error("Failed to start recording:", err);
       setErrorMessage(getMicErrorMessage(err));
     }
-  }, [handleProcessCheckIn, drawWaveform]);
+  }, [handleProcessCheckIn, drawWaveform, serviceConsent]);
 
   const startRecording = useCallback(async () => {
     setErrorMessage(null);
@@ -291,8 +308,18 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <p className="text-sm text-white/70 text-center">
-          Name what's present in one breath (10–20 seconds)
+          Speak at any pace for up to 20 seconds. You can stop at any time.
         </p>
+        {!completed && (
+          <div className="mx-auto max-w-sm space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-xs leading-relaxed text-white/65">Your audio is sent for transcription, and the transcript is sent for an AI response. Automated emotional labels may be wrong and are not a diagnosis. Review our <a href="/privacy" className="text-amber-200 underline underline-offset-4">Privacy Notice</a>.</p>
+            <label className="flex min-h-11 items-start gap-3 text-xs leading-relaxed text-white/75">
+              <input type="checkbox" checked={serviceConsent} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300" />
+              I choose to send my audio and transcript to these services for this check-in.
+            </label>
+            <p className="text-xs leading-relaxed text-white/55">If you may be in immediate danger, contact local emergency services. In the U.S. or its territories, call or text <a href="tel:988" className="text-amber-200 underline">988</a> or <a href="https://988lifeline.org/get-help/" target="_blank" rel="noreferrer" className="text-amber-200 underline">chat with 988</a>.</p>
+          </div>
+        )}
 
         {showDevLanNote && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs text-amber-200/90 max-w-sm mx-auto mb-6">
@@ -302,7 +329,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
 
         {errorMessage && (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 max-w-sm mx-auto mb-6">
-            <p className="text-sm text-amber-200 mb-3">{errorMessage}</p>
+            <p role="alert" className="text-sm text-amber-200 mb-3">{errorMessage}</p>
             <div className="flex flex-wrap gap-2">
               {!isSecureContextOk() && isLanHost() && (
                 <button
@@ -338,9 +365,6 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
                 <div className="text-center">
                   <div className="text-3xl font-medium text-white mb-1">{recordingTime}s</div>
                   <div className="text-sm text-white/50">Recording...</div>
-                  {recordingTime < 3 && (
-                    <div className="text-xs text-yellow-400 mt-1">Keep going...</div>
-                  )}
                 </div>
                 <div className="w-full">
                   <canvas
@@ -353,14 +377,14 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
                 <div className="flex justify-center">
                   <button
                     type="button"
-                    onMouseUp={stopRecording}
-                    onTouchEnd={stopRecording}
+                    onClick={stopRecording}
+                    aria-label="Stop voice check-in recording"
                     className="h-20 w-20 rounded-full bg-red-400/20 border-4 border-red-400 flex items-center justify-center hover:bg-red-400/30 transition"
                   >
                     <MicOff className="h-8 w-8 text-red-400" />
                   </button>
                 </div>
-                <p className="text-center text-sm text-white/50">Release to stop</p>
+                  <p className="text-center text-sm text-white/50">Select Stop recording when you are ready.</p>
               </div>
             </>
           ) : processing ? (
@@ -384,7 +408,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
 
               {emotionalState && (
                 <div className="rounded-xl p-4 border border-white/10 bg-white/5">
-                  <h3 className="text-sm font-medium text-white/70 mb-2">Emotional State</h3>
+                  <h3 className="text-sm font-medium text-white/70 mb-2">Automatic reflection · may not fit</h3>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-white capitalize">{emotionalState.state}</span>
                     <span className="text-xs text-white/50">({emotionalState.intensity}/5)</span>
@@ -411,16 +435,14 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
             <div className="text-center">
               <button
                 type="button"
-                onMouseDown={startRecording}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  startRecording();
-                }}
-                className="mx-auto mt-6 w-20 h-20 rounded-full border border-amber-400/70 bg-amber-400/10 shadow-[0_0_0_6px_rgba(245,158,11,0.10)] flex items-center justify-center active:scale-[0.99]"
+                onClick={startRecording}
+                disabled={!serviceConsent}
+                aria-label="Start voice check-in recording"
+                className="mx-auto mt-6 w-20 h-20 rounded-full border border-amber-400/70 bg-amber-400/10 shadow-[0_0_0_6px_rgba(245,158,11,0.10)] flex items-center justify-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Mic className="w-7 h-7 text-amber-400 opacity-90" />
               </button>
-              <p className="text-sm text-white/50 mt-4">Press and hold to record</p>
+              <p className="text-sm text-white/50 mt-4">{serviceConsent ? "Select to begin recording" : "Choose whether to share audio before recording"}</p>
             </div>
           )}
         </div>

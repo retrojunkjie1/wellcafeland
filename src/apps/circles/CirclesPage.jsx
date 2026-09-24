@@ -6,14 +6,15 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { withFrom } from "@/navigation/linkState";
 import { Users, Heart, Sparkles, Calendar } from "lucide-react";
 import { listCircles, joinCircle, getUserCircles } from "@/services/circlesService";
-import PageHeader from "@/components/navigation/PageHeader";
 
 const CirclesPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [circles, setCircles] = useState([]);
   const [userCircles, setUserCircles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     loadCircles();
@@ -38,14 +39,18 @@ const CirclesPage = () => {
 
   const handleJoinCircle = async (circleId) => {
     setJoining(circleId);
+    setActionError("");
     try {
       const result = await joinCircle(circleId);
       if (result.ok) {
         await loadCircles(); // Reload to update membership
         navigate(`/circles/${circleId}`, withFrom(location));
+      } else {
+        setActionError(result.error || "We couldn’t join that circle. Please try again.");
       }
     } catch (err) {
       console.error("Failed to join circle:", err);
+      setActionError("We couldn’t join that circle. Please try again.");
     } finally {
       setJoining(null);
     }
@@ -66,7 +71,6 @@ const CirclesPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-white">
-        <PageHeader title="Recovery Circles" />
         <div className="flex items-center justify-center p-12">
           <div className="text-white/50">Loading circles...</div>
         </div>
@@ -76,14 +80,16 @@ const CirclesPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <PageHeader
-        title="Recovery Circles"
-        subtitle="Join a community for reflection and support"
-      />
       <div className="lux-shell py-10">
+        {actionError && <p role="alert" className="mb-4 rounded-xl border border-rose-300/20 bg-rose-400/[0.06] px-4 py-3 text-sm text-rose-100/85">{actionError}</p>}
         {circles.length === 0 ? (
-          <div className="flex items-center justify-center p-12">
-            <div className="text-white/50">No circles available yet</div>
+          <div className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center sm:p-8">
+            <h2 className="text-lg font-medium text-white">No circles are available right now</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/60">You can explore other ways to connect or find local support while community circles are unavailable.</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-3">
+              <button type="button" onClick={() => navigate("/social/feed")} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-white/85 hover:bg-white/5">Explore community</button>
+              <button type="button" onClick={() => navigate("/assistance")} className="min-h-11 rounded-full border border-amber-200/20 px-4 text-sm text-amber-100/85 hover:bg-amber-100/5">Find local support</button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,4 +143,3 @@ const CirclesPage = () => {
 };
 
 export default CirclesPage;
-

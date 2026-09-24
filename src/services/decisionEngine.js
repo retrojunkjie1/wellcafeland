@@ -10,7 +10,7 @@ import { ContextMemory } from "./contextMemory";
  * Determine guide response strategy based on user text
  * This is the central brain that integrates all analysis
  */
-export async function determineGuideResponse(userText) {
+export async function determineGuideResponse(userText, { allowEmotionAnalysis = true, trackEmotionalHistory = true } = {}) {
   if (!userText || typeof userText !== "string") {
     return {
       emotion: { emotion: "neutral", intensity: 1, cues: [], urgency: "low" },
@@ -23,12 +23,15 @@ export async function determineGuideResponse(userText) {
   }
 
   // Run all analyses
-  const emotion = analyzeEmotionalState(userText);
+  const emotion = allowEmotionAnalysis
+    ? analyzeEmotionalState(userText)
+    : { emotion: "neutral", intensity: 1, cues: [], urgency: "low" };
   const spirit = analyzeSpiritualState(userText);
   const forecast = forecastRecoveryRisk(emotion.emotion, userText);
 
   // Update context memory
-  ContextMemory.setLastEmotionalState(emotion);
+  if (allowEmotionAnalysis) ContextMemory.setLastEmotionalState(emotion);
+  else ContextMemory.setLastEmotionalState(null);
   if (spirit.spiritualNeed) {
     ContextMemory.setLastSpiritualNeed(spirit.spiritualNeed);
   }
@@ -65,14 +68,16 @@ export async function determineGuideResponse(userText) {
     spirit.spiritualNeed === "grounding";
 
   // Add to conversation history
-  ContextMemory.addToHistory({
-    text: userText.substring(0, 200), // Store first 200 chars
-    emotion: emotion.emotion,
-    intensity: emotion.intensity,
-    spiritualNeed: spirit.spiritualNeed,
-    riskLevel: forecast.riskLevel,
-    intervention: forecast.recommendedIntervention,
-  });
+  if (allowEmotionAnalysis && trackEmotionalHistory) {
+    ContextMemory.addToHistory({
+      text: userText.substring(0, 200), // Store first 200 chars
+      emotion: emotion.emotion,
+      intensity: emotion.intensity,
+      spiritualNeed: spirit.spiritualNeed,
+      riskLevel: forecast.riskLevel,
+      intervention: forecast.recommendedIntervention,
+    });
+  }
 
   return {
     emotion,
@@ -87,4 +92,3 @@ export async function determineGuideResponse(userText) {
 export default {
   determineGuideResponse,
 };
-

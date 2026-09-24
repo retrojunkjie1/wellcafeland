@@ -8,17 +8,16 @@ import { saveResource } from "@/lib/savedResources";
 
 const DOMAIN_LABELS = {
   food: "Food & meals",
+  "food.essentials": "Food, meals & benefits",
   housing: "Housing",
   treatment: "Treatment",
   grants: "Grants & funding",
   programs: "Programs",
   real_help: "Real Help",
   other: "Resources",
+  government_assistance: "Benefits & practical assistance",
+  assistance: "Local practical support",
 };
-
-const REFINE_CHIPS = ["near me", "today", "women", "low cost"];
-
-const LOCATION_CHIPS = ["Denver, CO", "Houston, TX", "Lagos", "Abuja", "Other..."];
 
 export default function DirectoryResultsPanel({
   domain,
@@ -55,19 +54,7 @@ export default function DirectoryResultsPanel({
   if (!results || results.length === 0) {
     return (
       <div className="rounded-xl border border-white/10 bg-white/[0.06] p-4 space-y-3">
-        <p className="text-sm text-white/80">Tell me your city or state for better results.</p>
-        <div className="flex flex-wrap gap-2">
-          {LOCATION_CHIPS.map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => handleLocationChip(chip)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 text-white/90 hover:bg-white/20 border border-white/10 transition"
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
+        <p className="text-sm text-white/80">I couldn’t find a live local listing. Share your city, state, or ZIP code and I’ll help you narrow the next step. You can also open the full resource directory.</p>
         <button
           type="button"
           onClick={handleOpenDirectory}
@@ -107,11 +94,6 @@ export default function DirectoryResultsPanel({
         >
           Open full directory
         </button>
-        {REFINE_CHIPS.map((chip) => (
-          <span key={chip} className="px-2 py-1 rounded-md bg-white/5 text-white/50 text-[11px]">
-            {chip}
-          </span>
-        ))}
         {savedId ? (
           <span className="text-[11px] text-white/50 ml-auto">Saved</span>
         ) : null}

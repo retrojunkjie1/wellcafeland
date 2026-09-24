@@ -91,7 +91,12 @@ const ResourcesDetailPage = () => {
         backTo="/resources"
       />
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 max-w-3xl mx-auto w-full">
-        {item.verified && (
+        {item.curated && (
+          <p className="text-xs text-white/55 mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            Curated national resource. Contact the organization to confirm current availability, eligibility, costs, and local service details.
+          </p>
+        )}
+        {item.verified && !item.curated && (
           <span className="inline-flex items-center gap-1 text-xs text-amber-400 mb-4">
             <CheckCircle className="h-4 w-4" />
             Verified
@@ -102,6 +107,9 @@ const ResourcesDetailPage = () => {
             <MapPin className="h-4 w-4" />
             {item.location.region}
           </div>
+        )}
+        {(item.description || item.summary) && (
+          <p className="text-sm leading-7 text-white/75 mb-5">{item.description || item.summary}</p>
         )}
         {item.contact?.phone && (
           <a

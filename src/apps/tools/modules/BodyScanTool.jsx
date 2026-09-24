@@ -23,8 +23,6 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
   const [tensionLevels, setTensionLevels] = useState({}); // 0-10 scale
   const [notes, setNotes] = useState({});
   const [startTime] = useState(() => Date.now());
-  const [mostTenseArea, setMostTenseArea] = useState(null);
-  const [mostSoftenedArea, setMostSoftenedArea] = useState(null);
 
   const currentRegion = BODY_REGIONS[currentRegionIndex];
   const isFirst = currentRegionIndex === 0;
@@ -40,7 +38,7 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
   const handleNoteChange = (regionId, note) => {
     setNotes((prev) => ({
       ...prev,
-      [regionId]: note.trim(),
+      [regionId]: note,
     }));
   };
 
@@ -63,27 +61,19 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
     const durationSeconds = Math.floor((endTime - startTime) / 1000);
     
     // Find most tense area (highest tension level)
-    const tenseEntries = Object.entries(tensionLevels).filter(([_, level]) => level !== undefined);
+    const tenseEntries = Object.entries(tensionLevels);
+    let tenseArea = null;
     if (tenseEntries.length > 0) {
       const [mostTenseId] = tenseEntries.reduce((max, [id, level]) => 
         level > max[1] ? [id, level] : max, tenseEntries[0]
       );
-      setMostTenseArea(mostTenseId);
-    }
-
-    // Find area that softened most (if we tracked before/after, for now just use lowest tension)
-    const softEntries = Object.entries(tensionLevels).filter(([_, level]) => level !== undefined);
-    if (softEntries.length > 0) {
-      const [mostSoftId] = softEntries.reduce((min, [id, level]) => 
-        level < min[1] ? [id, level] : min, softEntries[0]
-      );
-      setMostSoftenedArea(mostSoftId);
+      tenseArea = mostTenseId;
     }
 
     const result = createToolResult(
       "body_scan",
       "Body Scan",
-      `Completed body scan through ${BODY_REGIONS.length} regions. Most tense: ${BODY_REGIONS.find(r => r.id === mostTenseArea)?.name || "noted"}`,
+      `Completed body scan through ${BODY_REGIONS.length} regions.`,
       {
         regionsScanned: BODY_REGIONS.length,
         tensionLevels: { ...tensionLevels },
@@ -91,8 +81,7 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
           if (notes[id]?.trim()) acc[id] = notes[id].trim();
           return acc;
         }, {}),
-        mostTenseArea: mostTenseArea || null,
-        mostSoftenedArea: mostSoftenedArea || null,
+        mostTenseArea: tenseArea,
       },
       durationSeconds
     );
@@ -104,18 +93,17 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
       durationMs: durationSeconds * 1000,
       context: {
         regionsScanned: BODY_REGIONS.length,
-        mostTenseArea: mostTenseArea || null,
       },
     }).catch(err => console.warn("Tool telemetry failed:", err));
 
     safeComplete(onComplete, result);
-  }, [startTime, tensionLevels, notes, mostTenseArea, mostSoftenedArea, onComplete]);
+  }, [startTime, tensionLevels, notes, onComplete]);
 
   const handleCancel = useCallback(() => {
     safeCancel(onCancel);
   }, [onCancel]);
 
-  const currentTension = tensionLevels[currentRegion.id] || 5;
+  const currentTension = tensionLevels[currentRegion.id] ?? 0;
 
   return (
     <div className="space-y-6">
@@ -135,7 +123,7 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
       {/* Instructions */}
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
         <p className="text-base text-white/70">
-          Bring gentle awareness to each part of your body. Notice sensations without judgment.
+          If it feels comfortable, notice this area. You can skip any region or stop at any time.
         </p>
         <p className="text-sm text-white/50">
           Region {currentRegionIndex + 1} of {BODY_REGIONS.length}
@@ -152,12 +140,15 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
         {/* Tension Level */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-base text-white/80">
-              How much tension do you notice here?
+            <label htmlFor={`tension-${currentRegion.id}`} className="text-base text-white/80">
+              Optional: how much tension do you notice here?
             </label>
-            <span className="text-2xl font-light text-white">{currentTension}</span>
+            <span className="text-sm text-white/60" aria-live="polite">
+              {tensionLevels[currentRegion.id] === undefined ? "Not rated" : currentTension}
+            </span>
           </div>
           <input
+            id={`tension-${currentRegion.id}`}
             type="range"
             min="0"
             max="10"
@@ -166,19 +157,21 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
             className="w-full"
           />
           <div className="flex justify-between text-xs text-white/50">
-            <span>Relaxed</span>
-            <span>Very Tense</span>
+            <span>None (0)</span>
+            <span>A lot (10)</span>
           </div>
         </div>
 
         {/* Optional Notes */}
         <div className="space-y-2">
-          <label className="text-sm text-white/70">Any sensations or notes? (optional)</label>
+          <label htmlFor={`body-note-${currentRegion.id}`} className="text-sm text-white/70">Any sensations or notes? (optional)</label>
           <textarea
+            id={`body-note-${currentRegion.id}`}
             value={notes[currentRegion.id] || ""}
             onChange={(e) => handleNoteChange(currentRegion.id, e.target.value)}
             placeholder="What do you notice in this area?"
             rows={3}
+            maxLength={1000}
             className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none resize-none"
           />
         </div>
@@ -204,6 +197,12 @@ const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fals
           </button>
         </div>
       </div>
+
+      {onCancel && (
+        <button type="button" onClick={handleCancel} className="min-h-11 rounded-lg px-3 text-sm text-white/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
+          Stop and leave
+        </button>
+      )}
 
       {/* Progress Indicator */}
       <div className="flex items-center justify-center gap-2">

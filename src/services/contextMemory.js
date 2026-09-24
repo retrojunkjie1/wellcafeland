@@ -149,7 +149,13 @@ export const ContextMemory = {
       console.warn("Failed to clear context memory:", err);
     }
   },
+
+  clearEmotionalAnalysis() {
+    const memory = getMemory();
+    memory.lastEmotionalState = null;
+    memory.conversationHistory = [];
+    saveMemory(memory);
+  },
 };
 
 export default ContextMemory;
-

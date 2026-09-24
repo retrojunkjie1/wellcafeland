@@ -31,7 +31,6 @@ const SessionPlayerPage = () => {
   }
 
   const handleStartAI = () => {
-    // Simple, clean prompt
     const sessionInfo = [
       template.title && `Session: ${template.title}`,
       template.summary && `About: ${template.summary}`,
@@ -51,7 +50,7 @@ const SessionPlayerPage = () => {
 
 ${stepsInfo}
 
-Guide me through this session. Speak simply, validate my feelings, and offer gentle options.`;
+Guide me through this session one short step at a time. Keep every step optional, use warm and simple language, and validate my experience without pressure or blame. Remind me that I can pause, skip a step, or stop whenever I want. Offer alternatives, including keeping my eyes open, focusing on a neutral object or sound, or letting my breath stay natural; never ask me to force or hold my breath or push through discomfort. Do not diagnose me or promise a health outcome. If I express that I may be in immediate danger, pause the practice and encourage me to contact local emergency services or a trusted person nearby.`;
 
     startWithPrompt(prompt.trim());
   };
@@ -82,6 +81,16 @@ Guide me through this session. Speak simply, validate my feelings, and offer gen
             </p>
           )}
         </div>
+
+        <aside
+          aria-label="Your choice during this session"
+          className="mb-8 rounded-2xl border border-border/60 bg-foreground/[0.03] p-4 sm:p-5"
+        >
+          <p className="text-sm font-medium text-foreground">You stay in control</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            This is an invitation, not an obligation. You can skip any step, take a break, or stop at any time. If focusing inward does not feel right, keep your eyes open and notice something neutral around you.
+          </p>
+        </aside>
 
         {/* Steps - simplified */}
         {Array.isArray(template.steps) && template.steps.length > 0 && (

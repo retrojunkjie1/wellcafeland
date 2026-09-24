@@ -12,8 +12,8 @@
 const ALL_TOOLS = [
   {
     id: "breathing",
-    name: "Breathing Exercises",
-    description: "4-7-8, Box, and Coherent breathing to calm your nervous system.",
+    name: "Breathing Practice",
+    description: "Choose a gentle pace, include optional holds, or follow your natural breath.",
     category: "body-breath",
     duration: "1-10 min",
     primaryAgentId: "healer_breathwork",
@@ -39,7 +39,7 @@ const ALL_TOOLS = [
   {
     id: "body-scan",
     name: "Body Scan",
-    description: "Progressive body awareness from head to toe. Notice tension and release.",
+    description: "Optional body-awareness prompts. Move at your own pace and skip any region.",
     category: "body-breath",
     duration: "~10 min",
     primaryAgentId: "healer_grounding",
@@ -65,7 +65,7 @@ const ALL_TOOLS = [
   {
     id: "self-surgeon",
     name: "Self-Inquiry",
-    description: "Explore what's present with curiosity. Reframe harsh self-talk with compassion.",
+    description: "Explore a situation with optional, compassionate prompts.",
     category: "mind-thoughts",
     duration: "~10 min",
     primaryAgentId: "healer_mindfulness",
@@ -91,7 +91,7 @@ const ALL_TOOLS = [
   {
     id: "urge-surfing",
     name: "Urge Surfing",
-    description: "Ride the wave of cravings and urges without acting. Track intensity before and after.",
+    description: "A timed pause with optional reflection and check-ins. Choose the support you need.",
     category: "stress-crisis",
     duration: "3-10 min",
     primaryAgentId: "sentinel",
@@ -112,6 +112,32 @@ const ALL_TOOLS = [
     tags: ["meditation", "mindfulness", "focus", "calm"],
     recommendedFor: ["anxiety", "focus", "stress", "sleep"],
     icon: "🧘",
+    public: true,
+  },
+  {
+    id: "acuwellness",
+    name: "Acupressure-Inspired Self-Care",
+    description: "Optional, gentle touch practices. No pressure points or outcomes are required.",
+    category: "body-breath",
+    duration: "Optional",
+    primaryAgentId: "healer_acuwellness",
+    telemetryEventKey: "tool_acuwellness",
+    tags: ["acuwellness", "self-care", "body-awareness"],
+    recommendedFor: ["self-care", "body-awareness"],
+    icon: "🤲",
+    public: true,
+  },
+  {
+    id: "affirmations",
+    name: "Supportive Phrases",
+    description: "Explore optional phrases for a concern you choose. Keep only what feels true to you.",
+    category: "mind-thoughts",
+    duration: "Optional",
+    primaryAgentId: "healer_spiritual",
+    telemetryEventKey: "tool_affirmations",
+    tags: ["affirmations", "self-compassion", "reflection"],
+    recommendedFor: ["self-compassion", "reflection"],
+    icon: "✨",
     public: true,
   },
 ];
@@ -160,4 +186,3 @@ export function getToolsByCategory(category) {
 export function getToolsForConcern(concern) {
   return TOOLS.filter((tool) => tool.recommendedFor.includes(concern));
 }
-

@@ -30,26 +30,23 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'list' }) =>
         <Link
           to={`/tools/${tool.id}`}
           {...withFrom(location)}
-          className="block glass-panel w-full flex items-center gap-3 px-3 py-2.5 transition hover:border-white/20 hover:bg-white/8 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/80"
+          className="glass-panel group flex w-full items-start gap-3 px-3 py-3 transition hover:border-white/20 hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/80 sm:items-center"
         >
-          <div className="text-base text-white/50 flex-shrink-0 group-hover:text-white/70 transition">
-            {/* Icon placeholder - tools don't have icons yet */}
-          </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2 mb-0.5">
-              <h3 className="text-sm font-medium text-white truncate">
+            <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <h3 className="min-w-0 max-w-full text-sm font-medium leading-snug text-white [overflow-wrap:anywhere]">
                 {tool.title}
               </h3>
               <span className="rounded-full border border-emerald-300/50 bg-emerald-300/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-emerald-100/80 flex-shrink-0">
                 Low
               </span>
             </div>
-            <p className="text-xs text-white/55 leading-relaxed line-clamp-1">
+            <p className="line-clamp-2 text-xs leading-relaxed text-white/55">
               {tool.summary}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="text-[10px] text-white/40">{categoryLabel(tool.category)}</span>
+          <div className="hidden shrink-0 items-center gap-2 md:flex">
+            <span className="max-w-24 truncate text-[10px] text-white/40">{categoryLabel(tool.category)}</span>
             {tool.tags?.[0] && (
               <span className="text-[10px] text-white/35">• {tool.tags[0]}</span>
             )}

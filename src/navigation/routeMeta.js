@@ -18,6 +18,7 @@ export const ROUTE_META = [
   { pattern: "/explore", title: "Explore", parent: "/home", breadcrumb: false },
   { pattern: "/tools", title: "Tools", parent: "/home", breadcrumb: false },
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", breadcrumb: true },
+  { pattern: "/tools/grounding/54321", title: "5–4–3–2–1 Grounding", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", breadcrumb: true },
@@ -140,4 +141,3 @@ export function resolveParentPath(currentPattern, currentPathname, parentPattern
   // if unresolved still has params, fallback
   return resolved.includes(":") ? "/home" : resolved;
 }
-

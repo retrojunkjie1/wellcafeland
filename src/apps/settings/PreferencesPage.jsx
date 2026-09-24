@@ -24,12 +24,14 @@ const PreferencesPage = () => {
             Appearance
           </h2>
           <p className="text-xs text-white/60 mb-3">
-            Theme, contrast, and reading comfort.
+            Choose a light, dark, or system theme.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             <button
+              type="button"
+              aria-pressed={settings.themeMode === "deep-night"}
               onClick={() => setThemeMode("deep-night")}
-              className={`rounded-xl border px-3 py-2 text-xs transition ${
+              className={`min-h-11 rounded-xl border px-3 py-2 text-xs transition ${
                 settings.themeMode === "deep-night"
                   ? "border-amber-400/60 bg-amber-400/10 text-amber-50 hover:bg-amber-400/20"
                   : "border-white/12 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
@@ -38,8 +40,10 @@ const PreferencesPage = () => {
               Deep Night
             </button>
             <button
+              type="button"
+              aria-pressed={settings.themeMode === "dawn"}
               onClick={() => setThemeMode("dawn")}
-              className={`rounded-xl border px-3 py-2 text-xs transition ${
+              className={`min-h-11 rounded-xl border px-3 py-2 text-xs transition ${
                 settings.themeMode === "dawn"
                   ? "border-amber-400/60 bg-amber-400/10 text-amber-50 hover:bg-amber-400/20"
                   : "border-white/12 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
@@ -48,8 +52,10 @@ const PreferencesPage = () => {
               Dawn
             </button>
             <button
+              type="button"
+              aria-pressed={settings.themeMode === "system"}
               onClick={() => setThemeMode("system")}
-              className={`rounded-xl border px-3 py-2 text-xs transition ${
+              className={`min-h-11 rounded-xl border px-3 py-2 text-xs transition ${
                 settings.themeMode === "system"
                   ? "border-amber-400/60 bg-amber-400/10 text-amber-50 hover:bg-amber-400/20"
                   : "border-white/12 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
@@ -64,12 +70,14 @@ const PreferencesPage = () => {
             Text & Layout
           </h2>
           <p className="text-xs text-white/60 mb-3">
-            Control font size and density.
+            Control the spacing around client pages.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
+              type="button"
+              aria-pressed={settings.interfaceDensity === "compact"}
               onClick={() => setInterfaceDensity("compact")}
-              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              className={`min-h-11 rounded-full border px-4 py-1.5 text-xs transition ${
                 settings.interfaceDensity === "compact"
                   ? "border-amber-400/60 bg-amber-400/10 text-amber-50 hover:bg-amber-400/20"
                   : "border-white/12 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
@@ -78,8 +86,10 @@ const PreferencesPage = () => {
               Compact
             </button>
             <button
+              type="button"
+              aria-pressed={settings.interfaceDensity === "cozy"}
               onClick={() => setInterfaceDensity("cozy")}
-              className={`rounded-full border px-3 py-1.5 text-xs transition ${
+              className={`min-h-11 rounded-full border px-4 py-1.5 text-xs transition ${
                 settings.interfaceDensity === "cozy"
                   ? "border-amber-400/60 bg-amber-400/10 text-amber-50 hover:bg-amber-400/20"
                   : "border-white/12 bg-white/[0.02] text-white/70 hover:bg-white/[0.06]"
@@ -95,4 +105,3 @@ const PreferencesPage = () => {
 };
 
 export default PreferencesPage;
-

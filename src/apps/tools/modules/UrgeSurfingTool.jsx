@@ -7,18 +7,18 @@ import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract
 import { logToolUsage } from "@/services/toolTelemetry";
 
 const COACH_INSTRUCTIONS = {
-  rising: "The urge is rising. Notice it without judgment. You don't need to act on it.",
-  peak: "You're at the peak. This is the hardest moment. Stay with it. The wave will pass.",
-  falling: "The wave is receding. Notice how the intensity is decreasing. You're doing it.",
-  passed: "The wave has passed. You rode it out. Notice how you feel now.",
+  rising: "If it feels useful, notice what is happening in this moment. You can choose what support you need.",
+  peak: "You can pause, stop, or reach out for support at any point. There is no required way to feel.",
+  falling: "Notice any change—or no change—without needing to judge it.",
+  passed: "This practice is ending. The urge may have changed, stayed the same, or increased.",
 };
 
 const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = false }) => {
   const [mode, setMode] = useState(null); // "3min" or "10min"
   const [step, setStep] = useState(1); // 1: name, 2: rate before, 3: timer, 4: rate after, 5: reflection
   const [urgeName, setUrgeName] = useState("");
-  const [intensityBefore, setIntensityBefore] = useState(5);
-  const [intensityAfter, setIntensityAfter] = useState(5);
+  const [intensityBefore, setIntensityBefore] = useState(null);
+  const [intensityAfter, setIntensityAfter] = useState(null);
   const [reflection, setReflection] = useState("");
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -45,18 +45,16 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
   const handleComplete = useCallback(() => {
     const endTime = Date.now();
     const durationSeconds = Math.floor((endTime - startTime) / 1000);
-    const improvement = intensityBefore - intensityAfter;
-
     const result = createToolResult(
       "urge_surfing",
       "Urge Surfing",
-      `Rode the wave for ${mode}. Intensity ${improvement > 0 ? `decreased from ${intensityBefore} to ${intensityAfter}` : `changed from ${intensityBefore} to ${intensityAfter}`}`,
+      `Completed an urge-surfing practice (${mode}).`,
       {
         mode,
         urgeName,
         intensityBefore,
         intensityAfter,
-        improvement,
+        improvement: intensityBefore !== null && intensityAfter !== null ? intensityBefore - intensityAfter : null,
         reflection: reflection.trim() || null,
         durationMinutes: Math.floor(durationSeconds / 60),
       },
@@ -70,9 +68,7 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
       durationMs: durationSeconds * 1000,
       context: {
         mode,
-        intensityBefore,
-        intensityAfter,
-        improvement,
+        // Do not send urge ratings to analytics telemetry.
       },
     }).catch(err => console.warn("Tool telemetry failed:", err));
 
@@ -91,8 +87,9 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
   }, [isTimerActive, onCancel]);
 
   const handleNext = useCallback(() => {
-    if (step === 1 && !urgeName.trim()) return;
-    if (step === 2) {
+    if (step === 1) {
+      setStep(2);
+    } else if (step === 2) {
       setStep(3);
       setIsTimerActive(true);
     } else if (step === 3) {
@@ -161,7 +158,7 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
         <div className="rounded-lg border border-white/10 bg-white/5 p-4 sm:p-5 w-full">
           <h3 className="text-base sm:text-lg font-medium text-white mb-2">Choose Duration</h3>
           <p className="text-sm sm:text-base text-white/60 mb-4 break-words">
-            Select how long you want to ride the wave.
+            Choose an optional guide duration. You can stop or check in early.
           </p>
           <div className="flex gap-3 w-full">
             <button
@@ -206,19 +203,20 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
             Step 1: Name the Urge
           </h3>
           <p className="text-sm sm:text-base text-white/60 mb-4 break-words">
-            What are you feeling the urge to do? Be specific and honest.
+            Naming the urge is optional. A broad label or no detail is enough.
           </p>
           <input
             type="text"
             value={urgeName}
             onChange={(e) => setUrgeName(e.target.value)}
-            placeholder="e.g., use substances, binge eat, self-harm..."
+            placeholder="Optional: a word such as 'urge' or 'craving'"
+            maxLength={120}
+            aria-label="Optional name for the urge"
             className="w-full rounded-lg border border-white/10 bg-white/5 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none"
           />
           <button
             type="button"
             onClick={handleNext}
-            disabled={!urgeName.trim()}
             className="w-full rounded-lg bg-white/10 px-4 py-3 sm:py-2.5 text-sm sm:text-base font-medium text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
           >
             Next →
@@ -240,14 +238,15 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
               type="range"
               min="0"
               max="10"
-              value={intensityBefore}
+              value={intensityBefore ?? 0}
+              aria-label="Optional starting urge intensity, from 0 to 10"
               onChange={(e) => setIntensityBefore(parseInt(e.target.value, 10))}
               className="w-full"
             />
             <div className="text-center">
-              <span className="text-4xl font-light text-white">{intensityBefore}</span>
+              <span className="text-4xl font-light text-white">{intensityBefore ?? "—"}</span>
               <p className="text-sm text-white/50 mt-1">
-                {intensityBefore <= 3
+                {intensityBefore === null ? "Not rated" : intensityBefore <= 3
                   ? "Mild"
                   : intensityBefore <= 6
                   ? "Moderate"
@@ -264,6 +263,7 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
           >
             Start Riding the Wave →
           </button>
+          <button type="button" onClick={handleNext} className="min-h-11 w-full rounded-lg text-sm text-white/55 underline underline-offset-4 hover:text-white">Skip rating</button>
         </div>
       )}
 
@@ -272,7 +272,7 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
         <div className="rounded-lg border border-white/10 bg-white/5 p-6 text-center space-y-6 animate-fade-in">
           <h3 className="text-lg font-medium text-white mb-2">Ride the Wave</h3>
           <p className="text-base text-white/60 mb-4">
-            The urge is like a wave. It will rise, peak, and fall. You don't need to act on it. Just observe it.
+            This is a timed pause, not a prediction. Urges vary; stop, skip ahead, or seek support whenever you choose.
           </p>
           
           {/* Timeline Progress Bar */}
@@ -327,18 +327,21 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
               type="range"
               min="0"
               max="10"
-              value={intensityAfter}
+              value={intensityAfter ?? 0}
+              aria-label="Optional current urge intensity, from 0 to 10"
               onChange={(e) => setIntensityAfter(parseInt(e.target.value, 10))}
               className="w-full"
             />
             <div className="text-center">
-              <span className="text-4xl font-light text-white">{intensityAfter}</span>
+              <span className="text-4xl font-light text-white">{intensityAfter ?? "—"}</span>
               <p className="text-sm text-white/50 mt-1">
-                {intensityAfter < intensityBefore
-                  ? "✓ The wave is receding"
+              {intensityBefore === null || intensityAfter === null
+                  ? "Not rated"
+                  : intensityAfter < intensityBefore
+                  ? "Lower than your first rating"
                   : intensityAfter === intensityBefore
-                  ? "The wave is holding"
-                  : "The wave may still be rising"}
+                  ? "About the same as your first rating"
+                  : "Higher than your first rating"}
               </p>
             </div>
           </div>
@@ -349,6 +352,7 @@ const UrgeSurfingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = f
           >
             Continue →
           </button>
+          <button type="button" onClick={handleNext} className="min-h-11 w-full rounded-lg text-sm text-white/55 underline underline-offset-4 hover:text-white">Skip rating</button>
         </div>
       )}
 

@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { callAgent } from "../../../agents/aiAgents";
 import { logToolUsage } from "../../../services/toolTelemetry";
 import { trackAction } from "../../../services/telemetry";
+import { createToolResult, safeComplete } from "@/utils/toolContract";
 
 const DURATIONS = [3, 5, 10, 15, 20];
 
-const MeditationTool = ({ tool }) => {
+const MeditationTool = ({ tool, onComplete }) => {
   const [selectedDuration, setSelectedDuration] = useState(5);
   const [isActive, setIsActive] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(5 * 60); // seconds
@@ -15,6 +16,7 @@ const MeditationTool = ({ tool }) => {
   const [isGeneratingTheme, setIsGeneratingTheme] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const intervalRef = useRef(null);
+  const completionHandledRef = useRef(false);
 
   useEffect(() => {
     if (isActive && timeRemaining > 0) {
@@ -79,6 +81,7 @@ const MeditationTool = ({ tool }) => {
   };
 
   const handleStart = () => {
+    completionHandledRef.current = false;
     setStartTime(new Date().getTime());
     setIsActive(true);
     setTimeRemaining(selectedDuration * 60);
@@ -96,12 +99,13 @@ const MeditationTool = ({ tool }) => {
     setIsActive(true);
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     setIsActive(false);
-    if (startTime) {
+    if (startTime && !completionHandledRef.current) {
+      completionHandledRef.current = true;
       const now = new Date().getTime();
       const durationMs = now - startTime;
-      await logToolUsage(tool.id, {
+      logToolUsage(tool.id, {
         startedAt: startTime,
         completedAt: now,
         durationMs,
@@ -109,7 +113,14 @@ const MeditationTool = ({ tool }) => {
         context: {
           theme: meditationTheme,
         },
-      });
+      }).catch((error) => console.warn("Meditation telemetry failed:", error));
+      safeComplete(onComplete, createToolResult(
+        tool.id,
+        tool.name || "Guided practice",
+        `Completed a ${selectedDuration}-minute timed practice.`,
+        { durationMinutes: selectedDuration },
+        Math.floor(durationMs / 1000)
+      ));
       setStartTime(null);
     }
   };
@@ -232,4 +243,3 @@ const MeditationTool = ({ tool }) => {
 };
 
 export default MeditationTool;
-
