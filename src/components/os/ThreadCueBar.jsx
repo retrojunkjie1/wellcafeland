@@ -5,7 +5,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 
-const ANCHOR_SENTENCE = "You don't have to explain. Start with one breath.";
+const ANCHOR_SENTENCE = "No need to explain. Start wherever you are.";
 
 const ThreadCueBar = ({ onContinue }) => {
   const navigate = useNavigate();
