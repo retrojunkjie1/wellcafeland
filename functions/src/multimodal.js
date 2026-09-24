@@ -14,7 +14,16 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5182",
   "https://wellnesscafe.net",
   "https://www.wellnesscafe.net",
+  "https://wellnesscafelanding.web.app",
 ];
+
+const WELLNESS_VOICE_INSTRUCTIONS = [
+  "Speak as a grounded, compassionate wellness guide: warm, clear, emotionally present, and quietly confident.",
+  "Use natural conversational pacing with gentle variation and small pauses between thoughts.",
+  "Sound reassuring without being saccharine, breathy, theatrical, or clinical. Avoid a polished commercial-announcer delivery.",
+  "Pronounce names and resource acronyms clearly. Read the provided words faithfully; do not add advice, interpretation, or extra words.",
+].join(" ");
+const MAX_SPEECH_CHARACTERS = 4096;
 
 let _openai = null
 function getOpenAI() {
@@ -122,9 +131,11 @@ exports.chat = onRequest(
       if (needsAudio || emotional.panic) {
         try {
           const speech = await openai.audio.speech.create({
-            model: "tts-1",
-            voice: "alloy",
-            input: reply,
+            model: "gpt-4o-mini-tts",
+            voice: "coral",
+            input: reply.slice(0, MAX_SPEECH_CHARACTERS),
+            instructions: WELLNESS_VOICE_INSTRUCTIONS,
+            speed: 0.96,
           });
 
           const buf = Buffer.from(await speech.arrayBuffer());
@@ -171,13 +182,18 @@ exports.tts = onRequest(
     }
 
     try {
-      const { text } = req.body;
+      const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
       if (!text) return res.status(400).json({ error: "Missing text" });
+      if (text.length > MAX_SPEECH_CHARACTERS) {
+        return res.status(413).json({ error: "Text is too long for a single voice response" });
+      }
 
       const speech = await openai.audio.speech.create({
-        model: "tts-1",
-        voice: "alloy",
+        model: "gpt-4o-mini-tts",
+        voice: "coral",
         input: text,
+        instructions: WELLNESS_VOICE_INSTRUCTIONS,
+        speed: 0.96,
       });
 
       const buf = Buffer.from(await speech.arrayBuffer());

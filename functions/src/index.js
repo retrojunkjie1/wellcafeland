@@ -34,6 +34,7 @@ exports.multimodalChat = onRequest(
       "http://localhost:5182",
       "https://wellnesscafe.net",
       "https://www.wellnesscafe.net",
+      "https://wellnesscafelanding.web.app",
     ],
     secrets: ["OPENAI_API_KEY"],
   },

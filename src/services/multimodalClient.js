@@ -654,7 +654,7 @@ export async function speakText(text, options = {}) {
       },
       body: JSON.stringify({
         text: text.trim(),
-        voice: options.voice || "alloy",
+        voice: options.voice || "coral",
       }),
       signal: (() => {
         const controller = new AbortController();

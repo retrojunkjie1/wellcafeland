@@ -40,6 +40,15 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Deploy voice functions
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          credential_file="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$credential_file"
+          GOOGLE_APPLICATION_CREDENTIALS="$credential_file" npx --yes firebase-tools deploy --only functions:multimodalTts,functions:multimodalChat --project wellnesscafelanding --non-interactive
+          rm -f "$credential_file"
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
