@@ -8,6 +8,15 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    env:
+      VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+      VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+      VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+      VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.VITE_FIREBASE_STORAGE_BUCKET }}
+      VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+      VITE_FIREBASE_MEASUREMENT_ID: ${{ vars.VITE_FIREBASE_MEASUREMENT_ID }}
+      VITE_FIREBASE_FUNCTIONS_URL: ${{ vars.VITE_FIREBASE_FUNCTIONS_URL }}
 
     steps:
       - name: Checkout repository
@@ -20,6 +29,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Validate Firebase client configuration
+        run: |
+          node -e 'const keys=["VITE_FIREBASE_API_KEY","VITE_FIREBASE_AUTH_DOMAIN","VITE_FIREBASE_PROJECT_ID","VITE_FIREBASE_STORAGE_BUCKET","VITE_FIREBASE_MESSAGING_SENDER_ID","VITE_FIREBASE_APP_ID","VITE_FIREBASE_FUNCTIONS_URL"];const missing=keys.filter((key)=>!process.env[key]);if(missing.length){console.error(`Missing Firebase build variables: ${missing.join(", ")}`);process.exit(1)}if(process.env.VITE_FIREBASE_PROJECT_ID!=="wellnesscafelanding"){throw new Error("Firebase project mismatch")}console.log("Firebase build configuration is present for wellnesscafelanding")'
+
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build
