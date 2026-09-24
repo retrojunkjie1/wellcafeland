@@ -97,7 +97,6 @@ const AdminConsolePage = lazy(() => import("./apps/dashboard/AdminConsolePage"))
 
 const ThemeControlPanel = lazy(() => import("./admin/ThemeControlPanel"));
 const TemplatesManagerPage = lazy(() => import("./apps/admin/TemplatesManagerPage"));
-const OverseerConsolePage = lazy(() => import("./apps/admin/OverseerConsolePage"));
 const OverseerConsoleUltra = lazy(() => import("./apps/overseer/OverseerConsoleUltra").then((module) => ({ default: module.OverseerConsoleUltra })));
 const ContentStudioPage = lazy(() => import("./apps/admin/ContentStudioPage"));
 const SeedDataPage = lazy(() => import("./apps/admin/SeedDataPage"));
@@ -358,9 +357,7 @@ const App = () => {
             element={
               <RequireAuth>
                 <RequireAdmin>
-                  <AdminRoute>
-                    <AdminConsolePage />
-                  </AdminRoute>
+                  <AdminConsolePage />
                 </RequireAdmin>
               </RequireAuth>
             }
@@ -406,9 +403,7 @@ const App = () => {
             element={
               <RequireAuth>
                 <RequireAdmin>
-                  <AdminRoute>
-                    <OverseerConsolePage />
-                  </AdminRoute>
+                  <Navigate to="/admin/console" replace />
                 </RequireAdmin>
               </RequireAuth>
             }

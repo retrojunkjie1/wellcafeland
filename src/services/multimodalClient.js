@@ -6,6 +6,8 @@ import { isDebugEnabled, logDebug } from "@/lib/debug";
 import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
 import { observe, interpret, adapt, optimize } from "@/core/system/intelligenceEngine";
 import { trackLatency, trackNetworkEvent } from "@/telemetry/telemetry";
+import { callAI } from "@/services/aiClient";
+import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
 
 function buildEndpoint(path) {
   const base = resolveFunctionsBaseUrl();
@@ -894,7 +896,7 @@ export async function detectEmotionFromText(text) {
  * @param {Blob} audioBlob - Audio blob to transcribe and process
  * @returns {Promise<Object>}
  */
-export async function sendVoiceSession(audioBlob) {
+export async function sendVoiceSession(audioBlob, { memoryEnabled = false } = {}) {
   try {
     if (!audioBlob) {
       return { ok: false, error: "No audio provided" };
@@ -940,10 +942,13 @@ export async function sendVoiceSession(audioBlob) {
       };
     }
 
-    const aiResponse = await guideEngine(transcript, {
-      mode: emotion.intensity >= 4 ? "audio" : "default",
-      preferences: {
-        tone: emotion.emotionalState === "anxious" ? "gentle" : "practical",
+    const aiResponse = await callAI("aiSession", {
+      mode: "chat",
+      messages: [{ role: "user", content: transcript }],
+      memoryContext: getConversationMemoryContext(memoryEnabled),
+      metadata: {
+        source: "voice-session",
+        preferredTone: emotion.emotionalState === "anxious" ? "gentle" : "practical",
       },
     });
 
@@ -959,16 +964,20 @@ export async function sendVoiceSession(audioBlob) {
       };
     }
 
+    const responseText = aiResponse.text || aiResponse.assistantText || "";
+    if (!responseText.trim()) {
+      return { ok: false, error: "The guide returned an empty response. Please try again.", type: "voice-session", transcript };
+    }
+    rememberConversationTurn({ user: transcript, assistant: responseText, enabled: memoryEnabled });
+
     let audioUrl = null;
-    if (aiResponse.audio || emotion.intensity >= 3) {
-      try {
-        const audioResult = await speakText(aiResponse.content);
-        if (audioResult.ok && audioResult.audioUrl) {
-          audioUrl = audioResult.audioUrl;
-        }
-      } catch (err) {
-        console.warn("Failed to generate audio response:", err);
+    try {
+      const audioResult = await speakText(responseText);
+      if (audioResult.ok && audioResult.audioUrl) {
+        audioUrl = audioResult.audioUrl;
       }
+    } catch (err) {
+      console.warn("Failed to generate audio response:", err);
     }
 
     let videoUrl = null;
@@ -981,14 +990,12 @@ export async function sendVoiceSession(audioBlob) {
                       lowerTranscript.includes("stretch") ||
                       emotion.emotionalState === "anxious" && emotion.intensity >= 4;
 
-    if (needsVideo && aiResponse.video) {
-      videoUrl = aiResponse.video;
-    }
+    if (needsVideo) videoUrl = null;
 
     return {
       ok: true,
       type: "voice-session",
-      text: aiResponse.content,
+      text: responseText,
       transcript,
       audioUrl: audioUrl || aiResponse.audio || null,
       videoUrl: videoUrl || aiResponse.video || null,

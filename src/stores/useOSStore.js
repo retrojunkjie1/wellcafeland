@@ -500,6 +500,7 @@ export const useOSStore = create((set, get) => ({
     allowEmotionFromChat: false,
     allowFaceSignals: false,
     trajectoryTrackingEnabled: true,
+    personalizationMemoryEnabled: false,
     recoveryMode: "standard",     // "gentle" | "standard" | "intensive"
 
     // Notifications
@@ -607,6 +608,19 @@ export const useOSStore = create((set, get) => ({
       saveLocalSettings(settings);
       if (!value) ContextMemory.clearEmotionalAnalysis();
       return value ? { settings } : { settings, emotionalHistory: [], lastCrisisForecast: null };
+    }),
+
+  setPersonalizationMemoryEnabled: (value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        personalizationMemoryEnabled: Boolean(value),
+      };
+      saveLocalSettings(settings);
+      if (!value) {
+        import("@/services/conversationMemory").then(({ clearConversationMemory }) => clearConversationMemory());
+      }
+      return { settings };
     }),
 
   setRecoveryMode: (mode) =>

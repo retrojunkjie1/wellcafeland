@@ -7,6 +7,8 @@
 // This endpoint is used for agent orchestration, not primary conversational AI
 import { callAiSession } from "@/services/aiSessionClient";
 
+export const LIVE_AGENT_IDS = new Set(["seer", "oracle", "overseer", "sentinel", "healer_spiritual"]);
+
 /**
  * Call an AI agent with payload
  * @param {string} agent - Agent ID (seer, oracle, overseer, sentinel)
@@ -14,12 +16,16 @@ import { callAiSession } from "@/services/aiSessionClient";
  * @returns {Promise<object|null>} Agent response or null on error
  */
 export const callAgent = async (agent, payload = {}) => {
-  try {
-    return await callAiSession({ mode: "agent", agent, ...payload });
-  } catch (err) {
-    console.error("Agent call error", agent, err);
-    return null;
+  const response = await callAiSession({ mode: "agent", agent, ...payload });
+  if (!response || response.success !== true) {
+    const message = response?.error?.message || response?.error || `Agent ${agent} did not complete successfully.`;
+    throw new Error(typeof message === "string" ? message : `Agent ${agent} did not complete successfully.`);
   }
+  const result = response.result || {};
+  const reply = result.phrases?.length
+    ? result.phrases.map((phrase) => `• ${phrase}`).join("\n")
+    : result.reply || result.summary || result.wisdom || result.message || JSON.stringify(result);
+  return { ...response, ...result, result, reply };
 };
 
 // 🔭 The Seer: reads telemetry & patterns
@@ -41,4 +47,3 @@ export const runOverseer = async (stateSnapshot,goal)=>{
 export const runSentinel = async (telemetryBatch,thresholds)=>{
   return await callAgent("sentinel",{telemetry:telemetryBatch,thresholds});
 };
-

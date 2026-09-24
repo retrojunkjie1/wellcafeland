@@ -5,6 +5,7 @@
 // NO side-effects, NO React imports.
 
 import { getAgentById } from "./agentRegistry";
+import { callAgent as callRegisteredAgent } from "@/agents/aiAgents";
 
 /**
  * Calls the specified intelligence agent.
@@ -20,32 +21,15 @@ export async function callAgent(agentId, payload = {}) {
     throw new Error(`Agent "${agentId}" not found in registry`);
   }
 
-  if (!agent.enabledByDefault) {
-    console.warn(`[agentClient] Agent "${agent.name}" is disabled by default`);
-  }
-
-  // TODO: Replace this placeholder with an actual LLM / fusion-engine call
-  // Example: return await fusionEngine.call(agent, payload);
-  console.log(`[agentClient] Calling ${agent.name} (${agentId})`, payload);
-
-  // Simulate a short network delay (remove in production)
-  await new Promise((resolve) => setTimeout(resolve, 350));
-
+  if (!agent.enabledByDefault) throw new Error(`${agent.name} is not enabled.`);
+  const response = await callRegisteredAgent(agentId, payload);
   return {
+    ...response,
     agentId: agent.id,
     agentName: agent.name,
-    timestamp: new Date().toISOString(),
     status: "success",
-    data: {
-      message: `Placeholder response from ${agent.name}`,
-      // In production this would contain the actual model output / recommendations
-      ...payload,
-    },
-    meta: {
-      role: agent.role,
-      priority: agent.priority,
-      scope: agent.scope,
-    },
+    data: { message: response.reply, ...payload },
+    meta: { ...response.meta, role: agent.role, priority: agent.priority, scope: agent.scope },
   };
 }
 

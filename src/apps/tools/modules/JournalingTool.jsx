@@ -12,27 +12,31 @@ import { logToolUsage } from "@/services/toolTelemetry";
 const JOURNAL_MODES = [
   {
     id: "dump",
-    name: "Open reflection",
-    description: "Write as much or as little as feels useful. You can skip anything.",
+    name: "Clear the page",
+    description: "Unload thoughts without organizing or fixing them. Stop when you have said enough.",
     placeholder: "Start anywhere, or leave this blank...",
+    prompts: ["What keeps returning to my mind?", "What do I wish I could say without being interrupted?", "What can I set down for the next hour?"],
   },
   {
     id: "gratitude",
-    name: "Gratitude for today",
-    description: "What are you grateful for right now?",
-    placeholder: "What are you grateful for today?",
+    name: "Small moments that mattered",
+    description: "Notice something supportive, meaningful, or simply okay. This can include mixed feelings; gratitude is never required.",
+    placeholder: "A small moment, comfort, person, or ordinary thing I noticed...",
+    prompts: ["What made today 1% easier?", "What did I do for myself that I want to acknowledge?", "What ordinary thing felt steady or comforting?"],
   },
   {
-    id: "fear",
-    name: "What feels present",
-    description: "Notice what is here, at your own pace. You do not need to solve it now.",
-    placeholder: "What feels present for you?",
+    id: "check-in",
+    name: "Name what is here",
+    description: "Sort the moment into feeling, need, and one possible support. No diagnosis or solution is expected.",
+    placeholder: "Right now I notice… I might need… One support I could choose is…",
+    prompts: ["What feeling is easiest to name?", "What is taking the most energy?", "What would help me feel 5% more supported?"],
   },
   {
-    id: "reflection",
-    name: "Reflection",
-    description: "Process what's happening in your life right now.",
-    placeholder: "What's present for you right now?",
+    id: "learning",
+    name: "Look back with care",
+    description: "Review one moment without grading yourself. Notice what you learned, what mattered, and what you want to try next.",
+    placeholder: "The moment… What I needed… What I want to remember…",
+    prompts: ["What went differently than I expected?", "What boundary or value mattered here?", "What would I tell someone I care about in this situation?"],
   },
 ];
 
@@ -147,6 +151,10 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
     }
   };
 
+  const addPrompt = (prompt) => {
+    setText((current) => `${current.trim() ? `${current.trim()}\n\n` : ""}${prompt}\n`);
+  };
+
   const handleCancel = useCallback(() => {
     safeCancel(onCancel);
   }, [onCancel]);
@@ -226,6 +234,16 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
       )}
 
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-4">
+        <div className="space-y-2" aria-label="Optional writing prompts">
+          <p className="text-xs font-medium uppercase tracking-wide text-white/50">Optional prompt cards · choose one or ignore them</p>
+          <div className="flex flex-wrap gap-2">
+            {selectedMode.prompts.map((prompt) => (
+              <button key={prompt} type="button" onClick={() => addPrompt(prompt)} className="min-h-10 rounded-full border border-white/10 px-3 py-2 text-left text-xs leading-relaxed text-white/70 transition hover:border-amber-200/30 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
         <label htmlFor="journal-entry" className="sr-only">Journal entry</label>
         <textarea
           id="journal-entry"

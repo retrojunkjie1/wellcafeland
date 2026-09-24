@@ -40,11 +40,6 @@ const ToolCard = ({ tool, variant = "list" }) => {
     "sleep-winddown": "Sleep & Wind-down",
   };
 
-  // Truncate description to 1-2 lines
-  const truncatedDescription = tool.description?.length > 100 
-    ? tool.description.substring(0, 100) + "..."
-    : tool.description;
-
   // List variant: compact row
   if (variant === "list") {
     return (
@@ -62,7 +57,7 @@ const ToolCard = ({ tool, variant = "list" }) => {
             </span>
           </div>
           <p className="text-xs leading-relaxed text-white/55 line-clamp-2">
-            {truncatedDescription}
+            {tool.description}
           </p>
         </div>
         <div className="hidden shrink-0 items-center gap-2 md:flex">
@@ -88,7 +83,7 @@ const ToolCard = ({ tool, variant = "list" }) => {
             </span>
           </div>
           <p className="text-xs text-white/60 leading-relaxed line-clamp-2 mb-1">
-            {truncatedDescription}
+            {tool.description}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <p className="text-[10px] uppercase tracking-wider text-white/40">

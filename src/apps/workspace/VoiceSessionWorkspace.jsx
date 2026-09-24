@@ -138,7 +138,8 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
   const handleProcessAudio = async (blob) => {
     setProcessing(true);
     try {
-      const result = await sendVoiceSession(blob);
+      const memoryEnabled = osStore.settings?.personalizationMemoryEnabled === true;
+      const result = await sendVoiceSession(blob, { memoryEnabled });
       
       if (result.ok) {
         setTranscript(result.transcript || "");
@@ -155,13 +156,15 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
         };
         setSessionData(session);
 
-        // Save to localStorage for anonymous users
-        try {
-          const existing = JSON.parse(localStorage.getItem("wc-voice-sessions") || "[]");
-          existing.push(session);
-          localStorage.setItem("wc-voice-sessions", JSON.stringify(existing.slice(-50))); // Keep last 50
-        } catch (err) {
-          console.warn("Failed to save voice session:", err);
+        // Voice transcripts are retained locally only when the user opted into conversation memory.
+        if (memoryEnabled) {
+          try {
+            const existing = JSON.parse(localStorage.getItem("wc-voice-sessions") || "[]");
+            existing.push(session);
+            localStorage.setItem("wc-voice-sessions", JSON.stringify(existing.slice(-50)));
+          } catch (err) {
+            console.warn("Failed to save voice session:", err);
+          }
         }
 
         // Add to chat
@@ -365,4 +368,3 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
 };
 
 export default VoiceSessionWorkspace;
-

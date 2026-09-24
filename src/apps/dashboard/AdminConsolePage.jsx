@@ -15,13 +15,6 @@ import { useAllClientAssignments } from "../../hooks/useClientAssignments";
 import { getRiskLevelColor } from "../../ai/predictive/predictiveConfig";
 import { useSystemSettingsStore } from "../../stores/systemSettingsStore";
 import {
-  hasAdminSession,
-  tryUnlockAdmin,
-  logoutAdmin,
-  getAdminKeyHint,
-  setAdminKeyHint,
-} from "../../services/adminAccess";
-import {
   Activity,
   AlertCircle,
   CheckCircle2,
@@ -48,13 +41,10 @@ import {
 
 // NEW IMPORT - this is the only new import we added
 import callAgent from "../../ai/agents/agentClient";
+import { LIVE_AGENT_IDS } from "../../agents/aiAgents";
 
 const AdminConsolePage = () => {
   const navigate = useNavigate();
-  const [isAdmin, setIsAdmin] = useState(hasAdminSession());
-  const [unlockKey, setUnlockKey] = useState("");
-  const [unlockError, setUnlockError] = useState("");
-  const [unlockBusy, setUnlockBusy] = useState(false);
 
   // Filters state
   const [eventFilters, setEventFilters] = useState({
@@ -223,32 +213,6 @@ const AdminConsolePage = () => {
     towncrier: Bell,
   };
 
-  function handleLogout() {
-    logoutAdmin();
-    setIsAdmin(false);
-    setUnlockKey("");
-    setUnlockError("");
-  }
-
-  async function handleUnlock(e) {
-    e.preventDefault();
-    setUnlockError("");
-    setUnlockBusy(true);
-    try {
-      const result = tryUnlockAdmin(unlockKey);
-      if (!result.ok) {
-        setUnlockError(result.message || "That key didn't work.");
-        return;
-      }
-      setIsAdmin(true);
-      if (!getAdminKeyHint()) {
-        setAdminKeyHint("Master admin key set on this device");
-      }
-    } finally {
-      setUnlockBusy(false);
-    }
-  }
-
   // NEW FUNCTION - This runs when you click "Test Agent"
   const handleTestAgent = async () => {
     if (!testAgentId) return;
@@ -264,62 +228,6 @@ const AdminConsolePage = () => {
     }
   };
 
-  // 🔒 If not admin, show unlock screen
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-4">
-        <div className="max-w-md w-full space-y-6">
-          <div className="space-y-2">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground">
-              Restricted area
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              WellnessCafe Admin Console
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              This space is for the builder and trusted admins. If you don't
-              have an admin key, you can safely go back to the main OS.
-            </p>
-          </div>
-
-          <form onSubmit={handleUnlock} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Admin access key
-              </label>
-              <input
-                type="password"
-                value={unlockKey}
-                onChange={(e) => setUnlockKey(e.target.value)}
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="Enter your key"
-              />
-              {unlockError && (
-                <p className="text-xs text-destructive mt-1">{unlockError}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={unlockBusy || !unlockKey.trim()}
-              className="w-full inline-flex items-center justify-center rounded-md bg-foreground text-background text-sm font-medium px-4 py-2 hover:opacity-90 disabled:opacity-60 transition-colors"
-            >
-              {unlockBusy ? "Verifying…" : "Unlock console"}
-            </button>
-          </form>
-
-          <div className="text-xs text-muted-foreground space-y-1">
-            <p>
-              Tip: use a strong key and keep it private. You can change the
-              master key later via your Vite environment variables.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ✅ Admin view
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="lux-shell py-10 space-y-8">
@@ -337,18 +245,13 @@ const AdminConsolePage = () => {
             </p>
           </div>
 
-          <div className="flex flex-col items-end gap-2">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              Sign out of admin
-            </button>
-            <p className="text-[11px] text-muted-foreground">
-              {getAdminKeyHint() || "Admin session active on this device"}
-            </p>
-          </div>
+          <button
+            type="button"
+            onClick={() => navigate("/profile")}
+            className="inline-flex min-h-11 items-center rounded-full border border-border px-4 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            Back to profile
+          </button>
         </header>
 
         {/* System Metrics */}
@@ -445,17 +348,9 @@ const AdminConsolePage = () => {
 
         {/* Agents Overview */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Agents Overview
-            </h2>
-            <a
-              href="/admin/overseer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-amber-400/10 px-3 py-1.5 text-[11px] text-amber-300 hover:bg-amber-400/20 transition-colors"
-            >
-              Overseer Console →
-            </a>
-          </div>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Agents Overview
+          </h2>
 
           {/* NEW: Quick Agent Test Section */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -466,7 +361,9 @@ const AdminConsolePage = () => {
             >
               <option value="">Select agent to test…</option>
               {agents.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
+                <option key={a.id} value={a.id} disabled={!LIVE_AGENT_IDS.has(a.id)}>
+                  {a.name}{LIVE_AGENT_IDS.has(a.id) ? " · Live" : " · Implementation pending"}
+                </option>
               ))}
             </select>
 
@@ -513,7 +410,7 @@ const AdminConsolePage = () => {
                         {agent.role}
                       </p>
                     </div>
-                    {agent.status === "active" ? (
+                    {agent.status === "active" && LIVE_AGENT_IDS.has(agent.id) ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
                     ) : (
                       <X className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
@@ -521,6 +418,12 @@ const AdminConsolePage = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
+                    <div className="col-span-2">
+                      <p className="text-[10px] text-muted-foreground">Production implementation</p>
+                      <p className={`text-xs font-semibold ${LIVE_AGENT_IDS.has(agent.id) ? "text-emerald-400" : "text-amber-300"}`}>
+                        {LIVE_AGENT_IDS.has(agent.id) ? "Connected" : "Not connected yet"}
+                      </p>
+                    </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">Runs</p>
                       <p className="text-sm font-semibold">{agent.runCount || 0}</p>
@@ -530,7 +433,7 @@ const AdminConsolePage = () => {
                       <p className={`text-sm font-semibold ${
                         agent.health === "healthy" ? "text-emerald-400" :
                         agent.health === "degraded" ? "text-amber-400" :
-                        "text-destructive"
+                        agent.health === "unknown" ? "text-muted-foreground" : "text-destructive"
                       }`}>
                         {agent.health}
                       </p>
@@ -542,7 +445,7 @@ const AdminConsolePage = () => {
           </div>
 
           {/* Health Summary */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lux-card p-3 text-xs">
               <p className="text-muted-foreground">Total Agents</p>
               <p className="text-lg font-semibold mt-1">{healthSummary.total}</p>
@@ -564,6 +467,10 @@ const AdminConsolePage = () => {
               <p className="text-lg font-semibold text-destructive mt-1">
                 {healthSummary.down}
               </p>
+            </div>
+            <div className="lux-card p-3 text-xs">
+              <p className="text-muted-foreground">Not yet measured</p>
+              <p className="text-lg font-semibold text-muted-foreground mt-1">{healthSummary.unknown}</p>
             </div>
           </div>
         </section>
@@ -605,9 +512,9 @@ const AdminConsolePage = () => {
                   className="rounded-md border border-border bg-background px-2 py-1 text-[11px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="">All Types</option>
-                  <option value="execution">Execution</option>
-                  <option value="error">Error</option>
-                  <option value="status_change">Status Change</option>
+                  <option value="agent_execution">Agent execution</option>
+                  <option value="agent_execution_error">Agent error</option>
+                  <option value="risk_signal">Risk signal</option>
                 </select>
               </div>
               <button
@@ -942,7 +849,7 @@ const AdminConsolePage = () => {
                   >
                     <label className="text-xs text-foreground flex-1">
                       {feature
-                        .replace(/([A-Z])/g, " \$1")
+                        .replace(/([A-Z])/g, " $1")
                         .replace(/^./, (str) => str.toUpperCase())}
                     </label>
                     <button

@@ -35,6 +35,7 @@ import UrgeSurfingTool from "./modules/UrgeSurfingTool";
 import MeditationTool from "./modules/MeditationTool";
 import AcuwellnessTool from "./modules/AcuwellnessTool";
 import AffirmationsTool from "./modules/AffirmationsTool";
+import SpecializedPathwayTool from "./modules/SpecializedPathwayTool";
 
 const MODULE_TOOLS = {
   grounding: GroundingTool,
@@ -44,10 +45,10 @@ const MODULE_TOOLS = {
   education: EducationModule,
   "urge-surfing": UrgeSurfingTool,
   cravings: UrgeSurfingTool,
-  "emotion-regulator": SelfSurgeonTool,
-  "shame-release": SelfSurgeonTool,
+  "emotion-regulator": SpecializedPathwayTool,
+  "shame-release": SpecializedPathwayTool,
   meditation: MeditationTool,
-  "sleep-reset": MeditationTool,
+  "sleep-reset": SpecializedPathwayTool,
   acuwellness: AcuwellnessTool,
   affirmations: AffirmationsTool,
   "panic-reset": PanicResetSessionView,
@@ -85,6 +86,7 @@ const ToolDetailPage = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [moduleCompleted, setModuleCompleted] = useState(false);
+  const [cycles, setCycles] = useState(0);
   const [breathingPattern, setBreathingPattern] = useState([4, 0, 6, 0]);
 
   // Load protocol tool (Firestore + seed) for Daily Practice slugs

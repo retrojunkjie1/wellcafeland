@@ -108,9 +108,9 @@ export const useAgentsRegistryStore = create((set, get) => ({
       healthy: agents.filter((a) => a.health === "healthy").length,
       degraded: agents.filter((a) => a.health === "degraded").length,
       down: agents.filter((a) => a.health === "down").length,
+      unknown: agents.filter((a) => !a.health || a.health === "unknown").length,
       active: agents.filter((a) => a.status === "active").length,
       inactive: agents.filter((a) => a.status === "inactive").length,
     };
   },
 }));
-

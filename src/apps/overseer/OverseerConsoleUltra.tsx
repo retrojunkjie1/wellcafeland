@@ -46,10 +46,10 @@ export const OverseerConsoleUltra: React.FC = () => {
         <header className="flex flex-col gap-3 border-b border-white/10 pb-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-wide text-white">
-              Overseer Console · Ultra
+              Overseer Telemetry Simulation
             </h1>
             <p className="mt-1 text-sm text-white/60">
-              Mission control for emotional telemetry, risk radar, and multi-agent orchestration.
+              A sandbox for simulated signals and fusion behavior. Production metrics are in the Admin Console.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -59,7 +59,7 @@ export const OverseerConsoleUltra: React.FC = () => {
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
               </span>
               <span className="text-[11px] uppercase tracking-[0.2em] text-white/70">
-                System Online
+                Simulation Mode
               </span>
             </div>
           </div>
@@ -98,4 +98,3 @@ export const OverseerConsoleUltra: React.FC = () => {
     </div>
   );
 };
-

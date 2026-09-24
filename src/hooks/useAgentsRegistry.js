@@ -1,6 +1,6 @@
 // src/hooks/useAgentsRegistry.js
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAgentsRegistryStore } from "../stores/agentsRegistryStore";
 import { db } from "../firebase";
 import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
@@ -10,25 +10,35 @@ import { collection, query, where, orderBy, limit, onSnapshot } from "firebase/f
  * Provides real-time updates from Firestore when available
  */
 export function useAgentsRegistry() {
-  const store = useAgentsRegistryStore();
+  const agentsState = useAgentsRegistryStore((state) => state.agents);
+  const agents = useMemo(() => Object.values(agentsState), [agentsState]);
+  const agentIds = useMemo(() => agents.map((agent) => agent.id).join(","), [agents]);
+  const loadRegistry = useAgentsRegistryStore((state) => state.loadRegistry);
+  const recordRun = useAgentsRegistryStore((state) => state.recordRun);
+  const getAgent = useAgentsRegistryStore((state) => state.getAgent);
+  const updateAgent = useAgentsRegistryStore((state) => state.updateAgent);
+  const toggleAgent = useAgentsRegistryStore((state) => state.toggleAgent);
+  const updateAgentConfig = useAgentsRegistryStore((state) => state.updateAgentConfig);
+  const resetAgent = useAgentsRegistryStore((state) => state.resetAgent);
+  const getHealthSummary = useAgentsRegistryStore((state) => state.getHealthSummary);
   const [error, setError] = useState(null);
 
   // Load registry on mount
   useEffect(() => {
-    store.loadRegistry();
-  }, [store]);
+    loadRegistry();
+  }, [loadRegistry]);
 
   // Subscribe to Firestore agent_events for real-time updates (if Firebase available)
   useEffect(() => {
     if (!db) return;
 
-    const agents = store.getAllAgents();
-    const agentIds = agents.map((a) => a.id);
+    if (!agentIds) return;
+    let initialSnapshot = true;
 
     // Subscribe to recent agent events
     const q = query(
       collection(db, "agent_events"),
-      where("agentId", "in", agentIds),
+      where("agentId", "in", agentIds.split(",")),
       orderBy("timestamp", "desc"),
       limit(50)
     );
@@ -36,13 +46,18 @@ export function useAgentsRegistry() {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        if (initialSnapshot) {
+          // The first snapshot is historical context, not new work from this session.
+          initialSnapshot = false;
+          return;
+        }
         snapshot.docChanges().forEach((change) => {
           if (change.type === "added") {
             const event = change.doc.data();
             // Update agent stats based on events
             if (event.success !== undefined) {
               const responseTime = event.responseTime || 0;
-              store.recordRun(event.agentId, responseTime, event.success);
+              recordRun(event.agentId, responseTime, event.success);
             }
           }
         });
@@ -54,17 +69,16 @@ export function useAgentsRegistry() {
     );
 
     return () => unsubscribe();
-  }, [store]);
+  }, [agentIds, recordRun]);
 
   return {
-    agents: store.getAllAgents(),
-    getAgent: store.getAgent,
-    updateAgent: store.updateAgent,
-    toggleAgent: store.toggleAgent,
-    updateAgentConfig: store.updateAgentConfig,
-    resetAgent: store.resetAgent,
-    getHealthSummary: store.getHealthSummary,
+    agents,
+    getAgent,
+    updateAgent,
+    toggleAgent,
+    updateAgentConfig,
+    resetAgent,
+    getHealthSummary,
     error,
   };
 }
-

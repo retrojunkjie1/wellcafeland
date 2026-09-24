@@ -21,6 +21,7 @@ import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
 import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
 import { callAI } from "@/services/aiClient";
+import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
 import { makeLivingMeta, detectRoleIntent, safeApproachForRole, pickVariantText } from "@/lib/living";
 import { useLivingSession } from "@/hooks/useLivingSession";
 import { offlineRespond, advancedSupportContractOffline } from "@/services/offlineGuide";
@@ -678,6 +679,7 @@ const ChatPanel = () => {
         const res = await callAI("aiSession", {
           messages: messageHistory,
           mode,
+          memoryContext: getConversationMemoryContext(settings?.personalizationMemoryEnabled === true),
           metadata: {
             ...(decision ? {
               emotion: decision.emotion,
@@ -870,6 +872,11 @@ const ChatPanel = () => {
           });
         }
         addMessage("assistant", normalizeMessage(patch));
+        rememberConversationTurn({
+          user: text,
+          assistant: displayText,
+          enabled: settings?.personalizationMemoryEnabled === true,
+        });
 
         // Tool policy: ONLY intent.type === "tool.run" opens tools. tool.suggest = chips only (IntentRenderer).
         const intentType = lastMsgIntent?.type;
@@ -1079,7 +1086,7 @@ const ChatPanel = () => {
       setIsSending(false);
       setThinking(false);
     }
-  }, [messages, addMessage, injectToolIntoChat, setThinking, logEvent, openWorkspace, navigate]);
+  }, [messages, addMessage, injectToolIntoChat, setThinking, logEvent, openWorkspace, navigate, settings]);
 
   const handleVoiceInputComplete = (audioBlob) => {
     // Phase 14: Open voice session workspace when mic is held

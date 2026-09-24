@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useOSStore } from "@/stores/useOSStore";
+import { clearConversationMemory } from "@/services/conversationMemory";
 
 const ToggleRow = ({ label, description, checked, onChange, disabled = false }) => (
   <div className="flex items-start justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.02] px-3 py-3 sm:px-4 sm:py-3.5">
@@ -36,6 +37,7 @@ const WellnessSettingsPage = () => {
   const setAllowEmotionFromChat = useOSStore((state) => state.setAllowEmotionFromChat);
   const setAllowFaceSignals = useOSStore((state) => state.setAllowFaceSignals);
   const setTrajectoryTrackingEnabled = useOSStore((state) => state.setTrajectoryTrackingEnabled);
+  const setPersonalizationMemoryEnabled = useOSStore((state) => state.setPersonalizationMemoryEnabled);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -74,6 +76,25 @@ const WellnessSettingsPage = () => {
             checked={settings.trajectoryTrackingEnabled}
             onChange={() => setTrajectoryTrackingEnabled(!settings.trajectoryTrackingEnabled)}
           />
+        </section>
+        <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-white">Conversation memory</h2>
+          <p className="text-xs text-white/60">
+            Optional personalization. When enabled, up to 8 recent chat or voice exchanges are saved in this browser and may be sent with later requests to help the guide follow your context. This does not train the AI model. Turn it off to stop and clear this local memory.
+          </p>
+          <ToggleRow
+            label="Remember recent conversations on this device"
+            description="Off by default. Saved exchanges stay in this browser and are scoped to your signed-in or anonymous account."
+            checked={settings.personalizationMemoryEnabled === true}
+            onChange={() => setPersonalizationMemoryEnabled(settings.personalizationMemoryEnabled !== true)}
+          />
+          <button
+            type="button"
+            onClick={clearConversationMemory}
+            className="min-h-11 rounded-lg border border-white/15 px-4 text-sm text-white/80 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+          >
+            Clear saved conversation memory
+          </button>
         </section>
       </div>
     </div>

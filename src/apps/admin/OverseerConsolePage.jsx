@@ -95,6 +95,10 @@ const OverseerConsolePage = () => {
           throw new Error(`Unknown agent: ${agentId}`);
       }
 
+      if (!result || result.success !== true) {
+        throw new Error(result?.error?.message || `Agent ${agentId} returned no successful result.`);
+      }
+
       const responseTime = Date.now() - startTime;
       recordRun(agentId, responseTime, true);
 
@@ -624,4 +628,3 @@ const OverseerConsolePage = () => {
 };
 
 export default OverseerConsolePage;
-

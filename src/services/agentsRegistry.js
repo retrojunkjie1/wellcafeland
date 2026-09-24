@@ -16,7 +16,7 @@ export const AGENT_DEFINITIONS = {
     role: "Pattern Observer",
     capabilities: ["telemetry_analysis", "pattern_detection", "usage_insights"],
     status: "active", // active, inactive, error, maintenance
-    health: "healthy", // healthy, degraded, down
+    health: "unknown", // set to healthy only after a real execution
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -37,7 +37,7 @@ export const AGENT_DEFINITIONS = {
     role: "Wisdom Guide",
     capabilities: ["memory_fusion", "contextual_guidance", "deep_insight"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -58,7 +58,7 @@ export const AGENT_DEFINITIONS = {
     role: "Action Orchestrator",
     capabilities: ["plan_generation", "session_orchestration", "action_planning"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -79,7 +79,7 @@ export const AGENT_DEFINITIONS = {
     role: "Risk Monitor",
     capabilities: ["risk_detection", "alert_generation", "crisis_signals"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -100,7 +100,7 @@ export const AGENT_DEFINITIONS = {
     role: "Ethics Guardian",
     capabilities: ["privacy_protection", "ethical_oversight", "boundary_enforcement"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -121,7 +121,7 @@ export const AGENT_DEFINITIONS = {
     role: "Breathwork Specialist",
     capabilities: ["breathwork_guidance", "breathing_exercises", "nervous_system_regulation"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -142,7 +142,7 @@ export const AGENT_DEFINITIONS = {
     role: "Grounding Specialist",
     capabilities: ["grounding_techniques", "body_awareness", "present_moment_guidance"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -163,7 +163,7 @@ export const AGENT_DEFINITIONS = {
     role: "Mindfulness Specialist",
     capabilities: ["mindfulness_guidance", "meditation_instruction", "awareness_practices"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -184,7 +184,7 @@ export const AGENT_DEFINITIONS = {
     role: "Spiritual Guide",
     capabilities: ["spiritual_guidance", "sacred_practices", "meaning_making"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -205,7 +205,7 @@ export const AGENT_DEFINITIONS = {
     role: "Acuwellness Specialist",
     capabilities: ["acuwellness_guidance", "pressure_point_instruction", "meridian_work"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -226,7 +226,7 @@ export const AGENT_DEFINITIONS = {
     role: "Notification Manager",
     capabilities: ["notification_delivery", "alert_management", "announcement_system"],
     status: "active",
-    health: "healthy",
+    health: "unknown",
     lastRun: null,
     runCount: 0,
     avgResponseTime: 0,
@@ -241,7 +241,8 @@ export const AGENT_DEFINITIONS = {
   },
 };
 
-const STORAGE_KEY = "wc-agents-registry-v1";
+// v2 resets prior client-simulated run and health counters; new metrics come from real execution events.
+const STORAGE_KEY = "wc-agents-registry-v2";
 
 /**
  * Load agent registry from localStorage
@@ -267,6 +268,9 @@ export function loadAgentsRegistry() {
             ...(parsed[agentId].config || {}),
           },
         };
+        if (!merged[agentId].lastRun && Number(merged[agentId].runCount || 0) === 0) {
+          merged[agentId].health = "unknown";
+        }
       }
     });
     return merged;
@@ -401,4 +405,3 @@ export function resetAllAgents() {
   saveAgentsRegistry(AGENT_DEFINITIONS);
   return AGENT_DEFINITIONS;
 }
-

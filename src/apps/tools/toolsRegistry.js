@@ -13,7 +13,7 @@ const ALL_TOOLS = [
   {
     id: "breathing",
     name: "Breathing Practice",
-    description: "Choose a gentle pace, include optional holds, or follow your natural breath.",
+    description: "Select a paced breathing pattern or keep your breath natural; no holds are required.",
     category: "body-breath",
     duration: "1-10 min",
     primaryAgentId: "healer_breathwork",
@@ -26,7 +26,7 @@ const ALL_TOOLS = [
   {
     id: "grounding",
     name: "Grounding (5-4-3-2-1)",
-    description: "Return to the present moment using your five senses.",
+    description: "Orient outward through sight, sound, touch, smell, or taste; skip any sense that does not help.",
     category: "body-breath",
     duration: "~5 min",
     primaryAgentId: "healer_grounding",
@@ -39,7 +39,7 @@ const ALL_TOOLS = [
   {
     id: "body-scan",
     name: "Body Scan",
-    description: "Optional body-awareness prompts. Move at your own pace and skip any region.",
+    description: "Scan body regions at your pace, notice sensation or neutrality, and skip inward focus whenever you want.",
     category: "body-breath",
     duration: "~10 min",
     primaryAgentId: "healer_grounding",
@@ -52,7 +52,7 @@ const ALL_TOOLS = [
   {
     id: "journaling",
     name: "Journaling",
-    description: "Reflect and process with guided prompts. Dump, gratitude, or honest reflection.",
+    description: "Choose an open page, gratitude, a feelings check, or a focused reflection; save only what you want to keep.",
     category: "mind-thoughts",
     duration: "~10 min",
     primaryAgentId: "healer_mindfulness",
@@ -65,7 +65,7 @@ const ALL_TOOLS = [
   {
     id: "self-surgeon",
     name: "Self-Inquiry",
-    description: "Explore a situation with optional, compassionate prompts.",
+    description: "Untangle one situation into facts, interpretations, needs, and a fair next step.",
     category: "mind-thoughts",
     duration: "~10 min",
     primaryAgentId: "healer_mindfulness",
@@ -78,7 +78,7 @@ const ALL_TOOLS = [
   {
     id: "education",
     name: "Education",
-    description: "Learn about recovery, trauma, nervous system regulation, and more.",
+    description: "Read practical explainers on recovery, shame, urges, sleep, grief, trauma, and boundaries at your own pace.",
     category: "mind-thoughts",
     duration: "~5 min",
     primaryAgentId: "oracle",
@@ -91,7 +91,7 @@ const ALL_TOOLS = [
   {
     id: "urge-surfing",
     name: "Urge Surfing",
-    description: "A timed pause with optional reflection and check-ins. Choose the support you need.",
+    description: "Map an urge, choose a brief or longer pause, then decide what practical support comes next.",
     category: "stress-crisis",
     duration: "3-10 min",
     primaryAgentId: "sentinel",
@@ -104,7 +104,7 @@ const ALL_TOOLS = [
   {
     id: "meditation",
     name: "Visualization & Imagery",
-    description: "Set a timer and practice mindfulness. Optional guided meditation themes.",
+    description: "Use optional imagery or a quiet attention practice; choose an external scene if body focus is not right for you.",
     category: "sleep-winddown",
     duration: "5-20 min",
     primaryAgentId: "oracle",
@@ -117,7 +117,7 @@ const ALL_TOOLS = [
   {
     id: "acuwellness",
     name: "Acupressure-Inspired Self-Care",
-    description: "Optional, gentle touch practices. No pressure points or outcomes are required.",
+    description: "Explore gentle self-touch as a comfort cue, with clear opt-outs and no promised treatment effects.",
     category: "body-breath",
     duration: "Optional",
     primaryAgentId: "healer_acuwellness",
@@ -130,7 +130,7 @@ const ALL_TOOLS = [
   {
     id: "affirmations",
     name: "Supportive Phrases",
-    description: "Explore optional phrases for a concern you choose. Keep only what feels true to you.",
+    description: "Generate grounded, editable phrases for a chosen concern; reject anything that feels false or unhelpful.",
     category: "mind-thoughts",
     duration: "Optional",
     primaryAgentId: "healer_spiritual",
