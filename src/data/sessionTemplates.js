@@ -3,36 +3,32 @@
 export const DEFAULT_SESSION_TEMPLATES = [
   {
     id: "grounding-5min",
-    title: "5-Minute Grounding Reset",
+    title: "Choose an Anchor",
     tags: ["grounding", "anxiety", "body"],
     category: "Grounding",
     durationMinutes: 5,
     summary:
-      "A short reset to calm your nervous system and bring you back into your body.",
+      "A short optional pause: choose one point of orientation or a change to your surroundings.",
     steps: [
-      "Find a comfortable position. Place both feet flat on the floor.",
-      "Take a slow breath in through your nose for 4 seconds.",
-      "Hold gently for 2 seconds, then exhale through your mouth for 6 seconds.",
-      "Look around the room and name 5 things you can see.",
-      "Notice your shoulders. Let them drop away from your ears.",
-      "Stay with your breath for a few more slow cycles."
+      "Choose one steady object or color to rest your eyes on, if that suits you.",
+      "Or listen for one familiar sound—or choose a quieter place.",
+      "Hold a familiar object if it feels useful; nothing needs to be described.",
+      "You can change the light, sound, or where you are, or finish here."
     ]
   },
   {
-    id: "urge-surf-10min",
-    title: "Urge Surfing – Ride It Out",
+    id: "urge-support-3min",
+    title: "Urge Support",
     tags: ["cravings", "urge", "sobriety"],
     category: "Cravings",
-    durationMinutes: 10,
+    durationMinutes: 3,
     summary:
-      "Sit with an urge without acting on it. Notice it rise, peak, and fall.",
+      "Choose one practical next move, bring in a trusted person, or take an optional short pause. Urges vary; there is no required timeline.",
     steps: [
-      "Notice the urge is here. Say to yourself: 'An urge is present.'",
-      "Scan your body. Where do you feel this urge the most?",
-      "Give it a shape, a color, or a texture in your mind.",
-      "Breathe slowly while watching the urge rise and fall like a wave.",
-      "Remind yourself: 'I don't have to obey every urge I feel.'",
-      "Choose one small safe action after this session (water, walk, check-in)."
+      "Create a little distance from a trigger if that feels safe and possible.",
+      "Contact someone you trust, a peer, or a support group if company would help.",
+      "Choose a familiar, manageable activity to do next.",
+      "A short pause is optional. You can stop or seek live support at any time."
     ]
   },
   {
@@ -42,15 +38,14 @@ export const DEFAULT_SESSION_TEMPLATES = [
     category: "Sleep",
     durationMinutes: 15,
     summary:
-      "Help your mind slow down before sleep with gentle breathing and body scan.",
+      "Make room for rest with a quieter setting, a familiar sound, or a comfortable position.",
     steps: [
       "Dim the lights and put your phone on silent if you can.",
-      "Take three slow breaths. Let each exhale be heavier than the last.",
-      "Starting at your feet, gently tense and release each muscle group.",
+      "Choose whether a natural breath, a familiar sound, or quiet feels best.",
+      "Settle into a comfortable position or shift until the setup suits you.",
       "If thoughts come, notice them and let them pass like clouds.",
-      "End by placing one hand on your chest and one on your belly.",
-      "Whisper a simple phrase: 'It's safe to rest now.'"
+      "Keep a familiar object nearby if that is comforting.",
+      "End whenever you like; there is no need to feel a certain way."
     ]
   }
 ];
-

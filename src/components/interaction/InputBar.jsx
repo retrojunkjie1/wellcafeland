@@ -2,10 +2,11 @@
 // Enhanced input bar with text, voice, and future video modes
 
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Mic, Loader2 } from "lucide-react";
+import { ArrowUp, Mic, Loader2, Square } from "lucide-react";
 import { useInteractionCanvasStore } from "@/stores/useInteractionCanvasStore";
 import { useAIStore } from "@/apps/ai/useAIStore";
 import { callAiSession } from "@/services/aiSessionClient";
+import { transcribeAudio } from "@/services/multimodalClient";
 
 const QUICK_PROMPTS = [
   "I feel overwhelmed",
@@ -17,7 +18,11 @@ const QUICK_PROMPTS = [
 const InputBar = () => {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState("");
   const textareaRef = useRef(null);
+  const recorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
   const {
     addMessage,
     isRecording,
@@ -37,21 +42,26 @@ const InputBar = () => {
         prompt: text,
         mode: "session",
       });
-      const reply =
-        data.reply ||
-        data.summary ||
-        data.message ||
-        "I'm here. Let's take this one breath at a time.";
+      const reply = data?.reply || data?.assistantText || data?.summary || data?.message || data?.text;
+      if (data?.ok === false || typeof reply !== "string" || !reply.trim()) {
+        const providerUnavailable = data?.error?.code === "AI_PROVIDER_NOT_CONFIGURED" || data?.code === "AI_PROVIDER_NOT_CONFIGURED";
+        addMessage("error", providerUnavailable
+          ? "The AI service isn't configured right now. Please try again later or use the practical support directory."
+          : (data?.error?.message || data?.message || "The AI guide couldn't complete that request. Please try again or use the practical support directory."), { code: data?.error?.code || data?.code });
+        return;
+      }
       addMessage("assistant", reply);
       addAssistantMessage(reply);
     } catch (err) {
       console.error("AI request failed:", err);
-      const errorMsg =
-        err.code === "AUTH_REQUIRED"
-          ? "Please sign in to continue."
-          : "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment.";
-      addMessage("assistant", errorMsg);
-      addAssistantMessage(errorMsg);
+      const errorMsg = err.code === "AUTH_REQUIRED"
+        ? "Your session needs to reconnect. Please sign in again, then retry."
+        : err.code === "RATE_LIMITED"
+          ? `The AI guide is busy right now. Please wait about ${err.retryAfterSeconds || 60} seconds, then retry.`
+        : (typeof navigator !== "undefined" && navigator.onLine === false
+          ? "You're offline, so the AI guide couldn't receive that message. Reconnect and retry, or open practical support."
+          : "The AI guide couldn't be reached. Please retry or open practical support.");
+      addMessage("error", errorMsg, { code: err.code || "AI_SESSION_FAILED", status: err.status || 0 });
     } finally {
       setIsSending(false);
       setThinking(false);
@@ -74,13 +84,67 @@ const InputBar = () => {
     }
   };
 
-  const handleVoiceToggle = () => {
+  useEffect(() => () => {
+    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  const handleVoiceToggle = async () => {
     if (isRecording) {
-      stopRecording();
-      // TODO: Process audio and convert to text
-      // For now, just stop recording
-    } else {
+      recorderRef.current?.stop();
+      return;
+    }
+
+    setVoiceStatus("");
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setVoiceStatus("Voice input isn't supported in this browser. You can type your message instead.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      recorder.ondataavailable = (event) => {
+        if (event.data?.size) audioChunksRef.current.push(event.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        recorderRef.current = null;
+        stopRecording();
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        audioChunksRef.current = [];
+        if (!blob.size) {
+          setVoiceStatus("No speech was captured. Try again or type your message.");
+          return;
+        }
+        setVoiceStatus("Transcribing your voice…");
+        const result = await transcribeAudio(blob, blob.type);
+        if (result.ok && result.text?.trim()) {
+          setInput((current) => `${current}${current ? " " : ""}${result.text.trim()}`);
+          setVoiceStatus("Voice transcription ready. Review it, then press Send.");
+        } else {
+          setVoiceStatus(result.error || "I couldn't transcribe that audio. Please try again or type your message.");
+        }
+      };
+      recorder.onerror = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+        recorderRef.current = null;
+        stopRecording();
+        setVoiceStatus("Voice recording stopped unexpectedly. You can type your message instead.");
+      };
+      recorder.start();
       startRecording();
+      setVoiceStatus("Listening. Press the microphone again when you're ready to stop.");
+    } catch {
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+      stopRecording();
+      setVoiceStatus("Microphone access wasn't available. Check browser permissions or type your message.");
     }
   };
 
@@ -118,6 +182,7 @@ const InputBar = () => {
         )}
 
         {/* Input Area */}
+        {voiceStatus && <p className="mb-3 text-sm text-white/70" role="status">{voiceStatus}</p>}
         <div className="flex items-end gap-2">
           <div className="flex-1 relative">
             <textarea
@@ -138,13 +203,15 @@ const InputBar = () => {
               type="button"
               onClick={handleVoiceToggle}
               disabled={isSending}
+              aria-label={isRecording ? "Stop voice recording" : "Start voice input"}
+              title={isRecording ? "Stop voice recording" : "Start voice input"}
               className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
                 isRecording
                   ? "bg-red-500/20 text-red-400 border border-red-400/40"
                   : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white"
               }`}
             >
-              <Mic className="h-5 w-5" />
+              {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-5 w-5" />}
             </button>
             <button
               type="button"
@@ -166,4 +233,3 @@ const InputBar = () => {
 };
 
 export default InputBar;
-

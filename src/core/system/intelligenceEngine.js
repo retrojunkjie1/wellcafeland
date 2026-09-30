@@ -413,10 +413,10 @@ export function getRecommendedTool({ message, emotion, triggers, risk }) {
       return { kind: "tool", toolId: "grounding", reason: "A short grounding practice might help you feel more stable." };
     }
 
-    // Priority 2: Cravings / relapse pressure → urge-surfing (REQUIRE text signals)
+    // Priority 2: Cravings / relapse pressure → optional practical support (REQUIRE text signals)
     if ((_triggers.includes("cravings") || _triggers.includes("relapse_pressure") || _risk.domains?.includes("cravings")) &&
         userMessageHasStrongSignal(rawText, "urge-surfing")) {
-      return { kind: "tool", toolId: "urge-surfing", reason: "Try a 60s reset? Surf the urge instead of fighting it." };
+      return { kind: "tool", toolId: "urge-surfing", reason: "Choose a practical next move, contact someone, or take a short optional pause." };
     }
 
     // Priority 3: Shame / self-worth collapse → self-surgeon (require shame-related text)
@@ -745,41 +745,6 @@ export function computeIdentityTrajectory(history) {
 }
 
 /**
- * Merge emotion from text and face signals.
- * Phase 31 — Face Signal Engine integration.
- * @param {Object} textEmotion - Emotion from text analysis
- * @param {Object} faceEmotion - Emotion from face scan
- * @returns {Object} Merged emotion
- */
-export function mergeEmotionChannels(textEmotion, faceEmotion) {
-  if (!faceEmotion) return textEmotion;
-
-  // Weighted blend: face can boost intensity, but text label takes priority if present
-  const textLabel = textEmotion?.label || "neutral";
-  const faceLabel = faceEmotion?.label || "neutral";
-  const textIntensity = typeof textEmotion?.intensity === "number" ? textEmotion.intensity : 0;
-  const faceIntensity = typeof faceEmotion?.intensity === "number" ? faceEmotion.intensity : 0;
-
-  // Use text label if available, otherwise face label
-  const label = textLabel !== "neutral" ? textLabel : faceLabel;
-
-  // Intensity: take the maximum (face can amplify but not override strong text signals)
-  const intensity = Math.max(textIntensity, faceIntensity * 0.8);
-
-  // Valence: prefer face if it's more specific, otherwise text
-  const valence = faceEmotion?.valence && faceEmotion.valence !== "neutral"
-    ? faceEmotion.valence
-    : textEmotion?.valence || "neutral";
-
-  return {
-    label,
-    intensity: Math.max(0, Math.min(1, intensity)),
-    valence,
-    source: ["text", "face"],
-  };
-}
-
-/**
  * Compute a crisis forecast based on emotional history, last emotion,
  * last risk event, and last relationship snapshot.
  *
@@ -953,6 +918,5 @@ export default {
   computeIdentityTrajectory,
   enrichMessageWithRelationship,
   computeCrisisForecast,
-  mergeEmotionChannels,
   SYSTEM_STATES,
 };

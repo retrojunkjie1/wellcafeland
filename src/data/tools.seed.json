@@ -19,21 +19,20 @@
   },
   {
     "slug": "grounding-54321",
-    "title": "5-4-3-2-1 Senses Grounding",
+    "title": "Choose an Anchor",
     "category": ["Grounding"],
     "intensity": "low",
-    "durationSec": 240,
-    "clinicalIntent": "An optional way to notice sensory details around you. Choose only the senses that feel comfortable and skip any that do not.",
+    "durationSec": 90,
+    "clinicalIntent": "An optional way to choose one point of orientation. No counting, ratings, or written answers are required.",
     "indications": ["anxiety", "overwhelm", "panic", "freeze", "dissociation"],
     "contraindications": ["If a sense or prompt feels uncomfortable, skip it or stop the practice."],
     "steps": [
-      { "label": "Things you see", "description": "If looking around feels okay, gently notice one or more things you can see. You can keep your gaze on a neutral object.", "durationSec": 30 },
-      { "label": "Things you feel", "description": "If it feels comfortable, notice a point of contact such as clothing or the chair. No need to touch or move anything.", "durationSec": 30 },
-      { "label": "Things you hear", "description": "If listening feels okay, notice one or more sounds nearby or farther away.", "durationSec": 30 },
-      { "label": "Things you smell", "description": "You might notice a smell already present or remember a familiar one. Do not seek out a smell; skipping is okay.", "durationSec": 30 },
-      { "label": "Things you taste", "description": "If it feels comfortable, notice a taste already present or imagine one. You can skip this step.", "durationSec": 30 }
+      { "label": "One steady object", "description": "Rest your eyes on one still object or color, if that feels comfortable. Nothing needs to be counted or named.", "durationSec": 30 },
+      { "label": "One familiar sound—or quiet", "description": "Listen for one familiar sound, or choose a quieter space.", "durationSec": 30 },
+      { "label": "A familiar texture", "description": "Hold a familiar object if that feels useful. No description is needed.", "durationSec": 30 },
+      { "label": "A more comfortable place", "description": "Stay, turn, or move to a part of the space that suits you.", "durationSec": 30 }
     ],
-    "aftercare": ["Take a few natural breaths. You can repeat this sequence if needed."],
+    "aftercare": ["Finish here, choose another support, or return to what you were doing. No particular result is expected."],
     "whenToEscalate": "If you feel increasingly disconnected or distressed, stop and consider reaching out to someone you trust. In the U.S. and its territories, call or text 988 for emotional crisis support. For immediate danger, contact local emergency services."
   },
   {

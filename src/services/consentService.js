@@ -35,8 +35,8 @@ export async function getClientConsentSettings(clientId, providerId) {
       id: docSnap.id,
       clientId: data.clientId,
       providerId: data.providerId,
-      canViewTimeline: data.canViewTimeline !== false, // Default true
-      canViewSummaries: data.canViewSummaries !== false, // Default true
+      canViewTimeline: data.canViewTimeline === true, // Sharing must be explicitly enabled
+      canViewSummaries: data.canViewSummaries === true, // Sharing must be explicitly enabled
       canViewToolsUsage: data.canViewToolsUsage === true, // Default false
       canSeeCircleActivity: data.canSeeCircleActivity === true, // Default false
       createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
@@ -79,8 +79,8 @@ export async function updateClientConsentSettings(clientId, providerId, partialS
       const newSettings = {
         clientId,
         providerId,
-        canViewTimeline: partialSettings.canViewTimeline !== false,
-        canViewSummaries: partialSettings.canViewSummaries !== false,
+        canViewTimeline: partialSettings.canViewTimeline === true,
+        canViewSummaries: partialSettings.canViewSummaries === true,
         canViewToolsUsage: partialSettings.canViewToolsUsage === true,
         canSeeCircleActivity: partialSettings.canSeeCircleActivity === true,
         createdAt: serverTimestamp(),
@@ -110,8 +110,8 @@ function getDefaultConsentSettings() {
     id: null,
     clientId: null,
     providerId: null,
-    canViewTimeline: true,
-    canViewSummaries: true,
+    canViewTimeline: false,
+    canViewSummaries: false,
     canViewToolsUsage: false,
     canSeeCircleActivity: false,
     createdAt: null,
@@ -123,4 +123,3 @@ export default {
   getClientConsentSettings,
   updateClientConsentSettings,
 };
-

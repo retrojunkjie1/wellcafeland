@@ -2,37 +2,25 @@
 // Phase 56: wires UnifiedInteractionDock mic to voice session + audio duck. Use inside AudioProvider + VoiceSessionProvider.
 
 import React, {useCallback} from "react";
-import {useNavigate} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import UnifiedInteractionDock from "./UnifiedInteractionDock";
-import {useVoiceSessionContext} from "@/experience/voice/VoiceSessionProvider";
-import {useAudio} from "@/experience/audio/AudioProvider";
 
 export default function DockWithVoice() {
   const navigate = useNavigate();
-  const voice = useVoiceSessionContext();
-  const audio = useAudio();
+  const location = useLocation();
 
   const handleMic = useCallback(() => {
-    if (!voice) return;
-    const active = voice.state === "listening" || voice.state === "processing" || voice.state === "speaking";
-    if (active) {
-      voice.stop();
-      audio?.duck?.(false);
-      audio?.stopAll?.();
-    } else {
-      audio?.duck?.(true);
-      try {
-        audio?.play?.("cue_inhale");
-      } catch (e) {}
-      voice.start();
+    if (location.pathname.startsWith("/chat")) {
+      window.dispatchEvent(new CustomEvent("wc:open-voice-composer"));
+      return;
     }
-  }, [voice, audio]);
+    navigate("/chat?voice=1");
+  }, [location.pathname, navigate]);
 
   return (
     <UnifiedInteractionDock
       contextKey="shell"
-      voiceState={voice?.state}
-      onRetry={() => voice?.start?.()}
+      voiceState="idle"
       onMicPress={handleMic}
       onToolsPress={() => navigate("/tools")}
       onSupportPress={() => navigate("/assistance")}

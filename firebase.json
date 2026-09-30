@@ -1,7 +1,7 @@
 {
   "functions": {
     "source": "functions",
-    "runtime": "nodejs20"
+    "runtime": "nodejs22"
   },
   "emulators": {
     "hub": {
@@ -37,6 +37,24 @@
         "source": "**",
         "headers": [
           {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "assets/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**",
+        "headers": [
+          {
             "key": "Content-Security-Policy",
             "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://www.google.com https://www.recaptcha.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.google.com https://www.recaptcha.net wss:; frame-src 'self' https://www.google.com https://www.recaptcha.net https:; object-src 'none'; base-uri 'self';"
           }
@@ -53,12 +71,12 @@
         "function": "globalResourceSearch"
       },
       {
-        "source": "/aiSession",
-        "function": "aiSession"
+        "source": "/api/searchRecoveryMeetings",
+        "function": "searchRecoveryMeetings"
       },
       {
-        "source": "/wellnessEngine",
-        "function": "wellnessEngine"
+        "source": "/aiSession",
+        "function": "aiSession"
       },
       {
         "source": "**",
@@ -67,6 +85,7 @@
     ]
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }

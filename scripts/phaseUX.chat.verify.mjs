@@ -20,15 +20,17 @@ results.markdownLiteExists = { ok: existsSync(markdownLitePath) };
 if (!results.markdownLiteExists.ok) allOk = false;
 
 const messageBubblePath = join(SRC, "components", "os", "MessageBubble.jsx");
+const actionRowPath = join(SRC, "components", "os", "ChatActionsRow.jsx");
 if (existsSync(messageBubblePath)) {
   const content = readFileSync(messageBubblePath, "utf8");
+  const actionRow = existsSync(actionRowPath) ? readFileSync(actionRowPath, "utf8") : "";
   const hasMarkdownLite = content.includes("MarkdownLite");
-  const hasClipboard = content.includes("navigator.clipboard.writeText");
-  const hasTypography = content.includes("text-[15px]") || content.includes("text-[16px]");
-  const hasCopy = content.includes("Copy");
-  const hasBookmark = content.includes("Bookmark");
-  const hasVolume2 = content.includes("Volume2");
-  const hasActionRowClass = content.includes("rounded-full border border-white/10");
+  const hasClipboard = actionRow.includes("Copy") && actionRow.includes("onCopy");
+  const hasTypography = content.includes("text-base sm:text-lg") || content.includes("text-[15px]") || content.includes("text-[16px]");
+  const hasCopy = actionRow.includes("Copy");
+  const hasBookmark = actionRow.includes("Bookmark");
+  const hasVolume2 = actionRow.includes("Volume2");
+  const hasActionRowClass = actionRow.includes("rounded-full border border-white/10");
   results.messageBubbleWiring = {
     ok: hasMarkdownLite && hasClipboard && hasTypography && hasCopy && hasBookmark && hasVolume2 && hasActionRowClass,
     hasMarkdownLite,

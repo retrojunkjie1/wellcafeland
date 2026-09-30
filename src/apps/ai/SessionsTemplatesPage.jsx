@@ -13,6 +13,8 @@ const SessionsTemplatesPage = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All");
 
   // Legacy AI – restricted scope: Session templates only
   // This uses /aiSession (legacy endpoint) for admin template management
@@ -74,6 +76,15 @@ const SessionsTemplatesPage = () => {
     navigate("/sessions/templates/new");
   }
 
+  const categories = ["All", "Grounding", "Cravings", "Anxiety", "Sleep", "Spiritual reset"];
+  const filteredTemplates = templates.filter((template) => {
+    const haystack = [template.title, template.summary, template.aiSummary, template.category, ...(template.tags || [])]
+      .filter(Boolean).join(" ").toLowerCase();
+    const matchesSearch = !searchText.trim() || haystack.includes(searchText.trim().toLowerCase());
+    const matchesCategory = activeCategory === "All" || haystack.includes(activeCategory.toLowerCase());
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="lux-shell py-10 md:py-12 lg:py-14">
         {/* Header */}
@@ -133,9 +144,9 @@ const SessionsTemplatesPage = () => {
               type="text"
               placeholder="Search for anxiety, cravings, sleep, grounding…"
               className="w-full rounded-full border border-border bg-background/60 px-4 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              onChange={() => {
-                // placeholder – later we can wire this to local filtering
-              }}
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              aria-label="Search wellness sessions"
             />
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
               Search
@@ -143,12 +154,14 @@ const SessionsTemplatesPage = () => {
           </div>
 
           <div className="flex flex-wrap gap-2 text-xs">
-            {["Grounding", "Cravings", "Anxiety", "Sleep", "Spiritual reset"].map(
+            {categories.map(
               (label) => (
                 <button
                   key={label}
                   type="button"
-                  className="rounded-full border border-border px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  aria-pressed={activeCategory === label}
+                  onClick={() => setActiveCategory(label)}
+                  className={`rounded-full border px-3 py-1 text-[11px] transition-colors ${activeCategory === label ? "border-amber-300/50 bg-amber-300/10 text-amber-100" : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"}`}
                 >
                   {label}
                 </button>
@@ -172,7 +185,7 @@ const SessionsTemplatesPage = () => {
         )}
 
         {/* Templates grid */}
-        {!loading && templates.length > 0 && (
+        {!loading && filteredTemplates.length > 0 && (
           <section className="mb-12">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold tracking-wide uppercase text-muted-foreground">
@@ -184,7 +197,7 @@ const SessionsTemplatesPage = () => {
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {templates.map((t) => {
+              {filteredTemplates.map((t) => {
                 const id = t.id || t.slug || t.title;
                 const duration =
                   t.durationMinutes ||
@@ -235,7 +248,13 @@ const SessionsTemplatesPage = () => {
         {/* Empty state */}
         {!loading && !templates.length && !error && (
           <div className="py-16 text-center text-sm text-muted-foreground">
-            No sessions available yet. Try generating a custom one.
+            No saved sessions are available yet. Try generating a custom session or check back after the AI service is configured.
+          </div>
+        )}
+
+        {!loading && templates.length > 0 && filteredTemplates.length === 0 && (
+          <div className="py-10 text-center text-sm text-muted-foreground" role="status">
+            No sessions match these filters. Clear the search or choose “All”.
           </div>
         )}
 

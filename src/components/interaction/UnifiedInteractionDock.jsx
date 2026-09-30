@@ -7,7 +7,7 @@ import {Mic, Loader2, MessageCircle, AlertCircle, Wrench, LifeBuoy} from "lucide
 
 // Phase 56 Day 3: voice lifecycle labels and state-aware UI
 const VOICE_STATE_LABELS = {
-  idle: "Mic",
+  idle: "Voice",
   permission: "Allow",
   ready: "Mic",
   listening: "Listening",
@@ -47,7 +47,7 @@ export default function UnifiedInteractionDock({
   const isActive = state === "listening" || state === "processing" || state === "speaking";
   const isRequesting = state === "permission";
   const isError = state === "error";
-  const ariaLabel = isError ? "Retry microphone" : `Voice: ${label}`;
+  const ariaLabel = isError ? "Retry voice message recording" : state === "idle" ? "Record a voice message" : `Voice message: ${label}`;
 
   const isFocus = variant === "focus";
   const cardClass = "w-full rounded-2xl border border-white/10 bg-black/85 backdrop-blur-xl p-3 flex items-center justify-between gap-2 " + (isFocus ? "ring-1 ring-amber-400/20" : "");
@@ -73,6 +73,7 @@ export default function UnifiedInteractionDock({
         onClick={() => (isError && onRetry ? onRetry() : onMicPress?.())}
         disabled={disabled && !isError}
         aria-label={ariaLabel}
+        title={ariaLabel}
         className={micButtonClass + micRing}
       >
         <Icon className={`h-5 w-5 text-white/90 ${state === "processing" || state === "permission" ? "animate-spin" : ""}`} />
@@ -83,10 +84,12 @@ export default function UnifiedInteractionDock({
           type="button"
           onClick={() => onToolsPress?.()}
           disabled={disabled}
-          aria-label="Tools"
-          className="flex items-center justify-center rounded-xl px-3 py-3 text-sm bg-transparent hover:bg-white/10 transition"
+          aria-label="Tools and practices"
+          title="Browse tools and practices"
+          className="flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm bg-transparent hover:bg-white/10 transition"
         >
           <Wrench className="h-5 w-5 text-white/70" />
+          <span className="text-[10px] leading-none text-white/65">Tools</span>
         </button>
       )}
       {showSupport && (
@@ -94,10 +97,12 @@ export default function UnifiedInteractionDock({
           type="button"
           onClick={() => onSupportPress?.()}
           disabled={disabled}
-          aria-label="Support / Crisis"
-          className="flex items-center justify-center rounded-xl px-3 py-3 text-sm bg-transparent hover:bg-white/10 transition"
+          aria-label="Support and resources"
+          title="Find practical support and resources"
+          className="flex min-w-[64px] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm bg-transparent hover:bg-white/10 transition"
         >
           <LifeBuoy className="h-5 w-5 text-amber-300/90" />
+          <span className="text-[10px] leading-none text-amber-100/75">Help</span>
         </button>
       )}
     </div>

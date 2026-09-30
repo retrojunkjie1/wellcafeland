@@ -22,9 +22,11 @@ import { searchResources } from "@/services/resourceSearch";
 import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
 import { callAI } from "@/services/aiClient";
 import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
-import { makeLivingMeta, detectRoleIntent, safeApproachForRole, pickVariantText } from "@/lib/living";
+import { makeLivingMeta, detectRoleIntent, safeApproachForRole } from "@/lib/living";
 import { useLivingSession } from "@/hooks/useLivingSession";
-import { offlineRespond, advancedSupportContractOffline } from "@/services/offlineGuide";
+import { offlineRespond } from "@/services/offlineGuide";
+import { getAIServiceFailureActions } from "@/services/aiFailureGuidance";
+import { resolveChatActionTurn } from "@/services/chatTurnContext";
 import { getPref, setPref } from "@/services/sessionPrefs";
 // Removed: using aiClient instead
 import { determineGuideResponse } from "@/services/decisionEngine";
@@ -39,7 +41,6 @@ import {
   enrichMessageWithIdentity,
   enrichMessageWithRelationship,
   computeCrisisForecast,
-  mergeEmotionChannels,
 } from "@/core/system/intelligenceEngine";
 import { computeEmotionalTrajectory } from "@/core/system/patternEngine";
 import { buildIdentitySnapshot } from "@/ai/human/identityModel";
@@ -51,16 +52,9 @@ import { getPhrasingStyle, buildAssistantResponse } from "@/core/system/phrasing
 import { trackRiskEvent } from "@/services/sessionTelemetry";
 import { logRiskSnapshot, logIdentitySnapshot } from "@/services/providerTimeline";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
-import EmotionalSignalBar from "../analysis/EmotionalSignalBar";
 import ProviderMonitorStrip from "../analysis/ProviderMonitorStrip";
-// Phase 27: Emotional HUD Integration
-import EmotionalChip from "../analysis/EmotionalChip";
-import TriggerChips from "../analysis/TriggerChip";
-import RiskBadge from "../analysis/RiskBadge";
-import TrajectoryTag from "../analysis/TrajectoryTag";
 import IntelligencePulse from "../hud/IntelligencePulse";
 // Phase 31: Face Signal Engine
-import { getFaceEmotionSnapshot } from "@/core/system/faceSignal";
 import FaceScanPrompt from "./FaceScanPrompt";
 import { logDebug } from "@/lib/debug";
 import ThreadCueBar from "./ThreadCueBar";
@@ -70,7 +64,6 @@ import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 import { planResponse } from "@/engines/trust/responsePlanner";
 import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
-import { getSupportFallbackGuidance } from "@/lib/support/fallback";
 import GroundingModal from "@/components/chat/GroundingModal";
 import ThinkingOverlay from "@/components/presence/ThinkingOverlay";
 import useAutoSpeak from "@/components/presence/useAutoSpeak";
@@ -90,10 +83,10 @@ const STYLE_HINTS_54K = ["warm_concise", "coach", "clinical_calm", "grounded_spi
 
 const TOOL_NAMES = {
   breathing: "Breathing Exercise",
-  grounding: "Grounding (5-4-3-2-1)",
+  grounding: "Choose an Anchor",
   journaling: "Journaling",
   "urge-surfing": "Urge Surfing",
-  "body-scan": "Body Scan",
+  "body-scan": "Steady Ground",
   "self-surgeon": "Self-Inquiry",
   education: "Education",
 };
@@ -258,9 +251,9 @@ function classifyRouteIntent(text, isDirectory) {
 }
 
 // Phase 54M: Replacement for "Please sign in to continue" — title, body, and action labels
-const SIGNIN_ALTERNATIVE_TITLE = "I can help right now.";
+const SIGNIN_ALTERNATIVE_TITLE = "Sign in to continue this action.";
 const SIGNIN_ALTERNATIVE_BODY =
-  "Share your city or state if you'd like (optional). What kind of therapy or support are you looking for—e.g. trauma, addiction, anxiety, or grief? I can guide you.";
+  "Your account is needed to schedule or message a practitioner. You can browse practitioners now, or sign in to continue.";
 
 // Helper: Convert base64 to Blob
 const ChatPanel = () => {
@@ -277,12 +270,8 @@ const ChatPanel = () => {
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
   const [input, setInput] = useState("");
+  const [imageAttachment, setImageAttachment] = useState(null);
   const [isSending, setIsSending] = useState(false);
-  const [pendingFaceEmotion, setPendingFaceEmotion] = useState(null);
-
-  useEffect(() => {
-    if (!allowFaceSignals || !allowEmotionAnalysis) setPendingFaceEmotion(null);
-  }, [allowFaceSignals, allowEmotionAnalysis]);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const [voiceCheckInModalOpen, setVoiceCheckInModalOpen] = useState(false);
   const [pending, setPending] = useState(null);
@@ -308,7 +297,6 @@ const ChatPanel = () => {
   // Phase 54N: Last turn snapshot for Retry (re-run sendToAI with new turnId/variationSeed)
   const lastTurnRef = useRef(null);
   // Phase 55A: Identity pills only when value changes (reduce noise)
-  const lastIdentityRef = useRef(null);
   // Connection state machine: idle → sending → awaiting_response → resolved → error
   const connectionStateRef = useRef("idle");
   const lastErrorMessageRef = useRef(null);
@@ -374,7 +362,7 @@ const ChatPanel = () => {
     const store = useOSStore.getState();
     if (store.messages && Array.isArray(store.messages)) {
       const isErrorMsg = (m) =>
-        (m.type === "assistant_text" || m.role === "assistant") &&
+        (m.type === "assistant_error" || m.meta?.kind === "service_error" || (m.type === "assistant_text" || m.role === "assistant")) &&
         (m.actions?.length > 0 ||
           m.text?.includes("Still here with you") ||
           m.text?.includes("Connection lost") ||
@@ -409,7 +397,7 @@ const ChatPanel = () => {
   }, []);
 
   // Chat transport: sendToAI - must be stable function, defined before any usage
-  const sendToAI = React.useCallback(async function sendToAIFn(text) {
+  const sendToAI = React.useCallback(async function sendToAIFn(text, media = {}) {
     // Phase 2: Guard against empty sends - prevent chat loop
     if (!text || typeof text !== "string" || !text.trim() || text.trim().length === 0) {
       console.warn("[ChatPanel] sendToAI called with invalid or empty text");
@@ -475,15 +463,26 @@ const ChatPanel = () => {
           // Build message history for context
           const messageHistory = messages
             .filter((m) => m.role === "user" || m.role === "assistant")
-            .map((m) => ({
-              role: m.role === "assistant" ? "assistant" : "user",
-              content: typeof m.content === "string" ? m.content : m.text || m.content || "",
-            }));
+            .map((m) => {
+              const textContent = typeof m.content === "string" ? m.content : m.text || "";
+              const content = m.imageUrl
+                ? [
+                    { type: "text", text: textContent || "Please describe what is visible in this image." },
+                    { type: "image_url", image_url: { url: m.imageUrl, detail: "auto" } },
+                  ]
+                : textContent;
+              return { role: m.role === "assistant" ? "assistant" : "user", content };
+            });
 
           // Add current user message
           messageHistory.push({
             role: "user",
-            content: text,
+            content: media.imageUrl
+              ? [
+                  { type: "text", text: text || "Please describe what is visible in this image." },
+                  { type: "image_url", image_url: { url: media.imageUrl, detail: "auto" } },
+                ]
+              : text,
           });
 
           // Run decision engine to analyze emotional/spiritual state (optional, non-blocking)
@@ -562,7 +561,7 @@ const ChatPanel = () => {
 
           // Phase 54M/54N: Route intent (ALWAYS_ON_SUPPORT, DIRECTORY, RESTRICTED, UNKNOWN). Only RESTRICTED can show sign-in.
           const routeIntent = classifyRouteIntent(text, !!directoryQueries);
-          lastTurnRef.current = { text, routeIntent };
+          lastTurnRef.current = { text, routeIntent, sourceMessageId: media?.sourceMessageId || null };
 
           // Trust layer: plan (for reasoning envelope on success); then single pending indicator (Phase 54J)
           const startMs = Date.now();
@@ -598,38 +597,29 @@ const ChatPanel = () => {
               text: signInMessageText,
               content: signInMessageText,
               timestamp: Date.now(),
-              meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
+              meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now(), sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent },
               actions: [
-                { label: "Continue with guidance", action: "continue_guidance" },
-                { label: "Open Directory", action: "open_directory" },
+                { label: "Browse practitioners", action: "open_practitioners" },
                 { label: "Sign in", action: "sign_in" },
               ],
             }));
           } else {
             const isDirectoryOrBasicNeeds = directoryQueries != null || directoryFallback;
             const crisisHint = /hurt myself|suicid|kill myself|end it|988|emergency/i.test((text || "").trim());
-            const offlineContent =
-              routeIntent === "ALWAYS_ON_SUPPORT" || routeIntent === "DIRECTORY"
-                ? advancedSupportContractOffline(text)
-                : isDirectoryOrBasicNeeds
-                  ? offlineRespond(text, { intent: "directory", crisis: crisisHint })
-                  : (() => {
-                      const n = Number(typeof sessionStorage !== "undefined" ? sessionStorage.getItem("wc_offline_n") || "0" : "0");
-                      if (typeof sessionStorage !== "undefined") sessionStorage.setItem("wc_offline_n", String(n + 1));
-                      return pickVariantText({ intent: "offline_support", key: (text || "").toLowerCase().trim(), n });
-                    })();
+            const offlineContent = offlineRespond(text, {
+              intent: routeIntent === "DIRECTORY" || isDirectoryOrBasicNeeds ? "directory" : "support",
+              crisis: crisisHint,
+            });
             addMessage("assistant", normalizeMessage({
               role: "assistant",
               type: "assistant_text",
               text: offlineContent,
               content: offlineContent,
               timestamp: Date.now(),
-              meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
-              actions: [
-                { label: "Retry", action: "retry" },
-                { label: "Open Real Help", action: "open_tools" },
-                { label: "Continue offline", action: "offline" },
-              ],
+              meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now(), sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent },
+              actions: directoryQueries || directoryFallback
+                ? [{ label: "Open support search", action: "open_directory" }]
+                : [],
             }));
           }
           setIsSending(false);
@@ -679,7 +669,7 @@ const ChatPanel = () => {
         const res = await callAI("aiSession", {
           messages: messageHistory,
           mode,
-          memoryContext: getConversationMemoryContext(settings?.personalizationMemoryEnabled === true),
+          memoryContext: await getConversationMemoryContext(settings?.personalizationMemoryEnabled === true),
           metadata: {
             ...(decision ? {
               emotion: decision.emotion,
@@ -748,10 +738,10 @@ const ChatPanel = () => {
               if (toolMessage) {
                 addMessage("assistant", normalizeMessage({ role: "assistant", type: "system", content: `I'm having trouble connecting right now, but I can still help. I've opened the ${TOOL_NAMES[directToolRequest] || directToolRequest} tool for you.`, meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
               } else {
-                addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_text", text: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.", content: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.", timestamp: Date.now(), meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
+                addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_error", text: "I couldn't connect to the guide. The tool didn't open, but you can open it from Tools.", content: "I couldn't connect to the guide. The tool didn't open, but you can open it from Tools.", timestamp: Date.now(), meta: { kind: "service_error", sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent: lastTurnRef.current?.routeIntent, pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() }, actions: [{ label: "Browse tools", action: "open_tools" }, { label: "Retry", action: "retry" }] }));
               }
             } else {
-              addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_text", text: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.", content: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.", timestamp: Date.now(), meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
+              addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_error", text: "I couldn't connect to the guide. Please retry or open Tools to choose a practice.", content: "I couldn't connect to the guide. Please retry or open Tools to choose a practice.", timestamp: Date.now(), meta: { kind: "service_error", sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent: lastTurnRef.current?.routeIntent, pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() }, actions: [{ label: "Browse tools", action: "open_tools" }, { label: "Retry", action: "retry" }] }));
             }
             connectionStateRef.current = "idle";
             isSendingRef.current = false;
@@ -764,40 +754,34 @@ const ChatPanel = () => {
           if (isActuallyOffline) {
             offlineMessageQueueRef.current.push(text);
             setOfflineQueueLength((n) => n + 1);
-            addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_text", text: "Connection lost. Your message will be sent when you're back online. Tap Retry to send now.", content: "Connection lost. Your message will be sent when you're back online.", timestamp: Date.now(), meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() } }));
+            const offlineText = "You're offline, so I couldn't send that message to the AI guide. Your message is saved here; retry when your connection returns, or use offline support.";
+            addMessage("assistant", normalizeMessage({ role: "assistant", type: "assistant_error", text: offlineText, content: offlineText, timestamp: Date.now(), meta: { kind: "service_error", errorReason: "offline", sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent: lastTurnRef.current?.routeIntent, pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() }, actions: getAIServiceFailureActions({ routeIntent, directoryRequested: directoryQueries != null || directoryFallback }) }));
           } else {
             // Phase 54J/54M/54N: ALWAYS_ON_SUPPORT and DIRECTORY never show "Please sign in"; only RESTRICTED can prompt sign-in. On fail use ADVANCED_SUPPORT_V1 contract.
-            const isBasicNeeds = directoryFallback || (directoryQueries != null) || routeIntent === "ALWAYS_ON_SUPPORT" || routeIntent === "DIRECTORY";
-            const is401SignIn = res.status === 401 && (res.error || "").includes("Please sign in");
-            const useOfflineMessage = isBasicNeeds;
-            const useSignInAlternative = is401SignIn && !useOfflineMessage;
-            const displayText = useOfflineMessage
-              ? advancedSupportContractOffline(text)
-              : useSignInAlternative
-                ? `${SIGNIN_ALTERNATIVE_TITLE}\n\n${SIGNIN_ALTERNATIVE_BODY}`
-                : (res.error || "Still here with you. Tap send to continue.");
-            const displayActions = useSignInAlternative
-              ? [
-                  { label: "Continue with guidance", action: "continue_guidance" },
-                  { label: "Open Directory", action: "open_directory" },
-                  { label: "Sign in", action: "sign_in" },
-                ]
-              : [
-                  { label: "Retry", action: "retry" },
-                  { label: "Continue offline", action: "offline" },
-                  { label: "Open tools", action: "open_tools" },
-                ];
-            if (!useOfflineMessage && !useSignInAlternative && lastErrorMessageRef.current === displayText) {
+            const isAuthError = res.errorCode === "AUTH_REQUIRED" || res.errorCode === "AUTH_INVALID" || res.status === 401;
+            const isProviderSetupError = res.errorCode === "AI_PROVIDER_NOT_CONFIGURED";
+            const displayText = isProviderSetupError
+              ? "The AI guide could not reach its response service. Your message is saved in this chat, but it has not received an AI reply yet."
+              : res.error || "The AI guide couldn't complete that request. Please retry or choose another kind of support.";
+            const displayActions = isAuthError
+              ? [{ label: "Reconnect", action: "retry" }, { label: "Sign in", action: "sign_in" }]
+              : getAIServiceFailureActions({
+                  routeIntent,
+                  directoryRequested: directoryQueries != null || directoryFallback,
+                  retryable: res.retryable !== false,
+                });
+            if (lastErrorMessageRef.current === displayText) {
               // Skip duplicate error bubble
             } else {
-              if (!useOfflineMessage && !useSignInAlternative) lastErrorMessageRef.current = displayText;
+              lastErrorMessageRef.current = displayText;
               addMessage("assistant", normalizeMessage({
                 role: "assistant",
-                type: "assistant_text",
+                type: "assistant_error",
                 text: displayText,
                 content: displayText,
                 timestamp: Date.now(),
-                meta: { pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
+                errorCode: res.errorCode,
+                meta: { kind: "service_error", errorCode: res.errorCode, errorReason: res.errorReason, sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent, pending: false, startMs: pendingStartMsRef.current, doneMs: Date.now() },
                 actions: displayActions,
               }));
             }
@@ -872,7 +856,7 @@ const ChatPanel = () => {
           });
         }
         addMessage("assistant", normalizeMessage(patch));
-        rememberConversationTurn({
+        await rememberConversationTurn({
           user: text,
           assistant: displayText,
           enabled: settings?.personalizationMemoryEnabled === true,
@@ -1018,19 +1002,23 @@ const ChatPanel = () => {
             } else {
               // Tool failed to open - don't promise it
               addMessage("assistant", {
-                type: "assistant_text",
+                type: "assistant_error",
                 text: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
                 content: "I'm having trouble connecting right now. You can navigate to the Tools section to open tools directly.",
                 timestamp: Date.now(),
+                meta: { kind: "service_error" },
+                actions: [{ label: "Browse tools", action: "open_tools" }, { label: "Retry", action: "retry" }],
               });
             }
           } else {
             // Tool not available - show safe fallback
             addMessage("assistant", {
-              type: "assistant_text",
+              type: "assistant_error",
               text: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
               content: "I'm having trouble connecting right now. Please try again in a moment, or navigate to the Tools section directly.",
               timestamp: Date.now(),
+              meta: { kind: "service_error" },
+              actions: [{ label: "Browse tools", action: "open_tools" }, { label: "Retry", action: "retry" }],
             });
           }
           connectionStateRef.current = "idle";
@@ -1055,18 +1043,20 @@ const ChatPanel = () => {
 
       // Guard: Only show error message once per failure - prevent loop
       const isActuallyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
-      const errorMessage = isActuallyOffline 
-        ? "Connection lost. Reconnecting..."
-        : "Still here with you. Tap send to continue.";
+      const errorMessage = isActuallyOffline
+        ? "You're offline, so I couldn't send that message to the AI guide. Retry when your connection returns, or use offline support."
+        : "I couldn't connect to the AI guide. Please retry or open real-world support.";
       
       // Only add message if this is a new error or different message
       if (lastErrorMessageRef.current !== errorMessage) {
         lastErrorMessageRef.current = errorMessage;
         addMessage("assistant", {
-          type: "assistant_text",
+          type: "assistant_error",
           text: errorMessage,
           content: errorMessage,
           timestamp: Date.now(),
+          meta: { kind: "service_error", errorReason: isActuallyOffline ? "offline" : "unknown", sourceMessageId: lastTurnRef.current?.sourceMessageId, routeIntent: lastTurnRef.current?.routeIntent },
+          actions: getAIServiceFailureActions({ routeIntent: lastTurnRef.current?.routeIntent }),
         });
       }
       
@@ -1099,8 +1089,12 @@ const ChatPanel = () => {
     }
   };
 
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (voiceMessage = null) => {
+    const outgoingImage = imageAttachment;
+    const typedText = String(input || "").trim();
+    const voiceText = String(voiceMessage?.transcript || "").trim();
+    const text = [typedText, voiceText].filter(Boolean).join("\n") || (outgoingImage ? "Please describe what is visible in this image." : "");
+    const outgoingAudioUrl = voiceMessage?.audioUrl || "";
     // Guard: Prevent duplicate sends using connection state
     if (!text || isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response") {
       return;
@@ -1113,12 +1107,25 @@ const ChatPanel = () => {
         content: text,
         role: "user",
         timestamp: Date.now(),
+        ...(outgoingAudioUrl ? { audioUrl: outgoingAudioUrl, audioDurationSeconds: voiceMessage?.durationSeconds || 0, type: "voice_message" } : {}),
+        ...(outgoingImage ? { imageUrl: outgoingImage.dataUrl, imageName: outgoingImage.name, type: "user_image" } : {}),
       });
       addMessage("user", offlineUserMessage);
-      pushAction({ type: "message", label: "Sent a message", href: "/chat", ts: Date.now() });
-      offlineMessageQueueRef.current.push(text);
-      setOfflineQueueLength((n) => n + 1);
+      lastTurnRef.current = { text, sourceMessageId: offlineUserMessage.id, routeIntent: classifyRouteIntent(text, false) };
+      pushAction({ type: "message", label: "Saved a message", href: "/chat", ts: Date.now() });
+      if (!outgoingAudioUrl && !outgoingImage) {
+        offlineMessageQueueRef.current.push(text);
+        setOfflineQueueLength((n) => n + 1);
+      } else {
+        addMessage("assistant", normalizeMessage({
+          role: "assistant", type: "assistant_error",
+          content: "This voice recording or image is saved in the chat on this device, but it was not sent because you are offline. Reconnect and attach it again to get a response.",
+          text: "This voice recording or image is saved in the chat on this device, but it was not sent because you are offline. Reconnect and attach it again to get a response.",
+          meta: { kind: "service_error", errorReason: "offline", sourceMessageId: offlineUserMessage.id, routeIntent: lastTurnRef.current.routeIntent, pending: false },
+        }));
+      }
       setInput("");
+      setImageAttachment(null);
       return;
     }
 
@@ -1130,15 +1137,12 @@ const ChatPanel = () => {
       role: "user",
       content: text,
       timestamp: Date.now(),
+      ...(outgoingAudioUrl ? { audioUrl: outgoingAudioUrl, audioDurationSeconds: voiceMessage?.durationSeconds || 0, type: "voice_message" } : {}),
+      ...(outgoingImage ? { imageUrl: outgoingImage.dataUrl, imageName: outgoingImage.name, type: "user_image" } : {}),
     };
     
     let enrichedMessage = allowEmotionAnalysis ? enrichMessageWithEmotion(userMessage) : userMessage;
     
-    // Phase 31: Merge face emotion if available
-    if (pendingFaceEmotion && allowFaceSignals && allowEmotionAnalysis) {
-      enrichedMessage.emotion = mergeEmotionChannels(enrichedMessage.emotion, pendingFaceEmotion);
-      setPendingFaceEmotion(null); // Reset after use
-    }
     
     // Phase 17: Analyze signals (triggers + risk)
     const signals = analyzeMessageSignals(enrichedMessage, { includeTriggers: allowEmotionAnalysis });
@@ -1330,6 +1334,8 @@ const ChatPanel = () => {
     // Phase 25: Normalize message before storing
     const messageForStore = normalizeMessage({
       content: enrichedMessage.content,
+      ...(enrichedMessage.audioUrl ? { audioUrl: enrichedMessage.audioUrl, audioDurationSeconds: enrichedMessage.audioDurationSeconds, type: enrichedMessage.type || "voice_message" } : {}),
+      ...(enrichedMessage.imageUrl ? { imageUrl: enrichedMessage.imageUrl, imageName: enrichedMessage.imageName, type: "user_image" } : {}),
       emotion: enrichedMessage.emotion,
       triggers: enrichedMessage.triggers,
       risk: enrichedMessage.risk,
@@ -1400,8 +1406,27 @@ const ChatPanel = () => {
     
     pushAction({ type: "message", label: "Sent a message", href: "/chat", ts: Date.now() });
     setInput("");
-    await sendToAI(text);
+    setImageAttachment(null);
+    await sendToAI(text, { imageUrl: outgoingImage?.dataUrl || "", sourceMessageId: messageForStore.id });
   };
+
+  const handleVoiceMessageComplete = ({ transcript, audioUrl, durationSeconds }) => {
+    setVoiceCheckInModalOpen(false);
+    void handleSend({ transcript, audioUrl, durationSeconds });
+  };
+
+  useEffect(() => {
+    const openVoiceComposer = () => setVoiceCheckInModalOpen(true);
+    window.addEventListener("wc:open-voice-composer", openVoiceComposer);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("voice") === "1") {
+      setVoiceCheckInModalOpen(true);
+      params.delete("voice");
+      const search = params.toString();
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}${search ? `?${search}` : ""}${window.location.hash}`);
+    }
+    return () => window.removeEventListener("wc:open-voice-composer", openVoiceComposer);
+  }, []);
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -1410,68 +1435,53 @@ const ChatPanel = () => {
     }
   };
 
-  // Phase 31: Face scan handler
-  const handleFaceScan = async () => {
-    if (!allowFaceSignals || !allowEmotionAnalysis) return;
-    try {
-      const faceEmotion = await getFaceEmotionSnapshot({ seconds: 5 });
-      if (faceEmotion) {
-        setPendingFaceEmotion(faceEmotion);
-        // Show brief confirmation
-        addMessage("assistant", {
-          type: "system",
-          content: "Face expression captured. Your next message will include this emotional signal.",
-        });
-      } else {
-        // User denied permission or error
-        addMessage("assistant", {
-          type: "system",
-          content: "Face scan was cancelled or unavailable. You can continue typing normally.",
-        });
-      }
-    } catch (err) {
-      console.warn("[ChatPanel] Face scan error:", err);
-      addMessage("assistant", {
-        type: "system",
-        content: "Face scan unavailable. You can continue typing normally.",
-      });
-    }
+  // A camera still is only a user attachment. It is never converted into an
+  // emotion, health, or identity estimate.
+  const handleFaceScan = ({ imageDataUrl } = {}) => {
+    if (!allowFaceSignals || !/^data:image\/jpeg;base64,/i.test(imageDataUrl || "")) return;
+    setImageAttachment({ dataUrl: imageDataUrl, name: "Camera check-in.jpg", mimeType: "image/jpeg", source: "camera-check-in" });
+    addMessage("assistant", {
+      type: "system",
+      content: "Your photo is in the message box. It has not been sent. Add a note or question and choose Send if you want the Guide to see it. You can remove it any time.",
+    });
   };
 
-  const retryLastTurn = React.useCallback(() => {
-    const text = lastTurnRef.current?.text ?? lastUserMessageRef.current;
-    if (text && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
+  const retryLastTurn = React.useCallback((actionMessage) => {
+    const turn = resolveChatActionTurn(useOSStore.getState().messages, actionMessage, lastTurnRef.current);
+    if (turn?.text && connectionStateRef.current !== "sending" && connectionStateRef.current !== "awaiting_response") {
       lastErrorMessageRef.current = null;
       const store = useOSStore.getState();
       const msgs = store.messages || [];
-      const filtered = msgs.filter((m) => !(m.actions?.length > 0 && m.role === "assistant"));
+      const filtered = msgs.filter((m) => !(m.id === actionMessage?.id || (m.role === "assistant" && (m.type === "assistant_error" || m.meta?.kind === "service_error") && (!turn.sourceMessageId || m.meta?.sourceMessageId === turn.sourceMessageId))));
       if (filtered.length < msgs.length) store.setMessages(filtered);
-      sendToAI(text);
+      lastTurnRef.current = turn;
+      sendToAI(turn.text, { sourceMessageId: turn.sourceMessageId });
     }
   }, [sendToAI]);
 
   const handleMessageAction = React.useCallback((action, msg) => {
     if (action === "retry") {
-      retryLastTurn();
-    } else if (action === "open_tools" || action === "open_directory") {
+      retryLastTurn(msg);
+    } else if (action === "open_tools") {
+      navigate("/tools");
+    } else if (action === "open_directory") {
       navigate("/assistance");
+    } else if (action === "open_practitioners") {
+      navigate("/providers");
     } else if (action === "sign_in") {
       navigate("/login");
     } else if (action === "continue_guidance" || action === "offline") {
-      const text = lastUserMessageRef.current;
-      if (text) {
-        const routeIntent = lastTurnRef.current?.routeIntent;
-        const reply = routeIntent === "ALWAYS_ON_SUPPORT" ? advancedSupportContractOffline(text) : offlineRespond(text, { intent: "directory" });
+      const turn = resolveChatActionTurn(useOSStore.getState().messages, msg, lastTurnRef.current);
+      if (turn?.text) {
+        const reply = offlineRespond(turn.text, { intent: turn.routeIntent === "DIRECTORY" ? "directory" : "support" });
         addMessage("assistant", normalizeMessage({
           role: "assistant",
           type: "assistant_text",
           text: reply,
           content: reply,
           timestamp: Date.now(),
-          meta: { pending: false },
+          meta: { pending: false, sourceMessageId: turn.sourceMessageId, routeIntent: turn.routeIntent },
         }));
-        offlineMessageQueueRef.current.push(text);
-        setOfflineQueueLength((n) => n + 1);
       }
     }
   }, [navigate, retryLastTurn, addMessage]);
@@ -1528,47 +1538,22 @@ const ChatPanel = () => {
     setExpandedMessageIds((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const handleOpenTools = React.useCallback(() => {
-    navigate("/tools");
-  }, [navigate]);
-
-  const handleOpenRealHelp = React.useCallback(async () => {
-    try {
-      navigate("/assistance");
-    } catch (e) {
-      const guidance = getSupportFallbackGuidance();
-      addMessage("assistant", normalizeMessage({
-        role: "assistant",
-        type: "assistant_text",
-        text: guidance,
-        content: guidance,
-        timestamp: Date.now(),
-        meta: { kind: "support_fallback" },
-      }));
-    }
-  }, [navigate, addMessage]);
-
   const handleContinueOffline = React.useCallback((msg) => {
-    const text = lastUserMessageRef.current || (typeof msg?.content === "string" ? msg.content : msg?.text) || "";
-    if (!text) return;
-    const routeIntent = lastTurnRef.current?.routeIntent;
-    const reply = routeIntent === "ALWAYS_ON_SUPPORT" ? advancedSupportContractOffline(text) : offlineRespond(text, { intent: "directory" });
+    const turn = resolveChatActionTurn(useOSStore.getState().messages, msg, lastTurnRef.current);
+    if (!turn?.text) return;
+    const reply = offlineRespond(turn.text, { intent: turn.routeIntent === "DIRECTORY" ? "directory" : "support" });
     addMessage("assistant", normalizeMessage({
       role: "assistant",
       type: "assistant_text",
       text: reply,
       content: reply,
       timestamp: Date.now(),
-      meta: { pending: false },
+      meta: { pending: false, sourceMessageId: turn.sourceMessageId, routeIntent: turn.routeIntent },
     }));
-    offlineMessageQueueRef.current.push(text);
-    setOfflineQueueLength((n) => n + 1);
   }, [addMessage]);
 
   const chatActionHandlers = {
     onRetry: retryLastTurn,
-    onOpenTools: handleOpenTools,
-    onOpenRealHelp: handleOpenRealHelp,
     onOpenToolRoute: (route) => route && navigate(route),
     onContinueOffline: handleContinueOffline,
     onCopy: handleCopyMessage,
@@ -1599,6 +1584,7 @@ const ChatPanel = () => {
       {/* Welcome Screen (before conversation starts) */}
       {!hasStarted && (
         <WelcomeScreen
+          onContinueChat={() => textareaRef.current?.focus()}
           onAction={async (action) => {
             // Phase 17: Enrich welcome screen actions with emotion/risk too
             const userMessage = {
@@ -2012,30 +1998,10 @@ const ChatPanel = () => {
                   }
                 }
                 
-                // Phase 19: Add EmotionalSignalBar to user messages
-                // Phase 27: Add HUD components under user messages
                 if (msg.role === "user") {
-                  const prevId = lastIdentityRef.current;
-                  const idChanged = !prevId || (msg.identity && (prevId.tensionScore !== msg.identity?.tensionScore || prevId.summaryTag !== msg.identity?.summaryTag));
-                  if (msg.identity && idChanged) lastIdentityRef.current = { tensionScore: msg.identity?.tensionScore, summaryTag: msg.identity?.summaryTag };
                   return (
-                    <div key={msg.id} className="space-y-2">
+                    <div key={msg.id}>
                       <MessageBubble message={msg} onAction={handleMessageAction} {...chatActionHandlers} />
-                      <EmotionalSignalBar
-                        emotion={msg.emotion}
-                        triggers={msg.triggers}
-                        risk={msg.risk}
-                        identity={idChanged ? msg.identity : null}
-                      />
-                      {/* Phase 27: Emotional HUD - Micro-components */}
-                      {(msg.emotion || msg.triggers || msg.risk || msg.trajectory) && (
-                        <div className="flex flex-wrap items-center gap-2 px-2 sm:px-4 text-xs">
-                          <EmotionalChip emotion={msg.emotion} />
-                          <TriggerChips triggers={msg.triggers} />
-                          <RiskBadge risk={msg.risk} />
-                          <TrajectoryTag trajectory={msg.trajectory} />
-                        </div>
-                      )}
                     </div>
                   );
                 }
@@ -2103,7 +2069,7 @@ const ChatPanel = () => {
             {isOffline 
               ? "Offline"
               : offlineQueueLength > 0 
-                ? "Back online. Tap send to continue."
+                ? "Connection restored. Retry your message when ready."
                 : ""}
           </span>
           {offlineQueueLength > 0 && !isOffline && (
@@ -2129,29 +2095,41 @@ const ChatPanel = () => {
         const composerEl = (
           <div ref={composerRef}>
             <ChatDock>
-              <div className="flex items-end gap-2 w-full">
-                <ComposerPresenceControls
-                  pending={!!pending}
-                  onSpeakLast={speakLastAssistant}
-                  autoSpeakEnabled={autoSpeakEnabled}
-                  onToggleAutoSpeak={(v) => setAutoSpeakEnabled(!!v)}
+              {voiceCheckInModalOpen ? (
+                <VoiceCheckInModal
+                  open
+                  presentation="inline"
+                  onClose={() => setVoiceCheckInModalOpen(false)}
+                  mode="chat"
+                  onComplete={handleVoiceMessageComplete}
                 />
-                <ChatComposerBar
-                  value={input}
-                  onChange={(v) => {
-                    setInput(v);
-                    clearTimeout(ingestDebounceRef.current);
-                    ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
-                  }}
-                  onSend={handleSend}
-                  onMic={() => setVoiceCheckInModalOpen(true)}
-                  onFaceScan={allowFaceSignals && allowEmotionAnalysis ? () => setFaceScanPromptOpen(true) : undefined}
-                  disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
-                  isSending={isSending}
-                  inputRef={textareaRef}
-                  placeholder="Ask anything"
-                />
-              </div>
+              ) : (
+                <div className="flex items-end gap-2 w-full">
+                  <ComposerPresenceControls
+                    pending={!!pending}
+                    onSpeakLast={speakLastAssistant}
+                    autoSpeakEnabled={autoSpeakEnabled}
+                    onToggleAutoSpeak={(v) => setAutoSpeakEnabled(!!v)}
+                  />
+                  <ChatComposerBar
+                    value={input}
+                    onChange={(v) => {
+                      setInput(v);
+                      clearTimeout(ingestDebounceRef.current);
+                      ingestDebounceRef.current = setTimeout(() => ingestUserDraft(v), 300);
+                    }}
+                    onSend={handleSend}
+                    onMic={() => setVoiceCheckInModalOpen(true)}
+                    onImageChange={setImageAttachment}
+                    attachment={imageAttachment}
+                    onFaceScan={allowFaceSignals ? () => setFaceScanPromptOpen(true) : undefined}
+                    disabled={isSending || connectionStateRef.current === "sending" || connectionStateRef.current === "awaiting_response"}
+                    isSending={isSending}
+                    inputRef={textareaRef}
+                    placeholder="Ask anything"
+                  />
+                </div>
+              )}
             </ChatDock>
           </div>
         );
@@ -2164,11 +2142,6 @@ const ChatPanel = () => {
 
       {/* Phase 31: Face Scan Prompt Modal */}
 
-      {/* Voice Check-In Modal — in-app, never new tab */}
-      <VoiceCheckInModal
-        open={voiceCheckInModalOpen}
-        onClose={() => setVoiceCheckInModalOpen(false)}
-      />
       <FaceScanPrompt
         open={faceScanPromptOpen}
         onClose={() => setFaceScanPromptOpen(false)}

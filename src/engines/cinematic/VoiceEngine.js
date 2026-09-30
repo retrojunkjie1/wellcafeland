@@ -30,11 +30,10 @@ export const VoiceProfiles = {
   GROUNDING: {
     startCues: ['Let us ground together', 'Begin when ready', 'Take your time'],
     stepCues: [
-      'Name 5 things you can see',
-      'Name 4 things you can touch',
-      'Name 3 things you can hear',
-      'Name 2 things you can smell',
-      'Name 1 thing you can taste',
+      'Choose one steady point to rest your attention on',
+      'Listen for one familiar sound, or choose quiet',
+      'Hold a familiar object if that feels useful',
+      'Move toward a more comfortable part of the space if you can',
     ],
     affirmations: ['You are present', 'You are here', 'You are grounded'],
     completeCues: ['You are fully present', 'Well done', 'You are grounded now'],
@@ -235,4 +234,3 @@ export function getVoiceEngine(profile) {
   }
   return voiceEngineInstance;
 }
-

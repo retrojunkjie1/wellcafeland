@@ -27,28 +27,37 @@ const isDevLanBaseUrl = () => {
 
 const TEXT_FALLBACK_PREFILL = "You don't have to explain everything—share only what feels comfortable.";
 
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("Could not prepare audio playback."));
+    reader.readAsDataURL(blob);
+  });
+}
+
 function getMicErrorMessage(err) {
   const name = err?.name || "";
   const isLan = isLanHost() && !isSecureContextOk();
   if (name === "NotAllowedError") {
     if (isLan) {
-      return "Voice recording requires HTTPS or localhost. On this network URL, audio capture may be blocked. Use http://127.0.0.1:5173 on this machine or set up HTTPS for LAN.";
+      return "Your browser couldn’t use the microphone here. Open this app on a secure connection, or check microphone permission in your browser.";
     }
-    return "Microphone access denied. Enable in browser settings.";
+    return "Your browser couldn’t use the microphone. Check this site’s microphone permission, then try again.";
   }
   if (name === "NotFoundError") {
     return "No microphone detected.";
   }
   if (name === "SecurityError" || (isLan && name === "NotAllowedError")) {
-    return "Voice recording requires HTTPS or localhost. On this network URL, audio capture may be blocked. Use http://127.0.0.1:5173 on this machine or set up HTTPS for LAN.";
+    return "Your browser couldn’t use the microphone here. Open this app on a secure connection, or check microphone permission in your browser.";
   }
   if (isLan) {
-    return "Voice recording requires HTTPS or localhost. On this network URL, audio capture may be blocked. Use http://127.0.0.1:5173 on this machine or set up HTTPS for LAN.";
+    return "Your browser couldn’t use the microphone here. Open this app on a secure connection, or check microphone permission in your browser.";
   }
-  return "Microphone access denied. Enable in browser settings.";
+  return "Your browser couldn’t use the microphone. Check this site’s microphone permission, then try again.";
 }
 
-export default function VoiceCheckInModal({ open, onClose, onComplete }) {
+export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "reflection", presentation = "modal" }) {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -59,6 +68,8 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   const [completed, setCompleted] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [serviceConsent, setServiceConsent] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState("");
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -83,9 +94,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
     audioContextRef.current = null;
     analyserRef.current = null;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      // MediaRecorder dispatches its final dataavailable event after stop().
+      // Keep the mic stream alive until onstop has collected that final chunk.
       mediaRecorderRef.current.stop();
-    }
-    if (streamRef.current) {
+    } else if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
@@ -95,10 +107,9 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   useEffect(() => {
     if (isRecording) {
       timerRef.current = setInterval(() => {
-        const next = Math.min(recordingTimeRef.current + 1, 20);
+        const next = recordingTimeRef.current + 1;
         recordingTimeRef.current = next;
         setRecordingTime(next);
-        if (next >= 20) stopRecording();
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -123,6 +134,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   }, [open, stopRecording]);
 
   const handleProcessCheckIn = useCallback(async (blob) => {
+    if (mode === "chat" && !serviceConsent) {
+      setErrorMessage("Choose whether to send this recording so we can turn it into text and reply.");
+      return;
+    }
     const duration = recordingTimeRef.current;
     setProcessing(true);
     setErrorMessage(null);
@@ -136,6 +151,18 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
 
       const transcriptText = transcriptionResult.text;
       setTranscript(transcriptText);
+
+      if (mode === "chat") {
+        const audioDataUrl = await blobToDataUrl(blob);
+        onComplete?.({
+          transcript: transcriptText,
+          audioUrl: audioDataUrl,
+          durationSeconds: duration,
+          type: "voice_message",
+        });
+        setCompleted(true);
+        return;
+      }
 
       const emotion = detectEmotionFromText(transcriptText);
       setEmotionalState({
@@ -192,7 +219,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
     } finally {
       setProcessing(false);
     }
-  }, [onComplete]);
+  }, [mode, onComplete, serviceConsent]);
 
   const drawWaveform = useCallback(() => {
     const canvas = canvasRef.current;
@@ -226,21 +253,41 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
     animationFrameRef.current = requestAnimationFrame(drawWaveform);
   }, []);
 
+  useEffect(() => {
+    if (isRecording) drawWaveform();
+    return () => {
+      if (animationFrameRef.current != null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [isRecording, drawWaveform]);
+
+  useEffect(() => () => {
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+  }, [audioPreviewUrl]);
+
   const attemptGetUserMedia = useCallback(async () => {
     setErrorMessage(null);
-    if (!serviceConsent) {
+    if (mode !== "chat" && !serviceConsent) {
       setErrorMessage("Choose whether to send your audio for transcription and response before recording.");
       return;
     }
     try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        throw new Error("Voice recording is not available in this browser. You can still type your message.");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) throw new Error("Live microphone visualization is not supported in this browser.");
+      const audioContext = new AudioContextClass();
       audioContextRef.current = audioContext;
+      if (audioContext.state === "suspended") await audioContext.resume();
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 2048;
@@ -252,23 +299,40 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const audioType = mediaRecorder.mimeType || chunksRef.current.find((chunk) => chunk.type)?.type || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: audioType });
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
-        if (!discardRecordingRef.current) handleProcessCheckIn(blob);
+        mediaRecorderRef.current = null;
+        if (!discardRecordingRef.current && blob.size > 0) {
+          setRecordedAudio(blob);
+          setAudioPreviewUrl(URL.createObjectURL(blob));
+        } else if (!discardRecordingRef.current) {
+          setErrorMessage("No audio was captured. Try again or type your message.");
+        }
       };
 
       discardRecordingRef.current = false;
       recordingTimeRef.current = 0;
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       setIsRecording(true);
       setRecordingTime(0);
-      drawWaveform();
     } catch (err) {
       console.error("Failed to start recording:", err);
-      setErrorMessage(getMicErrorMessage(err));
+      setErrorMessage(err?.name === "Error" ? err.message : getMicErrorMessage(err));
     }
-  }, [handleProcessCheckIn, drawWaveform, serviceConsent]);
+  }, [mode, serviceConsent]);
+
+  const discardAndRetake = useCallback(() => {
+    if (audioPreviewUrl) URL.revokeObjectURL(audioPreviewUrl);
+    setAudioPreviewUrl("");
+    setRecordedAudio(null);
+    setTranscript("");
+    setCompleted(false);
+    setErrorMessage(null);
+    recordingTimeRef.current = 0;
+    setRecordingTime(0);
+  }, [audioPreviewUrl]);
 
   const startRecording = useCallback(async () => {
     setErrorMessage(null);
@@ -291,9 +355,9 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
   if (!open) return null;
 
   const content = (
-    <div className="flex flex-col h-full bg-slate-950 text-white rounded-t-2xl sm:rounded-2xl overflow-hidden">
+    <div className={`flex flex-col ${presentation === "inline" ? "bg-slate-950 text-white" : "h-full bg-slate-950 text-white rounded-t-2xl sm:rounded-2xl overflow-hidden"}`}>
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
-        <h2 className="text-lg font-medium text-white">Voice Check-In</h2>
+        <h2 className="text-lg font-medium text-white">{mode === "chat" ? "Voice message" : "Voice Check-In"}</h2>
         {!completed && (
           <button
             type="button"
@@ -306,22 +370,29 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className={`${presentation === "inline" ? "p-3 space-y-3" : "flex-1 overflow-y-auto p-6 space-y-6"}`}>
         <p className="text-sm text-white/70 text-center">
-          Speak at any pace for up to 20 seconds. You can stop at any time.
+          {mode === "chat" ? "Say what’s on your mind. You can listen before you send." : "Speak at your own pace. You can listen before continuing."}
         </p>
-        {!completed && (
+        {!completed && mode !== "chat" && (
           <div className="mx-auto max-w-sm space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-xs leading-relaxed text-white/65">Your audio is sent for transcription, and the transcript is sent for an AI response. Automated emotional labels may be wrong and are not a diagnosis. Review our <a href="/privacy" className="text-amber-200 underline underline-offset-4">Privacy Notice</a>.</p>
+            <p className="text-xs leading-relaxed text-white/65">{mode === "chat" ? "Your recording stays with this chat on this device. If you send it, we turn your words into text so the guide can reply." : "Your recording is used to create a text check-in."} <a href="/privacy" className="text-amber-200 underline underline-offset-4">Privacy details</a>.</p>
             <label className="flex min-h-11 items-start gap-3 text-xs leading-relaxed text-white/75">
-              <input type="checkbox" checked={serviceConsent} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300" />
-              I choose to send my audio and transcript to these services for this check-in.
+              <input type="checkbox" checked={serviceConsent} disabled={isRecording || processing || Boolean(recordedAudio)} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300 disabled:opacity-50" />
+              I choose to send my audio for transcription and my words to the AI guide.
             </label>
             <p className="text-xs leading-relaxed text-white/55">If you may be in immediate danger, contact local emergency services. In the U.S. or its territories, call or text <a href="tel:988" className="text-amber-200 underline">988</a> or <a href="https://988lifeline.org/get-help/" target="_blank" rel="noreferrer" className="text-amber-200 underline">chat with 988</a>.</p>
           </div>
         )}
+        {!completed && mode === "chat" && (
+          <details className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/65">
+            <summary className="cursor-pointer py-1 text-white/80">How voice messages are used</summary>
+            <p className="pt-2 leading-relaxed">The recording stays with this chat on this device. If you send it, we create a transcript and use your words to prepare a reply. <a href="/privacy" className="text-amber-200 underline underline-offset-4">Privacy details</a>.</p>
+            <p className="pt-2 leading-relaxed">If you may be in immediate danger in the U.S., call or text <a href="tel:988" className="text-amber-200 underline">988</a>.</p>
+          </details>
+        )}
 
-        {showDevLanNote && (
+        {showDevLanNote && mode !== "chat" && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs text-amber-200/90 max-w-sm mx-auto mb-6">
             Dev: Mic may be blocked on LAN (HTTP). Use http://127.0.0.1:5173 for local testing.
           </div>
@@ -363,8 +434,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
             <>
               <div className="w-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-4 space-y-4">
                 <div className="text-center">
-                  <div className="text-3xl font-medium text-white mb-1">{recordingTime}s</div>
-                  <div className="text-sm text-white/50">Recording...</div>
+                  <div className="text-sm font-medium text-emerald-100 mb-1">Listening · {Math.floor(recordingTime / 60)}:{String(recordingTime % 60).padStart(2, "0")}</div>
                 </div>
                 <div className="w-full">
                   <canvas
@@ -384,7 +454,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
                     <MicOff className="h-8 w-8 text-red-400" />
                   </button>
                 </div>
-                  <p className="text-center text-sm text-white/50">Select Stop recording when you are ready.</p>
+                  <p className="text-center text-sm text-white/60">Tap stop when you’re ready.</p>
               </div>
             </>
           ) : processing ? (
@@ -405,6 +475,8 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
                   <p className="text-white leading-relaxed text-sm">{transcript}</p>
                 </div>
               )}
+
+              {audioPreviewUrl && <audio controls preload="metadata" src={audioPreviewUrl} className="w-full" aria-label="Play your recorded voice message" />}
 
               {emotionalState && (
                 <div className="rounded-xl p-4 border border-white/10 bg-white/5">
@@ -431,24 +503,47 @@ export default function VoiceCheckInModal({ open, onClose, onComplete }) {
                 Done
               </button>
             </div>
+          ) : recordedAudio && audioPreviewUrl ? (
+            <div className="w-full space-y-4 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.04] p-4">
+              <p className="text-center text-sm font-medium text-emerald-100">Your recording is ready</p>
+              <audio controls preload="metadata" src={audioPreviewUrl} onError={() => setErrorMessage("This recording could not be played. Please record it again.")} className="w-full" aria-label="Play your recorded voice message" />
+              {mode === "chat" && (
+                <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-3 text-sm leading-relaxed text-white/75">
+                  <input type="checkbox" checked={serviceConsent} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" />
+                  Send this recording to turn it into text and get a reply.
+                </label>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={discardAndRetake} className="min-h-11 rounded-xl border border-white/15 bg-white/5 px-4 text-sm text-white hover:bg-white/10">Record again</button>
+                <button type="button" onClick={() => handleProcessCheckIn(recordedAudio)} disabled={processing || (mode === "chat" && !serviceConsent)} className="min-h-11 rounded-xl border border-amber-200/60 bg-amber-300 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">{mode === "chat" ? "Send voice message" : "Transcribe check-in"}</button>
+              </div>
+              {errorMessage && <p role="alert" className="text-sm text-rose-200">{errorMessage}</p>}
+            </div>
           ) : (
             <div className="text-center">
               <button
                 type="button"
                 onClick={startRecording}
-                disabled={!serviceConsent}
                 aria-label="Start voice check-in recording"
                 className="mx-auto mt-6 w-20 h-20 rounded-full border border-amber-400/70 bg-amber-400/10 shadow-[0_0_0_6px_rgba(245,158,11,0.10)] flex items-center justify-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Mic className="w-7 h-7 text-amber-400 opacity-90" />
               </button>
-              <p className="text-sm text-white/50 mt-4">{serviceConsent ? "Select to begin recording" : "Choose whether to share audio before recording"}</p>
+              <p className="text-sm text-white/60 mt-4">Tap to start. Your microphone is used only while recording.</p>
             </div>
           )}
         </div>
       </div>
     </div>
   );
+
+  if (presentation === "inline") {
+    return (
+      <section className="w-full rounded-2xl border border-emerald-200/20 bg-slate-950/85 p-3 text-white shadow-xl" aria-label="Voice message">
+        <div className="max-h-[34vh] overflow-y-auto">{content}</div>
+      </section>
+    );
+  }
 
   const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches;
 

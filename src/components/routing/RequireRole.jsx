@@ -3,6 +3,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useAdminClaim } from "@/hooks/useAdminClaim";
 
 /**
  * Route guard that redirects public users from hidden pages
@@ -13,7 +14,7 @@ import { useAuth } from "../../context/AuthContext";
  * @param {string} props.redirectTo - Path to redirect to if unauthorized (default: "/")
  */
 const RequireRole = ({ children, allowedRoles = [], redirectTo = "/unauthorized" }) => {
-  const { role, loading, isAuthenticated } = useAuth();
+  const { role, roles = [], loading, isAuthenticated } = useAuth();
 
   // Show loading state while checking auth
   if (loading) {
@@ -34,7 +35,7 @@ const RequireRole = ({ children, allowedRoles = [], redirectTo = "/unauthorized"
 
   // If roles are specified, check if user's role is allowed
   if (allowedRoles.length > 0) {
-    if (!role || !allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(role) && !roles.some((candidate) => allowedRoles.includes(candidate))) {
       // User is authenticated but doesn't have required role
       // Redirect to home or dashboard
       return <Navigate to={redirectTo} replace />;
@@ -51,32 +52,9 @@ const RequireRole = ({ children, allowedRoles = [], redirectTo = "/unauthorized"
  */
 export const RequireAdmin = ({ children, redirectTo = "/unauthorized" }) => {
   const { user, loading } = useAuth();
-  const [checkingClaims, setCheckingClaims] = React.useState(true);
-  const [isAdmin, setIsAdmin] = React.useState(false);
+  const { isAdmin, adminReady } = useAdminClaim();
 
-  React.useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      setCheckingClaims(false);
-      setIsAdmin(false);
-      return;
-    }
-
-    // Check Firebase custom claims directly
-    user.getIdTokenResult(true)
-      .then((tokenResult) => {
-        const hasAdminClaim = tokenResult.claims?.admin === true;
-        setIsAdmin(hasAdminClaim);
-        setCheckingClaims(false);
-      })
-      .catch(() => {
-        setIsAdmin(false);
-        setCheckingClaims(false);
-      });
-  }, [user, loading]);
-
-  if (loading || checkingClaims) {
+  if (loading || !adminReady) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center space-y-4">

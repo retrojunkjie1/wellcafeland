@@ -50,7 +50,7 @@ export function detectPatterns(activityData = {}) {
       severity: 'medium',
       message: "You've used calming tools several times today. Would grounding exercises help?",
       suggestions: [
-        { type: 'tool', id: 'grounding', label: 'Try 5-4-3-2-1 Grounding' },
+        { type: 'tool', id: 'grounding', label: 'Choose an Anchor' },
         { type: 'content', id: 'anxiety-panic', label: 'Learn about anxiety' },
         { type: 'action', id: 'reach-out', label: 'Talk to someone' },
       ],
@@ -195,4 +195,3 @@ export function getCrisisSupportMessage() {
     priority: 'immediate',
   };
 }
-

@@ -4,25 +4,10 @@
 import React, { useEffect, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useOSStore, MODES } from "@/stores/useOSStore";
-import BreathingTool from "@/apps/tools/modules/BreathingTool";
-import GroundingTool from "@/apps/tools/modules/GroundingTool";
-import JournalingTool from "@/apps/tools/modules/JournalingTool";
-import UrgeSurfingTool from "@/apps/tools/modules/UrgeSurfingTool";
-import BodyScanTool from "@/apps/tools/modules/BodyScanTool";
-import SelfSurgeonTool from "@/apps/tools/modules/SelfSurgeonTool";
-import EducationModule from "@/apps/tools/modules/EducationModule";
+import { resolveToolComponent } from "@/apps/tools/toolComponentRegistry";
+import ToolAvailabilityFallback from "@/components/tools/ToolAvailabilityFallback";
 import SupportSearchModule from "@/components/interaction/modules/SupportSearchModule";
 import RealHelpWorkspace from "./RealHelpWorkspace";
-
-const TOOL_COMPONENTS = {
-  breathing: BreathingTool,
-  grounding: GroundingTool,
-  journaling: JournalingTool,
-  "urge-surfing": UrgeSurfingTool,
-  "body-scan": BodyScanTool,
-  "self-surgeon": SelfSurgeonTool,
-  education: EducationModule,
-};
 
 const WorkspacePage = () => {
   const { id } = useParams();
@@ -109,23 +94,16 @@ const WorkspacePage = () => {
     }
 
     if (workspace.type === "tool") {
-      const { toolType, config } = workspace.data;
-      const ToolComponent = TOOL_COMPONENTS[toolType];
+      const { toolType, toolId, config = {} } = workspace.data || {};
+      const ToolComponent = resolveToolComponent(toolType, toolId);
       if (!ToolComponent) {
-        return (
-          <div className="text-center text-white/70">
-            Tool "{toolType}" is not available.
-          </div>
-        );
+        return <ToolAvailabilityFallback toolType={toolType || toolId} />;
       }
       return (
         <ToolComponent
-          tool={{ id: toolType, type: toolType, ...config }}
+          tool={{ id: toolId || toolType, type: toolType || toolId, ...config }}
+          topic={config.topic || toolId || toolType}
           isEmbedded={false}
-          onComplete={() => {
-            // Workspace tool completion - could show a message or navigate
-            console.log(`Tool ${toolType} completed in workspace`);
-          }}
         />
       );
     }
@@ -143,8 +121,12 @@ const WorkspacePage = () => {
 
     if (workspace.type === "provider") {
       return (
-        <div className="text-center text-white/70">
-          Provider search coming soon.
+        <div className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
+          <h2 className="text-lg font-medium text-white">Find a care provider</h2>
+          <p className="mt-2 text-sm leading-relaxed text-white/70">Search the current provider directory by specialty and location.</p>
+          <button type="button" onClick={() => navigate("/resources?type=providers")} className="mt-5 min-h-11 rounded-full bg-amber-200 px-5 text-sm font-medium text-slate-950 hover:bg-amber-100">
+            Open provider directory
+          </button>
         </div>
       );
     }
@@ -203,4 +185,3 @@ const WorkspacePage = () => {
 };
 
 export default WorkspacePage;
-

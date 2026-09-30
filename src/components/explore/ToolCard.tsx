@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import type { DailyPracticeTool } from '../../tools/toolsTypes';
 import { luxuryRadii, luxuryShadows, luxuryGradients } from '../../theme/luxuryTheme';
 import { withFrom } from '../../navigation/linkState';
+import { Clock3 } from 'lucide-react';
 
 interface ToolCardProps {
   tool: DailyPracticeTool;
@@ -13,6 +14,13 @@ interface ToolCardProps {
 }
 
 const categoryLabel = (cat: string) => cat || 'Practice';
+
+const getDurationLabel = (tool: DailyPracticeTool) => {
+  if (typeof tool.durationSec === 'number' && tool.durationSec > 0) {
+    return `${Math.max(1, Math.round(tool.durationSec / 60))} min`;
+  }
+  return tool.duration || 'Self-paced';
+};
 
 export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'list' }) => {
   const location = useLocation();
@@ -37,16 +45,15 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'list' }) =>
               <h3 className="min-w-0 max-w-full text-sm font-medium leading-snug text-white [overflow-wrap:anywhere]">
                 {tool.title}
               </h3>
-              <span className="rounded-full border border-emerald-300/50 bg-emerald-300/10 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-emerald-100/80 flex-shrink-0">
-                Low
-              </span>
+              {tool.intensity && <span className="rounded-full border border-emerald-300/35 bg-emerald-300/[0.07] px-1.5 py-0.5 text-[9px] font-medium capitalize tracking-wide text-emerald-100/75 flex-shrink-0">{tool.intensity} effort</span>}
             </div>
             <p className="line-clamp-2 text-xs leading-relaxed text-white/55">
               {tool.summary}
             </p>
           </div>
-          <div className="hidden shrink-0 items-center gap-2 md:flex">
-            <span className="max-w-24 truncate text-[10px] text-white/40">{categoryLabel(tool.category)}</span>
+          <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+            <span className="inline-flex items-center gap-1 text-[10px] text-white/50"><Clock3 className="h-3 w-3" />{getDurationLabel(tool)}</span>
+            <span className="hidden max-w-24 truncate text-[10px] text-white/40 md:inline">{categoryLabel(tool.category)}</span>
             {tool.tags?.[0] && (
               <span className="text-[10px] text-white/35">• {tool.tags[0]}</span>
             )}
@@ -86,13 +93,11 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'list' }) =>
           <div className="relative z-10 flex h-full min-h-[88px] flex-col gap-2 px-3 pb-3 pt-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <h3 className="text-sm font-medium text-white truncate">
                     {tool.title}
                   </h3>
-                  <span className="rounded-full border border-emerald-300/60 bg-emerald-300/15 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider text-emerald-100 flex-shrink-0">
-                    Low
-                  </span>
+                  {tool.intensity && <span className="rounded-full border border-emerald-300/40 bg-emerald-300/10 px-1.5 py-0.5 text-[9px] font-medium capitalize tracking-wider text-emerald-100/85 flex-shrink-0">{tool.intensity} effort</span>}
                 </div>
                 <p className="text-[10px] uppercase tracking-wider text-white/40">
                   {categoryLabel(tool.category)}
@@ -107,7 +112,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool, variant = 'list' }) =>
             )}
 
             <div className="mt-auto flex items-center justify-between pt-1 text-[10px] text-white/45">
-              <span className="truncate">{tool.tags?.[0] ?? 'support'}</span>
+              <span className="truncate">{getDurationLabel(tool)} · {tool.tags?.[0] ?? 'support'}</span>
               <span className="flex items-center gap-1 flex-shrink-0">
                 <span className="inline-block h-1 w-1 rounded-full bg-amber-300/80" />
                 <span>Open</span>

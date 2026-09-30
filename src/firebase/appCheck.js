@@ -1,7 +1,9 @@
 // src/firebase/appCheck.js
-// App Check initialization - safe, production-only
+// App Check initializes in production, or locally when a developer opts into a registered debug token.
 
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { getToken, initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+
+let appCheckInstance = null;
 
 export function initAppCheck(app) {
   const isLocalhost = typeof window !== "undefined" && (
@@ -14,23 +16,38 @@ export function initAppCheck(app) {
   const isProduction = import.meta.env.PROD === true && import.meta.env.MODE === "production";
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_RECAPTCHA_KEY;
 
-  // Only initialize in production, not localhost
-  if (isProduction && !isLocalhost && siteKey) {
+  const debugTokenSetting = import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN;
+  const localDebugEnabled = isLocalhost && !!debugTokenSetting;
+
+  // Local traffic stays on emulators by default. A developer can opt into
+  // requests to deployed Functions with a Firebase-registered debug token.
+  if (localDebugEnabled && typeof window !== "undefined") {
+    window.FIREBASE_APPCHECK_DEBUG_TOKEN = debugTokenSetting === "true" ? true : debugTokenSetting;
+  }
+
+  if ((isProduction && !isLocalhost || localDebugEnabled) && siteKey) {
     try {
-      initializeAppCheck(app, {
+      appCheckInstance = initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider(siteKey),
         isTokenAutoRefreshEnabled: true,
       });
       if (import.meta.env.DEV) {
-        console.log("[AppCheck] Initialized for production");
+        console.log(localDebugEnabled ? "[AppCheck] Local debug verification enabled" : "[AppCheck] Initialized for production");
       }
     } catch (appCheckError) {
       console.warn("[AppCheck] Initialization failed (non-blocking):", appCheckError.message);
     }
   } else {
     if (import.meta.env.DEV) {
-      console.log("[AppCheck] Skipped - dev/localhost environment or missing site key");
+      console.log(localDebugEnabled && !siteKey
+        ? "[AppCheck] Local debug was requested but the reCAPTCHA site key is missing"
+        : "[AppCheck] Skipped - dev/localhost environment or missing site key");
     }
   }
 }
 
+export async function getAppCheckToken() {
+  if (!appCheckInstance) return null;
+  const result = await getToken(appCheckInstance, false);
+  return result?.token || null;
+}

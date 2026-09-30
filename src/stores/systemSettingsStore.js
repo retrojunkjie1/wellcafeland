@@ -1,8 +1,7 @@
 // src/stores/systemSettingsStore.js
 
 import { create } from "zustand";
-import { db } from "../firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { loadAdminSystemSettings, saveAdminSystemSettings } from "../services/adminSystemSettings";
 
 const STORAGE_KEY = "wc-system-settings-v1";
 
@@ -175,29 +174,32 @@ export const useSystemSettingsStore = create((set, get) => ({
 
   // Firestore integration
   async loadFromRemote() {
-    if (!db) return;
-
-    try {
-      const docRef = doc(db, "system_settings", "global");
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const remote = docSnap.data();
-        set({ settings: { ...defaultSystemSettings, ...remote } });
-      }
-    } catch (err) {
-      console.error("Failed to load system settings from Firestore:", err);
+    const result = await loadAdminSystemSettings();
+    if (result.settings) {
+      const remote = result.settings;
+      const merged = {
+        ...defaultSystemSettings,
+        ...remote,
+        features: { ...defaultSystemSettings.features, ...remote.features },
+        thresholds: { ...defaultSystemSettings.thresholds, ...remote.thresholds },
+        notifications: {
+          ...defaultSystemSettings.notifications,
+          ...remote.notifications,
+          quietHours: { ...defaultSystemSettings.notifications.quietHours, ...remote.notifications?.quietHours },
+        },
+        agentAutoRun: { ...defaultSystemSettings.agentAutoRun, ...remote.agentAutoRun },
+      };
+      set({ settings: merged });
+      try {
+        if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      } catch { /* remote remains authoritative for this session */ }
     }
+    return result;
   },
 
   async saveToRemote() {
-    if (!db) return;
-
-    try {
-      const docRef = doc(db, "system_settings", "global");
-      await setDoc(docRef, get().settings, { merge: true });
-    } catch (err) {
-      console.error("Failed to save system settings to Firestore:", err);
-    }
+    const result = await saveAdminSystemSettings(get().settings);
+    if (!result.saved) throw new Error("Settings were not confirmed as saved.");
+    return result;
   },
 }));
-

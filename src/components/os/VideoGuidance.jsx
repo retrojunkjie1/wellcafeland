@@ -2,17 +2,8 @@
 // Video guidance player for breathing, grounding, yoga, etc.
 
 import React, { useState, useRef, useEffect } from "react";
-import { Play, Pause, X, Maximize2, Minimize2 } from "lucide-react";
-
-// Fallback video URLs for different practices
-// These are sample videos used when no specific video URL is provided
-const FALLBACK_VIDEOS = {
-  breathing: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  grounding: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-  yoga: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-  stretch: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  exercise: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-};
+import { Play, Pause, X, Maximize2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const VideoGuidance = ({ videoUrl, title = "Guided Practice", onClose, mode }) => {
   const videoRef = useRef(null);
@@ -24,7 +15,7 @@ const VideoGuidance = ({ videoUrl, title = "Guided Practice", onClose, mode }) =
   const [error, setError] = useState(null);
 
   // Use provided URL or fallback based on mode
-  const finalVideoUrl = videoUrl || (mode ? FALLBACK_VIDEOS[mode] : null);
+  const finalVideoUrl = videoUrl || null;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -132,8 +123,9 @@ const VideoGuidance = ({ videoUrl, title = "Guided Practice", onClose, mode }) =
   if (!finalVideoUrl) {
     return (
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
-        <p className="text-sm sm:text-base text-white/60">Nothing here yet</p>
-        <p className="text-xs sm:text-sm text-white/50 mt-2">Video guidance will appear when available</p>
+        <p className="text-sm sm:text-base text-white/80">A video isn't available for this response.</p>
+        <p className="text-xs sm:text-sm text-white/60 mt-2">You can still read the guidance above or choose a working guided practice.</p>
+        <Link to="/tools" className="mt-4 inline-flex min-h-11 items-center rounded-full border border-white/20 px-4 text-sm text-white hover:bg-white/10">Browse practices</Link>
       </div>
     );
   }

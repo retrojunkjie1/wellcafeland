@@ -4,6 +4,7 @@
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 import { logError, logInfo } from "./logService";
+import { isRetiredDemoHelpRecord } from "./helpDirectoryRecordQuality";
 
 /**
  * List grants
@@ -24,6 +25,7 @@ export async function listGrants(filters = {}) {
 
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
+      if (isRetiredDemoHelpRecord(data)) return;
       grants.push({
         id: docSnap.id,
         name: data.name || "",
@@ -58,6 +60,7 @@ export async function getGrant(grantId) {
     if (!grantDoc.exists()) return null;
 
     const data = grantDoc.data();
+    if (isRetiredDemoHelpRecord(data)) return null;
     return {
       id: grantDoc.id,
       name: data.name || "",
@@ -78,4 +81,3 @@ export default {
   listGrants,
   getGrant,
 };
-

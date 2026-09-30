@@ -43,6 +43,24 @@ export const useAgentsRegistryStore = create((set, get) => ({
     return registry;
   },
 
+  syncOperationalStats: (serverStats = {}) => {
+    const current = get().agents;
+    const next = { ...current };
+    for (const [agentId, stats] of Object.entries(serverStats)) {
+      if (!next[agentId] || !stats) continue;
+      next[agentId] = {
+        ...next[agentId],
+        runCount: stats.runCount || 0,
+        errorCount: stats.errorCount || 0,
+        avgResponseTime: stats.avgResponseTime,
+        lastRun: stats.lastRunAt ? new Date(stats.lastRunAt).getTime() : null,
+        health: stats.health || "unknown",
+      };
+    }
+    set({ agents: next });
+    return next;
+  },
+
   // Toggle agent enabled/disabled
   toggleAgent: (agentId) => {
     const agent = get().agents[agentId];

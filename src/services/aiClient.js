@@ -192,21 +192,42 @@ export async function callAI(endpoint, body = {}, abortController = null) {
           return {
             ok: false,
             error: "Please sign in to continue.",
+            errorCode: callErr.data?.error?.code || callErr.code,
+            errorReason: "auth",
+            retryable: true,
             status: 401,
             correlationId,
           };
         }
         const status = callErr.status || 0;
+        const backendCode = callErr.data?.error?.code || callErr.data?.code || callErr.code;
         logRequest("error", correlationId, {
           action: "response_error",
           status,
           error: callErr.message,
         });
+        if (status === 429 || backendCode === "RATE_LIMITED") {
+          const waitSeconds = Number(callErr.data?.retryAfterSeconds || callErr.retryAfterSeconds) || 60;
+          return {
+            ok: false,
+            error: `The AI guide is busy right now. Please wait about ${waitSeconds} seconds, then retry.`,
+            errorCode: "RATE_LIMITED",
+            errorReason: "rate_limit",
+            retryable: true,
+            retryAfterSeconds: waitSeconds,
+            status: 429,
+            correlationId,
+          };
+        }
         if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
           return {
             ok: false,
-            error: "Server returned an error (4xx). Tap Retry to try again.",
-            errorReason: "4xx",
+            error: backendCode === "AI_PROVIDER_NOT_CONFIGURED"
+              ? "The AI guide is not configured right now. You can retry later or open real-world support."
+              : "The AI guide couldn't complete that request. Please retry or open real-world support.",
+            errorCode: backendCode,
+            errorReason: backendCode || "4xx",
+            retryable: false,
             status,
             correlationId,
           };
@@ -245,8 +266,44 @@ export async function callAI(endpoint, body = {}, abortController = null) {
         });
       }
 
+      const providerError = data.error && typeof data.error === "object" ? data.error : {};
+      const errorCode = providerError.code || data.code || null;
+      if (data.ok === false) {
+        const errorCopy = {
+          AI_PROVIDER_NOT_CONFIGURED: "The AI guide is not configured right now. You can retry later or open real-world support.",
+          AI_PROVIDER_UNAUTHORIZED: "The AI service needs attention before it can respond. You can retry later or open real-world support.",
+          RATE_LIMITED: "The AI guide is busy right now. Please wait a moment, then retry.",
+          AI_SESSIONS_PAUSED: "Custom AI-generated sessions are paused right now. Your saved practices and AI Guide remain available.",
+          AI_FEATURE_SETTINGS_UNAVAILABLE: "Custom AI sessions cannot be checked right now. Please try again later; your saved practices remain available.",
+          AUTH_REQUIRED: "Your session needs to reconnect. Please retry.",
+          AUTH_INVALID: "Your session needs to reconnect. Please retry.",
+        };
+        const error = errorCopy[errorCode] || "I couldn't get a reliable response from the AI guide. Please retry or open real-world support.";
+        logRequest("error", correlationId, { action: "provider_error", errorCode, status: 200 });
+        return {
+          ok: false,
+          error,
+          errorCode: errorCode || "AI_REQUEST_FAILED",
+          errorReason: errorCode || "provider_error",
+          retryable: !["AI_PROVIDER_NOT_CONFIGURED", "AI_SESSIONS_PAUSED", "AI_FEATURE_SETTINGS_UNAVAILABLE", "AUTH_INVALID"].includes(errorCode),
+          status: 200,
+          correlationId: data.correlationId || correlationId,
+        };
+      }
+
       // Standardize response extraction (new envelope + legacy)
       const assistantText = data.assistantText || data.message?.text || data.content || data.text || data.reply || "";
+      if (!String(assistantText).trim()) {
+        return {
+          ok: false,
+          error: "The AI guide returned an empty response. Please retry or open real-world support.",
+          errorCode: "EMPTY_AI_RESPONSE",
+          errorReason: "empty_response",
+          retryable: true,
+          status: 200,
+          correlationId: data.correlationId || correlationId,
+        };
+      }
       const intent = data.intent && typeof data.intent === "object" ? data.intent : null;
       const links = Array.isArray(data.links) ? data.links : [];
       const tool = data.tool || (data.meta?.toolRoute ? { name: data.meta.toolRoute } : null);
@@ -275,7 +332,7 @@ export async function callAI(endpoint, body = {}, abortController = null) {
       }
 
       const result = {
-        ok: data.ok !== false, // Default to true if not explicitly false
+        ok: true,
         text: assistantText,
         assistantText,
         intent,
@@ -345,13 +402,21 @@ export async function callAI(endpoint, body = {}, abortController = null) {
   const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
   const isAborted = lastError?.name === "AbortError";
   const isNetwork = lastError?.message?.includes("Failed to fetch") || lastError?.message?.includes("NetworkError");
+  const status = lastError?.status || 0;
+  const errorCode = lastError?.data?.error?.code || lastError?.data?.code || lastError?.code || null;
   const errorMsg = isOffline
-    ? "Offline. Please check your connection. Tap Retry when back online."
-    : isAborted
-      ? "Request timed out. Tap Retry to try again."
-      : isNetwork
-        ? "Connection error. Tap Retry to try again."
-        : "Something went wrong. Tap Retry to try again.";
+    ? "You're offline. Reconnect, then retry your message."
+    : status === 429 || errorCode === "RATE_LIMITED"
+      ? "The AI guide is busy right now. Please wait a moment, then retry."
+      : errorCode === "AI_PROVIDER_NOT_CONFIGURED"
+        ? "The AI guide is not configured right now. Please retry later or open real-world support."
+        : isAborted
+          ? "The request timed out before the guide could respond. Please retry."
+          : isNetwork
+            ? "I couldn't connect to the AI guide. Please check your connection and retry."
+            : status >= 500
+              ? "The AI service is temporarily unavailable. Please retry or open real-world support."
+              : "The AI guide couldn't complete that request. Please retry or open real-world support.";
 
   try {
     updateChatDiagnostics({
@@ -367,8 +432,10 @@ export async function callAI(endpoint, body = {}, abortController = null) {
   return {
     ok: false,
     error: errorMsg,
-    errorReason: isOffline ? "offline" : isAborted ? "timeout" : isNetwork ? "network" : "unknown",
-    status: 0,
+    errorCode: errorCode || undefined,
+    errorReason: isOffline ? "offline" : isAborted ? "timeout" : isNetwork ? "network" : errorCode || "unknown",
+    retryable: isOffline || isAborted || isNetwork || status === 429 || status >= 500 || !status,
+    status,
   };
 }
 
@@ -399,4 +466,3 @@ export async function checkHealth() {
     return { ok: false, status: 0 };
   }
 }
-

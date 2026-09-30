@@ -4,8 +4,7 @@
 
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { trackRouteChange, setRuntimePatch } from "@/telemetry/telemetry";
-import { getAuth } from "firebase/auth";
+import { trackRouteChange } from "@/telemetry/telemetry";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 
 const ROUTE_LABELS = {
@@ -17,7 +16,6 @@ const ROUTE_LABELS = {
 
 export function RouteTracker() {
   const location = useLocation();
-  const auth = getAuth();
   const { setRoute, pushAction } = useContinuityStore();
 
   useEffect(() => {
@@ -30,15 +28,6 @@ export function RouteTracker() {
       pushAction({ type: "route", label, href: path, ts: Date.now() });
     }
 
-    const user = auth.currentUser;
-    if (user) {
-      setRuntimePatch({
-        route: path,
-        device: /iPad|iPhone|iPod/.test(navigator.userAgent) ? "ios" :
-               /Android/.test(navigator.userAgent) ? "android" : "desktop",
-        appVersion: import.meta.env.VITE_APP_VERSION || "dev",
-      });
-    }
   }, [location.pathname, setRoute, pushAction]);
 
   return null;

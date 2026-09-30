@@ -4,6 +4,8 @@
 import { collection, addDoc, query, where, getDocs, updateDoc, serverTimestamp, doc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { logError, logInfo } from "./logService";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/firebase";
 
 /**
  * Assign a provider to a client
@@ -85,32 +87,15 @@ export async function unassignProvider(assignmentId) {
  * @returns {Promise<Array>}
  */
 export async function listAssignmentsForProvider(providerId) {
+  if (!providerId) throw new Error("A signed-in practitioner is required to load connections.");
+  if (!db || !functions) throw new Error("Practitioner connections are unavailable right now.");
   try {
-    if (!providerId || !db) return [];
-
-    const assignmentsRef = collection(db, "clientProviderAssignments");
-    const q = query(assignmentsRef, where("providerId", "==", providerId), where("status", "==", "active"));
-    const snapshot = await getDocs(q);
-
-    const assignments = [];
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      assignments.push({
-        id: docSnap.id,
-        clientId: data.clientId,
-        providerId: data.providerId,
-        orgId: data.orgId || null,
-        relationshipType: data.relationshipType || "primary",
-        status: data.status || "active",
-        createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
-        createdBy: data.createdBy || null,
-      });
-    });
-
-    return assignments;
+    const call = httpsCallable(functions, "listProviderClients");
+    const response = await call({});
+    return response.data?.assignments || [];
   } catch (err) {
     logError("assignmentService", err, { function: "listAssignmentsForProvider", providerId });
-    return [];
+    throw err;
   }
 }
 
@@ -155,4 +140,3 @@ export default {
   listAssignmentsForProvider,
   listAssignmentsForClient,
 };
-

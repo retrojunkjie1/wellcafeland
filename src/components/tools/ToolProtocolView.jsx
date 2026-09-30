@@ -1,295 +1,162 @@
-/**
- * ToolProtocolView - Step-by-step protocol runner for Daily Practice tools
- * Renders clinical intent, indications, contraindications, steps, aftercare, escalation.
- * Trauma-informed, safety-gated.
- */
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, CircleHelp } from "lucide-react";
 import { logToolSessionBegin, logToolSessionComplete } from "@/services/toolSessionLogger";
 
-const CRISIS_MESSAGE = "This is a self-guided practice, not emergency care. If you are in immediate danger, contact local emergency services.";
+function SafetyDetails({ message }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <section className="rounded-2xl border border-amber-200/15 bg-amber-100/[0.035] p-4 sm:p-5">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((value) => !value)}
+        className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-medium text-amber-100/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+      >
+        <span className="inline-flex items-center gap-2"><CircleHelp aria-hidden="true" className="h-4 w-4" />Need more support?</span>
+        {expanded ? <ChevronDown aria-hidden="true" className="h-4 w-4" /> : <ChevronRight aria-hidden="true" className="h-4 w-4" />}
+      </button>
+      {expanded && (
+        <div className="mt-3 space-y-3 border-t border-amber-100/10 pt-3 text-sm leading-relaxed text-white/70">
+          <p>{message || "This practice is optional. You can stop and choose another kind of support at any time."}</p>
+          <p>In the U.S., call or text <a className="font-medium text-amber-200 underline underline-offset-4" href="tel:988">988</a> for crisis support. If anyone is in immediate danger, contact local emergency services.</p>
+        </div>
+      )}
+    </section>
+  );
+}
 
+/** A brief, self-paced practice. Steps are invitations; nothing is timed or scored. */
 export function ToolProtocolView({ tool, onClose }) {
   const navigate = useNavigate();
   const [stepIndex, setStepIndex] = useState(0);
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [distressBefore, setDistressBefore] = useState(null);
-  const [distressAfter, setDistressAfter] = useState(null);
-  const [showCompleteForm, setShowCompleteForm] = useState(false);
-  const [crisisExpanded, setCrisisExpanded] = useState(false);
-
-  const steps = tool?.steps || [];
+  const [completed, setCompleted] = useState(false);
+  const steps = Array.isArray(tool?.steps) ? tool.steps : [];
   const currentStep = steps[stepIndex];
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === steps.length - 1;
-
-  const handleBegin = async () => {
-    setSessionStarted(true);
-    try {
-      await logToolSessionBegin(tool.slug || tool.id);
-    } catch (e) {
-      if (import.meta.env.DEV) console.debug("[ToolProtocolView] log begin", e?.message);
-    }
-  };
-
-  const handleComplete = async () => {
-    void logToolSessionComplete({
-      slug: tool.slug || tool.id,
-      distressBefore: distressBefore ?? undefined,
-      distressAfter: distressAfter ?? undefined,
-      completed: true,
-    }).catch(() => {});
-    onClose?.();
-    navigate("/tools");
-  };
-
-  const handleStop = () => {
-    logToolSessionComplete({
-      slug: tool.slug || tool.id,
-      distressBefore: distressBefore ?? undefined,
-      distressAfter: distressAfter ?? undefined,
-      completed: false,
-    }).catch(() => {});
-    onClose?.();
-    navigate("/tools");
-  };
-
-  const handleSkipStep = () => {
-    if (isLastStep) {
-      setShowCompleteForm(true);
-      return;
-    }
-    setStepIndex((index) => Math.min(steps.length - 1, index + 1));
-  };
+  const progress = steps.length ? Math.round(((stepIndex + (completed ? 1 : 0)) / steps.length) * 100) : 0;
 
   if (!tool) return null;
 
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
-      {/* Clinical safety banner */}
-      <div className="rounded-xl border border-amber-400/30 bg-amber-400/[0.06] px-4 py-3">
-          <p className="text-xs text-amber-200/90 leading-relaxed">{CRISIS_MESSAGE}</p>
-          <button
-            type="button"
-            aria-expanded={crisisExpanded}
-            aria-controls="tool-crisis-resources"
-            onClick={() => setCrisisExpanded(!crisisExpanded)}
-            className="mt-2 text-xs font-medium text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline"
-          >
-            {crisisExpanded ? "Hide" : "Need live support?"}
-          </button>
-          {crisisExpanded && (
-          <div id="tool-crisis-resources" className="mt-2 space-y-1 text-xs text-white/80">
-            <p>In the U.S. and its territories, call or text 988 for emotional crisis support.</p>
-            <div className="flex flex-wrap gap-3">
-              <a className="underline underline-offset-2" href="tel:988">Call 988</a>
-              <a className="underline underline-offset-2" href="sms:988">Text 988</a>
-              <a className="underline underline-offset-2" href="https://988lifeline.org/get-help/" target="_blank" rel="noreferrer">988 Lifeline website</a>
-            </div>
-            <p>For immediate danger, contact local emergency services.</p>
-          </div>
-          )}
-      </div>
+  const close = () => {
+    onClose?.();
+    navigate("/tools");
+  };
 
-      {/* Header */}
-      <header className="space-y-2">
-        <h1 className="text-2xl font-light tracking-tight text-white">{tool.title}</h1>
-        <div className="flex flex-wrap gap-2">
-          {(Array.isArray(tool.category) ? tool.category : [tool.category]).map((cat) => (
-            <span
-              key={cat}
-              className="rounded-full border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/70"
-            >
-              {cat}
-            </span>
+  const begin = async () => {
+    setSessionStarted(true);
+    try {
+      await logToolSessionBegin(tool.slug || tool.id);
+    } catch (error) {
+      if (import.meta.env.DEV) console.debug("[ToolProtocolView] log begin", error?.message);
+    }
+  };
+
+  const finish = () => {
+    setCompleted(true);
+    void logToolSessionComplete({ slug: tool.slug || tool.id, completed: true }).catch(() => {});
+  };
+
+  const leave = () => {
+    if (sessionStarted && !completed) {
+      void logToolSessionComplete({ slug: tool.slug || tool.id, completed: false }).catch(() => {});
+    }
+    close();
+  };
+
+  const next = () => {
+    if (isLastStep) finish();
+    else setStepIndex((index) => Math.min(steps.length - 1, index + 1));
+  };
+
+  const skip = () => {
+    if (isLastStep) finish();
+    else setStepIndex((index) => Math.min(steps.length - 1, index + 1));
+  };
+
+  return (
+    <main className="wc-tool-detail mx-auto min-h-screen w-full max-w-3xl px-4 pb-28 pt-5 sm:px-6 sm:pt-8">
+      <button
+        type="button"
+        onClick={leave}
+        className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-white/[0.035] px-4 text-sm text-white/75 transition hover:bg-white/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+      >
+        <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+        Back to practices
+      </button>
+
+      <header className="mb-6 space-y-3 sm:mb-8">
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-amber-200/80">A practice, at your pace</p>
+        <h1 className="text-3xl font-medium tracking-tight text-white sm:text-4xl">{tool.title}</h1>
+        <p className="max-w-2xl text-base leading-relaxed text-white/70 sm:text-lg">
+          {tool.clinicalIntent || "A few optional ideas to try. Keep what helps, skip what does not, and stop whenever you like."}
+        </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          {(Array.isArray(tool.category) ? tool.category : [tool.category]).filter(Boolean).map((category) => (
+            <span key={category} className="rounded-full border border-white/15 bg-white/[0.035] px-3 py-1 text-xs text-white/70">{category}</span>
           ))}
-          {tool.intensity && (
-            <span className="rounded-full border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] text-white/60">
-              {tool.intensity}
-            </span>
-          )}
-          {tool.durationSec && (
-            <span className="rounded-full border border-white/20 bg-white/5 px-2 py-0.5 text-[10px] text-white/60">
-              ~{Math.round(tool.durationSec / 60)} min
-            </span>
-          )}
+          {tool.durationSec > 0 && <span className="rounded-full border border-white/15 bg-white/[0.035] px-3 py-1 text-xs text-white/70">About {Math.max(1, Math.round(tool.durationSec / 60))} min · take less or more</span>}
         </div>
       </header>
 
-      {/* Clinical intent */}
-      {tool.clinicalIntent && (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <h2 className="text-xs uppercase tracking-wider text-white/50 mb-2">Intent</h2>
-          <p className="text-sm text-white/85 leading-relaxed">{tool.clinicalIntent}</p>
-        </div>
-      )}
-
-      {/* Indications / Contraindications */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {tool.indications?.length > 0 && (
-          <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-            <h3 className="text-[10px] uppercase tracking-wider text-emerald-400/80 mb-1.5">When helpful</h3>
-            <p className="text-xs text-white/70">{tool.indications.join(", ")}</p>
-          </div>
-        )}
-        {tool.contraindications?.length > 0 && (
-          <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-            <h3 className="text-[10px] uppercase tracking-wider text-amber-400/80 mb-1.5">Use with care</h3>
-            <p className="text-xs text-white/70">{tool.contraindications.join(" ")}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Step runner */}
       {!sessionStarted ? (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-sm text-white/70 mb-4">
-            This practice has {steps.length} optional steps. Take your time. You can skip a step or stop whenever you want.
-          </p>
-          <button
-            type="button"
-            onClick={handleBegin}
-            className="rounded-xl bg-amber-500/20 border border-amber-400/40 px-6 py-3 text-sm font-medium text-amber-200 hover:bg-amber-500/30 transition"
-          >
-            Begin practice
+        <section className="wc-tool-session-panel space-y-5 rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-7">
+          <div>
+            <h2 className="text-lg font-medium text-white">Make it your own</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/65">There are {steps.length} small invitations here. Follow one, skip any, or simply leave. Nothing is timed and there are no ratings to complete.</p>
+          </div>
+          <details className="group rounded-2xl border border-white/10 bg-black/10 p-4">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-white/80 [&::-webkit-details-marker]:hidden">
+              <span>When this may fit</span><ChevronDown aria-hidden="true" className="h-4 w-4 transition group-open:rotate-180" />
+            </summary>
+            {tool.indications?.length > 0 && <p className="pt-2 text-sm leading-relaxed text-white/65">{tool.indications.join(" · ")}</p>}
+            {tool.contraindications?.length > 0 && <p className="pt-3 text-sm leading-relaxed text-white/65">You can change or stop if any part does not feel right. {tool.contraindications.join(" ")}</p>}
+          </details>
+          <button type="button" onClick={begin} className="min-h-12 w-full rounded-full bg-amber-300 px-6 text-base font-semibold text-slate-950 shadow-[0_8px_28px_rgba(245,196,82,0.16)] transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+            Start when ready
           </button>
-        </div>
-      ) : !showCompleteForm ? (
-        <div className="space-y-4">
-          <div role="status" aria-live="polite" aria-atomic="true" className="rounded-xl border border-amber-400/20 bg-amber-400/[0.04] p-5">
-            <p className="text-[10px] uppercase tracking-wider text-amber-400/70 mb-1">
-              Step {stepIndex + 1} of {steps.length}
-            </p>
-            <h3 className="text-lg font-medium text-white mb-2">{currentStep?.label}</h3>
-            <p className="text-sm text-white/80 leading-relaxed">{currentStep?.description}</p>
-            {currentStep?.durationSec && (
-              <p className="mt-2 text-xs text-white/50">~{currentStep.durationSec} seconds</p>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-              disabled={isFirstStep}
-              className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/80 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white/5"
-            >
-              Previous
-            </button>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={handleSkipStep}
-                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
-              >
-                Skip this step
-              </button>
-              {isLastStep ? (
-                <button
-                  type="button"
-                  onClick={() => setShowCompleteForm(true)}
-                  className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
-                >
-                  Finish practice
-                </button>
-              ) : (
-              <button
-                type="button"
-                onClick={() => setStepIndex((i) => Math.min(steps.length - 1, i + 1))}
-                className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
-              >
-                Next
-              </button>
-              )}
+        </section>
+      ) : completed ? (
+        <section role="status" aria-live="polite" className="wc-tool-session-panel rounded-3xl border border-emerald-200/20 bg-emerald-100/[0.04] p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-emerald-200/10 text-emerald-200"><Check aria-hidden="true" className="h-5 w-5" /></span>
+            <div>
+              <h2 className="text-xl font-medium text-white">You can leave it here.</h2>
+              <p className="mt-2 text-base leading-relaxed text-white/70">Thank you for taking a moment. There is no need to explain how it went or make anything different before you move on.</p>
             </div>
           </div>
-          <button type="button" onClick={handleStop} className="text-xs text-white/50 underline underline-offset-2 hover:text-white/80">Stop practice and leave</button>
-        </div>
+          {tool.aftercare?.length > 0 && <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4"><h3 className="text-sm font-medium text-white/85">If you want to carry something with you</h3><ul className="mt-2 space-y-2 text-sm leading-relaxed text-white/65">{tool.aftercare.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ul></div>}
+          <button type="button" onClick={close} className="mt-6 min-h-12 w-full rounded-full bg-amber-300 px-6 text-base font-semibold text-slate-950 transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">Return to practices</button>
+        </section>
       ) : (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
-          <h3 className="text-sm font-medium text-white">Would you like to check in?</h3>
-          <p className="text-xs leading-relaxed text-white/55">These ratings are optional. If you enter them, they are saved with this practice record. You can finish without sharing a rating.</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="distress-before" className="block text-xs text-white/60 mb-1">Before this practice (0–10)</label>
-              <input
-                id="distress-before"
-                type="number"
-                min={0}
-                max={10}
-                inputMode="numeric"
-                aria-describedby="distress-rating-help"
-                value={distressBefore ?? ""}
-                onChange={(e) => setDistressBefore(e.target.value === "" ? null : Math.min(10, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white"
-              />
+        <section className="wc-tool-session-panel rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-7">
+          <div className="mb-6">
+            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-white/65">
+              <span>Step {stepIndex + 1} of {steps.length}</span><span>{progress}%</span>
             </div>
-            <div>
-              <label htmlFor="distress-after" className="block text-xs text-white/60 mb-1">Now (0–10)</label>
-              <input
-                id="distress-after"
-                type="number"
-                min={0}
-                max={10}
-                inputMode="numeric"
-                aria-describedby="distress-rating-help"
-                value={distressAfter ?? ""}
-                onChange={(e) => setDistressAfter(e.target.value === "" ? null : Math.min(10, Math.max(0, parseInt(e.target.value, 10) || 0)))}
-                className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-sm text-white"
-              />
+            <div role="progressbar" aria-label="Practice progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={stepIndex + 1} className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full bg-gradient-to-r from-amber-300 to-emerald-200 transition-[width] duration-500" style={{ width: `${Math.max(progress, Math.round((1 / steps.length) * 100))}%` }} />
             </div>
           </div>
-          <p id="distress-rating-help" className="text-xs text-white/45">0 means no distress; 10 means the most intense distress you can imagine.</p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleComplete}
-              className="rounded-lg bg-amber-500/20 border border-amber-400/40 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-500/30"
-            >
-              Save & finish
-            </button>
-            <button
-              type="button"
-              onClick={handleComplete}
-              className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/70 hover:bg-white/5"
-            >
-              Finish without ratings
-            </button>
+          <div key={stepIndex} role="group" aria-live="polite" aria-atomic="true" className="min-h-44 rounded-2xl border border-amber-200/15 bg-amber-100/[0.035] p-5 sm:min-h-52 sm:p-7">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-amber-200/80">Take what is useful</p>
+            <h2 className="mt-3 text-2xl font-medium leading-snug text-white sm:text-3xl">{currentStep?.label}</h2>
+            <p className="mt-4 text-base leading-relaxed text-white/75 sm:text-lg">{currentStep?.description}</p>
+            {currentStep?.durationSec && <p className="mt-4 text-sm text-white/50">A gentle suggestion: around {currentStep.durationSec} seconds. There is no timer.</p>}
           </div>
-        </div>
+          <SafetyDetails message={tool.whenToEscalate} />
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => setStepIndex((index) => Math.max(0, index - 1))} disabled={isFirstStep} className="min-h-12 rounded-full border border-white/15 px-4 text-sm font-medium text-white/80 transition hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">Previous</button>
+            <button type="button" onClick={next} className="min-h-12 rounded-full bg-amber-300 px-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">{isLastStep ? "Finish this practice" : "Continue"}</button>
+          </div>
+          {!isLastStep && <button type="button" onClick={skip} className="mt-3 min-h-11 w-full rounded-full text-sm text-white/55 underline decoration-white/25 underline-offset-4 hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">Skip this idea</button>}
+          <button type="button" onClick={leave} className="mt-3 min-h-11 w-full text-sm text-white/55 hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">End and leave</button>
+        </section>
       )}
 
-      {/* Aftercare */}
-      {tool.aftercare?.length > 0 && sessionStarted && (
-        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
-          <h3 className="text-[10px] uppercase tracking-wider text-white/50 mb-2">Aftercare</h3>
-          <ul className="text-xs text-white/70 space-y-1">
-            {tool.aftercare.map((line, i) => (
-              <li key={i}>{line}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* When to escalate */}
-      {tool.whenToEscalate && (
-        <div className="rounded-lg border border-amber-400/20 bg-amber-400/[0.04] p-3">
-          <h3 className="text-[10px] uppercase tracking-wider text-amber-400/80 mb-1">When to seek help</h3>
-          <p className="text-xs text-amber-200/90 leading-relaxed">{tool.whenToEscalate}</p>
-        </div>
-      )}
-
-      {/* Back */}
-      <div className="pt-4">
-        <button
-          type="button"
-          onClick={() => navigate("/tools")}
-          className="text-sm text-white/60 hover:text-white/90 underline-offset-2 hover:underline"
-        >
-          ← Back to Tools
-        </button>
-      </div>
-    </div>
+      {tool.whenToEscalate && !sessionStarted && <div className="mt-5"><SafetyDetails message={tool.whenToEscalate} /></div>}
+    </main>
   );
 }

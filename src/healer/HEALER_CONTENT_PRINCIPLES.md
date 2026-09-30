@@ -119,7 +119,7 @@ Short, clear steps; simple, body-based focus.
 - Focus on what it does, not what's wrong
 
 **Examples:**
-- ✅ "5-4-3-2-1 Senses Grounding"
+- ✅ "Choose an Anchor"
 - ✅ "Hand-on-Heart Shame Soften"
 - ✅ "Panic Anchoring: Feet and Breath"
 - ❌ "Cognitive Behavioral Grounding Technique"
@@ -136,7 +136,7 @@ Short, clear steps; simple, body-based focus.
 - No pressure or demands
 
 **Examples:**
-- ✅ "A short, sensory grounding sequence to help reconnect to the present moment when things feel too loud inside."
+- ✅ "A short, optional way to orient to your surroundings without counting, rating, or writing."
 - ✅ "A gentle self-contact and self-talk protocol for when shame feels heavy or the mind is attacking itself."
 - ❌ "This will fix your anxiety"
 - ❌ "You need to do this to get better"
@@ -153,7 +153,7 @@ Short, clear steps; simple, body-based focus.
 - No judgment
 
 **Examples:**
-- ✅ "Gently look around and name 5 things you can see, either out loud or silently."
+- ✅ "Rest your eyes on one steady object or color, if that feels comfortable. Nothing needs to be named."
 - ✅ "Place a hand over your chest or another area that feels safe to touch."
 - ✅ "Take a slow breath in, then a longer, softer exhale, as if gently fogging a mirror."
 - ❌ "You must identify exactly 5 visual objects"
@@ -217,7 +217,7 @@ Before publishing any healer content, verify:
 - [ ] Permission to stop included
 - [ ] Trauma-informed approach
 - [ ] Shame-safe language
-- [ ] Nervous-system aware (simple, body-focused)
+- [ ] Invitational and useful without requiring body focus
 - [ ] Clear, actionable steps
 - [ ] Validating and normalizing
 - [ ] Invitational tone
@@ -229,15 +229,15 @@ Before publishing any healer content, verify:
 
 ### **Good Example**
 
-**Intervention:** "5-4-3-2-1 Senses Grounding"
+**Intervention:** "Choose an Anchor"
 
 **Summary:**
-"A short, sensory grounding sequence to help reconnect to the present moment when things feel too loud inside."
+"A short, optional way to orient to your surroundings without counting, rating, or writing."
 
 **Steps:**
-1. "Gently look around and name 5 things you can see, either out loud or silently."
-2. "Notice 4 things you can feel through touch (your feet on the floor, clothing on your skin, the chair, etc.)."
-3. "Name 3 sounds you can hear right now, even very faint ones."
+1. "Rest your eyes on one steady object or color, if that feels comfortable."
+2. "Listen for one familiar sound, or choose a quieter space."
+3. "Hold a familiar object if that feels useful."
 
 **Notes:**
 "Keep pace gentle, no forcing. If any step feels like too much, it is okay to stop early."
@@ -245,7 +245,7 @@ Before publishing any healer content, verify:
 **Why it works:**
 - ✅ No pressure ("gently", "if...feels like too much")
 - ✅ Permission-based ("it is okay to stop early")
-- ✅ Simple, body-focused
+- ✅ No required body focus or response
 - ✅ Validating ("when things feel too loud inside")
 - ✅ Invitational tone
 
@@ -291,4 +291,3 @@ Before publishing any healer content, verify:
 ---
 
 **Phase 57 Ultra - Healer Content Principles** ✅
-

@@ -35,22 +35,14 @@ If shame was a voice sitting across from you at the table, what exact lines woul
     id: "cravings-and-urges",
     title: "Cravings and Urges",
     understanding: `
-A craving is not a moral failure; it is a **signal**. The nervous system has learned, through repetition, that a certain substance or behavior temporarily changes how you feel. When stress, loneliness, anger, or emptiness spike, the brain simply offers the fastest solution it remembers.
+A craving is not a moral failure or a verdict about your recovery. It can show up as a thought, feeling, physical sensation, or several things at once. You do not need to identify a hidden cause or scan your body to deserve support.
 
-Urges usually have three layers:
+Urges differ from person to person and from moment to moment. Some change quickly; some last longer or become stronger. A short pause can create room for another choice, but no timer or technique can promise when an urge will ease.
 
-1) **Body** – tight chest, restless hands, buzzing under the skin.
-
-2) **Emotion** – shame, anger, grief, boredom, or raw emptiness.
-
-3) **Story** – "I can't handle this," "Just this once," "It doesn't matter anymore."
-
-Most people only fight at the story level and try to win with willpower: "I just need to be stronger." That is exhausting. A trauma-informed approach treats cravings like ocean waves: they rise, peak, and fall. Your job is not to stop the ocean. Your job is to build a board you can ride.
-
-In recovery, the question shifts from "Why am I craving?" to "What is this craving *protecting me from feeling right now*?" When you can identify the feeling underneath and respond to *that* need – connection, soothing, rest, honesty – the urge often loosens its grip without a fight.
+You can choose a practical next move: put distance between yourself and a trigger if that is safe, contact someone you trust, start a familiar activity, or meet a basic need. You can also look for a peer group, counselor, or local support option. Pick what fits, switch plans, or stop the exercise at any time.
     `.trim(),
     reflection: `
-Think about your last strong craving: if the substance or behavior disappeared from the earth in that moment, what feeling would have been left sitting in the room with you?
+Optional: what kind of support would make the next few minutes easier—company, a change of setting, a familiar activity, or practical help? You can choose without writing anything.
     `.trim(),
   },
 
@@ -180,4 +172,3 @@ export function getRecoveryBasicsContent(topicId) {
 
   return TOPIC_MAP[normalized] ?? fallback;
 }
-

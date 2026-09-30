@@ -79,31 +79,4 @@ export const useAdminConfigStore = create((set) => ({
     });
   },
 
-  // Placeholder: safe to call, does nothing until Firestore is wired.
-  // Later, we'll:
-  //  - read from Firestore
-  //  - merge into local state
-  async loadFromRemote() {
-    // TODO: Implement Firestore read
-    // const db = getFirestore(app);
-    // const docRef = doc(db, "adminConfig", "global");
-    // const docSnap = await getDoc(docRef);
-    // if (docSnap.exists()) {
-    //   const remote = docSnap.data();
-    //   set({ config: { ...defaultAdminConfig, ...remote } });
-    // }
-    return;
-  },
-
-  // Placeholder: safe to call, does nothing until Firestore is wired.
-  // Later, we'll:
-  //  - write current config to Firestore
-  async saveToRemote() {
-    // TODO: Implement Firestore write
-    // const db = getFirestore(app);
-    // const docRef = doc(db, "adminConfig", "global");
-    // await setDoc(docRef, get().config, { merge: true });
-    return;
-  },
 }));
-

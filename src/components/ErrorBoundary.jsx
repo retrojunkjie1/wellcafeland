@@ -4,6 +4,11 @@ import React from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { trackError } from "@/telemetry/telemetry";
 
+export function needsPageReload(error) {
+  const message = String(error?.message || error || "");
+  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk\s+\S+\s+failed|chunkloaderror/i.test(message);
+}
+
 /**
  * Error Boundary Component
  * Catches React errors and displays a fallback UI
@@ -14,9 +19,9 @@ class ErrorBoundary extends React.Component {
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(_error) {
+  static getDerivedStateFromError(error) {
     // Update state so the next render will show the fallback UI
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
@@ -39,15 +44,16 @@ class ErrorBoundary extends React.Component {
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null, errorInfo: null });
-    // Optionally reload the page
-    if (this.props.resetOnError) {
+    if (this.props.resetOnError || needsPageReload(this.state.error)) {
       window.location.reload();
+      return;
     }
+    this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   render() {
     if (this.state.hasError) {
+      const reloadRequired = this.props.resetOnError || needsPageReload(this.state.error);
       // Fallback UI
       return (
         <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
@@ -76,7 +82,7 @@ class ErrorBoundary extends React.Component {
               className="inline-flex items-center gap-2 rounded-full border border-foreground px-4 py-2 text-sm font-medium hover:bg-foreground hover:text-background transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
-              Try again
+              {reloadRequired ? "Reload page" : "Try again"}
             </button>
           </div>
         </div>

@@ -12,12 +12,13 @@ export type CategoryKey =
   | 'Somatic'
   | 'Emergency'
   | 'Emotional'
-  | 'Sleep';
+  | 'Sleep'
+  | 'Everyday Support';
 
 interface CategoryChipsProps {
-  categories: CategoryKey[];
-  selected: CategoryKey;
-  onSelect: (cat: CategoryKey) => void;
+  categories: string[];
+  selected: string;
+  onSelect: (cat: string) => void;
 }
 
 export const CategoryChips: React.FC<CategoryChipsProps> = ({

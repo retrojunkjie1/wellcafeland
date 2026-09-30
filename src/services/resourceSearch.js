@@ -32,6 +32,7 @@ function normalizeSearchQuery(query, domain, region, category) {
     programs: ["recovery programs", "IOP", "PHP", "rehab", "support groups"],
     providers: ["therapist", "counselor", "recovery coach"],
     hotlines: ["crisis hotline", "suicide prevention", "helpline"],
+    peer: ["peer recovery", "support group", "recovery community"],
     "food.essentials": ["food bank", "food pantry", "SNAP", "WIC", "meal program", "soup kitchen", "grocery assistance"],
   };
 
@@ -124,14 +125,14 @@ function mapResultsToDirectory(results, domain) {
   return results.map((item, index) => normalizeResourceItem(item, domain)).filter(Boolean);
 }
 
-function curatedResults(domain, query) {
+function curatedResults(domain, query, region) {
   const queryText = String(query || "").toLowerCase();
   const searchText = domain === "programs" && /\baa\b|alcoholics anonymous|a\.a\./.test(queryText)
     ? "Alcoholics Anonymous"
     : domain === "programs" && /\bna\b|narcotics anonymous|n\.a\./.test(queryText)
       ? "Narcotics Anonymous"
       : query;
-  return getCuratedFallback(domain, searchText).map((item) => normalizeResourceItem({
+  return getCuratedFallback(domain, searchText, region).map((item) => normalizeResourceItem({
     ...item,
     title: item.name,
     summary: item.description,
@@ -154,6 +155,7 @@ async function callFunctionSearch({ query, domain, region, category }) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...await getAuthHeaders(),
       },
       body: JSON.stringify({
         query: (query || "").trim(),
@@ -233,6 +235,9 @@ export async function searchResources({ query, domain, region, category }) {
     
     // Call live resource search function (globalResourceSearch)
     let liveResults = [];
+    let backendFallback = false;
+    let backendMessage = "";
+    let backendMeta = {};
     try {
       const endpoint = buildApiUrl("/globalResourceSearch");
       const authHeaders = await getAuthHeaders();
@@ -248,8 +253,12 @@ export async function searchResources({ query, domain, region, category }) {
       });
       if (response.ok) {
         const data = await response.json();
-        // Results are already normalized with verification status from backend
-        liveResults = data.results || [];
+        backendFallback = data.provider === "fallback" || data.meta?.fallback === true || data.ok === false;
+        backendMessage = data.message || "";
+        backendMeta = data.meta || {};
+        // A 200 response can still be an offline fallback or an unconfigured
+        // upstream. Keep those records useful, but never label them as live.
+        liveResults = data.ok !== false && !backendFallback ? (data.results || []) : [];
       } else {
         // Graceful fallback: use verified providers only
         console.warn("Live resource search failed, using verified providers only:", response.status);
@@ -263,13 +272,13 @@ export async function searchResources({ query, domain, region, category }) {
     const domainNorm = domain || "other";
     const allRaw = [...verifiedProviders, ...liveResults];
     const liveNormalized = allRaw.map((r) => normalizeResourceItem(r, domainNorm)).filter(Boolean);
-    const results = liveNormalized.length ? liveNormalized : curatedResults(domainNorm, query);
+    const results = liveNormalized.length ? liveNormalized : curatedResults(domainNorm, query, region);
     return {
       ok: results.length > 0,
       results,
-      fallback: liveNormalized.length === 0 && results.length > 0,
-      error: results.length ? null : "Live search is unavailable. Share your city or ZIP code and I can help you choose the right local service to contact.",
-      meta: { domain: domainNorm, query: query || "" },
+      fallback: (backendFallback || liveNormalized.length === 0) && results.length > 0,
+      error: results.length ? null : (backendMessage || "No matching support options were found. Try a broader search or another area."),
+      meta: { ...backendMeta, domain: domainNorm, query: query || "", liveAvailable: liveNormalized.length > 0 && !backendFallback },
     };
   } catch (err) {
     console.warn("Provider search failed, falling back to legacy search:", err);
@@ -516,7 +525,7 @@ export async function searchResources({ query, domain, region, category }) {
       // Graceful degradation: Show helpful message instead of hard error
       logWarn("resourceSearch", "No search results found", { query: normalizedQuery, domain });
 
-      const fallbackResults = curatedResults(domain || "hotlines", query);
+      const fallbackResults = curatedResults(domain || "hotlines", query, region);
       const result = {
         ok: fallbackResults.length > 0,
         results: fallbackResults,
@@ -535,7 +544,7 @@ export async function searchResources({ query, domain, region, category }) {
       return result;
     } catch (err) {
       console.error("[resourceSearch] Fallback search error:", err);
-      const fallbackResults = curatedResults(domain || "hotlines", query);
+      const fallbackResults = curatedResults(domain || "hotlines", query, region);
       const result = {
         ok: fallbackResults.length > 0,
         results: fallbackResults,

@@ -35,7 +35,7 @@ const MODE_CONFIG = {
     icon: HandHeart,
     cards: [
       { label: "Search local assistance", detail: "Housing, food, shelter, and benefits", path: "/assistance", icon: HandHeart, theme: "mint" },
-      { label: "Find recovery support", detail: "Meetings, peer groups, and recovery services", path: "/assistance", icon: HeartHandshake, theme: "blue" },
+      { label: "Find an A.A. or N.A. meeting", detail: "Choose online or in person, then find a current meeting", path: "/recovery/meetings", icon: HeartHandshake, theme: "blue" },
       { label: "Browse the resource library", detail: "Explore guides and service categories", path: "/resources", icon: BookOpen, theme: "amber" },
     ],
   },
@@ -44,7 +44,7 @@ const MODE_CONFIG = {
     subtitle: "You do not have to make a big decision right now. Pick one kind of support.",
     icon: Waves,
     cards: [
-      { label: "Pause and map the urge", detail: "Choose a short or longer guided check-in", path: "/tools/urge-surfing", icon: Waves, theme: "blue" },
+      { label: "Choose a next move", detail: "Practical options, a trusted person, or a short pause", path: "/tools/urge-surfing", icon: HeartHandshake, theme: "blue" },
       { label: "Talk it through", detail: "Get a response without having to explain perfectly", path: "/chat", icon: MessageCircle, theme: "lavender" },
       { label: "Find recovery support", detail: "Look for a group, peer, or local service", path: "/assistance", icon: HeartHandshake, theme: "mint" },
     ],
@@ -52,10 +52,10 @@ const MODE_CONFIG = {
 };
 
 const cardThemes = {
-  amber: "from-amber-50 to-orange-100/80 border-amber-200 text-amber-950",
-  mint: "from-emerald-50 to-teal-100/80 border-emerald-200 text-emerald-950",
-  lavender: "from-violet-50 to-fuchsia-100/80 border-violet-200 text-violet-950",
-  blue: "from-sky-50 to-cyan-100/80 border-sky-200 text-sky-950",
+  amber: "from-[#302719] to-[#1A1712] border-amber-200/25 text-[#F4EDE0] hover:from-[#3B2E1C] hover:to-[#211B12]",
+  mint: "from-[#183428] to-[#14251E] border-emerald-200/25 text-[#E3F3EA] hover:from-[#204332] hover:to-[#193126]",
+  lavender: "from-[#281D37] to-[#1D1727] border-violet-200/25 text-[#F3EAFB] hover:from-[#332345] hover:to-[#241B31]",
+  blue: "from-[#172B3C] to-[#14212D] border-sky-200/25 text-[#E5F1FA] hover:from-[#1D374D] hover:to-[#192A39]",
 };
 
 const GuidedEntrySessionPage = () => {
@@ -69,18 +69,18 @@ const GuidedEntrySessionPage = () => {
   const config = MODE_CONFIG[mode];
   const Icon = config.icon;
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f1eee5] via-[#f4f5f1] to-[#e7f0ee] px-3 py-5 text-slate-900 sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-3xl rounded-[2rem] border border-white/70 bg-white/75 p-5 shadow-[0_20px_70px_rgba(42,55,48,0.12)] backdrop-blur sm:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-[#0B1017] via-[#10191A] to-[#0A0F14] px-3 py-5 text-white sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-[#111A19]/90 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.34)] backdrop-blur sm:p-8">
         {/* Header */}
         <header className="mb-7 text-center sm:mb-9">
-          <div className="mb-4 inline-flex rounded-2xl bg-emerald-100 p-3">
-            <Icon className="h-8 w-8 text-emerald-800" aria-hidden />
+          <div className="mb-4 inline-flex rounded-2xl bg-emerald-300/10 p-3">
+            <Icon className="h-8 w-8 text-emerald-200" aria-hidden />
           </div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Choose one small step</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/70">Choose one small step</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {config.title}
           </h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-white/70 sm:text-base">
             {config.subtitle}
           </p>
         </header>
@@ -91,16 +91,16 @@ const GuidedEntrySessionPage = () => {
               const CardIcon = card.icon;
               return (
                 <button
-                  key={card.path}
+                  key={`${mode}-${card.label}`}
                   type="button"
                   onClick={() => navigate(card.path)}
-                  className={`group flex min-h-36 w-full items-start gap-3 rounded-2xl border bg-gradient-to-br p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-800 sm:p-5 ${cardThemes[card.theme]}`}
+                  className={`group flex min-h-36 w-full items-start gap-3 rounded-2xl border bg-gradient-to-br p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 sm:p-5 ${cardThemes[card.theme]}`}
                 >
-                  <span className="rounded-xl bg-white/75 p-2.5"><CardIcon className="h-5 w-5" aria-hidden="true" /></span>
+                  <span className="rounded-xl bg-white/10 p-2.5"><CardIcon className="h-5 w-5" aria-hidden="true" /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-base font-semibold leading-snug">{card.label}</span>
                     <span className="mt-1.5 block text-sm leading-snug opacity-75">{card.detail}</span>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold">Open <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></span>
+                    <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-white/85">Start here <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" /></span>
                   </span>
                 </button>
               );
@@ -113,7 +113,7 @@ const GuidedEntrySessionPage = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="min-h-11 rounded-full px-4 text-sm font-medium text-slate-600 underline decoration-slate-300 underline-offset-4 transition hover:bg-white/80 hover:text-slate-950"
+            className="min-h-11 rounded-full px-4 text-sm font-medium text-white/70 underline decoration-white/30 underline-offset-4 transition hover:bg-white/10 hover:text-white"
           >
             Back to choices
           </button>

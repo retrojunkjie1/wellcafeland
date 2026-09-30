@@ -17,6 +17,7 @@ const CATEGORIES: CategoryKey[] = [
   'Emergency',
   'Emotional',
   'Sleep',
+  'Everyday Support',
 ];
 
 export const ExplorePage: React.FC = () => {
@@ -55,8 +56,8 @@ export const ExplorePage: React.FC = () => {
             Daily Practice
           </h1>
           <p className="max-w-2xl text-sm md:text-base text-white/70">
-            Breathwork, grounding, micro-rituals, and nervous-system resets
-            designed for recovery in motion. Take what you need, leave what you don&apos;t.
+            Find practical next steps, reflection, recovery support, rest,
+            movement, connection, or a quiet pause. Take what helps and leave the rest.
           </p>
         </header>
 
@@ -96,4 +97,3 @@ export const ExplorePage: React.FC = () => {
     </div>
   );
 };
-

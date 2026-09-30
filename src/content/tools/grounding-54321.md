@@ -1,25 +1,16 @@
 ---
-title: "5-4-3-2-1 Grounding"
+title: "Choose an Anchor"
 type: "tool"
-tags: ["grounding", "panic", "overwhelm"]
+tags: ["grounding", "orientation", "overwhelm"]
 ---
 
-### 5-4-3-2-1 Grounding
+### Choose an Anchor
 
-Use this when you feel disconnected, panicky, or "not in your body."
+There is no required sequence. Choose one option that fits, switch if it does not, or leave the practice.
 
-- **5 things you can see**
+- Rest your eyes on one steady object or color. Nothing needs to be counted or named.
+- Listen for one familiar sound, or choose a quieter space.
+- Hold a familiar object if that feels useful.
+- Adjust one thing around you, such as light, sound, or where you are.
 
-- **4 things you can feel**
-
-- **3 things you can hear**
-
-- **2 things you can smell**
-
-- **1 thing you can taste**
-
-Move slowly.  
-Name them out loud or in your head.  
-The goal is **presence**, not perfection.
-
-
+No ratings or written answers are collected in this practice.

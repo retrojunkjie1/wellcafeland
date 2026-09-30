@@ -59,10 +59,10 @@ const mapRitualSequences = (): DailyPracticeTool[] => {
     const stepLabels: Record<string, string> = {
       'pause_and_arrive': 'Pause and Arrive',
       'breathe_slow': 'Breathe Slowly',
-      'body_scan_soft': 'Soft Body Scan',
+      'body_scan_soft': 'Steady Ground',
       'release_tension': 'Release Tension',
       'look_around_safely': 'Look Around Safely',
-      'name_5_objects': 'Name 5 Objects',
+      'name_5_objects': 'Find One Steady Thing',
       'feel_feet_on_ground': 'Feel Feet on Ground',
       'hand_on_chest': 'Hand on Chest',
       'slow_exhale': 'Slow Exhale',
@@ -75,10 +75,10 @@ const mapRitualSequences = (): DailyPracticeTool[] => {
     const stepDescriptions: Record<string, string> = {
       'pause_and_arrive': 'Take a moment to pause and arrive in this space.',
       'breathe_slow': 'Breathe slowly and naturally, letting your body settle.',
-      'body_scan_soft': 'Gently scan your body from head to toe, noticing sensations.',
+      'body_scan_soft': 'Choose a supportive surface, easy movement, familiar object, or small change to your space.',
       'release_tension': 'Release any tension you notice, without forcing.',
       'look_around_safely': 'Look around your environment, noticing what feels safe.',
-      'name_5_objects': 'Name 5 objects you can see in your environment.',
+      'name_5_objects': 'Rest your eyes on one steady object and follow one edge, if that feels comfortable. Nothing to count or name.',
       'feel_feet_on_ground': 'Feel your feet on the ground, noticing the support beneath you.',
       'hand_on_chest': 'Place your hand on your chest, feeling the warmth and pressure.',
       'slow_exhale': 'Exhale slowly, making your exhale longer than your inhale.',
@@ -171,4 +171,3 @@ export function getCategoryCount(category: string): number {
 export function getDailyPracticeToolById(id: string): DailyPracticeTool | null {
   return dailyPracticeTools.find(tool => tool.id === id) || null;
 }
-

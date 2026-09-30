@@ -178,11 +178,11 @@ const ProfilePage = () => {
           </div>
           <button
             type="button"
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/admin/console")}
             className="w-full rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-sm font-medium text-amber-200 hover:bg-amber-400/20 transition"
           >
             <Eye className="h-4 w-4 inline mr-2" />
-            God-Eye Dashboard
+            Open God-Eye console
           </button>
         </div>
       )}

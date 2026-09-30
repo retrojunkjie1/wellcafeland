@@ -169,6 +169,42 @@ function buildFallbackMeta(fallback, sourceCount, code) {
   return meta
 }
 
+function fallbackFailureMessage(code, error) {
+  if (code === "RATE_LIMITED" || code === "UPSTREAM_RATE_LIMITED") {
+    return "The live resource search is busy right now, and no saved listings matched. Please try again in a moment or change your search area."
+  }
+  if (code === "UPSTREAM_NOT_ENABLED" || code === "PROVIDER_NOT_SUBSCRIBED") {
+    return "The live resource directory is not available right now, and no saved listings matched. Try again later or choose another support path."
+  }
+  if (/timed out/i.test(String(error || ""))) {
+    return "The resource search took too long, and no saved listings matched. Check your connection and try again."
+  }
+  return "The resource directory could not be reached, and no saved listings matched. Check your connection and try again."
+}
+
+async function buildFallbackResponse({ query, domain, category, location, limit, code, error }) {
+  let items = await firestoreFallback({ query, category, location, limit })
+  let fallbackSource = "firestore"
+  if (!items.length) {
+    const curated = getCuratedFallback(domain, query)
+    items = curated.map((resource) => normalizeResult({
+      ...resource,
+      url: resource.link,
+      title: resource.name,
+      description: resource.description,
+      snippet: resource.description,
+      source: resource.source,
+      verified: resource.verified,
+    })).filter(Boolean)
+    fallbackSource = "curated"
+  }
+  const meta = buildFallbackMeta(fallbackSource, items.length, code)
+  if (!items.length) {
+    return { ok: false, items: [], nextPageToken: null, meta: { ...meta, unavailable: true }, error: fallbackFailureMessage(code, error) }
+  }
+  return { ok: true, items, nextPageToken: null, meta, error: null }
+}
+
 /**
  * Search directory with pagination and retry
  * @param {AbortSignal} [signal] - Optional abort signal to cancel in-flight request
@@ -242,58 +278,28 @@ async function searchDirectoryImpl({
         const isRateLimited = res.status === 429 || res.status === 403 || NO_RETRY_CODES.includes(code)
         if (isRateLimited) {
           const effectiveCode = code || (res.status === 429 || res.status === 403 ? "RATE_LIMITED" : undefined)
-          const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-          let fallbackSource = "firestore"
-          let out
-          if (!items.length) {
-            const curated = getCuratedFallback(domain, String(query).trim())
-            const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-            out = { ok: true, items: curatedItems, nextPageToken: null, meta: buildFallbackMeta("curated", curatedItems.length, effectiveCode), error: null }
-          } else {
-            out = { ok: true, items, nextPageToken: null, meta: buildFallbackMeta(fallbackSource, items.length, effectiveCode), error: null }
-          }
-          if (!pageToken) setClientCached(cacheKey, out)
+          const out = await buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, code: effectiveCode, error: lastError })
+          if (!pageToken && out.ok) setClientCached(cacheKey, out)
           return out
         }
         if (attempt < 2) {
           await sleep(RETRY_DELAY_MS)
           continue
         }
-        let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-        let fallbackSource = "firestore"
-        if (!items.length) {
-          const curated = getCuratedFallback(domain, String(query).trim())
-          items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-          fallbackSource = "curated"
-        }
-        return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+        return buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, error: lastError })
       }
 
       if (!data?.ok) {
         lastError = data?.error || "Search did not return data"
         const code = data?.code
         if (NO_RETRY_CODES.includes(code)) {
-          const items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-          let fallbackSource = "firestore"
-          if (!items.length) {
-            const curated = getCuratedFallback(domain, String(query).trim())
-            const curatedItems = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-            return { ok: true, items: curatedItems, nextPageToken: null, meta: buildFallbackMeta("curated", curatedItems.length, code), error: null }
-          }
-          return { ok: true, items, nextPageToken: null, meta: buildFallbackMeta(fallbackSource, items.length, code), error: null }
+          return buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, code, error: lastError })
         }
         if (attempt < 2) {
           await sleep(RETRY_DELAY_MS)
           continue
         }
-        let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-        let fallbackSource = "firestore"
-        if (!items.length) {
-          const curated = getCuratedFallback(domain, String(query).trim())
-          items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-          fallbackSource = "curated"
-        }
-        return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+        return buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, error: lastError })
       }
 
       const normalized = normalizeResponse({
@@ -319,36 +325,23 @@ async function searchDirectoryImpl({
       return out
     } catch (err) {
       clearTimeout(timeoutId)
+      if (signal?.aborted) throw err
       lastError = err?.message || "Request failed"
       if (err?.name === "AbortError") lastError = "Request timed out"
       if (attempt < 2) {
         await sleep(RETRY_DELAY_MS)
         continue
       }
-      let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-      let fallbackSource = "firestore"
-      if (!items.length) {
-        const curated = getCuratedFallback(domain, String(query).trim())
-        items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-        fallbackSource = "curated"
-      }
-      return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+      return buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, error: lastError })
     }
   }
 
-  let items = await firestoreFallback({ query: String(query).trim(), category, location, limit })
-  let fallbackSource = "firestore"
-  if (!items.length) {
-    const curated = getCuratedFallback(domain, String(query).trim())
-    items = curated.map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean)
-    fallbackSource = "curated"
-  }
-  return { ok: true, items, nextPageToken: null, meta: { fallback: fallbackSource, sourceCount: items.length }, error: null }
+  return buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, error: lastError })
 }
 
 
 /**
- * Defensive wrapper: never throws to UI. Returns curated fallback on uncaught error.
+ * Defensive wrapper: returns honest unavailability when no fallback results exist.
  */
 export async function searchDirectory(params) {
   try {
@@ -357,10 +350,18 @@ export async function searchDirectory(params) {
     if (typeof console !== 'undefined' && console.warn) console.warn('[directorySearch] Defensive fallback:', e?.message);
     const domain = params?.domain || '';
     const query = String(params?.query || '').trim();
-    let items = [];
+    if (params?.signal?.aborted) throw e;
     try {
-      items = getCuratedFallback(domain, query).map((r) => normalizeResult({ ...r, url: r.link, title: r.name, description: r.description, snippet: r.description, source: r.source, verified: r.verified })).filter(Boolean);
-    } catch (_) {}
-    return { ok: true, items, nextPageToken: null, meta: { fallback: 'curated', sourceCount: items.length }, error: null };
+      return await buildFallbackResponse({
+        query,
+        domain,
+        category: params?.category,
+        location: params?.location,
+        limit: params?.limit || 20,
+        error: e?.message,
+      });
+    } catch (_) {
+      return { ok: false, items: [], nextPageToken: null, meta: { unavailable: true }, error: fallbackFailureMessage(undefined, e?.message) };
+    }
   }
 }

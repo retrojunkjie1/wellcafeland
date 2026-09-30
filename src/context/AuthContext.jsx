@@ -12,6 +12,27 @@ import { logTelemetry, trackAuthStateChange } from "@/telemetry/telemetry";
 
 const AuthContext = createContext(null);
 
+const ADMIN_ROLES = ["admin", "superadmin", "org_admin", "provider_admin"];
+
+function getRolesFromClaims(claims = {}) {
+  const roles = new Set([
+    ...(Array.isArray(claims.roles) ? claims.roles : claims.roles ? [claims.roles] : []),
+    ...(typeof claims.role === "string" ? [claims.role] : []),
+  ]);
+  if (claims.admin === true) roles.add("admin");
+  if (claims.provider === true) roles.add("provider");
+  return [...roles];
+}
+
+function getRoleFromClaims(claims = {}) {
+  const roles = new Set(getRolesFromClaims(claims));
+  if (claims.admin === true || [...roles].some((value) => ADMIN_ROLES.includes(value))) {
+    return "admin";
+  }
+  if (roles.has("provider")) return "provider";
+  return typeof claims.role === "string" ? claims.role : null;
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -24,34 +45,39 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [workspaceIntent, setWorkspaceIntent] = useState("client");
   const [loading, setLoading] = useState(true);
 
-  // Fetch role from custom claims or Firestore user doc
-  const fetchUserRole = async (firebaseUser) => {
+  // Preserve all granted spaces; `role` remains the primary route role.
+  const fetchUserAccess = async (firebaseUser) => {
     if (!firebaseUser || !auth || !db) {
-      return null;
+      return { role: null, roles: [], workspaceIntent: "client" };
     }
 
+    let claims = {};
     try {
-      // First, try to get role from custom claims (set by Admin SDK)
       const tokenResult = await getIdTokenResult(firebaseUser, true);
-      if (tokenResult.claims.role) {
-        return tokenResult.claims.role;
-      }
-
-      // Fallback: check Firestore user document
-      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        return userData.role || "client";
-      }
-
-      // Default role for new users
-      return "client";
+      claims = tokenResult.claims || {};
     } catch (err) {
-      console.error("Error fetching user role:", err);
-      return "client"; // Default fallback
+      console.error("Error fetching user access claims:", err);
     }
+
+    let userData = {};
+    try {
+      const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+      if (userDoc.exists()) userData = userDoc.data();
+    } catch (err) {
+      console.error("Error fetching user profile access:", err);
+    }
+
+    const storedRoles = Array.isArray(userData.roles) ? userData.roles : (userData.role ? [userData.role] : []);
+    const allRoles = [...new Set([...getRolesFromClaims(claims), ...storedRoles])];
+    return {
+      role: getRoleFromClaims(claims) || userData.role || "client",
+      roles: allRoles,
+      workspaceIntent: userData.workspaceIntent || "client",
+    };
   };
 
   // Create or update user document in Firestore
@@ -182,12 +208,16 @@ export const AuthProvider = ({ children }) => {
         }
         
         setUser(firebaseUser);
-        const userRole = await fetchUserRole(firebaseUser);
-        setRole(userRole);
-        await ensureUserDoc(firebaseUser, userRole);
+        const access = await fetchUserAccess(firebaseUser);
+        setRole(access.role);
+        setRoles(access.roles);
+        setWorkspaceIntent(access.workspaceIntent);
+        await ensureUserDoc(firebaseUser, access.role);
       } else {
         setUser(null);
         setRole(null);
+        setRoles([]);
+        setWorkspaceIntent("client");
       }
       setLoading(false);
     });
@@ -201,6 +231,8 @@ export const AuthProvider = ({ children }) => {
       await firebaseSignOut(auth);
       setUser(null);
       setRole(null);
+      setRoles([]);
+      setWorkspaceIntent("client");
     } catch (err) {
       console.error("Error signing out:", err);
     }
@@ -209,11 +241,13 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     role,
+    roles,
+    workspaceIntent,
     loading,
     isAuthenticated: !!user,
-    isAdmin: role === "admin" || role === "superadmin",
-    isProvider: role === "provider" || role === "admin" || role === "superadmin",
-    isClient: role === "client" || !role, // Default to client if no role
+    isAdmin: roles.some((value) => ADMIN_ROLES.includes(value)) || role === "admin" || role === "superadmin",
+    isProvider: roles.includes("provider") || roles.includes("provider_admin") || role === "provider" || role === "provider_admin",
+    isClient: roles.includes("client") || (!roles.length && role === "client" && workspaceIntent !== "practitioner"),
     logout,
   };
 

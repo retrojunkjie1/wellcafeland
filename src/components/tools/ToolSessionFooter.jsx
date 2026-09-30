@@ -12,8 +12,8 @@ export function ToolSessionFooter({ toolId }) {
   const suggestion =
     toolId === "breathing"
       ? {
-          label: "Ground with your senses",
-          text: "If you still feel activated, a quick 5-4-3-2-1 grounding can help anchor you.",
+          label: "Choose an anchor",
+          text: "If another kind of support would help, choose one optional point of orientation in your surroundings.",
           action: () => navigate("/tools/grounding"),
         }
       : toolId === "grounding"
@@ -57,4 +57,3 @@ export function ToolSessionFooter({ toolId }) {
     </section>
   );
 }
-

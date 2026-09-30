@@ -11,7 +11,7 @@ import MarkdownLite from "@/components/system/MarkdownLite";
 import ChatActionsRow from "./ChatActionsRow";
 import MicroVideoCard from "../presence/MicroVideoCard";
 
-function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy, onSave, onSpeak, onExpand, onRetry, onOpenRealHelp, onOpenToolRoute, onContinueOffline, expandedMessageIds }) {
+function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy, onSave, onSpeak, onExpand, onRetry, onOpenToolRoute, onContinueOffline, expandedMessageIds }) {
   const isAssistant = message?.role === "assistant";
   const isPending = Boolean(message?.status === "pending" || message?.meta?.pending);
   const content = typeof message.content === "string" ? message.content : message.content?.content || message.text || "";
@@ -19,7 +19,14 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
   const isControlledExpand = typeof onExpand === "function" && expandedMessageIds != null;
   const [localDetailsOpen, setLocalDetailsOpen] = useState(false);
   const detailsOpen = isControlledExpand ? Boolean(expandedMessageIds[message?.id]) : localDetailsOpen;
-  const showListen = isAssistant && !isPending && content && String(message.text || content).trim() !== "Thinking…";
+  const isServiceError = message.type === "assistant_error" || message.meta?.kind === "service_error";
+  const serviceErrorCode = message.errorCode || message.meta?.errorCode;
+  const serviceErrorTitle = serviceErrorCode === "AI_PROVIDER_NOT_CONFIGURED"
+    ? "AI guide unavailable"
+    : message.meta?.errorReason === "offline"
+      ? "No internet connection"
+      : "Connection issue";
+  const showListen = isAssistant && !isPending && !isServiceError && content && String(message.text || content).trim() !== "Thinking…";
 
   const handleExpandClick = () => {
     if (isControlledExpand) onExpand(message);
@@ -47,7 +54,13 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
           </div>
         );
       })()}
-      <div className="inline-block w-full sm:max-w-[90%] rounded-lg bg-white/5 px-3 sm:px-4 py-2 sm:py-3 text-[15px] sm:text-[16px] leading-relaxed text-white/90 break-words">
+      <div className={`inline-block w-full sm:max-w-[90%] rounded-2xl border px-4 sm:px-5 py-4 sm:py-5 text-base sm:text-lg leading-relaxed break-words ${isServiceError ? "border-amber-200/20 bg-amber-300/[0.06] text-amber-50/90" : "border-white/10 bg-white/[0.05] text-white/90"}`}>
+        {isServiceError && (
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-100/80">
+            <AlertCircle className="h-4 w-4" aria-hidden="true" />
+            <span>{serviceErrorTitle}</span>
+          </div>
+        )}
         {isPending ? (
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin text-white/50" />
@@ -55,7 +68,19 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
         ) : (
           <MarkdownLite text={displayContent} />
         )}
-        {(message.type === "assistant_audio" || message.audioUrl) && (
+        {message.imageUrl && !isPending && (
+          <figure className="mt-3 max-w-sm overflow-hidden rounded-xl border border-white/10 bg-black/20">
+            <img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" />
+            <figcaption className="px-3 py-2 text-xs text-white/55">Image attached to your message</figcaption>
+          </figure>
+        )}
+        {message.role === "user" && message.audioUrl && !isPending && (
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
+            <p className="mb-2 text-xs font-medium text-white/65">Your recorded voice · {message.audioDurationSeconds || ""}</p>
+            <audio controls preload="metadata" src={message.audioUrl} className="w-full" aria-label="Play your recorded voice message" />
+          </div>
+        )}
+        {(message.type === "assistant_audio" || message.audioUrl) && !isServiceError && (
           <div className="mt-3">
             <VoiceResponse audioUrl={message.audioUrl} text={content} />
           </div>
@@ -73,7 +98,7 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
               onClick={() => onOpenToolRoute?.(message.meta.toolRoute)}
               className="rounded-xl px-3 py-2 text-xs bg-white/10 hover:bg-white/15 border border-white/10 text-white transition"
             >
-              Open tool
+              Start {message.meta.toolTitle || message.meta.toolName || "this practice"}
             </button>
           </div>
         )}
@@ -159,8 +184,6 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
           <ChatActionsRow
             message={message}
             onRetry={onRetry}
-            onOpenTools={onOpenTools != null ? () => onOpenTools?.() : undefined}
-            onOpenRealHelp={onOpenRealHelp}
             onContinueOffline={onContinueOffline}
             onCopy={onCopy}
             onSave={onSave}
@@ -201,7 +224,7 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
   );
 }
 
-const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsProp, onCopy, onSave, onSpeak, onExpand, onRetry, onOpenTools, onOpenRealHelp, onOpenToolRoute, onContinueOffline, expandedMessageIds }) => {
+const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsProp, onCopy, onSave, onSpeak, onExpand, onRetry, onOpenToolRoute, onContinueOffline, expandedMessageIds }) => {
   // Handle tool result messages
   if (message.type === "tool_result" || (typeof message.content === "object" && message.content?.type === "tool_result")) {
     const toolData = typeof message.content === "object" ? message.content : message;
@@ -257,8 +280,6 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
             onSpeak={onSpeak}
             onExpand={onExpand}
             onRetry={onRetry}
-            onOpenTools={onOpenTools != null ? () => onOpenTools?.() : undefined}
-            onOpenRealHelp={onOpenRealHelp}
             onOpenToolRoute={onOpenToolRoute}
             onContinueOffline={onContinueOffline}
             expandedMessageIds={expandedMessageIds}
@@ -275,6 +296,8 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
       <div className="flex-1 flex justify-end min-w-0">
         <div className="inline-block w-full sm:max-w-[90%] rounded-lg bg-white/10 px-3 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-[16px] leading-relaxed text-white/95 break-words whitespace-pre-wrap border border-white/5">
           {userContent}
+          {message.imageUrl && <figure className="mt-2 max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20"><img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" /><figcaption className="px-2 py-1 text-xs text-white/55">Image attached</figcaption></figure>}
+          {message.audioUrl && <div className="mt-2 rounded-lg border border-white/10 bg-black/20 p-2"><p className="mb-1 text-xs text-white/65">Voice message · {message.audioDurationSeconds ? `${message.audioDurationSeconds}s` : "recording"}</p><audio controls preload="metadata" src={message.audioUrl} className="w-full" aria-label="Play your recorded voice message" /></div>}
         </div>
       </div>
     </div>
@@ -284,4 +307,3 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
 MessageBubble.displayName = "MessageBubble";
 
 export default MessageBubble;
-

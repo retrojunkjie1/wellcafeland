@@ -7,7 +7,6 @@ const MODULE_TYPES = {
   MESSAGE: "message",
   TOOL: "tool",
   VIDEO: "video",
-  VOICE: "voice",
   SUPPORT_SEARCH: "support_search",
   INSIGHT: "insight",
   TIMELINE: "timeline",
@@ -90,7 +89,7 @@ export const useInteractionCanvasStore = create((set) => {
       set({
         isRecording: true,
         isVoiceMode: true,
-        voiceWaveform: Array(20).fill(0).map(() => Math.random() * 0.5 + 0.2),
+        voiceWaveform: [],
       });
     },
 
@@ -118,4 +117,3 @@ export const useInteractionCanvasStore = create((set) => {
 });
 
 export { MODULE_TYPES };
-

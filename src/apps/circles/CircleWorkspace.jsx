@@ -126,10 +126,12 @@ const CircleWorkspace = () => {
         </div>
 
         <div className="lux-card p-6 border border-white/10 bg-white/5">
-          <p className="text-sm text-white/60">
-            This is a reflection circle. Take time with today's prompt. 
-            Live chat and group features coming soon.
+          <p className="text-sm leading-relaxed text-white/70">
+            This circle currently offers guided reflection prompts. Live group chat is not available in this circle.
           </p>
+          <button type="button" onClick={() => navigate("/assistance")} className="mt-4 min-h-11 rounded-full border border-white/20 px-4 text-sm text-white hover:bg-white/10">
+            Find real-world support
+          </button>
         </div>
       </div>
     </div>
@@ -137,4 +139,3 @@ const CircleWorkspace = () => {
 };
 
 export default CircleWorkspace;
-

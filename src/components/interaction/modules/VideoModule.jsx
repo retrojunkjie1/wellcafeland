@@ -1,97 +1,29 @@
-// src/components/interaction/modules/VideoModule.jsx
-// Injected video blocks in chat
+import React from "react";
+import { Link } from "react-router-dom";
+import { Play } from "lucide-react";
 
-import React, { useState } from "react";
-import { Play, Pause, X, Check, XCircle } from "lucide-react";
-
-const VideoModule = ({ module }) => {
-  const { videoUrl, title, description, thumbnail } = module.payload;
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isHelpful, setIsHelpful] = useState(null);
+export default function VideoModule({ module }) {
+  const { videoUrl, title, description } = module?.payload || {};
 
   return (
-    <div className="animate-slide-up">
-      <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
-        {/* Video Player */}
-        <div className="relative aspect-video bg-slate-900">
-          {thumbnail && !isPlaying ? (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${thumbnail})` }}
-            >
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => setIsPlaying(true)}
-                  className="rounded-full bg-wcGold/90 p-4 text-slate-900 transition hover:bg-wcGold"
-                >
-                  <Play className="h-8 w-8" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
-              {videoUrl ? (
-                <video
-                  src={videoUrl}
-                  controls
-                  className="w-full h-full"
-                  onPlay={() => setIsPlaying(true)}
-                  onPause={() => setIsPlaying(false)}
-                />
-              ) : (
-                <div className="text-center text-white/60">
-                  <p className="text-sm">Video placeholder</p>
-                  <p className="text-xs mt-2">{title || "Video content"}</p>
-                </div>
-              )}
-            </div>
-          )}
+    <section className="animate-slide-up rounded-2xl border border-white/10 bg-white/[0.05] p-4 sm:p-5" aria-label={title || "Video guidance"}>
+      <div className="flex items-start gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/10 text-amber-200">
+          <Play className="h-5 w-5" aria-hidden="true" />
         </div>
-
-        {/* Video Info */}
-        <div className="p-4 space-y-3">
-          {title && (
-            <h3 className="text-sm font-medium text-white">{title}</h3>
-          )}
-          {description && (
-            <p className="text-xs text-white/70 leading-relaxed">
-              {description}
-            </p>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsHelpful(true)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition ${
-                isHelpful === true
-                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/40"
-                  : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
-              }`}
-            >
-              <Check className="h-3.5 w-3.5" />
-              Helpful
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsHelpful(false)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition ${
-                isHelpful === false
-                  ? "bg-red-500/20 text-red-400 border border-red-400/40"
-                  : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
-              }`}
-            >
-              <XCircle className="h-3.5 w-3.5" />
-              Not helpful
-            </button>
-          </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-medium text-white">{title || "Video guidance"}</h3>
+          {description && <p className="mt-1 text-sm leading-relaxed text-white/70">{description}</p>}
         </div>
       </div>
-    </div>
+      {videoUrl ? (
+        <video src={videoUrl} controls playsInline className="mt-4 w-full rounded-xl bg-black" aria-label={title || "Video guidance"} />
+      ) : (
+        <div className="mt-4 rounded-xl border border-amber-200/15 bg-amber-100/[0.04] p-4">
+          <p className="text-sm text-white/80">There is no video attached to this guidance, so we won't show a sample clip.</p>
+          <Link to="/tools" className="mt-3 inline-flex min-h-11 items-center rounded-full border border-white/20 px-4 text-sm text-white hover:bg-white/10">Browse guided practices</Link>
+        </div>
+      )}
+    </section>
   );
-};
-
-export default VideoModule;
-
+}

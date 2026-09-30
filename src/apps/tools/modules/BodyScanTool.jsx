@@ -1,224 +1,153 @@
-// src/apps/tools/modules/BodyScanTool.jsx
-// Progressive body awareness from head to toe
+// A choice-led grounding pause. The legacy body-scan route remains supported,
+// but this experience does not assess, rate, or collect body sensations.
 
-import React, { useState, useCallback } from "react";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useCallback, useState } from "react";
+import { Armchair, DoorOpen, Hand, Move, X } from "lucide-react";
 import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
 
-const BODY_REGIONS = [
-  { id: "head", name: "Head", description: "Notice your scalp, forehead, temples" },
-  { id: "face", name: "Face", description: "Jaw, cheeks, eyes, mouth" },
-  { id: "neck", name: "Neck & Shoulders", description: "Throat, shoulders, upper back" },
-  { id: "chest", name: "Chest & Heart", description: "Ribcage, heart area, upper torso" },
-  { id: "belly", name: "Belly & Core", description: "Abdomen, lower back, sides" },
-  { id: "arms", name: "Arms & Hands", description: "Shoulders to fingertips" },
-  { id: "hips", name: "Hips & Pelvis", description: "Hip joints, lower back, pelvis" },
-  { id: "legs", name: "Legs", description: "Thighs, knees, calves" },
-  { id: "feet", name: "Feet & Ankles", description: "Ankles, arches, toes" },
+const STEADYING_CHOICES = [
+  {
+    id: "support",
+    title: "Let something support you",
+    context: "A chair, bed, wall, or the floor",
+    cue: "Let the chair, bed, wall, or floor support you for a moment. Nothing to change.",
+    Icon: Armchair,
+  },
+  {
+    id: "movement",
+    title: "Choose one easy movement",
+    context: "A small shift, stretch, or stillness",
+    cue: "Open your hands, shift position, or gently press your feet down. Staying still is okay.",
+    Icon: Move,
+  },
+  {
+    id: "familiar-object",
+    title: "Keep a familiar object close",
+    context: "Something ordinary within reach",
+    cue: "Hold something familiar or set it nearby. No need to describe it.",
+    Icon: Hand,
+  },
+  {
+    id: "change-space",
+    title: "Make one change to your space",
+    context: "Light, sound, air, or where you are",
+    cue: "If you can, adjust one thing: light, sound, air, or where you are.",
+    Icon: DoorOpen,
+  },
 ];
 
-const BodyScanTool = ({ onComplete, onCancel, _initialContext, isEmbedded = false }) => {
-  const [currentRegionIndex, setCurrentRegionIndex] = useState(0);
-  const [tensionLevels, setTensionLevels] = useState({}); // 0-10 scale
-  const [notes, setNotes] = useState({});
+const BodyScanTool = ({ onComplete, onCancel, isEmbedded = false }) => {
+  const [selectedChoice, setSelectedChoice] = useState(null);
   const [startTime] = useState(() => Date.now());
 
-  const currentRegion = BODY_REGIONS[currentRegionIndex];
-  const isFirst = currentRegionIndex === 0;
-  const isLast = currentRegionIndex === BODY_REGIONS.length - 1;
-
-  const handleTensionChange = (regionId, level) => {
-    setTensionLevels((prev) => ({
-      ...prev,
-      [regionId]: level,
-    }));
-  };
-
-  const handleNoteChange = (regionId, note) => {
-    setNotes((prev) => ({
-      ...prev,
-      [regionId]: note,
-    }));
-  };
-
-  const handleNext = () => {
-    if (currentRegionIndex < BODY_REGIONS.length - 1) {
-      setCurrentRegionIndex(currentRegionIndex + 1);
-    } else {
-      handleComplete();
-    }
-  };
-
-  const handleBack = () => {
-    if (currentRegionIndex > 0) {
-      setCurrentRegionIndex(currentRegionIndex - 1);
-    }
-  };
-
-  const handleComplete = useCallback(() => {
-    const endTime = Date.now();
-    const durationSeconds = Math.floor((endTime - startTime) / 1000);
-    
-    // Find most tense area (highest tension level)
-    const tenseEntries = Object.entries(tensionLevels);
-    let tenseArea = null;
-    if (tenseEntries.length > 0) {
-      const [mostTenseId] = tenseEntries.reduce((max, [id, level]) => 
-        level > max[1] ? [id, level] : max, tenseEntries[0]
-      );
-      tenseArea = mostTenseId;
-    }
-
+  const finishPractice = useCallback(() => {
+    const completedAt = Date.now();
     const result = createToolResult(
       "body_scan",
-      "Body Scan",
-      `Completed body scan through ${BODY_REGIONS.length} regions.`,
-      {
-        regionsScanned: BODY_REGIONS.length,
-        tensionLevels: { ...tensionLevels },
-        notes: Object.keys(notes).reduce((acc, id) => {
-          if (notes[id]?.trim()) acc[id] = notes[id].trim();
-          return acc;
-        }, {}),
-        mostTenseArea: tenseArea,
-      },
-      durationSeconds
+      "Steady Ground",
+      "Completed an optional grounding pause.",
+      { practiceType: "choice-led-grounding" },
+      Math.floor((completedAt - startTime) / 1000),
     );
 
-    // Log telemetry (non-blocking)
+    // Track completion only; do not send body observations or the selected choice.
     logToolUsage("body_scan", {
       startedAt: startTime,
-      completedAt: endTime,
-      durationMs: durationSeconds * 1000,
-      context: {
-        regionsScanned: BODY_REGIONS.length,
-      },
-    }).catch(err => console.warn("Tool telemetry failed:", err));
+      completedAt,
+      durationMs: completedAt - startTime,
+      context: { completed: true },
+    }).catch((err) => console.warn("Tool telemetry failed:", err));
 
     safeComplete(onComplete, result);
-  }, [startTime, tensionLevels, notes, onComplete]);
+  }, [onComplete, startTime]);
 
-  const handleCancel = useCallback(() => {
-    safeCancel(onCancel);
-  }, [onCancel]);
-
-  const currentTension = tensionLevels[currentRegion.id] ?? 0;
+  const handleCancel = useCallback(() => safeCancel(onCancel), [onCancel]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {!isEmbedded && onCancel && (
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-medium text-white">Body Scan</h3>
+          <h2 className="text-xl font-medium text-white">Steady Ground</h2>
           <button
             type="button"
             onClick={handleCancel}
-            className="rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/5 transition"
+            aria-label="Close practice"
+            className="min-h-11 min-w-11 rounded-full p-2 text-white/70 transition hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
           >
-            <X className="h-4 w-4" />
+            <X aria-hidden="true" className="mx-auto h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
-        <p className="text-base text-white/70">
-          If it feels comfortable, notice this area. You can skip any region or stop at any time.
-        </p>
-        <p className="text-sm text-white/50">
-          Region {currentRegionIndex + 1} of {BODY_REGIONS.length}
-        </p>
+      <div className="space-y-1">
+        <p className="text-sm text-white/70">Choose one small thing that could help right now.</p>
+        <p className="text-xs text-white/50">No ratings or written answers. Skip anything that does not fit.</p>
       </div>
 
-      {/* Current Region */}
-      <div className="rounded-lg border border-white/10 bg-white/5 p-6 space-y-6 animate-fade-in">
-        <div>
-          <h3 className="text-xl font-medium text-white mb-2">{currentRegion.name}</h3>
-          <p className="text-base text-white/60">{currentRegion.description}</p>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2" aria-label="Ways to find steady ground">
+        {STEADYING_CHOICES.map(({ id, title, context, cue, Icon }) => {
+          const isSelected = selectedChoice === id;
+          const titleId = `steady-ground-${id}-title`;
+          const cueId = `steady-ground-${id}-cue`;
 
-        {/* Tension Level */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label htmlFor={`tension-${currentRegion.id}`} className="text-base text-white/80">
-              Optional: how much tension do you notice here?
-            </label>
-            <span className="text-sm text-white/60" aria-live="polite">
-              {tensionLevels[currentRegion.id] === undefined ? "Not rated" : currentTension}
-            </span>
-          </div>
-          <input
-            id={`tension-${currentRegion.id}`}
-            type="range"
-            min="0"
-            max="10"
-            value={currentTension}
-            onChange={(e) => handleTensionChange(currentRegion.id, parseInt(e.target.value, 10))}
-            className="w-full"
-          />
-          <div className="flex justify-between text-xs text-white/50">
-            <span>None (0)</span>
-            <span>A lot (10)</span>
-          </div>
-        </div>
-
-        {/* Optional Notes */}
-        <div className="space-y-2">
-          <label htmlFor={`body-note-${currentRegion.id}`} className="text-sm text-white/70">Any sensations or notes? (optional)</label>
-          <textarea
-            id={`body-note-${currentRegion.id}`}
-            value={notes[currentRegion.id] || ""}
-            onChange={(e) => handleNoteChange(currentRegion.id, e.target.value)}
-            placeholder="What do you notice in this area?"
-            rows={3}
-            maxLength={1000}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder:text-white/40 focus:border-white/20 focus:outline-none resize-none"
-          />
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-2">
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={isFirst}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-base text-white/70 transition hover:bg-white/10 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </button>
-          <button
-            type="button"
-            onClick={handleNext}
-            className="flex items-center gap-2 rounded-lg bg-white/10 px-6 py-2.5 text-base font-medium text-white transition hover:bg-white/20"
-          >
-            {isLast ? "Complete" : "Next"}
-            {!isLast && <ChevronRight className="h-4 w-4" />}
-          </button>
-        </div>
+          return (
+            <div
+              key={id}
+              className={`overflow-hidden rounded-2xl border transition ${
+                isSelected
+                  ? "border-amber-200/50 bg-amber-100/[0.06]"
+                  : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+              }`}
+            >
+              <button
+                type="button"
+                aria-expanded={isSelected}
+                aria-controls={isSelected ? cueId : undefined}
+                onClick={() => setSelectedChoice(id)}
+                className="flex min-h-24 w-full items-start gap-3 p-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-amber-300"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-amber-200" aria-hidden="true">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                  <span id={titleId} className="block text-sm font-medium text-white">{title}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-white/60">{context}</span>
+                </span>
+              </button>
+              {isSelected && (
+                <section
+                  id={cueId}
+                  role="region"
+                  aria-labelledby={titleId}
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="border-t border-amber-200/15 px-4 pb-4 pt-3 sm:px-5"
+                >
+                  <p className="text-sm leading-relaxed text-white">{cue}</p>
+                  <button
+                    type="button"
+                    onClick={finishPractice}
+                    className="mt-3 min-h-11 rounded-full bg-amber-200 px-5 text-sm font-medium text-slate-950 transition hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    Done for now
+                  </button>
+                </section>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {onCancel && (
-        <button type="button" onClick={handleCancel} className="min-h-11 rounded-lg px-3 text-sm text-white/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
-          Stop and leave
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="min-h-11 rounded-lg px-3 text-sm text-white/60 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
+        >
+          Leave practice
         </button>
       )}
-
-      {/* Progress Indicator */}
-      <div className="flex items-center justify-center gap-2">
-        {BODY_REGIONS.map((region, idx) => (
-          <div
-            key={region.id}
-            className={`h-1.5 rounded-full transition-all ${
-              tensionLevels[region.id] !== undefined
-                ? "w-8 bg-white/40"
-                : idx === currentRegionIndex
-                ? "w-6 bg-white/20"
-                : "w-4 bg-white/10"
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 };

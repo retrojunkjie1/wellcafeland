@@ -1,8 +1,6 @@
-// Phase 44 — Full Content Activation Patch
-// Replace your current "topics" page component with this implementation.
-
 import React, { useState, useMemo, useEffect } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { createToolResult, safeComplete } from "@/utils/toolContract";
 
 // --- Local narration hook (safe, no external imports) ----------------------
 
@@ -29,8 +27,6 @@ function useSimpleNarration() {
 
   return { isSpeaking, speak, stop };
 }
-
-// --- Topic registry with multimillion-dollar content -----------------------
 
 const TOPICS = [
   { id: "shame-and-recovery", label: "Shame and Recovery" },
@@ -61,16 +57,14 @@ Where in your life do you feel the strongest pull to hide who you are — and if
 
   "cravings-and-urges": {
     understanding: `
-A craving is not a moral failure. It is a **signal** from a body and brain that have learned, over time, that a certain behavior or substance offers rapid relief.
+A craving is not a moral failure or a verdict about your recovery. It can show up in different ways, and its strength and duration can vary. You do not need to find a hidden cause or explain the feeling before getting support.
 
-Cravings often show up when something in you is overwhelmed, lonely, flooded, or disconnected. They spike when the nervous system is searching for safety, comfort, or escape. Seen this way, the craving is trying to help — it is just using a tool that now harms you.
+A pause may create room for another choice, but urges do not follow a timer and no exercise can promise when one will ease. You can choose a practical next move: create distance from a trigger if safe, contact someone you trust, start a familiar activity, or look for peer or professional support.
 
-In recovery, the goal is not to be a person who never feels an urge. The work is to become someone who can **notice** an urge, **name** it, ride the wave, and reach for support or tools instead of self-destruction.
-
-When you can say, "A craving is moving through me; it is not my identity," you begin to reclaim your power. The urge rises, peaks, and falls. You are allowed to outlast it with honesty, connection, and care.
+Keep what helps, change direction, or stop. You deserve support even if the urge stays strong.
     `.trim(),
     reflection: `
-When cravings show up for you, what are they usually trying to relieve or protect you from beneath the surface?
+Optional: choose what could help now—company, a change of setting, a familiar activity, or outside support. You can skip writing.
     `.trim(),
   },
 
@@ -170,7 +164,7 @@ If you spoke to yourself today with the same tone you would use with someone you
 
 // --- Main Component ---------------------------------------------------------
 
-const EducationModule = ({ onComplete, onCancel, _initialContext, isEmbedded = false, topic: initialTopic = null }) => {
+const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
   const [selectedId, setSelectedId] = useState(
     initialTopic 
       ? TOPICS.find(t => t.label === initialTopic)?.id || TOPICS[0].id
@@ -190,6 +184,16 @@ const EducationModule = ({ onComplete, onCancel, _initialContext, isEmbedded = f
     () => TOPIC_CONTENT[selectedTopic.id],
     [selectedTopic.id]
   );
+  const paragraphs = useMemo(
+    () => (content?.understanding || "").split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean),
+    [content]
+  );
+
+  const renderInlineEmphasis = (text) => text.split(/(\*\*[^*]+\*\*)/g).map((part, index) => (
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={`${part}-${index}`} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+      : part
+  ));
 
   const handleReadAloud = () => {
     if (!content || !content.understanding) return;
@@ -209,100 +213,105 @@ const EducationModule = ({ onComplete, onCancel, _initialContext, isEmbedded = f
     setSoundEnabled((prev) => !prev);
   };
 
+  const handleComplete = () => safeComplete(onComplete, createToolResult(
+    "education",
+    `Read: ${selectedTopic.label}`,
+    "Finished a self-paced learning topic.",
+    { topicId: selectedTopic.id },
+  ));
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      {/* Header spacer handled by OS layout */}
-      <div className="px-4 pt-6 pb-3 sm:px-8">
-        <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-          Choose a Topic
-        </h1>
-        <p className="mt-2 text-sm text-slate-400 max-w-xl">
-          Select a topic and let the Living Guide walk with you through
-          understanding and reflection.
+    <div className="wc-education space-y-5 px-4 pb-24 pt-5 text-foreground sm:space-y-6 sm:px-8 sm:pt-7">
+      <header className="max-w-3xl">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Learn at your pace</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Choose a topic</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Start with one short idea. Open the deeper read or optional reflection only if it helps.
         </p>
-      </div>
+      </header>
 
-      {/* Topic pills */}
-      <div className="px-4 sm:px-8 pb-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {TOPICS.map((topic) => {
-          const isActive = topic.id === selectedTopic.id;
-          return (
-            <button
-              key={topic.id}
-              type="button"
-              onClick={() => { stop(); setSelectedId(topic.id); }}
-              className={[
-                "w-full rounded-full px-4 py-3 text-sm font-medium transition-all",
-                "border border-slate-700/70 shadow-sm",
-                "hover:border-amber-400/70 hover:text-amber-100",
-                isActive
-                  ? "bg-amber-500/15 text-amber-100 border-amber-400/80"
-                  : "bg-slate-900/70 text-slate-200",
-              ].join(" ")}
-            >
-              {topic.label}
-            </button>
-          );
-        })}
-      </div>
+      <nav aria-label="Learning topics" className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <div className="flex min-w-max gap-2 sm:flex-wrap">
+          {TOPICS.map((topic) => {
+            const isActive = topic.id === selectedTopic.id;
+            return (
+              <button
+                key={topic.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => { stop(); setSelectedId(topic.id); }}
+                className="min-h-11 rounded-full border border-border bg-background/60 px-4 text-sm font-medium text-foreground transition hover:border-amber-400/70 hover:bg-muted aria-pressed:border-amber-400/70 aria-pressed:bg-amber-400/10 aria-pressed:text-foreground"
+              >
+                {topic.label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
-      {/* Content panel */}
-      <div className="px-4 sm:px-8 pb-24 space-y-6">
-        {/* Title + controls */}
-        <div className="flex items-center justify-between gap-4">
+      <article className="lux-card max-w-4xl space-y-5 p-5 sm:p-7">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
-              {selectedTopic.label}
-            </h2>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">A short starting point</p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{selectedTopic.label}</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleReadAloud}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs sm:text-sm font-medium bg-slate-900 border border-slate-700 hover:border-amber-400 hover:text-amber-100 transition-colors"
+              disabled={!soundEnabled}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/60 px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSpeaking ? "Stop" : "Read to me"}
+              {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {isSpeaking ? "Stop reading" : "Read aloud"}
             </button>
             <button
               type="button"
               onClick={handleToggleSound}
-              aria-label={soundEnabled ? "Turn read-aloud audio off" : "Turn read-aloud audio on"}
+              aria-label={soundEnabled ? "Turn read-aloud off" : "Turn read-aloud on"}
               aria-pressed={soundEnabled}
-              className="inline-flex items-center justify-center rounded-full p-2 bg-slate-900 border border-slate-700 hover:border-amber-400 transition-colors"
+              className="min-h-11 rounded-full border border-border bg-background/60 px-4 text-sm text-foreground transition hover:bg-muted"
             >
-              {soundEnabled ? (
-                <Volume2 className="w-4 h-4" />
-              ) : (
-                <VolumeX className="w-4 h-4" />
-              )}
+              {soundEnabled ? "Voice on" : "Voice off"}
             </button>
           </div>
         </div>
 
-        {/* Understanding card */}
-        <section className="rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-xl shadow-black/40 px-5 sm:px-6 py-5 sm:py-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-3">
-            Understanding
-          </h3>
-          <p className="text-sm sm:text-base leading-relaxed text-slate-200 whitespace-pre-line">
-            {content?.understanding}
+        <section aria-labelledby="lesson-start-title" className="rounded-2xl border border-border bg-background/45 p-4 sm:p-5">
+          <h3 id="lesson-start-title" className="text-sm font-semibold text-foreground">The key idea</h3>
+          <p className="mt-2 max-w-[68ch] text-base leading-7 text-foreground sm:text-lg sm:leading-8">
+            {renderInlineEmphasis(paragraphs[0] || "Choose a topic to begin.")}
           </p>
         </section>
 
-        {/* Reflection card */}
-        <section className="rounded-2xl bg-slate-900/80 border border-slate-800/80 shadow-xl shadow-black/40 px-5 sm:px-6 py-5 sm:py-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-2">
-            Reflection
-          </h3>
-          <p className="text-sm sm:text-base italic text-slate-300 leading-relaxed">
-            {content?.reflection}
-          </p>
-          <p className="mt-3 text-xs text-slate-500">
-            You don&apos;t have to answer this perfectly. Let the question sit
-            with you. Notice what stirs, without judging yourself.
-          </p>
-        </section>
-      </div>
+        {paragraphs.length > 1 && (
+          <details className="group rounded-2xl border border-border bg-background/30 p-4 sm:p-5">
+            <summary className="min-h-11 cursor-pointer list-none py-2 text-sm font-semibold text-foreground marker:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400">
+              Read the fuller explanation <span className="ml-1 text-muted-foreground group-open:hidden">+</span><span className="ml-1 hidden text-muted-foreground group-open:inline">−</span>
+            </summary>
+            <div className="mt-3 max-w-[68ch] space-y-4 border-t border-border pt-4 text-base leading-7 text-foreground sm:text-lg sm:leading-8">
+              {paragraphs.slice(1).map((paragraph, index) => (
+                <p key={`${selectedTopic.id}-paragraph-${index}`}>{renderInlineEmphasis(paragraph)}</p>
+              ))}
+            </div>
+          </details>
+        )}
+
+        <details className="group rounded-2xl border border-border bg-background/30 p-4 sm:p-5">
+          <summary className="min-h-11 cursor-pointer list-none py-2 text-sm font-semibold text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400">
+            Optional reflection <span className="ml-1 text-muted-foreground group-open:hidden">+</span><span className="ml-1 hidden text-muted-foreground group-open:inline">−</span>
+          </summary>
+          <div className="mt-3 max-w-[68ch] border-t border-border pt-4">
+            <p className="text-base italic leading-7 text-foreground sm:text-lg sm:leading-8">{content?.reflection}</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">You can think about this, write privately, skip it, or close this section.</p>
+          </div>
+        </details>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+          <p className="text-sm text-muted-foreground">Reflect privately, or move on without answering.</p>
+          <button type="button" onClick={handleComplete} className="min-h-11 rounded-full bg-foreground px-5 text-sm font-semibold text-background transition hover:opacity-90">Done with this topic</button>
+        </div>
+      </article>
     </div>
   );
 };

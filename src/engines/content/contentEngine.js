@@ -78,7 +78,7 @@ There is no timeline for healing. Your pace is the right pace.`,
 
 This isn't permanent. Your nervous system can relearn rest, but it takes time and gentleness.
 
-Sleep hygiene isn't about rules—it's about creating conditions where your body feels safe enough to let go. This might mean: dimming lights an hour before bed, avoiding screens, doing a body scan, or listening to soft sounds.
+Sleep hygiene isn't about rules. It can mean dimming lights, taking a break from screens, choosing a familiar wind-down cue, or listening to soft sounds.
 
 If sleep still doesn't come, that's okay. Resting your body—even if you don't sleep—is still healing. Give yourself permission to rest without pressure to "get it right."`,
         },
@@ -148,18 +148,14 @@ You can hold yourself accountable and still offer yourself kindness. These aren'
       return {
         topic: CONTENT_TOPICS.CRAVINGS_URGES,
         understanding: {
-          text: `A craving isn't a failure. A craving is your nervous system trying to cope the way it learned to cope. It's not weak. It's not proof you're broken. It's old wiring that still fires when you're stressed, lonely, overwhelmed, or numb.
+          text: `A craving is not a failure or a verdict about your recovery. Urges can show up in different ways and their strength or duration can vary. They do not follow a timer, and no short exercise can promise when one will ease.
 
-Cravings peak and then they pass. Always. Even when it feels like they won't.
+You do not have to explain the urge or search for a hidden cause before getting support. You can choose one practical next move: create distance from a trigger if it is safe, contact someone you trust, start a familiar activity, or look for a peer group or local service.
 
-You don't have to white-knuckle through them. You can surf them—notice them, name them, let them rise and fall without acting. You can distract yourself. You can call someone. You can use a tool.
-
-The goal isn't to never have cravings. The goal is to not let the craving make the decision. Even waiting 10 minutes is a victory. Even noticing the craving without judgment is growth.
-
-You're not fighting yourself. You're learning to be with yourself differently.`,
+A pause is optional. Keep what helps, switch plans, or reach out for live support. You deserve support even if the urge stays strong.`,
         },
         reflection: {
-          question: "When a craving hits, what do you usually do? And what is one thing—even a small thing—that's helped you wait it out before?",
+          question: "Optional: choose a kind of support that could help now—company, a change of setting, a familiar activity, or practical help. You can skip writing.",
         },
       };
 
@@ -211,7 +207,7 @@ If you grew up in chaos, or if you used substances to numb emotions, you might n
 
 Regulation starts with noticing: What am I feeling? Where do I feel it? What does this feeling need?
 
-Sometimes the answer is: to move (body scan, walking). Sometimes it's to express (journaling, talking). Sometimes it's to soothe (breathing, grounding). Sometimes it's just to be with it without fixing it.
+Sometimes the answer is movement (a walk or stretch), expression (writing or talking), a soothing practice, or time without trying to fix anything.
 
 You don't have to be good at this yet. Learning to be with your emotions is a practice, not a destination.`,
         },
@@ -450,4 +446,3 @@ export function updateContentEngagementStats(userId = 'anonymous', updates = {})
     return null;
   }
 }
-

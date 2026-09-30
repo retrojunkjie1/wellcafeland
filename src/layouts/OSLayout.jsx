@@ -18,7 +18,7 @@ import { SheetProvider, useSheet } from "@/context/SheetContext";
 
 export default function OSLayout() {
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const identity = useSessionIdentity();
 
   // Hydration layers
@@ -57,18 +57,19 @@ export default function OSLayout() {
         isGuest={isGuest}
         isAuthenticated={isAuthenticated}
         user={user}
+        onLogout={logout}
       />
     </SheetProvider>
   );
 }
 
-function OSLayoutContent({ isGuest, isAuthenticated, user }) {
+function OSLayoutContent({ isGuest, isAuthenticated, user, onLogout }) {
   const { sheetOpen } = useSheet();
   const rootClass = "flex h-screen flex-col bg-slate-950 text-white overflow-x-hidden wc-app-shell [--wc-topbar-h:72px] [--wc-dock-h:76px]" + (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true" ? " wc-emulator-active" : "") + (sheetOpen ? " wc-sheet-open" : "");
   return (
     <div className={rootClass}>
       {/* Global header — single AppTopBar, no overlap */}
-      <AppTopBar isGuest={isGuest} isAuthenticated={isAuthenticated} user={user} />
+      <AppTopBar isGuest={isGuest} isAuthenticated={isAuthenticated} user={user} onLogout={onLogout} />
 
       {/* Main */}
       <main
@@ -94,4 +95,3 @@ function OSLayoutContent({ isGuest, isAuthenticated, user }) {
     </div>
   );
 }
-

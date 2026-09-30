@@ -13,42 +13,42 @@ import type { HealerIntervention } from './healerTypes';
 export const healerRegistry: HealerIntervention[] = [
   {
     id: 'ground_5_4_3_2_1',
-    name: '5-4-3-2-1 Senses Grounding',
+    name: 'Choose an Anchor',
     category: 'grounding',
     intensity: 'low',
     suitableForSignals: ['anxious', 'overwhelmed', 'panic', 'freeze'],
     suitableForRisk: ['medium', 'high', 'critical'],
-    approximateDurationSeconds: 240,
+    approximateDurationSeconds: 90,
     summary:
-      'A short, sensory grounding sequence to help reconnect to the present moment when things feel too loud inside.',
+      'A short, optional way to orient to the surroundings without counting, rating, or writing.',
     steps: [
       {
         id: 'step1',
-        label: 'Look Around',
-        description: 'Gently look around and name 5 things you can see, either out loud or silently.',
+        label: 'One steady point',
+        description: 'Rest your eyes on one still object or color, if that feels comfortable. Nothing needs to be named.',
       },
       {
         id: 'step2',
-        label: 'Touch',
-        description: 'Notice 4 things you can feel through touch (your feet on the floor, clothing on your skin, the chair, etc.).',
+        label: 'Familiar sound or quiet',
+        description: 'Listen for one familiar sound, or choose a quieter place if listening is too much.',
       },
       {
         id: 'step3',
-        label: 'Listen',
-        description: 'Name 3 sounds you can hear right now, even very faint ones.',
+        label: 'Familiar texture',
+        description: 'Hold a familiar object or touch its surface only if that feels useful.',
       },
       {
         id: 'step4',
-        label: 'Smell',
-        description: 'Notice 2 things you can smell, or remember a smell you find calming if none are obvious.',
+        label: 'Adjust the space',
+        description: 'Choose whether to change light, sound, air, or where you are. No change is required.',
       },
       {
         id: 'step5',
-        label: 'Taste',
-        description: 'Notice 1 thing about the taste in your mouth, or imagine a taste you find comforting.',
+        label: 'Stop or switch',
+        description: 'Leave the practice, switch options, or continue with what feels most comfortable.',
       },
     ],
-    notes: 'Keep pace gentle, no forcing. If any step feels like too much, it is okay to stop early.',
+    notes: 'Offer options without asking for a body check, personal rating, or written reflection. Stop or switch is always available.',
     linkedRitualSequenceKey: 'orientingProtocol',
   },
   {

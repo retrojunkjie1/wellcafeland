@@ -36,6 +36,7 @@ import MeditationTool from "./modules/MeditationTool";
 import AcuwellnessTool from "./modules/AcuwellnessTool";
 import AffirmationsTool from "./modules/AffirmationsTool";
 import SpecializedPathwayTool from "./modules/SpecializedPathwayTool";
+import LowEnergyPlanTool from "./modules/LowEnergyPlanTool";
 
 const MODULE_TOOLS = {
   grounding: GroundingTool,
@@ -49,6 +50,7 @@ const MODULE_TOOLS = {
   "shame-release": SpecializedPathwayTool,
   meditation: MeditationTool,
   "sleep-reset": SpecializedPathwayTool,
+  "low-energy-plan": LowEnergyPlanTool,
   acuwellness: AcuwellnessTool,
   affirmations: AffirmationsTool,
   "panic-reset": PanicResetSessionView,
@@ -82,12 +84,23 @@ const ToolDetailPage = () => {
   const [content, setContent] = useState(null);
   const [recoveryBasicsContent, setRecoveryBasicsContent] = useState(null);
   const [learningTopicId, setLearningTopicId] = useState(null); // Phase 45: Learning paths
-  const [darkMode, setDarkMode] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [resolvedTheme, setResolvedTheme] = useState(() =>
+    typeof document !== "undefined" ? document.documentElement.dataset.theme || "dark" : "dark",
+  );
+  const darkMode = resolvedTheme !== "light";
+  const soundEnabled = true;
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [moduleCompleted, setModuleCompleted] = useState(false);
   const [cycles, setCycles] = useState(0);
   const [breathingPattern, setBreathingPattern] = useState([4, 0, 6, 0]);
+
+  useEffect(() => {
+    const syncTheme = (event) => {
+      setResolvedTheme(event.detail?.theme || document.documentElement.dataset.theme || "dark");
+    };
+    window.addEventListener("wc_theme_change", syncTheme);
+    return () => window.removeEventListener("wc_theme_change", syncTheme);
+  }, []);
 
   // Load protocol tool (Firestore + seed) for Daily Practice slugs
   useEffect(() => {
@@ -283,6 +296,7 @@ const ToolDetailPage = () => {
       return (
         <BreathingSessionView
           isActive={isSessionActive}
+          darkMode={darkMode}
           onCycleComplete={() => setCycles((prev) => prev + 1)}
           pattern={[4, 0, 6, 0]}
           voiceEnabled={false}
@@ -312,6 +326,7 @@ const ToolDetailPage = () => {
             <p className="text-xs leading-relaxed text-white/50">Follow your natural breath if counting or holding does not feel comfortable. Stop if you feel unwell.</p>
           <BreathingSessionView
             isActive={isSessionActive}
+            darkMode={darkMode}
             pattern={breathingPattern}
           />
           </div>
@@ -337,7 +352,7 @@ const ToolDetailPage = () => {
   // Protocol tools (seed/Firestore): step-by-step Daily Practice
   if (protocolTool && Array.isArray(protocolTool.steps) && protocolTool.steps.length > 0) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className="wc-tool-detail min-h-screen bg-slate-950 text-white">
         <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
       </div>
     );
@@ -421,7 +436,7 @@ const ToolDetailPage = () => {
     if (isBreathingContent) {
       // Show interactive breathing view with orb and voice guide
       return (
-        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+        <div className="wc-tool-detail relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
           <ToolSessionLayout
             tool={{
               id: "breathing",
@@ -434,12 +449,10 @@ const ToolDetailPage = () => {
             onStart={handleStartSession}
             onEnd={handleEndSession}
             onClose={() => navigate("/tools")}
-            soundEnabled={soundEnabled}
-            onToggleSound={() => setSoundEnabled((v) => !v)}
-            onToggleTheme={() => setDarkMode((v) => !v)}
           >
             <BreathingSessionView
               isActive={isSessionActive}
+              darkMode={darkMode}
               onCycleComplete={() => setCycles((prev) => prev + 1)}
               pattern={[4, 0, 6, 0]} // 4-6 breathing: inhale 4, exhale 6, no holds
               voiceEnabled={soundEnabled} // Use soundEnabled state for voice guide
@@ -484,7 +497,7 @@ const ToolDetailPage = () => {
   if (toolMeta?.sessionType) {
     return (
       <AudioProvider>
-        <div className="relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
+        <div className="wc-tool-detail relative min-h-[70vh] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 pb-24 pt-6">
           {/* subtle background particles */}
           <div className="pointer-events-none fixed inset-0 overflow-hidden">
             {Array.from({ length: 20 }).map((_, i) => (
@@ -508,9 +521,6 @@ const ToolDetailPage = () => {
             onStart={handleStartSession}
             onEnd={handleEndSession}
             onClose={() => navigate("/tools")}
-            soundEnabled={soundEnabled}
-            onToggleSound={() => setSoundEnabled((v) => !v)}
-            onToggleTheme={() => setDarkMode((v) => !v)}
           >
             {renderSessionView()}
           </ToolSessionLayout>

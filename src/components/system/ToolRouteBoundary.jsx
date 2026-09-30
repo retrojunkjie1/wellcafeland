@@ -8,6 +8,25 @@ import NotReadyCard from "./NotReadyCard";
  * Simple class-based ErrorBoundary (no new deps).
  * On error: show NotReadyCard with Try again / Use text instead.
  */
+const CHUNK_RECOVERY_KEY = "wc_tool_chunk_recovery_at";
+const CHUNK_RECOVERY_WINDOW_MS = 60_000;
+
+function isModuleLoadError(error) {
+  const message = String(error?.message || error || "").toLowerCase();
+  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk\s+\d+\s+failed|failed to load module script/.test(message);
+}
+
+function reloadOnceForModuleError() {
+  try {
+    const previousAttempt = Number(window.sessionStorage.getItem(CHUNK_RECOVERY_KEY) || 0);
+    if (previousAttempt && Date.now() - previousAttempt < CHUNK_RECOVERY_WINDOW_MS) return;
+    window.sessionStorage.setItem(CHUNK_RECOVERY_KEY, String(Date.now()));
+    window.location.reload();
+  } catch {
+    // Storage may be unavailable in a restricted browser; keep the manual retry card.
+  }
+}
+
 class ToolErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -21,6 +40,11 @@ class ToolErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     if (import.meta.env.DEV) {
       console.error("[ToolRouteBoundary] caught error:", error, errorInfo);
+    }
+    // A deployment can replace a lazy-loaded chunk while an older app shell is
+    // still open. Recover once automatically; the session guard prevents loops.
+    if (isModuleLoadError(error) && typeof window !== "undefined") {
+      reloadOnceForModuleError();
     }
   }
 
@@ -52,7 +76,7 @@ export default function ToolRouteBoundary({ children }) {
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <NotReadyCard
         title="Something went wrong"
-        body="This tool didn’t load. You can try again or open Chat for support."
+        body="This page could not open. Try reloading, or open Chat for support."
         actions={[
           { label: "Try again", onClick: () => window.location.reload() },
           { label: "Use text instead", to: "/chat" },

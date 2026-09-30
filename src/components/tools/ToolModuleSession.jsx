@@ -9,24 +9,24 @@ export default function ToolModuleSession({
   children,
 }) {
   return (
-    <main className="mx-auto min-h-full w-full max-w-3xl px-4 py-5 pb-10 sm:px-6">
+    <main className="wc-tool-detail mx-auto min-h-full w-full max-w-3xl px-4 py-5 pb-10 sm:px-6">
       <button
         type="button"
         onClick={onClose}
-        className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm text-white/65 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+        className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm text-white/70 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
         Back to tools
       </button>
 
       <header className="mb-6 space-y-2">
-        <p className="text-[10px] uppercase tracking-[0.24em] text-amber-200/65">Daily practice</p>
+        <p className="text-[10px] uppercase tracking-[0.24em] text-amber-200/80">Daily practice</p>
         <h1 className="text-2xl font-light tracking-wide text-white sm:text-3xl">{title}</h1>
         {description && <p className="max-w-2xl text-sm leading-relaxed text-white/60">{description}</p>}
       </header>
 
       {completed ? (
-        <section aria-live="polite" className="rounded-2xl border border-emerald-200/15 bg-emerald-100/[0.04] p-6 sm:p-8">
+        <section aria-live="polite" className="wc-tool-session-panel rounded-2xl border border-emerald-200/15 bg-emerald-100/[0.04] p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <CircleCheck aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-200" />
             <div>
@@ -43,7 +43,7 @@ export default function ToolModuleSession({
           </button>
         </section>
       ) : (
-        <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-6">
+        <section className="wc-tool-session-panel rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-6">
           {children}
         </section>
       )}

@@ -5,7 +5,7 @@
 import React from "react";
 import Particles from "./Particles";
 
-const CinematicContainer = ({ children, theme = "calm" }) => {
+const CinematicContainer = ({ children, theme = "calm", className = "" }) => {
   const gradients = {
     calm: "from-slate-900 via-slate-800 to-amber-900/20",
     focus: "from-slate-900 via-indigo-900/30 to-purple-900/20",
@@ -16,7 +16,7 @@ const CinematicContainer = ({ children, theme = "calm" }) => {
   const gradient = gradients[theme] || gradients.calm;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${gradient} relative overflow-hidden`}>
+    <div className={`min-h-screen bg-gradient-to-b ${gradient} relative overflow-hidden ${className}`}>
       {/* Ambient glow overlay */}
       <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/40 pointer-events-none" />
       
@@ -32,4 +32,3 @@ const CinematicContainer = ({ children, theme = "calm" }) => {
 };
 
 export default CinematicContainer;
-

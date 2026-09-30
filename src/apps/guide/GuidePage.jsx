@@ -2,12 +2,15 @@
 // Full-screen ChatGPT-style Wellness Guide page
 
 import React, { useState, useEffect, useRef } from "react";
-import { ArrowUp, Loader2, MessageCircle, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { ArrowUp, BookOpen, Loader2, MessageCircle, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAIStore } from "../ai/useAIStore";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { guideEngine } from "../../services/multimodalClient";
 import { guestStorage } from "@/utils/guestStorage";
+import { useOSStore } from "@/stores/useOSStore";
+import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
+import { matchRecoveryStoryRequest } from "@/data/recoveryStories";
 
 const PROMPTS = [
   "I feel overwhelmed",
@@ -15,38 +18,11 @@ const PROMPTS = [
   "Talk me off the ledge",
 ];
 
-const sendToLivingGuide = async (text, setThinking, addLivingGuideMessage, setError) => {
-  try {
-    setThinking(true);
-    setError(null);
-    
-    const result = await guideEngine(text, {
-      mode: "default",
-    });
-
-    if (!result.ok) {
-      const errorMsg = result.error || "I reached for our higher counsel but the line was faint. Try again in a few breaths.";
-      setError("The guide is quiet for a moment. Try again shortly.");
-      addLivingGuideMessage(errorMsg);
-      return;
-    }
-
-    const reply = result.content || "I'm here. Let's take this one breath at a time.";
-    addLivingGuideMessage(reply);
-  } catch (err) {
-    console.error("Living Guide request failed:", err);
-    setError("Network error. Please try again.");
-    addLivingGuideMessage(
-      "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment."
-    );
-  } finally {
-    setThinking(false);
-  }
-};
-
 const GuidePage = () => {
   const navigate = useNavigate();
   const identity = useSessionIdentity();
+  const memoryEnabled = useOSStore((state) => state.settings?.personalizationMemoryEnabled === true);
+  const [storyRequest, setStoryRequest] = useState(null);
   const {
     messages,
     addUserMessage,
@@ -58,59 +34,88 @@ const GuidePage = () => {
   } = useAIStore();
 
   const [input, setInput] = useState("");
-  const lastSentIdRef = useRef(null);
+  const [failedPrompt, setFailedPrompt] = useState("");
+  const sendingRef = useRef(false);
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-send when console opens with a new user message
-  useEffect(() => {
-    if (isThinking) return;
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg && lastMsg.role === "user" && lastMsg.id !== lastSentIdRef.current) {
-      lastSentIdRef.current = lastMsg.id;
-      sendToLivingGuide(lastMsg.content, setThinking, addAssistantMessage, setError);
-      
-      // Save to guest storage if in guest mode
+  const submitMessage = async (value, { appendUser = true } = {}) => {
+    const text = value.trim();
+    if (!text || sendingRef.current || isThinking) return;
+
+    const requestedStory = matchRecoveryStoryRequest(text);
+    if (requestedStory) {
+      setError(null);
+      setFailedPrompt("");
+      setStoryRequest(requestedStory);
+      if (appendUser) {
+        addUserMessage(text);
+        if (identity.mode === "guest") guestStorage.addGuideMessage({ role: "user", content: text });
+      }
+      addAssistantMessage("Yes. We can look at a public account together, then turn only an idea you choose into your own next step. Public stories do not show a complete treatment plan, so we will keep inspiration separate from care advice.");
+      return;
+    }
+    setStoryRequest(null);
+
+    sendingRef.current = true;
+    setThinking(true);
+    setError(null);
+    setFailedPrompt("");
+
+    const priorConversation = messages
+      .filter((message) => message.role === "user" || message.role === "assistant")
+      .slice(-10)
+      .map(({ role, content }) => ({ role, content }));
+    const lastMessage = priorConversation[priorConversation.length - 1];
+    const requestMessages = appendUser || lastMessage?.role !== "user" || lastMessage.content !== text
+      ? [...priorConversation, { role: "user", content: text }]
+      : priorConversation;
+
+    if (appendUser) {
+      addUserMessage(text);
       if (identity.mode === "guest") {
-        guestStorage.addGuideMessage({
-          role: "user",
-          content: lastMsg.content,
-        });
+        guestStorage.addGuideMessage({ role: "user", content: text });
       }
     }
-  }, [isThinking, messages, addAssistantMessage, setThinking, setError, identity.mode]);
+
+    try {
+      const memoryContext = await getConversationMemoryContext(memoryEnabled && identity.mode === "account");
+      const result = await guideEngine(text, { mode: "default", messages: requestMessages, memoryContext });
+      if (!result.ok || !result.content?.trim()) {
+        setError(result.error || "I couldn’t get a response just now. You can try again or open support.");
+        setFailedPrompt(text);
+        return;
+      }
+
+      addAssistantMessage(result.content);
+      await rememberConversationTurn({
+        user: text,
+        assistant: result.content,
+        enabled: memoryEnabled && identity.mode === "account",
+      });
+      setError(null);
+    } catch (err) {
+      console.error("Living Guide request failed:", err);
+      setError("I couldn’t connect just now. Check your connection and try again.");
+      setFailedPrompt(text);
+    } finally {
+      sendingRef.current = false;
+      setThinking(false);
+    }
+  };
 
   const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
-    addUserMessage(text);
     setInput("");
-    await sendToLivingGuide(text, setThinking, addAssistantMessage, setError);
-    
-    // Save to guest storage if in guest mode
-    if (identity.mode === "guest") {
-      guestStorage.addGuideMessage({
-        role: "user",
-        content: text,
-      });
-    }
+    await submitMessage(text);
   };
 
-  const handleSuggestion = async (prompt) => {
-    addUserMessage(prompt);
-    await sendToLivingGuide(prompt, setThinking, addAssistantMessage, setError);
-    
-    if (identity.mode === "guest") {
-      guestStorage.addGuideMessage({
-        role: "user",
-        content: prompt,
-      });
-    }
-  };
+  const handleSuggestion = (prompt) => submitMessage(prompt);
 
   const handleKeyDown = async (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
@@ -132,13 +137,19 @@ const GuidePage = () => {
             <p className="text-xs text-white/60">Present with you</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          className="rounded-full border border-white/10 p-2 text-white/70 hover:text-white hover:border-white/40"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link to="/recovery/stories" aria-label="Explore recovery stories" className="inline-flex min-h-10 items-center gap-2 rounded-full border border-amber-200/20 px-3 text-xs font-medium text-amber-100/90 transition hover:border-amber-200/45 hover:bg-amber-100/[0.06] sm:px-4 sm:text-sm">
+            <BookOpen aria-hidden="true" className="h-4 w-4" /><span>Stories</span>
+          </Link>
+          <button
+            type="button"
+            aria-label="Close guide"
+            onClick={() => navigate("/")}
+            className="rounded-full border border-white/10 p-2.5 text-white/70 hover:text-white hover:border-white/40"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       {/* Messages Area */}
@@ -155,8 +166,16 @@ const GuidePage = () => {
                 <div key={message.id} className="chat-bubble-user">
                   {message.content}
                 </div>
-              )
-            )}
+            )
+          )}
+          {storyRequest && (
+            <div className="max-w-xl rounded-2xl border border-amber-200/20 bg-amber-200/[0.06] p-4">
+              <p className="text-sm leading-relaxed text-amber-50">This story is sourced and separated from WellnessCafe’s own reflections. You choose whether to explore it.</p>
+              <Link to={storyRequest.personId ? `/recovery/stories?person=${encodeURIComponent(storyRequest.personId)}` : "/recovery/stories"} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-full bg-wcGold px-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-300">
+                Open recovery story <BookOpen aria-hidden="true" className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
           {isThinking && (
             <div className="chat-bubble-assistant flex items-center gap-2 text-xs text-white/60">
               <Loader2 className="h-3.5 w-3.5 animate-spin text-wcGold" />
@@ -164,8 +183,18 @@ const GuidePage = () => {
             </div>
           )}
           {error && (
-            <div className="rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-xs text-red-200">
-              {error}
+            <div role="alert" className="rounded-2xl border border-amber-300/35 bg-amber-300/10 p-4 text-sm text-amber-100">
+              <p>{error}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {failedPrompt && (
+                  <button type="button" onClick={() => submitMessage(failedPrompt, { appendUser: false })} disabled={isThinking} className="rounded-full border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10 disabled:opacity-50">
+                    Try again
+                  </button>
+                )}
+                <button type="button" onClick={() => navigate("/assistance")} className="rounded-full border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10">
+                  Open support
+                </button>
+              </div>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -198,6 +227,7 @@ const GuidePage = () => {
               onKeyDown={handleKeyDown}
               placeholder="Tell me what's real for you right now…"
               rows={1}
+              aria-label="Message the Living Guide"
               className="flex-1 resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-wcGold/50 focus:outline-none focus:ring-1 focus:ring-wcGold/30"
               disabled={isThinking}
             />
@@ -205,6 +235,7 @@ const GuidePage = () => {
               type="button"
               onClick={handleSend}
               disabled={!input.trim() || isThinking}
+              aria-label="Send message"
               className="flex h-11 w-11 items-center justify-center rounded-full bg-wcGold text-slate-950 transition hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isThinking ? (
@@ -222,4 +253,3 @@ const GuidePage = () => {
 };
 
 export default GuidePage;
-

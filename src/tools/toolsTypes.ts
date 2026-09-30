@@ -11,9 +11,11 @@ export interface DailyPracticeTool {
   category: string;
   tags: string[];
   summary: string;
+  intensity?: string;
+  durationSec?: number;
+  duration?: string;
   steps: {
     label: string;
     description: string;
   }[];
 }
-

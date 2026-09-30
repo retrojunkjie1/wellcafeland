@@ -12,7 +12,7 @@ import { useAuth } from "../../context/AuthContext";
  * @param {boolean} props.requireAuth - If true, requires authentication (default: true)
  */
 const RequireAuth = ({ children, allowedRoles = [], requireAuth = true }) => {
-  const { role, loading, isAuthenticated } = useAuth();
+  const { role, roles = [], loading, isAuthenticated } = useAuth();
   const location = useLocation();
 
   // Show loading state while checking auth
@@ -34,7 +34,7 @@ const RequireAuth = ({ children, allowedRoles = [], requireAuth = true }) => {
 
   // If roles are specified, check if user's role is allowed
   if (allowedRoles.length > 0) {
-    if (!role || !allowedRoles.includes(role)) {
+    if (!allowedRoles.includes(role) && !roles.some((candidate) => allowedRoles.includes(candidate))) {
       // User is authenticated but doesn't have required role
       return <Navigate to="/unauthorized" replace />;
     }
@@ -45,4 +45,3 @@ const RequireAuth = ({ children, allowedRoles = [], requireAuth = true }) => {
 };
 
 export default RequireAuth;
-

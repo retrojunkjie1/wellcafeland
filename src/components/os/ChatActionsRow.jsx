@@ -7,8 +7,6 @@ import { Copy, Bookmark, Volume2, ChevronDown } from "lucide-react";
 export default function ChatActionsRow({
   message,
   onRetry,
-  onOpenTools,
-  onOpenRealHelp,
   onContinueOffline,
   onCopy,
   onSave,
@@ -16,28 +14,15 @@ export default function ChatActionsRow({
   onExpand,
 }) {
   const buttons = [];
-  if (typeof onRetry === "function") {
+  const actionIds = new Set((Array.isArray(message?.actions) ? message.actions : []).map((action) => action?.action));
+  if (typeof onRetry === "function" && !actionIds.has("retry")) {
     buttons.push(
       <button key="retry" type="button" onClick={() => onRetry?.(message)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[12px] text-white/55 hover:text-white" aria-label="Retry">
         Retry
       </button>
     );
   }
-  if (typeof onOpenTools === "function") {
-    buttons.push(
-      <button key="open_tools" type="button" onClick={() => onOpenTools?.()} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[12px] text-white/55 hover:text-white" aria-label="Open tools">
-        Open tools
-      </button>
-    );
-  }
-  if (typeof onOpenRealHelp === "function") {
-    buttons.push(
-      <button key="open_real_help" type="button" onClick={() => onOpenRealHelp?.()} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[12px] text-white/55 hover:text-white" aria-label="Open Real Help">
-        Open Real Help
-      </button>
-    );
-  }
-  if (typeof onContinueOffline === "function") {
+  if (typeof onContinueOffline === "function" && !actionIds.has("offline") && !actionIds.has("continue_guidance")) {
     buttons.push(
       <button key="offline" type="button" onClick={() => onContinueOffline?.(message)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[12px] text-white/55 hover:text-white" aria-label="Continue offline">
         Continue offline

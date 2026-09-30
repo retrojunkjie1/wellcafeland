@@ -1,344 +1,135 @@
-// src/apps/provider/ClientDetailPage.jsx
-// Client detail page for providers
-
-import React, { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { CalendarDays, ChevronRight, Clock3, HeartHandshake, LockKeyhole, MessageSquare, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
-import { getClient } from "@/services/clientRegistry";
-import { sendNudge } from "@/services/providerNudgeService";
-// import { addClientRecommendation } from "@/services/providerService"; // TODO: Implement if needed
-import { getClientConsentSettings } from "@/services/consentService";
-import { listNotesForClient } from "@/services/clinicalNotesService";
-import { listCarePlansForClient } from "@/services/carePlanService";
-import { listAppointmentsForClient } from "@/services/appointmentService";
-import RiskRadar from "./components/RiskRadar";
-import ClientTimeline from "./components/ClientTimeline";
+import { listAssignmentsForProvider } from "@/services/assignmentService";
+import { getMyProviderAvailability, listAppointmentsForProviderClient } from "@/services/appointmentService";
+import { getProviderClientOverview } from "@/services/practitionerRegistry";
 import PageHeader from "@/components/navigation/PageHeader";
-import { Send, Heart, Activity, BookOpen, MessageSquare, Home, DollarSign, Briefcase, Users, FileText, Calendar, ClipboardList, Lock } from "lucide-react";
+import ClientSharedSupportPanel from "./components/ClientSharedSupportPanel";
 
-const ClientDetailPage = () => {
+const SCOPE_LABELS = {
+  recoveryProgress: "Recovery progress",
+  wellnessPatterns: "Wellness patterns",
+  writtenReflections: "Written reflections",
+  assessments: "Assessment answers",
+};
+
+function formatDate(value, options = { weekday: "short", month: "short", day: "numeric" }) {
+  if (!value) return "Date not set";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Date not set" : date.toLocaleDateString(undefined, options);
+}
+
+export default function ClientDetailPage() {
   const { clientId } = useParams();
   const navigate = useNavigate();
-  const { isProvider, isAdmin, providerId, userId } = useSessionIdentity();
-  const [client, setClient] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [sendingNudge, setSendingNudge] = useState(null);
-  const [consent, setConsent] = useState(null);
-  const [notes, setNotes] = useState([]);
-  const [carePlans, setCarePlans] = useState([]);
+  const { isProvider, isAdmin, providerId, providerType, userId, isLoading: identityLoading } = useSessionIdentity();
+  const [connection, setConnection] = useState(null);
+  const [overview, setOverview] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+  const [appointmentsUnavailable, setAppointmentsUnavailable] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [loadedScope, setLoadedScope] = useState("");
+  const requestSequence = useRef(0);
+  const scopeKey = `${providerId || userId || ""}:${clientId || ""}`;
 
-  const loadClient = useCallback(async () => {
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!clientId) return;
+    const requestId = ++requestSequence.current;
+    const requestScope = `${providerId || userId || ""}:${clientId}`;
+    const isCurrentRequest = () => requestSequence.current === requestId;
+    if (quiet) setRefreshing(true);
+    else setLoading(true);
+    setError("");
     try {
-      if (!clientId) {
-        setLoading(false);
+      const assignments = await listAssignmentsForProvider(providerId || userId);
+      if (!isCurrentRequest()) return;
+      const activeConnection = assignments.find((item) => item.clientId === clientId && item.status === "active");
+      if (!activeConnection) {
+        setConnection(null);
+        setOverview(null);
+        setAppointments([]);
+        setAppointmentsUnavailable(false);
+        setLoadedScope(requestScope);
+        setError("This person is not in your active connections. Their private information is unavailable.");
         return;
       }
-
-      const providerIdToUse = providerId || userId;
-      const [clientData, consentData, notesData, plansData, appointmentsData] = await Promise.all([
-        getClient(clientId),
-        providerIdToUse ? getClientConsentSettings(clientId, providerIdToUse) : Promise.resolve(null),
-        providerIdToUse ? listNotesForClient(clientId, providerIdToUse) : Promise.resolve([]),
-        providerIdToUse ? listCarePlansForClient(clientId, providerIdToUse) : Promise.resolve([]),
-        listAppointmentsForClient(clientId, { from: new Date() }),
+      const [sharedOverview, appointmentResult, availability] = await Promise.all([
+        getProviderClientOverview(clientId),
+        listAppointmentsForProviderClient(clientId, { from: new Date() }).then((value) => ({ value })).catch(() => ({ value: [], unavailable: true })),
+        getMyProviderAvailability().catch(() => null),
       ]);
-
-      setClient(clientData);
-      setConsent(consentData);
-      setNotes(notesData);
-      setCarePlans(plansData);
-      setAppointments(appointmentsData);
+      if (!isCurrentRequest()) return;
+      setConnection(activeConnection);
+      setOverview(sharedOverview);
+      setAppointments(appointmentResult.value);
+      setAppointmentsUnavailable(appointmentResult.unavailable === true);
+      if (availability?.timezone) setTimezone(availability.timezone);
+      setLoadedScope(requestScope);
     } catch (err) {
-      console.error("Failed to load client:", err);
+      if (!isCurrentRequest()) return;
+      setConnection(null);
+      setOverview(null);
+      setAppointments([]);
+      setAppointmentsUnavailable(false);
+      setLoadedScope(requestScope);
+      setError(err?.message || "This connection could not be loaded. Try again.");
     } finally {
-      setLoading(false);
+      if (isCurrentRequest()) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [clientId, providerId, userId]);
 
   useEffect(() => {
+    if (identityLoading) return;
     if (!isProvider && !isAdmin) {
-      navigate("/");
+      navigate("/", { replace: true });
       return;
     }
-    loadClient();
-  }, [isProvider, isAdmin, navigate, loadClient]);
+    load();
+    return () => { requestSequence.current += 1; };
+  }, [identityLoading, isProvider, isAdmin, navigate, load]);
 
-  const handleSendNudge = async (type) => {
-    if (!clientId || !providerId || !userId) return;
+  const currentScopeLoaded = loadedScope === scopeKey && (isProvider || isAdmin);
+  if (identityLoading || loading || !currentScopeLoaded) return <main className="min-h-screen bg-slate-950 text-white"><PageHeader title="Connected person" /><div className="lux-shell py-16 text-center text-white/55">Loading this connection and its current sharing choices…</div></main>;
 
-    setSendingNudge(type);
-    try {
-      const result = await sendNudge(clientId, type, providerId || userId);
-      if (result.ok) {
-        // Show success message (could use a toast here)
-        console.log("Nudge sent successfully");
-      }
-    } catch (err) {
-      console.error("Failed to send nudge:", err);
-    } finally {
-      setSendingNudge(null);
-    }
-  };
-
-  if (!isProvider && !isAdmin) {
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white">
-        <PageHeader title="Client Details" />
-        <div className="flex items-center justify-center p-12">
-          <div className="text-white/50">Loading client...</div>
-        </div>
+  return <main className="min-h-screen bg-slate-950 text-white">
+    <PageHeader title="Connected person" subtitle="Support shaped by what this person chose to share" />
+    <div className="lux-shell space-y-5 py-6 sm:py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link to="/provider/clients" className="inline-flex min-h-10 items-center gap-2 text-sm text-white/65 hover:text-white"><Users className="h-4 w-4" />My people</Link>
+        <button type="button" onClick={() => load({ quiet: true })} disabled={refreshing} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/75 hover:bg-white/[0.05] disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />Refresh sharing</button>
       </div>
-    );
-  }
 
-  if (!client) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-white">
-        <PageHeader title="Client Details" />
-        <div className="flex items-center justify-center p-12">
-          <div className="text-white/50">Client not found</div>
-        </div>
-      </div>
-    );
-  }
+      {error && <section role="alert" className="rounded-2xl border border-rose-200/20 bg-rose-300/[0.07] p-4 text-sm text-rose-100"><p>{error}</p><button type="button" onClick={() => load()} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-rose-100/20 px-3"><RefreshCw className="h-4 w-4" />Try again</button></section>}
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <PageHeader
-        title={client.alias}
-        subtitle={`Risk Level: ${client.riskLevel}`}
-      />
-      <div className="lux-shell py-10 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Risk Radar */}
-          <div className="lg:col-span-1">
-            <div className="lux-card p-6 border border-white/10 bg-white/5">
-              <RiskRadar clientId={clientId} />
-            </div>
+      {connection && <>
+        {overview?.sharingPaused && <section role="status" className="rounded-2xl border border-amber-100/20 bg-amber-100/[0.05] p-4 text-sm leading-relaxed text-amber-50/80"><strong className="block text-amber-50">{overview.sharingStatusUnknown ? "Sharing status couldn’t be confirmed" : "Client sharing is temporarily paused"}</strong><span className="mt-1 block">{overview.message || "Personal check-ins and assessment answers are hidden until client sharing is available again."}</span></section>}
+        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-emerald-100/[0.075] via-white/[0.035] to-sky-100/[0.04] p-5 sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/65">Active connection</p><h1 className="mt-2 text-2xl font-semibold">Your connected person</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">Their check-ins, assessment answers, and reflections stay private unless they turn on the matching sharing choice. Refresh this page to load the latest choices.</p></div>
+            <div className="rounded-2xl border border-emerald-100/15 bg-slate-950/35 p-3 text-emerald-100"><HeartHandshake className="h-6 w-6" /></div>
           </div>
-
-          {/* Client Timeline */}
-          <div className="lg:col-span-2">
-            <div className="lux-card p-6 border border-white/10 bg-white/5">
-              {consent && !consent.canViewTimeline ? (
-                <div className="flex items-center gap-2 text-white/50">
-                  <Lock className="h-4 w-4" />
-                  <span className="text-sm">Client has not granted access to view timeline.</span>
-                </div>
-              ) : (
-                <ClientTimeline clientId={clientId} />
-              )}
-            </div>
+          <div className="mt-5 flex flex-wrap gap-2" aria-label="Current sharing choices">
+            {Object.entries(SCOPE_LABELS).map(([key, label]) => <span key={key} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${overview?.sharingPaused ? "border-white/10 bg-white/[0.025] text-white/40" : overview?.scopes?.[key] ? "border-emerald-200/20 bg-emerald-200/[0.08] text-emerald-100" : "border-white/10 bg-white/[0.025] text-white/40"}`}><ShieldCheck className="h-3.5 w-3.5" />{label}: {overview?.sharingPaused ? "paused" : overview?.scopes?.[key] ? "shared" : "private"}</span>)}
           </div>
-        </div>
+        </section>
 
-        {/* Consent Badges */}
-        {consent && (
-          <div className="lux-card p-4 border border-white/10 bg-white/5">
-            <div className="flex items-center gap-4 text-xs">
-              <span className={`px-2 py-1 rounded ${consent.canViewTimeline ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}`}>
-                Timeline
-              </span>
-              <span className={`px-2 py-1 rounded ${consent.canViewSummaries ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}`}>
-                Summaries
-              </span>
-              <span className={`px-2 py-1 rounded ${consent.canViewToolsUsage ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}`}>
-                Tools
-              </span>
-              <span className={`px-2 py-1 rounded ${consent.canSeeCircleActivity ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}`}>
-                Circles
-              </span>
-            </div>
-          </div>
-        )}
+        <ClientSharedSupportPanel key={`${clientId}-${overview?.latestCheckInAt || "private"}`} clientId={clientId} providerType={providerType} />
 
-        {/* Clinical Notes */}
-        <div className="lux-card p-6 border border-white/10 bg-white/5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-white flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Clinical Notes
-            </h3>
-            <button
-              onClick={() => navigate(`/provider/clients/${clientId}/notes/new`)}
-              className="px-4 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm"
-            >
-              Add Note
-            </button>
-          </div>
-          {notes.length === 0 ? (
-            <div className="text-sm text-white/50">No notes yet</div>
-          ) : (
-            <div className="space-y-2">
-              {notes.slice(0, 5).map((note) => (
-                <button
-                  key={note.id}
-                  onClick={() => navigate(`/provider/clients/${clientId}/notes/${note.id}`)}
-                  className="w-full text-left p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition"
-                >
-                  <div className="font-medium text-white text-sm">{note.title}</div>
-                  <div className="text-xs text-white/50 mt-1">
-                    {note.createdAt ? new Date(note.createdAt).toLocaleDateString() : "Recently"}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-3"><CalendarDays className="h-5 w-5 text-amber-100" /><div><h2 className="font-semibold">Appointments</h2><p className="text-xs text-white/50">Only sessions attached to this connection · times in {timezone}</p></div></div><button type="button" onClick={() => navigate("/provider/schedule")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/75 hover:bg-white/[0.05]">Open schedule<ChevronRight className="h-4 w-4" /></button></div>
+          {appointmentsUnavailable ? <div role="status" className="mt-4 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-4 text-sm text-amber-50/75">Appointment information is temporarily unavailable. Shared check-ins remain available; try refreshing or open Schedule.</div> : appointments.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{appointments.map((appointment) => <article key={appointment.id} className="rounded-xl border border-white/10 bg-slate-950/45 p-4"><div className="flex items-center gap-2 text-sm font-medium"><CalendarDays className="h-4 w-4 text-amber-100" />{formatDate(appointment.startAt, { weekday: "short", month: "short", day: "numeric", timeZone: timezone })}</div><p className="mt-2 flex items-center gap-2 text-sm text-white/65"><Clock3 className="h-4 w-4 text-white/40" />{appointment.startAt ? new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone: timezone }).format(new Date(appointment.startAt)) : "Time not set"} · {appointment.status || "scheduled"}</p>{appointment.note && <p className="mt-2 text-sm text-white/50">{appointment.note}</p>}</article>)}</div> : <div className="mt-4 rounded-xl border border-white/8 bg-slate-950/35 p-4"><p className="text-sm text-white/65">No upcoming appointment is scheduled.</p><p className="mt-1 text-xs text-white/45">Use Schedule to review requests or coordinate a session.</p></div>}
+        </section>
 
-        {/* Care Plans */}
-        <div className="lux-card p-6 border border-white/10 bg-white/5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-white flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" />
-              Care Plans
-            </h3>
-            <button
-              onClick={() => navigate(`/provider/clients/${clientId}/care-plan/new`)}
-              className="px-4 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm"
-            >
-              {carePlans.length === 0 ? "Create Plan" : "Edit Plan"}
-            </button>
-          </div>
-          {carePlans.length === 0 ? (
-            <div className="text-sm text-white/50">No care plan yet</div>
-          ) : (
-            <div className="space-y-3">
-              {carePlans.filter((p) => p.status === "active").map((plan) => (
-                <div key={plan.id} className="p-4 rounded-lg border border-white/10 bg-white/5">
-                  <div className="font-medium text-white mb-2">{plan.title}</div>
-                  <div className="space-y-1">
-                    {plan.items.slice(0, 3).map((item, idx) => (
-                      <div key={idx} className="text-sm text-white/70">
-                        • {item.label}
-                      </div>
-                    ))}
-                    {plan.items.length > 3 && (
-                      <div className="text-xs text-white/50">+{plan.items.length - 3} more items</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Upcoming Appointments */}
-        {appointments.length > 0 && (
-          <div className="lux-card p-6 border border-white/10 bg-white/5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-white flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Upcoming Appointments
-              </h3>
-              <button
-                onClick={() => navigate("/provider/schedule")}
-                className="text-sm text-white/70 hover:text-white transition"
-              >
-                View All
-              </button>
-            </div>
-            <div className="space-y-2">
-              {appointments.slice(0, 3).map((apt) => (
-                <div key={apt.id} className="p-3 rounded-lg border border-white/10 bg-white/5">
-                  <div className="text-sm font-medium text-white">
-                    {apt.startAt ? new Date(apt.startAt).toLocaleString() : "Scheduled"}
-                  </div>
-                  {apt.note && (
-                    <div className="text-xs text-white/50 mt-1">{apt.note}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Messaging */}
-        <div className="lux-card p-6 border border-white/10 bg-white/5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Messages
-            </h3>
-            <button
-              onClick={() => navigate(`/provider/messages?clientId=${clientId}`)}
-              className="px-4 py-2 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm"
-            >
-              Open Messages
-            </button>
-          </div>
-        </div>
-
-        {/* Nudge Panel */}
-        <div className="lux-card p-6 border border-white/10 bg-white/5">
-          <h3 className="text-lg font-medium text-white mb-4">Send Nudge</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button
-              onClick={() => handleSendNudge("check-in")}
-              disabled={sendingNudge === "check-in"}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-50"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="text-sm">Check-in</span>
-            </button>
-            <button
-              onClick={() => handleSendNudge("grounding")}
-              disabled={sendingNudge === "grounding"}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-50"
-            >
-              <Heart className="h-4 w-4" />
-              <span className="text-sm">Grounding</span>
-            </button>
-            <button
-              onClick={() => handleSendNudge("urge-surf")}
-              disabled={sendingNudge === "urge-surf"}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-50"
-            >
-              <Activity className="h-4 w-4" />
-              <span className="text-sm">Urge Surf</span>
-            </button>
-            <button
-              onClick={() => handleSendNudge("journal-prompt")}
-              disabled={sendingNudge === "journal-prompt"}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-50"
-            >
-              <BookOpen className="h-4 w-4" />
-              <span className="text-sm">Journal</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Phase 12: Provider Recommendations - TODO: Implement addClientRecommendation service */}
-        {/* <div className="lux-card p-6 border border-white/10 bg-white/5">
-          <h3 className="text-lg font-medium text-white mb-4">Recommend Resources</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <button className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm">
-              <Home className="h-4 w-4" />
-              <span>Housing</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm">
-              <DollarSign className="h-4 w-4" />
-              <span>Funding</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm">
-              <Briefcase className="h-4 w-4" />
-              <span>Program</span>
-            </button>
-            <button className="flex items-center gap-2 px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 transition text-sm">
-              <Users className="h-4 w-4" />
-              <span>Circle</span>
-            </button>
-          </div>
-        </div> */}
-      </div>
+        <section className="rounded-2xl border border-white/10 bg-white/[0.025] p-4"><p className="flex items-start gap-2 text-xs leading-relaxed text-white/45"><LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" />This workspace shows shared reflections and appointment details. It is not an emergency alert service, diagnosis, or live risk monitor. Follow up directly if you are concerned about someone's immediate safety.</p><Link to="/provider/messages" className="mt-3 inline-flex min-h-10 items-center gap-2 text-sm text-amber-100 hover:text-amber-50"><MessageSquare className="h-4 w-4" />Open secure messages</Link></section>
+      </>}
     </div>
-  );
-};
-
-export default ClientDetailPage;
-
+  </main>;
+}

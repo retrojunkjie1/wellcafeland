@@ -1,6 +1,6 @@
 // src/admin/AdminPage.jsx
 import React from "react";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { AdminGuard } from "./AdminGuard";
 import { AdminLayout } from "./AdminLayout";
 import { logTelemetry } from "@/telemetry/telemetry";
@@ -8,7 +8,6 @@ import { useEffect } from "react";
 import { AdminOverview } from "./pages/AdminOverview";
 import { AdminWarRoom } from "./pages/AdminWarRoom";
 import { AdminTelemetry } from "./pages/AdminTelemetry";
-import { AdminUsers } from "./pages/AdminUsers";
 import { AdminSystem } from "./pages/AdminSystem";
 import { AdminDeploy } from "./pages/AdminDeploy";
 import { AdminControlCenter } from "./pages/AdminControlCenter";
@@ -17,10 +16,23 @@ import { AdminOverrides } from "./pages/AdminOverrides";
 import { AdminIncidents } from "./pages/AdminIncidents";
 import { AdminAudit } from "./pages/AdminAudit";
 import { AdminProviderNetwork } from "./pages/AdminProviderNetwork";
+import CommunityGiversReviewPage from "@/apps/admin/CommunityGiversReviewPage";
+import PractitionerApplicationsPage from "@/apps/admin/PractitionerApplicationsPage";
+import AdminRolesPage from "@/apps/admin/AdminRolesPage";
+import { useAdminClaim } from "@/hooks/useAdminClaim";
+
+const SECTION_SCOPE = {
+  overview: "platform.operations.view", warroom: "platform.operations.view", telemetry: "support.activity.read",
+  users: "workspace.access.manage", control: "platform.operations.control", overrides: "platform.operations.control",
+  incidents: "trust_safety.review", forecast: "platform.operations.view", risk: "platform.operations.view",
+  audit: "platform.operations.view", "provider-network": "practitioner.directory.manage", system: "platform.operations.view",
+  deploy: "platform.operations.control", "community-givers": "giving.review", practitioners: "practitioner.review",
+};
 
 export function AdminPage() {
   const params = useParams();
   const section = params?.section || "overview";
+  const { claims } = useAdminClaim();
 
   // Track admin page access
   useEffect(() => {
@@ -31,17 +43,20 @@ export function AdminPage() {
     });
   }, [section]);
 
-  try {
-
-    const renderSection = () => {
-      try {
-        switch (section) {
+  const renderSection = () => {
+    const requiredScope = SECTION_SCOPE[section] || (section === "roles" ? "admin.roles.manage" : "platform.operations.view");
+    const granted = claims?.godAdmin === true || claims?.adminScopes?.includes(requiredScope)
+      || Object.prototype.hasOwnProperty.call(claims?.adminRegionalScopes || {}, requiredScope);
+    if (!granted) return <section role="status" className="rounded-xl border border-amber-100/15 bg-amber-100/[0.035] p-5"><h2 className="text-lg font-semibold text-white">This workspace is outside your assignment</h2><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">Your administrator access is limited to specific responsibilities. Ask the Alpha Owner to review your assigned access if this is part of your role.</p></section>;
+    switch (section) {
           case "warroom":
             return <AdminWarRoom />;
           case "telemetry":
             return <AdminTelemetry />;
           case "users":
-            return <AdminUsers />;
+            return <Navigate to="/admin/user-access" replace />;
+          case "roles":
+            return <AdminRolesPage />;
           case "control":
             return <AdminControlCenter />;
           case "overrides":
@@ -53,37 +68,27 @@ export function AdminPage() {
             return <AdminRiskForecast />;
           case "audit":
             return <AdminAudit />;
+          case "provider-network":
+            return <AdminProviderNetwork />;
           case "system":
             return <AdminSystem />;
           case "deploy":
             return <AdminDeploy />;
+          case "community-givers":
+            return <CommunityGiversReviewPage />;
+          case "practitioners":
+            return <PractitionerApplicationsPage />;
           case "overview":
           default:
             return <AdminOverview />;
-        }
-      } catch (err) {
-        console.error("Error rendering admin section:", err);
-        return <div className="text-white">Error loading section</div>;
-      }
-    };
+    }
+  };
 
-    return (
-      <AdminGuard>
-        <AdminLayout>
-          {renderSection()}
-        </AdminLayout>
-      </AdminGuard>
-    );
-  } catch (err) {
-    console.error("AdminPage error:", err);
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="glass-panel rounded-2xl border border-red-400/10 bg-red-400/5 p-6">
-          <h2 className="text-lg font-semibold text-white mb-2">Error</h2>
-          <p className="text-sm text-white/70">{err.message}</p>
-        </div>
-      </div>
-    );
-  }
+  return (
+    <AdminGuard>
+      <AdminLayout>
+        {renderSection()}
+      </AdminLayout>
+    </AdminGuard>
+  );
 }
-

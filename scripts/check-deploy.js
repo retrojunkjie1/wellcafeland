@@ -2,7 +2,7 @@
 // scripts/check-deploy.js
 // Pre-deployment validation script to prevent wrong-project deploys
 
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync, statSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -84,13 +84,53 @@ function checkEnvFile() {
           error: `Wrong project ID in ${envPath}: "${projectId}" (expected: "${REQUIRED_PROJECT_ID}")`,
         };
       }
-      console.log(`✅ ${envPath}: VITE_FIREBASE_PROJECT_ID is "${projectId}"`);
+      const required = [
+        "VITE_FIREBASE_API_KEY",
+        "VITE_FIREBASE_AUTH_DOMAIN",
+        "VITE_FIREBASE_STORAGE_BUCKET",
+        "VITE_FIREBASE_MESSAGING_SENDER_ID",
+        "VITE_FIREBASE_APP_ID",
+        "VITE_FIREBASE_FUNCTIONS_URL",
+      ];
+      const missing = required.filter((key) => !env[key]);
+      if (missing.length) {
+        console.error(`❌ ${envPath}: missing Firebase web configuration: ${missing.join(", ")}`);
+        return { valid: false, error: `Missing Firebase web configuration in ${envPath}` };
+      }
+      console.log(`✅ ${envPath}: Firebase web configuration is present for "${projectId}"`);
       return { valid: true, projectId };
     }
   }
 
-  console.warn("⚠️  No .env or .env.production file found with VITE_FIREBASE_PROJECT_ID");
-  return { valid: true, projectId: null, warning: true };
+  console.error("❌ No .env or .env.production file found with Firebase web configuration");
+  return { valid: false, error: "Firebase web configuration is missing" };
+}
+
+function checkVideoAppCheckConfig() {
+  // Vite reads production.local after production, while process variables have
+  // the highest precedence. Merge in that order so preflight sees the same
+  // public client settings that a production build will receive.
+  const env = {};
+  for (const name of [".env", ".env.local", ".env.production", ".env.production.local"]) {
+    Object.assign(env, readEnvFile(join(rootDir, name)) || {});
+  }
+  Object.assign(env, process.env);
+
+  if (env.VITE_WELLNESSCAFE_VIDEO_ENABLED !== "true") {
+    console.log("ℹ️  First-party video is disabled; no client App Check key is required");
+    return { valid: true };
+  }
+
+  if (!env.VITE_RECAPTCHA_SITE_KEY && !env.VITE_RECAPTCHA_KEY) {
+    console.error("❌ First-party video is enabled, but the client App Check site key is missing");
+    return {
+      valid: false,
+      error: "Configure VITE_RECAPTCHA_SITE_KEY (or VITE_RECAPTCHA_KEY) before deploying App-Check-protected video",
+    };
+  }
+
+  console.log("✅ First-party video client App Check key is present");
+  return { valid: true };
 }
 
 function checkFirebaseJson() {
@@ -111,12 +151,52 @@ function checkFirebaseJson() {
   return { valid: true };
 }
 
+function collectFunctionSourceFiles(directory) {
+  const skippedDirectories = new Set(["node_modules", "test", "tests", "scripts", ".git"]);
+  return readdirSync(directory).flatMap((name) => {
+    if (skippedDirectories.has(name)) return [];
+    const path = join(directory, name);
+    const stats = statSync(path);
+    if (stats.isDirectory()) return collectFunctionSourceFiles(path);
+    return /\.(?:js|cjs|mjs)$/.test(name) ? [path] : [];
+  });
+}
+
+function checkFunctionsRuntime() {
+  const functionsDir = join(rootDir, "functions");
+  const packageConfig = readJsonFile(join(functionsDir, "package.json"));
+  if (!packageConfig) {
+    console.error("❌ functions/package.json could not be read");
+    return { valid: false, error: "Functions package configuration is missing" };
+  }
+
+  if (packageConfig.engines?.node !== "22") {
+    console.error(`❌ Functions runtime is Node.js ${packageConfig.engines?.node || "not specified"}; expected Node.js 22`);
+    return { valid: false, error: "Functions runtime must stay on Node.js 22" };
+  }
+
+  const legacyConfigCall = /\bfunctions\s*\.\s*config\s*\(/;
+  const legacyFiles = collectFunctionSourceFiles(functionsDir)
+    .filter((path) => legacyConfigCall.test(readFileSync(path, "utf-8")));
+  if (legacyFiles.length) {
+    const files = legacyFiles.map((path) => path.replace(`${rootDir}/`, "")).join(", ");
+    console.error(`❌ Deprecated functions.config() call found in: ${files}`);
+    return { valid: false, error: "Migrate Runtime Config usage before deploying Functions" };
+  }
+
+  console.log("✅ Cloud Functions runtime is pinned to Node.js 22");
+  console.log("✅ Functions source contains no deprecated functions.config() calls");
+  return { valid: true };
+}
+
 function main() {
   console.log("🔍 Running pre-deployment checks...\n");
 
   const firebasercCheck = checkFirebaserc();
   const envCheck = checkEnvFile();
+  const videoAppCheckCheck = checkVideoAppCheckConfig();
   const firebaseJsonCheck = checkFirebaseJson();
+  const functionsRuntimeCheck = checkFunctionsRuntime();
 
   console.log("");
 
@@ -127,8 +207,14 @@ function main() {
   if (!envCheck.valid) {
     errors.push(envCheck.error);
   }
+  if (!videoAppCheckCheck.valid) {
+    errors.push(videoAppCheckCheck.error);
+  }
   if (!firebaseJsonCheck.valid) {
     errors.push(firebaseJsonCheck.error);
+  }
+  if (!functionsRuntimeCheck.valid) {
+    errors.push(functionsRuntimeCheck.error);
   }
 
   if (errors.length > 0) {
@@ -136,7 +222,7 @@ function main() {
     errors.forEach((err) => console.error(`   - ${err}`));
     console.error("\n💡 Fix the issues above before deploying.");
     console.error(`💡 Ensure .firebaserc default project is "${REQUIRED_PROJECT_ID}"`);
-    console.error(`💡 Ensure VITE_FIREBASE_PROJECT_ID="${REQUIRED_PROJECT_ID}" in .env or .env.production`);
+    console.error(`💡 Ensure complete Firebase web configuration is present in .env or .env.production`);
     process.exit(1);
   }
 
@@ -156,4 +242,3 @@ function main() {
 }
 
 main();
-

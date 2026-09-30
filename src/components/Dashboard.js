@@ -50,14 +50,14 @@ const Dashboard = () => {
 
             <div className="dashboard-grid">
               <div className="dashboard-card">
-                <h3>Daily Check-in</h3>
-                <p>How are you feeling today?</p>
+                <h3>Recovery check-in</h3>
+                <p>A private reflection on recovery, wellbeing, and today’s support.</p>
                 {lastCheckIn ? (
                   <div className="checkin-status">
                     <p>✅ Completed today!</p>
                     <small>
                       Last check-in:{" "}
-                      {new Date(lastCheckIn.timestamp.toDate()).toLocaleDateString()}
+                      {new Date(lastCheckIn.timestamp?.toDate?.() || lastCheckIn.timestamp).toLocaleDateString()}
                     </small>
                   </div>
                 ) : (
@@ -65,7 +65,7 @@ const Dashboard = () => {
                     className="dashboard-btn"
                     onClick={() => setCurrentView("checkin")}
                   >
-                    Start Check-in
+                    Start recovery check-in
                   </button>
                 )}
               </div>

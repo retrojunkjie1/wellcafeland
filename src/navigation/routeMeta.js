@@ -12,13 +12,14 @@ export const ROOT_ROUTES = [
 export const ROUTE_META = [
   // Core
   { pattern: "/home", title: "Home", parent: null, chrome: "full" },
+  { pattern: "/my-sessions", title: "My sessions", parent: "/home", breadcrumb: false },
   { pattern: "/chat", title: "Chat", parent: "/home", chrome: "minimal", hideBack: true },
 
   // Explore & Tools
   { pattern: "/explore", title: "Explore", parent: "/home", breadcrumb: false },
   { pattern: "/tools", title: "Tools", parent: "/home", breadcrumb: false },
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", breadcrumb: true },
-  { pattern: "/tools/grounding/54321", title: "5–4–3–2–1 Grounding", parent: "/tools", breadcrumb: true },
+  { pattern: "/tools/grounding/54321", title: "Choose an Anchor", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", breadcrumb: true },
@@ -31,11 +32,13 @@ export const ROUTE_META = [
 
   // Recovery / Dashboard
   { pattern: "/recovery", title: "Recovery", parent: "/home", breadcrumb: false },
+  { pattern: "/recovery/stories", title: "Recovery stories", parent: "/recovery", breadcrumb: true },
   { pattern: "/dashboard", title: "Dashboard", parent: "/home", breadcrumb: false },
   { pattern: "/milestones", title: "Milestones", parent: "/dashboard", breadcrumb: true },
 
   // Assistance / Support / Command
   { pattern: "/assistance", title: "Assistance", parent: "/home", breadcrumb: false },
+  { pattern: "/assistance/community", title: "Community support", parent: "/assistance", breadcrumb: true },
   { pattern: "/assistance/request", title: "Assistance Request", parent: "/assistance", breadcrumb: true }, // AssistancePage
   { pattern: "/support", title: "Support", parent: "/home", breadcrumb: false },
   { pattern: "/command", title: "Command", parent: "/home", breadcrumb: true },

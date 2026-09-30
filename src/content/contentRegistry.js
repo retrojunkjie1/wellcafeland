@@ -31,7 +31,7 @@ export const contentRegistry = {
   "tool.grounding.54321": {
     id: "tool.grounding.54321",
     section: CONTENT_SECTIONS.TOOLS,
-    title: "5-4-3-2-1 Grounding",
+    title: "Choose an Anchor",
     tags: ["grounding", "overwhelm", "panic"],
     file: "tools/grounding-54321.md",
   },
@@ -105,7 +105,7 @@ export const contentRegistry = {
     file: "education/shame-basics.md",
   },
 
-  // SPIRITUAL (placeholder)
+  // SPIRITUAL
   "spiritual.grounding.water": {
     id: "spiritual.grounding.water",
     section: CONTENT_SECTIONS.SPIRITUAL,
@@ -139,5 +139,3 @@ export function listContentBySection(section) {
 export function getContentRegistryEntry(id) {
   return contentRegistry[id] || null;
 }
-
-

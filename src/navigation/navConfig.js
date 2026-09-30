@@ -6,6 +6,7 @@ import { matchPath } from "react-router-dom";
 // Canonical root routes (no back button on these)
 export const ROOT_ROUTES = [
   "/home",
+  "/my-sessions",
   "/chat",
   "/tools",
   "/recovery",
@@ -19,6 +20,7 @@ export const ROOT_SET = new Set(ROOT_ROUTES);
 export const ROUTE_META = [
   // Core roots
   { pattern: "/home", title: "Home", parent: null, rootFallback: "/home" },
+  { pattern: "/my-sessions", title: "My sessions", parent: "/home", rootFallback: "/home" },
   { pattern: "/chat", title: "Chat", parent: null, rootFallback: "/chat" },
   { pattern: "/", title: "Home", parent: null, rootFallback: "/home" },
 
@@ -36,13 +38,14 @@ export const ROUTE_META = [
 
   // Tools
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", rootFallback: "/tools" },
-  { pattern: "/tools/grounding/54321", title: "5–4–3–2–1 Grounding", parent: "/tools", rootFallback: "/tools" },
+  { pattern: "/tools/grounding/54321", title: "Choose an Anchor", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", rootFallback: "/tools" },
 
   // Assistance
   { pattern: "/assistance", title: "Assistance", parent: "/home", rootFallback: "/home" },
+  { pattern: "/assistance/community", title: "Community support", parent: "/assistance", rootFallback: "/assistance" },
   { pattern: "/assistance/request", title: "Request Assistance", parent: "/assistance", rootFallback: "/assistance" },
 
   // Support & Command
@@ -82,6 +85,7 @@ export const ROUTE_META = [
   { pattern: "/settings/wellness", title: "Wellness", parent: "/profile", rootFallback: "/profile" },
   { pattern: "/settings/notifications", title: "Notifications", parent: "/profile", rootFallback: "/profile" },
   { pattern: "/settings/privacy", title: "Privacy", parent: "/profile", rootFallback: "/profile" },
+  { pattern: "/settings/practitioner-sharing", title: "Practitioner Sharing", parent: "/settings/privacy", rootFallback: "/settings/privacy" },
 
   // Recovery & Milestones
   { pattern: "/milestones", title: "Milestones", parent: "/dashboard", rootFallback: "/dashboard" },

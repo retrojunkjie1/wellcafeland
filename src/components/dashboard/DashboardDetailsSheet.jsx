@@ -23,8 +23,6 @@ const DashboardDetailsSheet = ({
 
   humanModeMessage,
 
-  faceMessage,
-
   trajectoryMessage,
 
   triggers,
@@ -60,10 +58,6 @@ const DashboardDetailsSheet = ({
       case "mode":
 
         return "Conversational Mode";
-
-      case "face":
-
-        return "Face Expression";
 
       case "trajectory":
 
@@ -343,62 +337,6 @@ const DashboardDetailsSheet = ({
 
 
 
-      case "face": {
-
-        const emo = faceMessage?.emotion;
-
-        if (!emo) {
-
-          return (
-
-            <p className="text-sm text-slate-300">
-
-              Face detection is available but inactive. When you choose to use
-
-              it, I'll reflect your expression back to you — never to judge,
-
-              only to help you notice what your face is already saying.
-
-            </p>
-
-          );
-
-        }
-
-
-
-        return (
-
-          <div className="space-y-2 text-sm text-slate-200">
-
-            <p>
-
-              Your expression looks{" "}
-
-              <span className="font-semibold text-amber-300">{emo.label}</span>{" "}
-
-              with an intensity around{" "}
-
-              <span className="font-semibold">{emo.intensity ?? 0}</span>/100.
-
-            </p>
-
-            <p className="text-xs text-slate-400">
-
-              This isn't a lie detector. It's a mirror to help you check in with
-
-              yourself.
-
-            </p>
-
-          </div>
-
-        );
-
-      }
-
-
-
       case "trajectory": {
 
         if (!trajectoryMessage && !hasMoments) {
@@ -537,4 +475,3 @@ const DashboardDetailsSheet = ({
 
 
 export default DashboardDetailsSheet;
-

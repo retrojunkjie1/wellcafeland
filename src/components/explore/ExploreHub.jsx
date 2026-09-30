@@ -10,7 +10,6 @@ import {
   Wind,
   Mountain,
   PenTool,
-  Waves,
   Activity,
   MapPin,
   Phone,
@@ -41,7 +40,7 @@ const EXPLORE_SECTIONS = [
       },
       {
         id: "grounding-54321",
-        label: "5-4-3-2-1 Grounding",
+        label: "Choose an Anchor",
         icon: Mountain,
         toolType: "grounding",
       },
@@ -53,13 +52,13 @@ const EXPLORE_SECTIONS = [
       },
       {
         id: "urge-surfing",
-        label: "Urge Surfing",
-        icon: Waves,
+        label: "Urge Support",
+        icon: LifeBuoy,
         toolType: "urge-surfing",
       },
       {
         id: "body-scan",
-        label: "Body Scan",
+        label: "Steady Ground",
         icon: Activity,
         toolType: "body-scan",
       },
@@ -260,4 +259,3 @@ const ExploreHub = ({ isMobile = false, onClose }) => {
 };
 
 export default ExploreHub;
-

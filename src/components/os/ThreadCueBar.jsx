@@ -2,17 +2,14 @@
 // Phase 54B: Calm thread continuity cue (trauma-safe, no guilt language)
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 
 const ANCHOR_SENTENCE = "No need to explain. Start wherever you are.";
 
 const ThreadCueBar = ({ onContinue }) => {
-  const navigate = useNavigate();
-  const { lastTopic, recentActions } = useContinuityStore();
+  const { lastTopic } = useContinuityStore();
 
   const displayTopic = lastTopic || null;
-  const actionChips = recentActions.slice(0, 2);
 
   return (
     <div
@@ -21,9 +18,7 @@ const ThreadCueBar = ({ onContinue }) => {
     >
       <div className="flex-1 min-w-0 truncate text-sm text-white/70">
         {displayTopic ? (
-          <span>
-            Still on: <span className="text-white/90">{displayTopic}</span>
-          </span>
+          <span>You were talking about: <span className="text-white/90">{displayTopic}</span></span>
         ) : (
           <span>{ANCHOR_SENTENCE}</span>
         )}
@@ -33,24 +28,12 @@ const ThreadCueBar = ({ onContinue }) => {
           <button
             type="button"
             onClick={onContinue}
-            className="px-3 py-1.5 text-xs rounded-lg border border-white/20 bg-white/5 text-white/90 hover:bg-white/10 transition"
+            className="min-h-10 px-3 py-1.5 text-xs rounded-lg border border-emerald-200/30 bg-emerald-100/10 text-emerald-50 hover:bg-emerald-100/15 transition"
+            aria-label="Write a message in the chat"
           >
-            Continue
+            Write a message
           </button>
         )}
-        {actionChips.map((a, i) => (
-          <a
-            key={a.ts + i}
-            href={a.href}
-            onClick={(e) => {
-              e.preventDefault();
-              navigate(a.href);
-            }}
-            className="px-2 py-1 text-xs rounded border border-white/10 bg-white/5 text-white/60 hover:text-white/80 hover:bg-white/10 transition truncate max-w-[120px]"
-          >
-            {a.label}
-          </a>
-        ))}
       </div>
     </div>
   );

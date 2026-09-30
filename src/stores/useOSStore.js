@@ -38,12 +38,25 @@ const saveChats = (chats) => {
 
 // Phase 34: Settings persistence helpers
 const SETTINGS_STORAGE_KEY = "wc-os-settings";
+const GUIDE_MEMORY_CONSENT_KEY = "wc-guide-memory-consent-v1";
+const hasGuideMemoryConsent = () => {
+  try {
+    return typeof localStorage !== "undefined" && localStorage.getItem(GUIDE_MEMORY_CONSENT_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
 
 const loadLocalSettings = () => {
   try {
     const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw);
+    const saved = JSON.parse(raw);
+    // Older builds defaulted memory on, so an old `true` is not proof of opt-in.
+    if (saved?.personalizationMemoryEnabled === true && localStorage.getItem(GUIDE_MEMORY_CONSENT_KEY) !== "1") {
+      return { ...saved, personalizationMemoryEnabled: false };
+    }
+    return saved;
   } catch {
     return null;
   }
@@ -150,6 +163,13 @@ export const useOSStore = create((set, get) => ({
       }
       if (content.audioUrl) {
         msg.audioUrl = content.audioUrl;
+      }
+      if (content.audioDurationSeconds) {
+        msg.audioDurationSeconds = content.audioDurationSeconds;
+      }
+      if (content.imageUrl) {
+        msg.imageUrl = content.imageUrl;
+        msg.imageName = content.imageName || "";
       }
       if (content.videoUrl) {
         msg.videoUrl = content.videoUrl;
@@ -501,6 +521,7 @@ export const useOSStore = create((set, get) => ({
     allowFaceSignals: false,
     trajectoryTrackingEnabled: true,
     personalizationMemoryEnabled: false,
+    recoveryStorySuggestionsEnabled: false,
     recoveryMode: "standard",     // "gentle" | "standard" | "intensive"
 
     // Notifications
@@ -532,6 +553,7 @@ export const useOSStore = create((set, get) => ({
       const merged = {
         ...state.settings,
         ...incoming,
+        personalizationMemoryEnabled: incoming.personalizationMemoryEnabled === true && hasGuideMemoryConsent(),
         notifications: {
           ...state.settings.notifications,
           ...(incoming.notifications || {}),
@@ -572,7 +594,6 @@ export const useOSStore = create((set, get) => ({
       const settings = {
         ...state.settings,
         allowEmotionFromChat: Boolean(value),
-        ...(!value ? { allowFaceSignals: false } : {}),
       };
       saveLocalSettings(settings);
       if (!value) {
@@ -593,7 +614,7 @@ export const useOSStore = create((set, get) => ({
     set((state) => {
       const settings = {
         ...state.settings,
-        allowFaceSignals: Boolean(value) && state.settings.allowEmotionFromChat === true,
+        allowFaceSignals: Boolean(value),
       };
       saveLocalSettings(settings);
       return { settings };
@@ -617,9 +638,21 @@ export const useOSStore = create((set, get) => ({
         personalizationMemoryEnabled: Boolean(value),
       };
       saveLocalSettings(settings);
-      if (!value) {
-        import("@/services/conversationMemory").then(({ clearConversationMemory }) => clearConversationMemory());
+      try {
+        localStorage.setItem(GUIDE_MEMORY_CONSENT_KEY, "1");
+      } catch {
+        // The in-memory setting still applies if browser storage is unavailable.
       }
+      return { settings };
+    }),
+
+  setRecoveryStorySuggestionsEnabled: (value) =>
+    set((state) => {
+      const settings = {
+        ...state.settings,
+        recoveryStorySuggestionsEnabled: Boolean(value),
+      };
+      saveLocalSettings(settings);
       return { settings };
     }),
 

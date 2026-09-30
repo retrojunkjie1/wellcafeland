@@ -5,6 +5,7 @@ import { auth } from "@/firebase";
 import { signInAnonymously } from "firebase/auth";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAnonymousUserId } from "@/lib/userId";
+import { getAppCheckHeaders } from "@/services/appCheckHeaders";
 
 const waitForUser = () =>
   new Promise((resolve) => {
@@ -46,8 +47,8 @@ async function ensureIdToken(opts = {}) {
  * @returns {Promise<Record<string, string>>} { Authorization: "Bearer ..." } or {}
  */
 export async function getAuthHeaders(opts = {}) {
-  const token = await ensureIdToken(opts);
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const [token, appCheckHeaders] = await Promise.all([ensureIdToken(opts), getAppCheckHeaders()]);
+  return { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...appCheckHeaders };
 }
 
 /**
@@ -58,8 +59,11 @@ export async function getAuthHeaders(opts = {}) {
 export async function getAuthHeadersWithTimeout(maxMs = 2000) {
   const timeout = () => new Promise((_, reject) => setTimeout(() => reject(new Error("AUTH_TIMEOUT")), maxMs));
   try {
-    const token = await Promise.race([ensureIdToken({}), timeout()]).catch(() => null);
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    const [token, appCheckHeaders] = await Promise.all([
+      Promise.race([ensureIdToken({}), timeout()]).catch(() => null),
+      getAppCheckHeaders(),
+    ]);
+    return { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...appCheckHeaders };
   } catch {
     return {};
   }
@@ -105,7 +109,10 @@ export const callAiSession = async (payload, options = {}) => {
   if (!resp.ok) {
     const err = new Error(resp.status === 401 ? "Session reconnecting…" : (data?.error?.message || data?.message || "AI_SESSION_FAILED"));
     err.status = resp.status;
-    err.code = resp.status === 401 ? "AUTH_REQUIRED" : "AI_SESSION_FAILED";
+    err.code = resp.status === 401
+      ? "AUTH_REQUIRED"
+      : (data?.error?.code || data?.code || "AI_SESSION_FAILED");
+    err.retryAfterSeconds = Number(data?.retryAfterSeconds || resp.headers.get("Retry-After")) || null;
     err.data = data;
     throw err;
   }

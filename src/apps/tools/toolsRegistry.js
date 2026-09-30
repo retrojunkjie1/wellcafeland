@@ -25,28 +25,28 @@ const ALL_TOOLS = [
   },
   {
     id: "grounding",
-    name: "Grounding (5-4-3-2-1)",
-    description: "Orient outward through sight, sound, touch, smell, or taste; skip any sense that does not help.",
+    name: "Choose an Anchor",
+    description: "Find a comfortable point of orientation through sight, sound, touch, or a change of space—without counting or writing.",
     category: "body-breath",
     duration: "~5 min",
     primaryAgentId: "healer_grounding",
     telemetryEventKey: "tool_grounding",
-    tags: ["grounding", "present-moment", "dissociation", "anxiety"],
+    tags: ["grounding", "orientation", "sensory-choice", "present-moment"],
     recommendedFor: ["anxiety", "panic", "dissociation", "trauma"],
     icon: "🌍",
     public: true,
   },
   {
     id: "body-scan",
-    name: "Body Scan",
-    description: "Scan body regions at your pace, notice sensation or neutrality, and skip inward focus whenever you want.",
+    name: "Steady Ground",
+    description: "Choose a small movement, a supportive surface, a familiar object, or a change to your space. No body ratings or written answers.",
     category: "body-breath",
     duration: "~10 min",
     primaryAgentId: "healer_grounding",
     telemetryEventKey: "tool_body_scan",
-    tags: ["body-awareness", "somatic", "relaxation", "present-moment"],
-    recommendedFor: ["anxiety", "stress", "body-tension", "sleep"],
-    icon: "🧍",
+    tags: ["grounding", "movement", "comfort", "present-moment"],
+    recommendedFor: ["overwhelm", "stress", "reorientation", "pause"],
+    icon: "🪑",
     public: true,
   },
   {
@@ -90,10 +90,10 @@ const ALL_TOOLS = [
   },
   {
     id: "urge-surfing",
-    name: "Urge Surfing",
-    description: "Map an urge, choose a brief or longer pause, then decide what practical support comes next.",
+    name: "Urge Support",
+    description: "Choose a practical next move, contact someone you trust, or take an optional three-minute pause. No ratings or writing.",
     category: "stress-crisis",
-    duration: "3-10 min",
+    duration: "Optional 3 min",
     primaryAgentId: "sentinel",
     telemetryEventKey: "tool_urge_surfing",
     tags: ["cravings", "urges", "addiction", "recovery"],
@@ -140,6 +140,18 @@ const ALL_TOOLS = [
     icon: "✨",
     public: true,
   },
+  {
+    id: "low-energy-plan",
+    name: "One Small Step",
+    description: "Choose one practical need, match it to the energy you have, and make a plan that allows for asking for help or pausing.",
+    category: "everyday-support",
+    duration: "2-10 min",
+    telemetryEventKey: "tool_low_energy_plan",
+    tags: ["low-energy", "daily-needs", "small-steps", "practical-support"],
+    recommendedFor: ["low-energy", "overwhelm", "daily-needs", "practical-support"],
+    icon: "🌱",
+    public: true,
+  },
 ];
 
 /**
@@ -163,6 +175,7 @@ export const CATEGORIES = [
   { id: "mind-thoughts", label: "Mind & Thoughts" },
   { id: "stress-crisis", label: "Stress & Crisis" },
   { id: "sleep-winddown", label: "Sleep & Wind-down" },
+  { id: "everyday-support", label: "Everyday Support" },
 ];
 
 /**

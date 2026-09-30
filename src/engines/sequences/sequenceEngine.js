@@ -17,7 +17,7 @@ export const ritualSequences = {
   "ritual-grounding-seq": {
     id: "ritual-grounding-seq",
     title: "5-Minute Grounding Ritual",
-    description: "A gentle sequence to settle your body and return to safety.",
+    description: "A brief sequence with optional choices for pausing and orienting.",
     estimatedMinutes: 5,
     steps: [
       {
@@ -34,22 +34,22 @@ export const ritualSequences = {
       },
       {
         type: "text",
-        title: "Orient to the Room",
+        title: "Choose One Point",
         body:
-          "Slowly look around and name three things you can see. One by one. Let your eyes land gently. You are here. You are now.",
+          "Rest your eyes on one steady object or color, if that feels comfortable. Nothing needs to be counted or named.",
       },
       {
         type: "tool",
-        title: "5–4–3–2–1 Grounding",
+        title: "Choose an Anchor",
         body:
-          "We'll move through the senses. This pulls your attention away from the storm and back into your body.",
+          "Choose one point of orientation, a familiar object, or a quieter space. You can switch or stop at any time.",
         toolKey: "ritual-grounding",
       },
       {
         type: "completion",
-        title: "You're Back on Solid Ground",
+        title: "Finish or Choose Another Step",
         body:
-          "Notice what is different in your body now, even if it's just 5% softer. That 5% matters. You did that.",
+          "There is no expected result. Finish here, open another support, or return to what you were doing.",
       },
     ],
   },

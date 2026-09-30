@@ -3,8 +3,7 @@
 // Multi-million dollar wellness experience
 
 import React, { useEffect, useState, useRef } from "react";
-import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
-import { useSmartNav } from "@/navigation/useSmartNav";
+import { Volume2, VolumeX } from "lucide-react";
 import { speakText, unlockAudio, stopSpeaking, getDiagnostics } from "@/utils/voiceGuide";
 import { useAudio } from "@/experience/audio/AudioProvider";
 import { useSpokenGuidance } from "@/experience/audio/useSpokenGuidance";
@@ -14,8 +13,8 @@ export const BreathingSessionView = ({
   onCycleComplete,
   pattern = [4, 4, 4, 4], // inhale, hold, exhale, hold
   voiceEnabled = false, // Voice guide option
+  darkMode = true,
 }) => {
-  const { back } = useSmartNav();
   const audio = useAudio();
   const { playGuidance } = useSpokenGuidance();
   const [phase, setPhase] = useState("idle");
@@ -177,7 +176,7 @@ export const BreathingSessionView = ({
   };
 
   const getOpacity = () => {
-    if (!isActive) return 0.6;
+    if (!isActive) return 1;
     if (displayPhase === "inhale" || displayPhase === "hold1") return 1.0;
     if (displayPhase === "exhale") return 0.85;
     return 0.9;
@@ -200,17 +199,6 @@ export const BreathingSessionView = ({
 
   return (
     <>
-      {/* Floating back button - luxury glass design */}
-      <button
-        type="button"
-        onClick={back}
-        className="fixed top-[calc(12px+env(safe-area-inset-top))] left-3 z-50 inline-flex items-center justify-center rounded-full p-2.5 text-xs transition-all hover:scale-105 backdrop-blur-xl bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/20 text-amber-200/80 hover:text-amber-200 shadow-lg shadow-black/20"
-        aria-label="Go back"
-        style={{ top: 'calc(12px + env(safe-area-inset-top))' }}
-      >
-        <ArrowLeft size={14} />
-      </button>
-
       {/* Luxury Orb zone - premium design with depth */}
       <div className="flex flex-col items-center justify-center gap-4 overflow-visible min-h-[28vh] py-4 sm:min-h-[50vh] sm:gap-6 sm:py-10">
         {/* Premium breathing orb with luxury materials — wrapper relative z-10 so rails/decor sit behind */}
@@ -274,7 +262,9 @@ export const BreathingSessionView = ({
               <span 
                 className="text-lg font-light tracking-[0.3em]"
                 style={{
-                  background: "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(251, 191, 36, 0.9) 50%, rgba(255, 255, 255, 0.8) 100%)",
+                  background: darkMode
+                    ? "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(251, 191, 36, 0.9) 50%, rgba(255, 255, 255, 0.8) 100%)"
+                    : "linear-gradient(135deg, #263449 0%, #876316 52%, #38556a 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
@@ -287,8 +277,8 @@ export const BreathingSessionView = ({
               <span 
                 className="text-xs font-extralight uppercase tracking-wider"
                 style={{
-                  color: "rgba(255, 255, 255, 0.9)",
-                  textShadow: "0 0 20px rgba(251, 191, 36, 0.4)",
+                  color: darkMode ? "rgba(255, 255, 255, 0.9)" : "#263449",
+                  textShadow: darkMode ? "0 0 20px rgba(251, 191, 36, 0.4)" : "none",
                 }}
               >
                 {phase === "idle" ? "Ready" : phase.toUpperCase()}
@@ -343,8 +333,8 @@ export const BreathingSessionView = ({
         <p 
           className="max-w-sm text-center text-sm leading-relaxed font-light"
           style={{
-            color: "rgba(255, 255, 255, 0.9)",
-            textShadow: "0 2px 20px rgba(0, 0, 0, 0.5)",
+            color: darkMode ? "rgba(255, 255, 255, 0.9)" : "#334155",
+            textShadow: darkMode ? "0 2px 20px rgba(0, 0, 0, 0.5)" : "none",
           }}
         >
           {phaseLabel}

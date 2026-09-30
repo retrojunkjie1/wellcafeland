@@ -1,0 +1,64 @@
+import React, { useCallback, useEffect, useState } from "react";
+import { HeartHandshake, LockKeyhole, Send } from "lucide-react";
+import { getProviderClientOverview, sendPractitionerSupportTool } from "@/services/practitionerRegistry";
+import { TOOLS } from "@/apps/tools/toolsRegistry";
+import { getPractitionerPracticeKit } from "../providerPracticeKits";
+
+const SENDABLE_TOOLS = ["grounding", "urge-surfing", "low-energy-plan", "journaling", "meditation", "breathing", "body-scan", "affirmations", "self-surgeon"];
+
+export default function ClientSharedSupportPanel({ clientId, providerType }) {
+  const [overview, setOverview] = useState(null);
+  const kit = getPractitionerPracticeKit(providerType);
+  const availableTools = SENDABLE_TOOLS.map((id) => TOOLS.find((item) => item.id === id)).filter(Boolean);
+  const suggestedTools = kit.suggestions
+    .filter(({ id }) => availableTools.some((tool) => tool.id === id))
+    .map((suggestion) => ({ ...suggestion, tool: availableTools.find((tool) => tool.id === suggestion.id) }));
+  const [toolId, setToolId] = useState("");
+  const [requestFollowUp, setRequestFollowUp] = useState(false);
+  const selectedToolId = availableTools.some((tool) => tool.id === toolId) ? toolId : "";
+  const selectedTool = availableTools.find((tool) => tool.id === selectedToolId);
+  const selectedSuggestion = suggestedTools.find((suggestion) => suggestion.id === selectedToolId);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const refresh = useCallback(() => getProviderClientOverview(clientId).then(setOverview).catch((err) => setError(err?.message || "Shared check-ins could not be loaded.")).finally(() => setLoading(false)), [clientId]);
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const sendTool = async (event) => {
+    event.preventDefault(); setSending(true); setError(""); setNotice("");
+    try { await sendPractitionerSupportTool(clientId, selectedToolId, message, requestFollowUp ? 7 : 0); setMessage(""); setRequestFollowUp(false); setNotice(requestFollowUp ? "Practice invitation sent with an optional seven-day follow-up. The client chooses whether to add it and whether to send you an update." : "The practice is now in their Daily Practice as an invitation. They can add it to their saved set, open it once, or dismiss it."); }
+    catch (err) { setError(err?.message || "We could not share this tool."); }
+    finally { setSending(false); }
+  };
+  const latest = overview?.checkins?.[0];
+  const highSharedSignal = [latest?.cravingIntensity, latest?.triggerIntensity].some((value) => Number(value) >= 7);
+  const supportSuggestion = !overview?.shared
+    ? "Offer a warm, open question and let the person set the pace."
+    : highSharedSignal
+      ? "They shared a strong craving or trigger rating. Ask what would feel most supportive right now, and whether they would like a tool, a conversation, or practical help."
+      : latest?.supportNeeded
+        ? `They chose “${latest.supportNeeded}” as a support need. Ask what that would look like for them today, and whether they want help with one small next step.`
+      : latest?.mood === "difficult" || latest?.mood === "challenging"
+        ? "They shared that today feels difficult. Ask what feels hardest and what kind of support they would welcome."
+        : latest?.plannedActivities?.length
+          ? "They chose activities they hope to try. Ask which one feels most doable, and whether anything would make it easier to begin."
+        : "Invite them to name one thing they want support with today. Follow their lead and ask before offering advice.";
+
+  return <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 text-white">
+    <div className="flex items-center gap-3"><div className="rounded-xl bg-sky-200/10 p-2.5 text-sky-100"><HeartHandshake className="h-5 w-5" /></div><div><h2 className="font-semibold">Shared check-in picture</h2><p className="text-xs text-white/50">Only information this person chose to share with you</p></div></div>
+    {loading ? <p className="mt-4 text-sm text-white/55">Loading shared information…</p> : !overview?.shared ? <div className="mt-4 rounded-xl border border-white/8 bg-slate-950/45 p-4 text-sm text-white/60"><LockKeyhole className="mr-2 inline h-4 w-4 text-white/45" />{overview?.message || "This person has not shared check-in information with you. Their check-ins stay private."}</div> : <div className="mt-4">
+      <p className="text-xs text-white/50">{overview.totalRecentCheckins} recent check-ins{overview.latestCheckInAt ? ` · latest ${new Date(overview.latestCheckInAt).toLocaleDateString()}` : ""}</p>
+      <div className="mt-3 space-y-2">{overview.checkins.slice(0, 5).map((entry, index) => <article key={`${entry.savedAt || entry.date}-${index}`} className="rounded-xl border border-white/8 bg-slate-950/45 p-3"><p className="text-xs text-white/45">{entry.date || (entry.savedAt && new Date(entry.savedAt).toLocaleDateString()) || "Check-in"}</p><div className="mt-2 flex flex-wrap gap-2 text-xs">{entry.mood && <span className="rounded-lg bg-white/5 px-2 py-1">Mood: {entry.mood}</span>}{entry.daysSinceLastUse != null && <span className="rounded-lg bg-white/5 px-2 py-1">Recovery day {entry.daysSinceLastUse}</span>}{entry.cravingStatus && <span className="rounded-lg bg-white/5 px-2 py-1">Craving: {entry.cravingStatus}{entry.cravingIntensity != null ? ` · ${entry.cravingIntensity}/10` : ""}</span>}{entry.triggerStatus && <span className="rounded-lg bg-white/5 px-2 py-1">Trigger: {entry.triggerStatus}{entry.triggerIntensity != null ? ` · ${entry.triggerIntensity}/10` : ""}</span>}{entry.energy != null && <span className="rounded-lg bg-white/5 px-2 py-1">Energy {entry.energy}/10</span>}{entry.stress != null && <span className="rounded-lg bg-white/5 px-2 py-1">Stress {entry.stress}/10</span>}</div>{entry.cravingDetails && <p className="mt-2 text-sm leading-relaxed text-white/65">Craving note: {entry.cravingDetails}</p>}{entry.triggerDetails && <p className="mt-2 text-sm leading-relaxed text-white/65">Trigger note: {entry.triggerDetails}</p>}{entry.supportNeeded && <p className="mt-2 text-sm text-sky-100/80">Support they asked for: {entry.supportNeeded}</p>}{entry.plannedActivities?.length > 0 && <p className="mt-2 text-sm text-white/65"><span className="text-white/45">Planned today:</span> {entry.plannedActivities.join(", ")}</p>}{entry.skillsPracticed && <p className="mt-2 text-sm leading-relaxed text-white/65"><span className="text-white/45">Skills:</span> {entry.skillsPracticed}</p>}{entry.gratitude && <p className="mt-2 text-sm leading-relaxed text-white/65"><span className="text-white/45">Gratitude:</span> {entry.gratitude}</p>}{entry.journal && <p className="mt-2 text-sm leading-relaxed text-white/65">Reflection: {entry.journal}</p>}</article>)}</div>
+      {overview.scopes?.assessments && <div className="mt-4"><h3 className="text-sm font-medium">Shared assessments</h3>{overview.assessments?.length ? <div className="mt-2 space-y-2">{overview.assessments.map((assessment) => <details key={assessment.id} className="rounded-xl border border-white/8 bg-slate-950/45 p-3"><summary className="cursor-pointer text-sm text-white/75">Assessment · {assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString() : "Saved"} · {Object.keys(assessment.answers || {}).length} responses</summary><dl className="mt-3 space-y-2">{Object.entries(assessment.answers || {}).map(([key, value]) => <div key={key} className="grid gap-1 border-t border-white/5 pt-2 sm:grid-cols-[minmax(7rem,0.6fr)_1fr]"><dt className="text-xs text-white/45">{key.replaceAll("_", " ")}</dt><dd className="break-words text-sm text-white/70">{typeof value === "string" || typeof value === "number" || typeof value === "boolean" ? String(value) : JSON.stringify(value)}</dd></div>)}</dl></details>)}</div> : <p className="mt-2 text-sm text-white/45">No saved assessment is available.</p>}<p className="mt-2 text-xs text-white/40">Shared answers support a conversation. They are not a diagnosis.</p></div>}
+      <p className="mt-3 text-xs text-white/40">This is a shared reflection, not a clinical assessment or live safety monitor. Check in directly with the person when needed.</p>
+    </div>}
+    {!loading && overview?.practiceProgress?.length > 0 && <section className="mt-4 rounded-xl border border-sky-200/15 bg-sky-100/[0.035] p-4"><h3 className="text-sm font-semibold text-sky-50">Updates they chose to share</h3><p className="mt-1 text-xs text-white/45">These are follow-up notes the client intentionally sent to you.</p><div className="mt-3 space-y-2">{overview.practiceProgress.slice(0, 5).map((entry) => { const outcome = { tried: "Tried it", "not-yet": "Not yet", "not-a-fit": "Wasn’t a fit", "prefer-not-to-say": "Prefer not to say" }[entry.outcome] || "Update"; const tool = TOOLS.find((item) => item.id === entry.toolId); return <article key={entry.id} className="rounded-lg border border-white/8 bg-slate-950/45 p-3"><p className="text-xs text-sky-100/70">{tool?.name || "Shared practice"} · {outcome}{entry.submittedAt ? ` · ${new Date(entry.submittedAt).toLocaleDateString()}` : ""}</p>{entry.note && <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-white/75">{entry.note}</p>}</article>; })}</div></section>}
+    {!loading && <div className="mt-4 rounded-xl border border-amber-200/10 bg-amber-200/[0.035] p-4"><p className="text-xs font-semibold uppercase tracking-wide text-amber-100/65">A gentle next question</p><p className="mt-1 text-sm leading-relaxed text-white/75">{supportSuggestion}</p><p className="mt-2 text-xs text-white/40">A conversation prompt only. Do not treat this as a diagnosis or an emergency alert.</p></div>}
+    <form onSubmit={sendTool} className="mt-5 border-t border-white/10 pt-4"><h3 className="text-sm font-semibold">Share a practice</h3><p className="mt-1 text-sm leading-relaxed text-white/60">Suggested for your {kit.label.toLowerCase()} work: {kit.description} The client decides whether to keep or use it.</p><div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1.4fr]">
+      <label className="text-sm text-white/70">Practice<select aria-label="Practice" value={selectedToolId} onChange={(e) => setToolId(e.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-white"><option value="">Choose a practice</option>{suggestedTools.length > 0 && <optgroup label={`Suggested for ${kit.label}`}>{suggestedTools.map(({ id, tool }) => <option key={id} value={id}>{tool?.name || id}</option>)}</optgroup>}<optgroup label="All shareable practices">{availableTools.filter((tool) => !suggestedTools.some((suggestion) => suggestion.id === tool.id)).map((tool) => <option key={tool.id} value={tool.id}>{tool.name}</option>)}</optgroup></select></label>
+      <label className="text-sm text-white/70">A short note (optional)<input value={message} onChange={(e) => setMessage(e.target.value.slice(0, 240))} maxLength={240} placeholder="I thought this might help; use it only if it feels right." className="mt-1 min-h-11 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-white placeholder:text-white/35" /></label>
+    </div>{(selectedTool?.description || selectedSuggestion?.reason) && <div className="mt-3 space-y-1.5 rounded-xl border border-amber-200/10 bg-amber-100/[0.035] px-4 py-3 text-sm leading-relaxed text-white/65">{selectedSuggestion?.reason && <p><span className="font-medium text-amber-100/85">Why it’s suggested:</span> {selectedSuggestion.reason}</p>}{selectedTool?.description && <p>{selectedTool.description}</p>}</div>}<label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-white/8 bg-slate-950/35 p-3"><input type="checkbox" checked={requestFollowUp} onChange={(event) => setRequestFollowUp(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300" /><span><span className="block text-sm text-white/75">Invite them to check back in after a week</span><span className="mt-1 block text-sm leading-relaxed text-white/50">They choose whether to add the practice and whether to send you a brief progress update. No use tracking happens in the background.</span></span></label><button disabled={sending || !selectedToolId} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-200 px-3 text-sm font-semibold text-slate-950 disabled:opacity-50"><Send className="h-4 w-4" />{sending ? "Sharing…" : "Share this practice"}</button>{error && <p role="alert" className="mt-2 text-sm text-rose-200">{error}</p>}{notice && <p role="status" className="mt-2 text-sm text-emerald-200">{notice}</p>}</form>
+  </section>;
+}

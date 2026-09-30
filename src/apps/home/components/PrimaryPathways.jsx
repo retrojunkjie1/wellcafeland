@@ -36,17 +36,17 @@ const PATHWAYS = [
 ];
 
 const themes = {
-  amber: "from-amber-100/90 to-orange-50/90 text-slate-900 border-amber-200 hover:from-amber-50 hover:to-white",
-  lavender: "from-violet-100/90 to-fuchsia-50/90 text-slate-900 border-violet-200 hover:from-violet-50 hover:to-white",
-  mint: "from-emerald-100/90 to-teal-50/90 text-slate-900 border-emerald-200 hover:from-emerald-50 hover:to-white",
-  blue: "from-sky-100/90 to-cyan-50/90 text-slate-900 border-sky-200 hover:from-sky-50 hover:to-white",
+  amber: "from-[#302719] to-[#1A1712] text-[#F4EDE0] border-amber-200/25 hover:from-[#3B2E1C] hover:to-[#211B12]",
+  lavender: "from-[#281D37] to-[#1D1727] text-[#F3EAFB] border-violet-200/25 hover:from-[#332345] hover:to-[#241B31]",
+  mint: "from-[#183428] to-[#14251E] text-[#E3F3EA] border-emerald-200/25 hover:from-[#204332] hover:to-[#193126]",
+  blue: "from-[#172B3C] to-[#14212D] text-[#E5F1FA] border-sky-200/25 hover:from-[#1D374D] hover:to-[#192A39]",
 };
 
 const iconThemes = {
-  amber: "bg-amber-500/15 text-amber-800",
-  lavender: "bg-violet-500/15 text-violet-800",
-  mint: "bg-emerald-500/15 text-emerald-800",
-  blue: "bg-sky-500/15 text-sky-800",
+  amber: "bg-amber-300/10 text-amber-200",
+  lavender: "bg-violet-300/10 text-violet-200",
+  mint: "bg-emerald-300/10 text-emerald-200",
+  blue: "bg-sky-300/10 text-sky-200",
 };
 
 const PrimaryPathways = ({ onPathwayClick }) => {
@@ -71,10 +71,10 @@ const PrimaryPathways = ({ onPathwayClick }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-base sm:text-lg font-semibold tracking-tight">{pathway.title}</h3>
-                <p className="mt-1.5 text-sm leading-snug text-slate-700/80">
+                <p className="mt-1.5 text-sm leading-snug text-white/75">
                   {pathway.description}
                 </p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-slate-700/75 group-hover:text-slate-950">Choose this <span aria-hidden>→</span></span>
+                <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-white/80 group-hover:text-white">Choose this <span aria-hidden>→</span></span>
               </div>
             </div>
           </button>

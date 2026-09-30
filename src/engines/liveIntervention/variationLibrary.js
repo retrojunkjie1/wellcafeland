@@ -21,7 +21,7 @@ export const variationLibrary = {
     ],
     1: [
       { variantId: "ovw-1-a", mode: "stabilize", uiPreset: "wave", title: "Stabilizing • Step 2", lines: ["Your system is activated. That's okay.", "We'll slow it down together."], instruction: "4-7-8: breathe in 4, hold 7, out 8. Do it twice.", choices: ["Breathing", "Open Chat"] },
-      { variantId: "ovw-1-b", mode: "stabilize", uiPreset: "stepper", title: "Grounding", lines: ["Name 5 things you see, 4 you hear, 3 you can touch.", "Stay with your senses."], instruction: "Say them out loud or in your head.", choices: ["5-4-3", "Open Chat"] },
+      { variantId: "ovw-1-b", mode: "stabilize", uiPreset: "stepper", title: "Choose an anchor", lines: ["Choose one steady point in your surroundings.", "You can switch or stop at any time."], instruction: "Rest your eyes on one object, listen for one familiar sound, or choose quiet.", choices: ["Choose an anchor", "Open Chat"] },
       { variantId: "ovw-1-c", mode: "stabilize", uiPreset: "orb", title: "Anchor", lines: ["Find one thing that feels steady.", "The floor. A chair. Your breath."], instruction: "Focus on that for 30 seconds.", choices: ["Anchor", "Open Chat"] },
       { variantId: "ovw-1-d", mode: "stabilize", uiPreset: "wave", title: "Ride the wave", lines: ["This feeling will peak and then ease.", "You don't have to fix it."], instruction: "Breathe out longer than you breathe in, 3 times.", choices: ["Breathe", "Open Chat"] },
       { variantId: "ovw-1-e", mode: "stabilize", uiPreset: "stepper", title: "Step 2", lines: ["You're doing the right thing by pausing.", "Next: one calming action."], instruction: "Choose: cold water on wrists, or 4-7-8 breath.", choices: ["Water", "Breath"] },

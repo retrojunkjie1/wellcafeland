@@ -26,10 +26,13 @@ export function useSessionIdentity() {
     isLoading: true,
     isProvider: false,
     isAdmin: false,
+    isGiver: false,
     providerId: null,
+    providerType: null,
     orgId: null,
     role: "client", // "client" | "provider" | "org_admin"
     roles: [],
+    workspaceIntent: "client",
   });
 
   useEffect(() => {
@@ -43,10 +46,13 @@ export function useSessionIdentity() {
           isLoading: false,
           isProvider: false,
           isAdmin: false,
+          isGiver: false,
           providerId: null,
+          providerType: null,
           orgId: null,
           role: "client",
           roles: [],
+          workspaceIntent: "client",
         });
       }, 0);
       return;
@@ -71,71 +77,102 @@ export function useSessionIdentity() {
         isLoading: false,
         isProvider: false,
         isAdmin: false,
+        isGiver: false,
         providerId: null,
+        providerType: null,
         orgId: null,
         role: "client",
         roles: [],
+        workspaceIntent: "client",
       });
     }
 
+    let identityRequestVersion = 0;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      const requestVersion = ++identityRequestVersion;
       if (user) {
+        // Clear the previous account's permissions while the new account's
+        // claims and profile are being resolved. This prevents stale role
+        // navigation from surviving an account switch.
+        setIdentity({
+          mode: "account",
+          userId: user.uid,
+          isLoading: true,
+          isProvider: false,
+          isAdmin: false,
+          isGiver: false,
+          providerId: null,
+          providerType: null,
+          orgId: null,
+          role: "client",
+          roles: [],
+          workspaceIntent: "client",
+        });
+
         // Check for custom claims first (if available)
         const tokenResult = await user.getIdTokenResult().catch(() => null);
+        if (requestVersion !== identityRequestVersion) return;
         const customClaims = tokenResult?.claims || {};
         
-        let isProvider = customClaims.provider === true || customClaims.role === "provider" || customClaims.role === "provider_admin";
-        let isAdmin = customClaims.admin === true || customClaims.role === "admin" || customClaims.role === "provider_admin";
-        let roles = customClaims.roles || [];
+        let roles = Array.isArray(customClaims.roles) ? customClaims.roles : (customClaims.roles ? [customClaims.roles] : []);
+        if (customClaims.role) roles.push(customClaims.role);
+        if (customClaims.provider === true) roles.push("provider");
+        if (customClaims.admin === true) roles.push("admin");
+        roles = [...new Set(roles)];
+        let isProvider = customClaims.provider === true || roles.includes("provider") || roles.includes("provider_admin");
+        let isAdmin = customClaims.admin === true || roles.some((item) => ["admin", "superadmin", "org_admin", "provider_admin"].includes(item));
+        let isGiver = roles.includes("giver") || roles.includes("community_giver");
         
         let providerId = null;
+        let providerType = typeof customClaims.providerType === "string" ? customClaims.providerType : null;
         let orgId = null;
         let role = "client";
-        
-        // If no custom claims, check Firestore
-        if (!isProvider && !isAdmin && db) {
+        let workspaceIntent = "client";
+
+        // Combine trusted approval claims with the account's selected spaces.
+        // This preserves a client's space when a practitioner claim is added.
+        if (db) {
           try {
             const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (requestVersion !== identityRequestVersion) return;
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              const userRole = userData.role || userData.roles?.[0];
-              
-              if (userRole === "provider" || userRole === "provider_admin") {
-                isProvider = true;
-                role = "provider";
-                providerId = user.uid;
-              }
-              if (userRole === "admin" || userRole === "provider_admin" || userRole === "org_admin") {
-                isAdmin = true;
-                role = userRole === "org_admin" ? "org_admin" : "admin";
-              }
-              
-              roles = userData.roles || (userRole ? [userRole] : []);
+              providerType = providerType || userData.providerType || null;
+              workspaceIntent = userData.workspaceIntent || "client";
+              const storedRoles = Array.isArray(userData.roles) ? userData.roles : (userData.role ? [userData.role] : []);
+              roles = [...new Set([...roles, ...storedRoles])];
+              isProvider = isProvider || roles.includes("provider") || roles.includes("provider_admin");
+              isAdmin = isAdmin || roles.some((item) => ["admin", "superadmin", "org_admin", "provider_admin"].includes(item));
+              isGiver = isGiver || roles.includes("giver") || roles.includes("community_giver");
+              if (isProvider) providerId = userData.providerId || user.uid;
               orgId = userData.orgId || null;
               providerId = userData.providerId || providerId;
-            }
-            
-            // Check provider profile if provider
-            if (isProvider && db) {
-              try {
-                const providerDoc = await getDoc(doc(db, "providers", user.uid));
-                if (providerDoc.exists()) {
-                  const providerData = providerDoc.data();
-                  providerId = providerDoc.id;
-                  orgId = providerData.orgId || orgId;
-                }
-              } catch (err) {
-                console.warn("Failed to load provider profile:", err);
-              }
             }
           } catch (err) {
             console.warn("Failed to check user role in Firestore:", err);
           }
-        } else if (isProvider) {
+        }
+
+        if (isProvider) {
           role = "provider";
           providerId = user.uid;
-        } else if (isAdmin) {
-          role = customClaims.org_admin ? "org_admin" : "admin";
+        }
+        if (isAdmin && !isProvider) role = roles.includes("org_admin") ? "org_admin" : "admin";
+        else if (!isProvider && roles.includes("client")) role = "client";
+
+        if (isProvider && db) {
+          try {
+            const providerDoc = await getDoc(doc(db, "providers", user.uid));
+            if (requestVersion !== identityRequestVersion) return;
+            if (providerDoc.exists()) {
+              const providerData = providerDoc.data();
+              providerId = providerDoc.id;
+              orgId = providerData.orgId || orgId;
+              providerType = providerType || providerData.category || providerData.type || null;
+            }
+          } catch (err) {
+            console.warn("Failed to load provider profile:", err);
+          }
         }
         
         setIdentity({
@@ -144,10 +181,13 @@ export function useSessionIdentity() {
           isLoading: false,
           isProvider,
           isAdmin,
+          isGiver,
           providerId,
+          providerType,
           orgId,
           role,
           roles: Array.isArray(roles) ? roles : (roles ? [roles] : []),
+          workspaceIntent,
         });
       } else {
         // Guest mode - generate or retrieve session guestId
@@ -159,15 +199,21 @@ export function useSessionIdentity() {
           isLoading: false,
           isProvider: false,
           isAdmin: false,
+          isGiver: false,
           providerId: null,
+          providerType: null,
           orgId: null,
           role: "client",
           roles: [],
+          workspaceIntent: "client",
         });
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      identityRequestVersion += 1;
+      unsubscribe();
+    };
   }, []);
 
   // Debug logging (dev only)

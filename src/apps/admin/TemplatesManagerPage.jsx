@@ -1,6 +1,6 @@
 // src/apps/admin/TemplatesManagerPage.jsx
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useSessionTemplatesStore } from "../../stores/useSessionTemplatesStore";
 
 const fieldClasses =
@@ -22,8 +22,13 @@ export default function TemplatesManagerPage() {
     reorderStep,
     saveAll,
     isSaving,
-    error
+    error,
+    isLoading,
+    saved,
+    loadAll,
   } = useSessionTemplatesStore();
+
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   const selected = useMemo(
     () => templates.find((t) => t.id === selectedId) ?? null,
@@ -53,7 +58,7 @@ export default function TemplatesManagerPage() {
 
   const handleAddStep = () => {
     if (!selected) return;
-    const steps = [...selected.steps, "New step..."];
+    const steps = [...selected.steps, ""];
     updateTemplate(selected.id, { steps });
   };
 
@@ -91,13 +96,18 @@ export default function TemplatesManagerPage() {
           </button>
           <button
             onClick={saveAll}
-            disabled={isSaving}
+            disabled={isSaving || isLoading}
             className="rounded-full border border-slate-600 bg-slate-900/70 px-4 py-2 text-xs font-medium uppercase tracking-wide text-slate-200 hover:bg-slate-800 disabled:opacity-50 transition"
           >
-            {isSaving ? "Saving..." : "Save all"}
+            {isSaving ? "Saving..." : isLoading ? "Loading..." : "Save all"}
           </button>
         </div>
       </div>
+      {(error || saved) && (
+        <p className={`mb-4 rounded-lg border px-4 py-3 text-sm ${error ? "border-rose-300/20 bg-rose-300/5 text-rose-100" : "border-emerald-300/20 bg-emerald-300/5 text-emerald-100"}`} role="status">
+          {error || "All session changes are saved."}
+        </p>
+      )}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)_minmax(0,0.9fr)]">
         {/* LEFT: list of templates */}
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
@@ -295,8 +305,8 @@ export default function TemplatesManagerPage() {
               step.
             </p>
             <p>
-              • "Save all" will later push these templates to the cloud. For
-              now, it just keeps them in this session.
+              • Save all writes these templates to the shared session library.
+                Changes become available to clients when the template is active.
             </p>
           </div>
           {selected && (
@@ -339,4 +349,3 @@ export default function TemplatesManagerPage() {
     </div>
   );
 }
-

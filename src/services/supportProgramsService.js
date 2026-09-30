@@ -4,6 +4,7 @@
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 import { logError, logInfo } from "./logService";
+import { isRetiredDemoHelpRecord } from "./helpDirectoryRecordQuality";
 
 /**
  * List support programs
@@ -27,6 +28,7 @@ export async function listSupportPrograms(filters = {}) {
 
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
+      if (isRetiredDemoHelpRecord(data)) return;
       programs.push({
         id: docSnap.id,
         category: data.category || "government_assistance",
@@ -60,6 +62,7 @@ export async function getSupportProgram(programId) {
     if (!programDoc.exists()) return null;
 
     const data = programDoc.data();
+    if (isRetiredDemoHelpRecord(data)) return null;
     return {
       id: programDoc.id,
       category: data.category || "government_assistance",
@@ -79,4 +82,3 @@ export default {
   listSupportPrograms,
   getSupportProgram,
 };
-

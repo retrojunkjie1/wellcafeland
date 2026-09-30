@@ -8,7 +8,7 @@ import React from "react";
  */
 const EventItem = React.memo(({ event, agents }) => {
   const agent = agents.find((a) => a.id === event.agentId);
-  const timestamp = event.timestamp?.toDate?.() || new Date(event.timestamp);
+  const timestamp = event.timestamp?.toDate?.() || (event.timestamp ? new Date(event.timestamp) : null);
 
   return (
     <div
@@ -31,11 +31,11 @@ const EventItem = React.memo(({ event, agents }) => {
           )}
         </div>
         <p className="text-[10px] text-muted-foreground mt-0.5">
-          {timestamp.toLocaleTimeString()}
+          {timestamp && !Number.isNaN(timestamp.getTime()) ? timestamp.toLocaleTimeString() : "Time unavailable"}
         </p>
-        {event.error && (
+        {event.errorCode && (
           <p className="text-[10px] text-destructive mt-1">
-            {event.error}
+            {event.errorCode}
           </p>
         )}
         {event.responseTime && (
@@ -51,4 +51,3 @@ const EventItem = React.memo(({ event, agents }) => {
 EventItem.displayName = "EventItem";
 
 export default EventItem;
-

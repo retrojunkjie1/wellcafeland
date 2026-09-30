@@ -1,32 +1,39 @@
 import React from "react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
 import GroundingTool from "./GroundingTool";
 
-vi.mock("@/services/toolTelemetry", () => ({ logToolUsage: vi.fn(() => Promise.resolve()) }));
+vi.mock("@/services/toolTelemetry", () => ({ logToolUsage: vi.fn().mockResolvedValue(undefined) }));
 
 describe("GroundingTool", () => {
-  it("lets the client move through and finish without answering prompts", () => {
+  it("offers optional orientation choices without a counting or writing task", () => {
+    render(<GroundingTool />);
+
+    expect(screen.getByText(/No counting, naming, or written answers/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Rest your eyes on one steady thing/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Listen for a familiar sound/ })).toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  it("shows one chosen cue and completes without saving personal reflections", () => {
     const onComplete = vi.fn();
     render(<GroundingTool onComplete={onComplete} />);
 
-    expect(screen.getByText(/leave the response blank, skip any step, or stop/i)).toBeInTheDocument();
-
-    for (let step = 0; step < 4; step += 1) {
-      fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-    }
-    fireEvent.click(screen.getByRole("button", { name: "Finish for now" }));
+    const textureCard = screen.getByRole("button", { name: /Use a familiar texture/ }).parentElement;
+    fireEvent.click(screen.getByRole("button", { name: /Use a familiar texture/ }));
+    expect(within(textureCard).getByRole("region", { name: "Use a familiar texture" })).toHaveTextContent(/hold a familiar object if it helps/i);
+    fireEvent.click(within(textureCard).getByRole("button", { name: "Done for now" }));
 
     expect(onComplete).toHaveBeenCalledOnce();
-    expect(onComplete.mock.calls[0][0].data.stepsCompleted).toBe(0);
-    expect(onComplete.mock.calls[0][0].data.stepsVisited).toBe(5);
+    expect(onComplete.mock.calls[0][0].title).toBe("Choose an Anchor");
+    expect(onComplete.mock.calls[0][0].data).toEqual({ practiceType: "choice-led-orientation" });
   });
 
-  it("offers an explicit way to stop when a cancel action is available", () => {
+  it("offers a clear way to leave without completing", () => {
     const onCancel = vi.fn();
     render(<GroundingTool onCancel={onCancel} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Stop practice" }));
+    fireEvent.click(screen.getByRole("button", { name: "Leave practice" }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 });

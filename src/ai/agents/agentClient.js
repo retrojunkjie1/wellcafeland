@@ -1,7 +1,6 @@
 // src/ai/agents/agentClient.js
 // Phase 25+ companion to agentRegistry.js
 // Provides a single, clean entry point for calling any registered agent.
-// Currently a placeholder — easy to wire to a real LLM / fusion engine later.
 // NO side-effects, NO React imports.
 
 import { getAgentById } from "./agentRegistry";

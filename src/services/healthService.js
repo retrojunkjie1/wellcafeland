@@ -5,6 +5,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { logError, logInfo } from "./logService";
+import { getAppCheckHeaders } from "@/services/appCheckHeaders";
 
 const HEALTH_CHECK_TIMEOUT = 5000; // 5 seconds
 
@@ -51,7 +52,7 @@ export async function checkFunctions() {
     const response = await Promise.race([
       fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...await getAppCheckHeaders() },
         body: JSON.stringify({ query: "health check" }),
       }),
       new Promise((_, reject) => 
@@ -147,7 +148,7 @@ export async function checkOpenAI() {
     const response = await Promise.race([
       fetch(`${functionsUrl}/multimodalChat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...await getAppCheckHeaders() },
         body: JSON.stringify({
           messages: [{ role: "user", content: "test" }],
           mode: "default",
@@ -219,4 +220,3 @@ export default {
   checkOpenAI,
   runAllHealthChecks,
 };
-

@@ -34,15 +34,23 @@ const otherPracticeTools = dailyPracticeTools.filter(
   (t) => !HEALER_RITUAL_IDS_REPLACED_BY_SEED.includes(t.id)
 );
 
-export const allTools = [
+const catalogSources = [
   ...seedToolsDisplay,
   ...otherPracticeTools,
   ...(legacyTools ?? []),
 ];
+
+// Keep source priority deterministic: curated seed protocols win over older
+// practice and legacy entries that reuse the same identifier.
+export const allTools = Array.from(
+  catalogSources.reduce((unique, tool) => {
+    if (tool?.id && !unique.has(tool.id)) unique.set(tool.id, tool);
+    return unique;
+  }, new Map()).values()
+);
 
 export const getToolById = (id: string) =>
   allTools.find((t) => t.id === id) || null;
 
 export const isSeedToolSlug = (slug: string) =>
   SEED_SLUGS.includes(slug);
-

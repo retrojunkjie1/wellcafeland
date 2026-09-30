@@ -7,10 +7,13 @@ import Loading from "./components/Loading";
 import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
+import { getAssistanceEntry } from "./apps/assistance/assistanceRoute";
 
 import ExperienceShell from "./system/ExperienceShell";
 
 const HomePage = lazy(() => import("./apps/core/HomePage"));
+const ClientSessionsPage = lazy(() => import("./apps/core/ClientSessionsPage"));
+const VideoSessionRoomPage = lazy(() => import("./apps/core/VideoSessionRoomPage"));
 const DailyCheckInPage = lazy(() => import("./apps/core/DailyCheckInPage"));
 const GuidedEntrySessionPage = lazy(() => import("./apps/core/GuidedEntrySessionPage"));
 const ChatPage = lazy(() => import("./apps/chat/ChatPage"));
@@ -21,6 +24,13 @@ const AssistancePage = lazy(() => import("./apps/assistance/AssistancePage"));
 const CommandConsolePage = lazy(() => import("./apps/command/CommandConsolePage"));
 const WorkspacePage = lazy(() => import("./apps/workspace/WorkspacePage"));
 const RealHelpWorkspace = lazy(() => import("./apps/workspace/RealHelpWorkspace"));
+const RecoveryMeetingsPage = lazy(() => import("./apps/assistance/RecoveryMeetingsPage"));
+const RecoveryMeetingSourcePage = lazy(() => import("./apps/recovery/RecoveryMeetingSourcePage"));
+const RecoveryMeetingSourcesAdminPage = lazy(() => import("./apps/admin/RecoveryMeetingSourcesPage"));
+const HelpDirectoryAdminPage = lazy(() => import("./apps/admin/HelpDirectoryPage"));
+const MeetingDirectoryPolicyPage = lazy(() => import("./apps/legal/MeetingDirectoryPolicyPage"));
+const CommunityGivingPage = lazy(() => import("./apps/assistance/CommunityGivingPage"));
+const AssistanceHubPage = lazy(() => import("./apps/assistance/AssistanceHubPage"));
 const GuidePage = lazy(() => import("./apps/guide/GuidePage"));
 const ResourcesListPage = lazy(() => import("./apps/resources/ResourcesListPage"));
 const ResourcesDetailPage = lazy(() => import("./apps/resources/ResourcesDetailPage"));
@@ -28,6 +38,20 @@ const ResourcesDetailPage = lazy(() => import("./apps/resources/ResourcesDetailP
 const RealHelpRedirect = () => {
   const { search } = useLocation();
   return <Navigate to={`/assistance${search || ""}`} replace />;
+};
+
+const AssistanceRoute = () => {
+  const { search } = useLocation();
+  const entry = getAssistanceEntry(search);
+  if (entry === "meetings") {
+    return <Navigate to="/recovery/meetings" replace />;
+  }
+  // A general “find help” entry should let the person choose a need first.
+  // Only open the results workspace directly when the link carries intent.
+  if (entry === "hub") {
+    return <AssistanceHubPage />;
+  }
+  return <RealHelpWorkspace />;
 };
 
 const DirectoryRedirect = () => {
@@ -40,12 +64,17 @@ const DirectoryRedirect = () => {
   return <Navigate to={to} replace />;
 };
 
+const ProviderClientRedirect = () => {
+  const { clientId } = useParams();
+  return <Navigate to={clientId ? `/provider/clients/${encodeURIComponent(clientId)}` : "/provider/clients"} replace />;
+};
+
 const RecoveryPage = lazy(() => import("./apps/recovery/RecoveryPage"));
+const RecoveryStoriesPage = lazy(() => import("./apps/recovery/RecoveryStoriesPage"));
 const MilestonesPage = lazy(() => import("./apps/milestones/MilestonesPage"));
 const AgentsPage = lazy(() => import("./apps/agents/AgentsPage"));
 
 const ToolsPage = lazy(() => import("./apps/tools/ToolsPageCinematic"));
-const ToolsPageClassic = lazy(() => import("./apps/tools/ToolsPage"));
 // Phase 61: Lazy-load luxury pages for better initial load performance
 const ToolDetailPage = lazy(() => import("./apps/tools/ToolDetailPage"));
 const ExplorePage = lazy(() => 
@@ -58,15 +87,13 @@ const VoiceCheckIn = lazy(() => import("./apps/tools/VoiceCheckIn"));
 const Grounding54321 = lazy(() => import("./apps/tools/Grounding54321"));
 
 const ProvidersPage = lazy(() => import("./apps/providers/ProvidersPage"));
+const PractitionerPortalPage = lazy(() => import("./apps/provider/PractitionerPortalPage"));
 const ProviderDashboardPage = lazy(() => import("./apps/provider/ProviderDashboardPage"));
 const ProviderClientsPage = lazy(() => import("./apps/provider/ProviderClientsPage"));
-const ClientListPage = lazy(() => import("./apps/provider/ClientListPage"));
 const ClientDetailPage = lazy(() => import("./apps/provider/ClientDetailPage"));
 const ProviderMessagesPage = lazy(() => import("./apps/provider/ProviderMessagesPage"));
+const MyPractitionerMessagesPage = lazy(() => import("./apps/provider/MyPractitionerMessagesPage"));
 const ProviderSchedulePage = lazy(() => import("./apps/provider/ProviderSchedulePage"));
-const ClinicalNoteEditor = lazy(() => import("./apps/provider/ClinicalNoteEditor"));
-const CarePlanEditor = lazy(() => import("./apps/provider/CarePlanEditor"));
-const ClientTimelinePage = lazy(() => import("./apps/providers/ClientTimelinePage"));
 
 const DashboardPage = lazy(() => import("./apps/dashboard/DashboardPage"));
 const ProfilePage = lazy(() => import("./apps/profile/ProfilePage"));
@@ -75,6 +102,7 @@ const PreferencesPage = lazy(() => import("./apps/settings/PreferencesPage"));
 const WellnessSettingsPage = lazy(() => import("./apps/settings/WellnessSettingsPage"));
 const NotificationsSettingsPage = lazy(() => import("./apps/settings/NotificationsSettingsPage"));
 const PrivacySettingsPage = lazy(() => import("./apps/settings/PrivacySettingsPage"));
+const PractitionerSharingPage = lazy(() => import("./apps/settings/PractitionerSharingPage"));
 const PrivacyPolicyPage = lazy(() => import("./apps/legal/PrivacyPolicyPage"));
 const TermsOfServicePage = lazy(() => import("./apps/legal/TermsOfServicePage"));
 const CookieNoticePage = lazy(() => import("./apps/legal/CookieNoticePage"));
@@ -89,11 +117,13 @@ const SessionsAdminPage = lazy(() => import("./apps/dashboard/SessionsAdminPage"
 
 const LoginPage = lazy(() => import("./apps/auth/LoginPage"));
 const SignupPage = lazy(() => import("./apps/auth/SignupPage"));
+const VerifyEmailPage = lazy(() => import("./apps/auth/VerifyEmailPage"));
 
 const OnboardingPage = lazy(() => import("./apps/onboarding/OnboardingPage"));
 const PlanStartPage = lazy(() => import("./apps/plan/PlanStartPage"));
 
 const AdminConsolePage = lazy(() => import("./apps/dashboard/AdminConsolePage"));
+const AdminWorkspaceAccessPage = lazy(() => import("./apps/admin/AdminWorkspaceAccessPage"));
 
 const ThemeControlPanel = lazy(() => import("./admin/ThemeControlPanel"));
 const TemplatesManagerPage = lazy(() => import("./apps/admin/TemplatesManagerPage"));
@@ -104,10 +134,13 @@ import AdminRoute from "./components/AdminRoute";
 import ToolRouteBoundary from "./components/system/ToolRouteBoundary";
 import RequireAuth from "./components/routing/RequireAuth";
 import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
+import WorkspaceLandingPage from "./components/routing/WorkspaceLandingPage";
 import UnauthorizedPage from "./components/routing/UnauthorizedPage";
+import AdminAccessPage from "./components/routing/AdminAccessPage";
 import { AdminGuard } from "./admin/AdminGuard";
 import { AdminShell } from "./admin/AdminShell";
 import { AdminPage } from "./admin/AdminPage";
+import GodEyeConsoleEntry from "./components/routing/GodEyeConsoleEntry";
 
 // Phase 13: Social & Circles imports
 const CirclesPage = lazy(() => import("./apps/circles/CirclesPage"));
@@ -132,18 +165,26 @@ const App = () => {
           {/* Preview - Standalone page, no layout */}
           <Route path="/preview/:token" element={<SessionPreviewPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/admin/access" element={<AdminAccessPage />} />
           
           <Route element={<ExperienceShell />}>
             {/* OS Routes */}
-            <Route path="/" element={<ChatPage />} />
+            <Route path="/" element={<WorkspaceLandingPage guestFallback={<ChatPage />} />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/home" element={<HomePage />} />
+          <Route path="/my-sessions" element={<ClientSessionsPage />} />
+          <Route path="/sessions/:appointmentId/video" element={<RequireAuth><VideoSessionRoomPage /></RequireAuth>} />
             <Route path="/check-in" element={<DailyCheckInPage />} />
           <Route path="/session/:mode" element={<GuidedEntrySessionPage />} />
             <Route path="/explore" element={<ExplorePage />} />
           <Route path="/sequence/:id" element={<SequencePage />} />
           {/* Assistance — unified Find Help (housing, food, funding, programs, crisis) */}
-          <Route path="/assistance" element={<RealHelpWorkspace />} />
+          <Route path="/assistance" element={<AssistanceRoute />} />
+          <Route path="/recovery/meetings" element={<RecoveryMeetingsPage />} />
+          <Route path="/recovery/meetings/share-source" element={<RecoveryMeetingSourcePage />} />
+          <Route path="/policies/meeting-directory" element={<MeetingDirectoryPolicyPage />} />
+          <Route path="/assistance/community" element={<CommunityGivingPage />} />
+          <Route path="/giver" element={<CommunityGivingPage initialMode="give" />} />
           {/* Phase 70: Route unrouted AssistancePage */}
           <Route path="/assistance/request" element={<AssistancePage />} />
           <Route path="/command" element={<CommandConsolePage />} />
@@ -160,16 +201,17 @@ const App = () => {
           <Route path="/living/v3" element={<Navigate to="/living" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/plan/start" element={<PlanStartPage />} />
 
           {/* Public Routes - Accessible in guest mode */}
           <Route path="/recovery" element={<RecoveryPage />} />
+          <Route path="/recovery/stories" element={<RecoveryStoriesPage />} />
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
           <Route path="/tools" element={<ToolRouteBoundary><ToolsPage /></ToolRouteBoundary>} />
-          {/* Phase 70: Route classic ToolsPage */}
-          <Route path="/tools/classic" element={<ToolRouteBoundary><ToolsPageClassic /></ToolRouteBoundary>} />
+          <Route path="/tools/classic" element={<Navigate to="/tools" replace />} />
           <Route path="/tools/:toolId" element={<ToolRouteBoundary><ToolDetailPage /></ToolRouteBoundary>} />
           <Route path="/tools/voice-journal" element={<ToolRouteBoundary><VoiceJournal /></ToolRouteBoundary>} />
           <Route path="/tools/voice-checkin" element={<ToolRouteBoundary><VoiceCheckIn /></ToolRouteBoundary>} />
@@ -196,16 +238,16 @@ const App = () => {
           <Route path="/settings/wellness" element={<WellnessSettingsPage />} />
           <Route path="/settings/notifications" element={<NotificationsSettingsPage />} />
           <Route path="/settings/privacy" element={<PrivacySettingsPage />} />
+          <Route path="/settings/practitioner-sharing" element={<RequireAuth><PractitionerSharingPage /></RequireAuth>} />
 
           {/* Provider Routes - Phase 15 */}
           <Route
             path="/provider"
             element={
-              <RequireRole allowedRoles={["provider", "admin"]}>
-                <ProviderDashboardPage />
-              </RequireRole>
+              <RequireAuth><PractitionerPortalPage /></RequireAuth>
             }
           />
+          <Route path="/provider/apply" element={<RequireAuth><PractitionerPortalPage /></RequireAuth>} />
           <Route
             path="/provider/dashboard"
             element={
@@ -222,14 +264,10 @@ const App = () => {
               </RequireRole>
             }
           />
-          {/* Phase 70: Route ClientListPage */}
+          {/* Legacy list URLs point to the current authorized connection list. */}
           <Route
             path="/provider/clients/list"
-            element={
-              <RequireRole allowedRoles={["provider", "admin"]}>
-                <ClientListPage />
-              </RequireRole>
-            }
+            element={<Navigate to="/provider/clients" replace />}
           />
           <Route
             path="/provider/clients/:clientId"
@@ -241,35 +279,19 @@ const App = () => {
           />
           <Route
             path="/provider/clients/:clientId/notes/new"
-            element={
-              <RequireRole allowedRoles={["provider", "admin"]}>
-                <ClinicalNoteEditor />
-              </RequireRole>
-            }
+            element={<Navigate to="/provider/clients" replace />}
           />
           <Route
             path="/provider/clients/:clientId/notes/:noteId"
-            element={
-              <RequireRole allowedRoles={["provider", "admin"]}>
-                <ClinicalNoteEditor />
-              </RequireRole>
-            }
+            element={<Navigate to="/provider/clients" replace />}
           />
           <Route
             path="/provider/clients/:clientId/care-plan/new"
-            element={
-              <RequireRole allowedRoles={["provider", "admin"]}>
-                <CarePlanEditor />
-              </RequireRole>
-            }
+            element={<Navigate to="/provider/clients" replace />}
           />
           <Route
             path="/provider/clients/:clientId/care-plan/:planId"
-            element={
-              <RequireRole allowedRoles={["provider", "admin"]}>
-                <CarePlanEditor />
-              </RequireRole>
-            }
+            element={<Navigate to="/provider/clients" replace />}
           />
           <Route
             path="/provider/messages"
@@ -279,6 +301,7 @@ const App = () => {
               </RequireRole>
             }
           />
+          <Route path="/my-practitioner-messages" element={<RequireAuth><MyPractitionerMessagesPage /></RequireAuth>} />
           <Route
             path="/provider/schedule"
             element={
@@ -291,24 +314,21 @@ const App = () => {
           {/* Phase A1: Redirect /providers/* to canonical /provider/* */}
           <Route
             path="/providers"
-            element={<Navigate to="/provider" replace />}
+            element={<ProvidersPage />}
           />
+          <Route path="/providers/apply" element={<Navigate to="/provider" replace />} />
           <Route
             path="/providers/dashboard"
             element={<Navigate to="/provider/dashboard" replace />}
           />
           <Route
             path="/providers/clients/:clientId"
-            element={<Navigate to="/provider/clients/:clientId" replace />}
+            element={<ProviderClientRedirect />}
           />
-          {/* Phase A1: Ensure timeline is under /provider, not /providers */}
+          {/* Legacy client routes now land on the consent-scoped practitioner view. */}
           <Route
             path="/provider/clients/:clientId/timeline"
-            element={
-              <RequireAuth>
-                <ClientTimelinePage />
-              </RequireAuth>
-            }
+            element={<RequireRole allowedRoles={["provider", "admin"]}><ProviderClientRedirect /></RequireRole>}
           />
           <Route
             path="/sessions/templates"
@@ -356,8 +376,38 @@ const App = () => {
             path="/admin/console"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminConsolePage />
+                <RequireAdmin redirectTo="/admin/access">
+                  <GodEyeConsoleEntry><AdminConsolePage /></GodEyeConsoleEntry>
+                </RequireAdmin>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/user-access"
+            element={
+              <RequireAuth>
+                <RequireAdmin redirectTo="/admin/access">
+                  <AdminWorkspaceAccessPage />
+                </RequireAdmin>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/recovery-meeting-sources"
+            element={
+              <RequireAuth>
+                <RequireAdmin redirectTo="/admin/access">
+                  <RecoveryMeetingSourcesAdminPage />
+                </RequireAdmin>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/help-directory"
+            element={
+              <RequireAuth>
+                <RequireAdmin redirectTo="/admin/access">
+                  <HelpDirectoryAdminPage />
                 </RequireAdmin>
               </RequireAuth>
             }

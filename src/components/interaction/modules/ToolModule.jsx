@@ -2,37 +2,23 @@
 // Injected tool modules (breathing, grounding, etc.) in chat
 
 import React from "react";
-import BreathingTool from "@/apps/tools/modules/BreathingTool";
-import GroundingTool from "@/apps/tools/modules/GroundingTool";
-import JournalingTool from "@/apps/tools/modules/JournalingTool";
-import UrgeSurfingTool from "@/apps/tools/modules/UrgeSurfingTool";
-import BodyScanTool from "@/apps/tools/modules/BodyScanTool";
-
-const TOOL_COMPONENTS = {
-  breathing: BreathingTool,
-  grounding: GroundingTool,
-  journaling: JournalingTool,
-  "urge-surfing": UrgeSurfingTool,
-  "body-scan": BodyScanTool,
-};
+import { resolveToolComponent } from "@/apps/tools/toolComponentRegistry";
+import ToolAvailabilityFallback from "@/components/tools/ToolAvailabilityFallback";
 
 const ToolModule = ({ module }) => {
-  const { toolType, toolId, config } = module.payload;
-  const ToolComponent = TOOL_COMPONENTS[toolType];
+  const { toolType, toolId, config = {} } = module?.payload || {};
+  const ToolComponent = resolveToolComponent(toolType, toolId);
 
   if (!ToolComponent) {
-    return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-        Tool "{toolType}" is not yet available.
-      </div>
-    );
+    return <ToolAvailabilityFallback toolType={toolType || toolId} />;
   }
 
   return (
     <div className="animate-slide-up">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
         <ToolComponent
-          tool={{ id: toolId, type: toolType, ...config }}
+          tool={{ id: toolId || toolType, type: toolType || toolId, ...config }}
+          topic={config.topic || toolId || toolType}
           isEmbedded={true}
         />
       </div>
@@ -41,4 +27,3 @@ const ToolModule = ({ module }) => {
 };
 
 export default ToolModule;
-

@@ -7,6 +7,7 @@ const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const axios = require("axios");
 const { getPathwayCardsForQuery } = require("./pathwayCards");
+const { verifyHttpAppCheck } = require("./httpAppCheck");
 
 const CACHE_TTL_MS = 30 * 1000; // 30s TTL
 const RATE_LIMIT_WINDOW_MS = 30 * 1000; // 30s window
@@ -155,6 +156,7 @@ function normalizeSearchQuery(query, domain, region, category) {
     programs: "addiction recovery programs IOP PHP rehab support groups",
     providers: "recovery therapists addiction counselors",
     hotlines: "crisis hotline suicide prevention addiction helpline",
+    peer: "peer recovery community support groups near me",
     "food.essentials": "food bank food pantry SNAP WIC meal program soup kitchen groceries",
   };
 
@@ -224,6 +226,8 @@ exports.globalResourceSearch = onRequest(
     if (req.method !== "POST") {
       return res.status(405).json({ error: "Method not allowed" })
     }
+
+    if (!await verifyHttpAppCheck(req, res)) return;
 
     const fingerprint = getFingerprint(req);
     if (!checkRateLimit(fingerprint)) {
@@ -436,4 +440,3 @@ exports.globalResourceSearch = onRequest(
     }
   }
 );
-

@@ -8,9 +8,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { WcOsProvider } from "./core/WcOsProvider";
 import { initTheme } from "@/theme/themeStore";
 import { validateEnv, EnvErrorScreen } from "./config/envGuard.jsx";
-import { initTelemetry } from "@/telemetry/telemetry";
-import { auth, db } from "@/firebase";
-import { initCoreOrchestrator } from "@/core/orchestrator";
 import { logDebug } from "@/lib/debug";
 
 // Boot sequence: UI shell mounts FIRST, services initialize LAST
@@ -63,13 +60,6 @@ if (!import.meta.env.VITE_FIREBASE_FUNCTIONS_URL) {
   console.warn("[Startup] VITE_FIREBASE_FUNCTIONS_URL not set - Cloud Functions may not be available");
 }
 
-// Initialize telemetry (must not throw)
-try {
-  initTelemetry({ auth, db });
-} catch (err) {
-  console.warn("[Startup] Telemetry initialization failed (non-blocking):", err);
-}
-
 // Auth provider for apiFetch (globalResourceSearch and other /api/*)
 try {
   const { setApiAuthProvider } = await import("@/lib/apiHelpers");
@@ -78,13 +68,3 @@ try {
 } catch (err) {
   console.warn("[Startup] setApiAuthProvider failed (non-blocking):", err);
 }
-
-// Initialize core orchestrator: safety, policy, intelligence (must not throw)
-setTimeout(() => {
-  try {
-    initCoreOrchestrator();
-  } catch (err) {
-    console.warn("[Startup] Core orchestrator initialization failed (non-blocking):", err);
-  }
-}, 0);
-

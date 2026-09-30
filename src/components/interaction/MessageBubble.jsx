@@ -15,6 +15,15 @@ const MessageBubble = ({ message, isThinking = false }) => {
     );
   }
 
+  if (message.role === "error") {
+    return (
+      <div role="status" className="mx-auto max-w-2xl rounded-xl border border-amber-300/25 bg-amber-300/10 px-4 py-3 text-sm leading-relaxed text-amber-100">
+        <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-amber-200/80">Connection issue</span>
+        {message.content}
+      </div>
+    );
+  }
+
   if (message.role === "assistant" || isThinking) {
     return (
       <div className="flex items-start gap-3 animate-slide-up">
@@ -47,4 +56,3 @@ const MessageBubble = ({ message, isThinking = false }) => {
 };
 
 export default MessageBubble;
-

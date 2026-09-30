@@ -6,14 +6,55 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin(){
-      return isSignedIn() && request.auth.token.admin == true;
+    function isGodAdmin(){
+      return isSignedIn() && request.auth.token.godAdmin == true;
+    }
+
+    function hasAssignedScope(scope) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid)).data.scopes is list
+        && scope in get(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid)).data.scopes
+        && (!('expiresAt' in get(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid)).data)
+          || get(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid)).data.expiresAt == null
+          || get(/databases/$(database)/documents/admin_access_assignments/$(request.auth.uid)).data.expiresAt > request.time);
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function validInitialUserRole() {
+      return !('role' in request.resource.data)
+        || request.resource.data.role == 'client'
+        || request.resource.data.role == request.auth.token.get('role', '');
+    }
+
+    function validInitialUserRoles() {
+      return !('roles' in request.resource.data)
+        || request.resource.data.roles == request.auth.token.get('roles', [])
+        // New accounts may choose the ordinary client space at signup. This
+        // never allows a self-assigned practitioner or admin role.
+        || (request.auth.token.get('roles', []) == [] && request.resource.data.roles == ['client']);
+    }
+
+    function validInitialAdminFlag() {
+      return !('isAdmin' in request.resource.data)
+        || request.resource.data.isAdmin == (request.auth.token.get('admin', false) == true);
     }
 
     // Resources directory: signed-in read, admin write
     match /resources/{id} {
       allow read: if isSignedIn();
-      allow create,update,delete: if isAdmin();
+      allow create,update,delete: if isGodAdmin() || hasAssignedScope('practitioner.directory.manage');
+    }
+
+    // Admin-authored session templates are visible to signed-in clients.
+    // Only administrators can create, update, or remove them.
+    match /sessionTemplates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isGodAdmin() || hasAssignedScope('platform.operations.control');
     }
 
     // Clinical engine: user reads own session data (server writes via Admin SDK)
@@ -30,7 +71,10 @@ service cloud.firestore {
       allow write: if false;
     }
     match /carePlans/{sessionId}/items/{itemId} {
-      allow read: if isSignedIn();
+      // Plan items do not duplicate userId; authorize through the owning plan.
+      // Keep clinical plan details private to the account that created the plan.
+      allow read: if isSignedIn()
+        && get(/databases/$(database)/documents/carePlans/$(sessionId)).data.userId == request.auth.uid;
       allow write: if false;
     }
     match /safetyFlags/{sessionId} {
@@ -40,6 +84,87 @@ service cloud.firestore {
     match /auditEvents/{eventId} {
       allow read,write: if false;
     }
+
+    // Recovery check-ins are sensitive and account-scoped. Clients may create
+    // and manage only their own records; list queries must constrain userId to
+    // the signed-in account. Provider access must use an explicitly authorized
+    // server-side workflow rather than broad client reads.
+    match /checkins/{checkInId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.completed == true;
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Users may manage their own profile and private app data. Privilege fields
+    // are immutable to the owner; trusted server/admin tooling must change them.
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && validInitialUserRole()
+        && validInitialUserRoles()
+        && validInitialAdminFlag();
+      allow update: if isOwner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.get('roles', []) == resource.data.get('roles', [])
+        && request.resource.data.isAdmin == resource.data.isAdmin;
+      allow delete: if false;
+
+      // Rules v2 recursive wildcards match zero or more path segments. Require
+      // an explicit child collection so this does not grant writes to /users/{uid}.
+      match /{privateCollection}/{privateDocument=**} {
+        // Child documents can include highly sensitive recovery conversations.
+        // Keep all account-owned private subcollections owner-only; admin access
+        // must use an explicitly authorized server-side workflow.
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Community giving data is callable-function-only. The public listing
+    // collection contains only anonymous, structured needs; requester details,
+    // giver applications, offers, and audit records must never be client-read.
+    // Cloud Functions use the Admin SDK and enforce requester/giver/admin access.
+    match /community_support_listings/{id} { allow read, write: if false; }
+    match /community_support_private/{id} { allow read, write: if false; }
+    match /community_support_offers/{id} { allow read, write: if false; }
+    match /community_supporter_applications/{id} { allow read, write: if false; }
+    match /community_supporters/{id} { allow read, write: if false; }
+    match /community_support_audit/{id} { allow read, write: if false; }
+
+    // Recovery meeting publication is read and written only by callable
+    // functions so release pointers, source permissions, and revisions stay
+    // consistent. The public finder consumes sanitized results from its API.
+    match /recovery_meetings/{meetingId} { allow read, write: if false; }
+    match /recovery_meeting_directory_sources/{sourceId} { allow read, write: if false; }
+    match /recovery_meeting_source_applications/{sourceId} { allow read, write: if false; }
+    match /recovery_meeting_source_audit/{eventId} { allow read, write: if false; }
+
+    // Help directory records are served only through a callable projection that
+    // returns published, public-safe fields. Admin workflow and audit writes use
+    // the trusted server SDK; clients never read source evidence or edit status.
+    match /help_directory_listings/{listingId} { allow read, write: if false; }
+    match /help_directory_audit/{eventId} { allow read, write: if false; }
+    match /help_directory_corrections/{reportId} { allow read, write: if false; }
+
+    // Account support activity is callable-only. Clients cannot forge or read
+    // the troubleshooting trail; admin reads are checked by the callable.
+    match /support_activity_events/{eventId} { allow read, write: if false; }
+
+    // Account-level abuse signals and the admin decision trail are written and
+    // read only by trusted server callables. Never expose them to client SDKs.
+    match /account_security_signals/{signalId} { allow read, write: if false; }
+    match /account_security_signal_reviews/{reviewId} { allow read, write: if false; }
+
+    // Delegated admin grants and their audit trail are callable-only. The UI
+    // never has direct access to the assignment registry or its reasons.
+    match /admin_access_assignments/{uid} { allow read, write: if false; }
+    match /admin_access_audit/{eventId} { allow read, write: if false; }
 
     // Default deny for everything else
     match /{document=**} {

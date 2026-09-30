@@ -6,7 +6,6 @@ import { useInteractionCanvasStore, MODULE_TYPES } from "@/stores/useInteraction
 import MessageBubble from "./MessageBubble";
 import ToolModule from "./modules/ToolModule";
 import VideoModule from "./modules/VideoModule";
-import VoiceModule from "./modules/VoiceModule";
 import SupportSearchModule from "./modules/SupportSearchModule";
 
 const InteractionCanvas = () => {
@@ -28,9 +27,6 @@ const InteractionCanvas = () => {
 
       case MODULE_TYPES.VIDEO:
         return <VideoModule key={item.id} module={item} />;
-
-      case MODULE_TYPES.VOICE:
-        return <VoiceModule key={item.id} module={item} />;
 
       case MODULE_TYPES.SUPPORT_SEARCH:
         return <SupportSearchModule key={item.id} module={item} />;
@@ -54,4 +50,3 @@ const InteractionCanvas = () => {
 };
 
 export default InteractionCanvas;
-

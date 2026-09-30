@@ -17,22 +17,7 @@ export async function listClientNotes(providerId, clientId) {
   }
 
   if (!db) {
-    // Return mock data if Firestore not available
-    return {
-      ok: false,
-      error: "Database not available",
-      notes: [
-        {
-          id: "note-1",
-          createdAt: new Date().toISOString(),
-          authorId: providerId,
-          clientId,
-          noteType: "session_note",
-          content: "Initial check-in. Client expressed concerns about housing stability.",
-          tags: ["housing", "check-in"],
-        },
-      ],
-    };
+    return { ok: false, error: "Database not available", notes: [] };
   }
 
   try {
@@ -45,7 +30,7 @@ export async function listClientNotes(providerId, clientId) {
       const data = docSnap.data();
       notes.push({
         id: docSnap.id,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || new Date().toISOString(),
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null,
         authorId: data.authorId || providerId,
         clientId: data.clientId || clientId,
         noteType: data.noteType || "session_note",
@@ -83,7 +68,10 @@ export async function createClientNote(providerId, clientId, noteData) {
 
   try {
     const currentUser = auth?.currentUser;
-    const authorId = currentUser?.uid || providerId;
+    if (!currentUser?.uid || currentUser.uid !== providerId) {
+      return { ok: false, error: "Sign in to the provider account before saving a client note." };
+    }
+    const authorId = currentUser.uid;
 
     const note = {
       authorId,
@@ -151,4 +139,3 @@ export default {
   createClientNote,
   updateClientNote,
 };
-

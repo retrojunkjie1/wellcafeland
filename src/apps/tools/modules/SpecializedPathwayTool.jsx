@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, X, RotateCcw } from "lucide-react";
 import { createToolResult, safeCancel, safeComplete } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
+import { getEmotionSupportGuidance } from "./emotionSupportGuidance";
 
 const PATHWAYS = {
   "emotion-regulator": {
@@ -50,6 +51,7 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
   const [answers, setAnswers] = useState({});
   const [startedAt] = useState(() => Date.now());
   const step = pathway.steps[stepIndex];
+  const emotionGuidance = step.id === "nextStep" ? getEmotionSupportGuidance(answers.need) : null;
 
   const setAnswer = (value) => setAnswers((previous) => ({ ...previous, [step.id]: value }));
   const finish = () => {
@@ -98,8 +100,8 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
             <X aria-hidden="true" className="h-4 w-4" /> Stop
           </button>
         </div>
-        <h2 className="text-lg font-medium text-white">{step.title}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-white/60">{step.detail}</p>
+        <h2 className="text-lg font-medium text-white">{emotionGuidance?.title || step.title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-white/60">{emotionGuidance?.detail || step.detail}</p>
 
         {step.options ? (
           <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -113,12 +115,18 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
           <textarea
             value={answers[step.id] || ""}
             onChange={(event) => setAnswer(event.target.value)}
-            placeholder={step.placeholder}
+            placeholder={emotionGuidance?.placeholder || step.placeholder}
             rows={4}
             maxLength={1200}
             className="mt-5 w-full resize-y rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm leading-relaxed text-white placeholder:text-white/35 focus:border-amber-200/40 focus:outline-none"
           />
         )}
+        {emotionGuidance && <details className="mt-3 rounded-xl border border-white/8 bg-black/10 px-3">
+          <summary className="min-h-11 cursor-pointer py-2 text-sm text-amber-100/75">Show a couple of examples (optional)</summary>
+          <div className="flex flex-wrap gap-2 pb-3" aria-label="Possible first steps">
+            {emotionGuidance.suggestions.map((suggestion) => <button key={suggestion} type="button" onClick={() => setAnswer(suggestion)} className="min-h-10 rounded-full border border-amber-100/15 bg-amber-100/[0.035] px-3 py-2 text-left text-sm text-amber-50/80 transition hover:border-amber-100/35 hover:bg-amber-100/[0.08]">{suggestion}</button>)}
+          </div>
+        </details>}
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">

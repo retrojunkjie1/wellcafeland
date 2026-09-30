@@ -8,6 +8,7 @@ import { observe, interpret, adapt, optimize } from "@/core/system/intelligenceE
 import { trackLatency, trackNetworkEvent } from "@/telemetry/telemetry";
 import { callAI } from "@/services/aiClient";
 import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
+import { getAuthHeaders } from "@/services/aiSessionClient";
 
 function buildEndpoint(path) {
   const base = resolveFunctionsBaseUrl();
@@ -45,7 +46,7 @@ const ENDPOINTS = {
  * @returns {Promise<{ok: boolean, type?: string, content?: string, audio?: string, video?: string, error?: string, mode?: string, meta?: object}>}
  */
 export async function guideEngine(query, options = {}) {
-  const { messages = [], mode = "default", audioInput, imageInput } = options;
+  const { messages = [], mode = "default", audioInput, imageInput, memoryContext = "" } = options;
   
   // Build message history
   let messageHistory = [];
@@ -85,9 +86,8 @@ export async function guideEngine(query, options = {}) {
       // Silently fail - use defaults
     }
     
-    const endpoint = ENDPOINTS.chat();
     logDebug("Chat", {
-      endpoint,
+      endpoint: "aiSession",
       functionsBaseUrl: resolveFunctionsBaseUrl(),
       envSet: !!import.meta.env.VITE_FIREBASE_FUNCTIONS_URL,
     });
@@ -150,10 +150,12 @@ export async function guideEngine(query, options = {}) {
     const requestBody = {
       messages: messageHistory,
       mode: adjustedMode,
-      // Add preference hints for backend
-      preferences: preferences ? {
-        tone: preferences.preferredTone,
-        pace: preferences.sessionPace,
+      ...(typeof memoryContext === "string" && memoryContext.trim()
+        ? { memoryContext: memoryContext.slice(0, 9000) }
+        : {}),
+      metadata: preferences ? {
+        preferredTone: preferences.preferredTone,
+        sessionPace: preferences.sessionPace,
       } : undefined,
     };
     
@@ -195,69 +197,33 @@ export async function guideEngine(query, options = {}) {
       }
     }
     
-    // Safari-compatible timeout: use AbortController instead of AbortSignal.timeout()
-    const timeoutController = new AbortController();
-    const timeoutId = setTimeout(() => {
-      timeoutController.abort();
-    }, 15000); // Reduced to 15s max
-    
-    let res;
-    try {
-      res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-        signal: timeoutController.signal,
-      });
-      clearTimeout(timeoutId);
-    } catch (fetchErr) {
-      clearTimeout(timeoutId);
-      if (fetchErr.name === "AbortError") {
-        return {
-          ok: false,
-          error: "Request timed out. Please try again.",
-        };
-      }
-      throw fetchErr;
+    const data = await callAI("aiSession", requestBody);
+    if (!data.ok) {
+      return {
+        ok: false,
+        error: data.error || "The AI guide couldn't respond. Please retry or open real-world support.",
+        errorCode: data.errorCode,
+        errorReason: data.errorReason,
+        retryable: data.retryable,
+        status: data.status,
+        correlationId: data.correlationId,
+      };
     }
 
     if (isDebugEnabled()) {
-      logDebug("Chat", { responseStatus: res.status, statusText: res.statusText });
-    }
-
-    if (!res.ok) {
-      const errorText = await res.text().catch(() => "Unknown error");
-      const safe = errorText?.slice(0, 400) || "Unknown error";
-      return {
-        ok: false,
-        status: res.status,
-        error: `Server error (${res.status}). ${safe}`,
-      };
-    }
-
-    const data = await res.json().catch((parseErr) => {
-      console.error("[guideEngine] Failed to parse JSON response:", parseErr);
-      return null;
-    });
-    
-    if (isDebugEnabled() && data) {
-      logDebug("Chat", { hasContent: !!data.content, hasAudio: !!data.audio, hasVideo: !!data.video });
-    }
-    
-    if (!data) {
-      console.error("[guideEngine] No data in response. Status:", res.status);
-      return {
-        ok: false,
-        error: "Invalid response from server. Please try again.",
-      };
+      logDebug("Chat", { hasContent: !!data.text, hasAudio: false, hasVideo: false });
     }
 
     // Optimize response based on system state (if intelligence engine available)
-    let finalContent = data.content || data.text || data.reply || "";
+    let finalContent = data.text || data.assistantText || "";
+    if (!finalContent.trim()) {
+      return { ok: false, errorCode: "EMPTY_AI_RESPONSE", error: "The AI guide returned an empty response. Please retry." };
+    }
     let optimization = {};
     let systemState = {};
+    let finalType = "text";
+    let finalAudio = null;
+    let finalVideo = null;
     
     try {
       const { SystemMemory } = await import("@/core/system/systemMemory");
@@ -280,10 +246,6 @@ export async function guideEngine(query, options = {}) {
     } catch {
       // Intelligence engine not available, continue without optimization
     }
-
-    let finalType = data.type || "text";
-    let finalAudio = data.audio || null;
-    let finalVideo = data.video || null;
 
     // Return clean, unified response format
     return {
@@ -313,12 +275,12 @@ export async function guideEngine(query, options = {}) {
                           err.name === "AbortError" ||
                           err.name === "TypeError";
     
-    // PHASE H: Soft messaging
+    // Return an explicit failure so callers never render a network error as an AI answer.
     return {
       ok: false,
       error: isNetworkError
         ? "Network connection failed. Please check your internet connection and try again."
-        : "Still here with you. Tap send to continue.",
+        : "I couldn't connect to the AI guide. Please check your connection and retry.",
     };
   }
 }
@@ -378,6 +340,7 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
   }
 
   const endpoint = ENDPOINTS.chat();
+  const authHeaders = await getAuthHeaders();
 
   // PHASE H: iOS Safari visibility guard
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -437,7 +400,7 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
         return {
           ok: false,
           type: "text",
-          text: "Still here with you. Tap send to continue.",
+          text: "You're offline. Reconnect and retry your message, or open real-world support.",
           disconnectReason: "offline",
         };
       }
@@ -470,6 +433,7 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           messages,
@@ -603,15 +567,12 @@ export async function sendChatMultimodal({ messages = [], metadata = {}, mode = 
   const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
   const isDegraded = fetchFailureCount >= 3;
   
-  // Soft messaging - only show connection lost if truly offline
-  let messageText;
-  if (isOffline) {
-    messageText = "Still here with you. Tap send to continue.";
-  } else if (isAborted && (disconnectReason === "visibility" || disconnectReason === "mobile_timeout")) {
-    messageText = "Still here with you. Tap send to continue.";
-  } else {
-    messageText = "Still here with you. Tap send to continue.";
-  }
+  // Explicitly distinguish transport failures from successful assistant replies.
+  const messageText = isOffline
+    ? "You're offline. Reconnect and retry your message, or open real-world support."
+    : isAborted
+      ? "The request was interrupted before the guide could respond. Please retry."
+      : "I couldn't connect to the AI guide. Please check your connection and retry.";
 
   // Track network status
   try {
@@ -649,10 +610,12 @@ export async function speakText(text, options = {}) {
   try {
     const ttsEndpoint = ENDPOINTS.tts();
     logDebug("TTS", { endpoint: ttsEndpoint, functionsBaseUrl: resolveFunctionsBaseUrl() });
+    const authHeaders = await getAuthHeaders();
     const res = await fetch(ttsEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify({
         text: text.trim(),
@@ -738,6 +701,7 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
     // Safari-compatible timeout
     const sttEndpoint = ENDPOINTS.stt();
     logDebug("STT", { endpoint: sttEndpoint, functionsBaseUrl: resolveFunctionsBaseUrl() });
+    const authHeaders = await getAuthHeaders();
     const sttController = new AbortController();
     const sttTimeoutId = setTimeout(() => sttController.abort(), 30000);
     
@@ -745,6 +709,7 @@ export async function transcribeAudio(audio, mimeType = "audio/webm") {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
       },
       body: JSON.stringify({
         audio: audioData,
@@ -824,6 +789,7 @@ export async function callWellnessChat({ messages, mode = "default" }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(await getAuthHeaders()),
         },
         body: JSON.stringify({
           messages,
@@ -861,8 +827,16 @@ export async function callWellnessChat({ messages, mode = "default" }) {
       fallbackData?.reply ||
       fallbackData?.choices?.[0]?.message?.content ||
       fallbackData?.content ||
-      fallbackData?.message ||
-      "I'm here. Let's take this one breath at a time.";
+      (typeof fallbackData?.message === "string" ? fallbackData.message : fallbackData?.message?.text) ||
+      "";
+
+    if (fallbackData?.ok === false || !String(reply).trim()) {
+      return {
+        ok: false,
+        error: fallbackData?.error?.message || fallbackData?.error || "The AI guide returned an empty response. Please retry.",
+        errorCode: fallbackData?.error?.code || fallbackData?.code || "EMPTY_AI_RESPONSE",
+      };
+    }
 
     return {
       ok: true,
@@ -875,7 +849,7 @@ export async function callWellnessChat({ messages, mode = "default" }) {
     // PHASE H: Soft messaging
     return {
       ok: false,
-      error: "Still here with you. Tap send to continue.",
+      error: "I couldn't connect to the AI guide. Please check your connection and retry.",
     };
   }
 }
@@ -945,7 +919,7 @@ export async function sendVoiceSession(audioBlob, { memoryEnabled = false } = {}
     const aiResponse = await callAI("aiSession", {
       mode: "chat",
       messages: [{ role: "user", content: transcript }],
-      memoryContext: getConversationMemoryContext(memoryEnabled),
+      memoryContext: await getConversationMemoryContext(memoryEnabled),
       metadata: {
         source: "voice-session",
         preferredTone: emotion.emotionalState === "anxious" ? "gentle" : "practical",
@@ -968,7 +942,7 @@ export async function sendVoiceSession(audioBlob, { memoryEnabled = false } = {}
     if (!responseText.trim()) {
       return { ok: false, error: "The guide returned an empty response. Please try again.", type: "voice-session", transcript };
     }
-    rememberConversationTurn({ user: transcript, assistant: responseText, enabled: memoryEnabled });
+    await rememberConversationTurn({ user: transcript, assistant: responseText, enabled: memoryEnabled });
 
     let audioUrl = null;
     try {

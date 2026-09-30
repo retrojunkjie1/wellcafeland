@@ -65,9 +65,9 @@ export default function IntentRenderer({ intent, onOpenLink, onRunTool, onDirect
       const labels = {
         breathing: "Breathing",
         grounding: "Grounding",
-        "urge-surfing": "Urge Surfing",
+        "urge-surfing": "Urge Support",
         journaling: "Journaling",
-        "body-scan": "Body Scan",
+        "body-scan": "Steady Ground",
         meditation: "Meditation",
         education: "Education",
       };

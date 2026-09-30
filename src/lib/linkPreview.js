@@ -4,6 +4,7 @@
  */
 
 import { resolveFunctionsBaseUrl } from "@/lib/functionsUrl";
+import { getAppCheckHeaders } from "@/services/appCheckHeaders";
 
 const MEMORY_CACHE = new Map();
 const LOCAL_CACHE_PREFIX = "wc_link_preview_";
@@ -45,7 +46,7 @@ export async function fetchLinkPreview(url) {
   const base = resolveFunctionsBaseUrl().replace(/\/+$/, "");
   const endpoint = `${base}/linkPreview?url=${encodeURIComponent(trimmed)}`;
   try {
-    const res = await fetch(endpoint);
+    const res = await fetch(endpoint, { headers: await getAppCheckHeaders() });
     const data = await res.json().catch(() => ({ ok: true, title: "", description: null, image: null, domain: "", url: trimmed }));
     const out = { ...data, url: trimmed };
     MEMORY_CACHE.set(trimmed, out);

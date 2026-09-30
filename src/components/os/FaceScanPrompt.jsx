@@ -1,93 +1,110 @@
-// src/components/os/FaceScanPrompt.jsx
-// Phase 31 — Face Signal Engine UI
-// Modal prompt for face scanning with privacy assurances
+import React, { useEffect, useRef, useState } from "react";
+import { Camera, X } from "lucide-react";
+import { captureCameraStill } from "@/core/system/faceSignal";
 
-import React, { useState } from "react";
-import { X } from "lucide-react";
-
-/**
- * FaceScanPrompt - Modal for initiating face emotion scan
- * @param {Object} props
- * @param {boolean} props.open
- * @param {Function} props.onClose
- * @param {Function} props.onStartScan
- */
 export default function FaceScanPrompt({ open, onClose, onStartScan }) {
-  const [isScanning, setIsScanning] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const [cameraState, setCameraState] = useState("idle");
+  const [previewReady, setPreviewReady] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const stopCamera = () => {
+    streamRef.current?.getTracks?.().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraState("idle");
+  };
+
+  useEffect(() => {
+    if (!open || !streamRef.current || !videoRef.current) return;
+    videoRef.current.srcObject = streamRef.current;
+    const playback = videoRef.current.play?.();
+    playback?.catch?.(() => setErrorMessage("Camera preview could not start. Check your browser camera permission and try again."));
+  }, [open, cameraState]);
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks?.().forEach((track) => track.stop());
+  }, []);
+
+  useEffect(() => {
+    if (!open) stopCamera();
+  }, [open]);
 
   if (!open) return null;
 
-  const handleStart = async () => {
-    setIsScanning(true);
+  const close = () => {
+    stopCamera();
+    setErrorMessage("");
+    onClose?.();
+  };
+
+  const openCamera = async () => {
+    setErrorMessage("");
+    setCameraState("opening");
+    setPreviewReady(false);
     try {
-      await onStartScan();
-    } finally {
-      setIsScanning(false);
-      onClose();
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error("CAMERA_UNAVAILABLE");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      });
+      streamRef.current = stream;
+      setCameraState("ready");
+    } catch (error) {
+      setCameraState("idle");
+      setErrorMessage(error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError"
+        ? "Camera permission was not allowed. You can continue with words instead."
+        : "Camera is unavailable here. You can continue with words instead.");
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const imageDataUrl = captureCameraStill(videoRef.current);
+      stopCamera();
+      await onStartScan?.({ imageDataUrl });
+      close();
+    } catch (error) {
+      setErrorMessage(error?.message === "CAMERA_FRAME_NOT_READY"
+        ? "The camera is still starting. Wait a moment and try again."
+        : "The photo could not be prepared. Try again, or continue with words.");
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div role="dialog" aria-modal="true" aria-labelledby="face-scan-title" className="relative w-full max-w-md rounded-2xl border border-white/20 bg-slate-900 p-6 shadow-xl">
-        {/* Close button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 text-white/60 transition hover:bg-white/10 hover:text-white"
-          aria-label="Close"
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-labelledby="face-scan-title" className="relative max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/15 bg-[#101522] p-5 text-white shadow-2xl sm:p-7">
+        <button type="button" onClick={close} className="absolute right-4 top-4 rounded-full p-2 text-white/65 transition hover:bg-white/10 hover:text-white" aria-label="Close camera check-in">
           <X className="h-5 w-5" />
         </button>
 
-        {/* Content */}
-        <div className="space-y-4">
-          <h3 id="face-scan-title" className="text-xl font-semibold text-white">Face Expression Scan</h3>
-          <p className="text-sm text-white/70">
-            With your permission, WellnessCafe analyzes a brief camera sample to estimate an emotional signal.
-          </p>
+        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200/20 bg-amber-200/10 text-amber-100">
+          <Camera className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <h2 id="face-scan-title" className="pr-10 text-xl font-semibold">Camera check-in</h2>
+        <p className="mt-2 max-w-prose text-sm leading-relaxed text-white/70">
+          A photo can help the Guide describe visible details. It cannot tell how you feel or assess your health.
+        </p>
+        <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm leading-relaxed text-white/65">
+          Nothing is shared when you open the camera. The photo appears in your message box for review. It is sent to the configured AI service only if you choose Send, and you can remove it first.
+        </p>
 
-          {/* Privacy assurances */}
-          <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-400" />
-              <p className="text-xs text-white/60">
-                <strong className="text-white/80">Frames are processed in this browser.</strong> The scan does not upload camera video.
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-400" />
-              <p className="text-xs text-white/60">
-                <strong className="text-white/80">A derived signal may be attached to your next chat message.</strong> It can be included with chat history and may shape the response.
-              </p>
-            </div>
-            <div className="flex items-start gap-2">
-              <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-green-400" />
-              <p className="text-xs text-white/60">
-                <strong className="text-white/80">Camera access is temporary.</strong> The camera stops after scanning. Cancel if you do not want to share this signal.
-              </p>
-            </div>
+        {cameraState === "ready" && (
+          <div className="mt-4 overflow-hidden rounded-2xl border border-white/15 bg-black">
+            <video ref={videoRef} autoPlay playsInline muted onLoadedMetadata={() => setPreviewReady(true)} className="aspect-[4/3] w-full object-cover" aria-label="Live camera preview" />
           </div>
+        )}
+        {cameraState === "opening" && <p role="status" className="mt-4 text-sm text-white/65">Opening camera…</p>}
+        {errorMessage && <p role="alert" className="mt-4 rounded-xl border border-rose-300/25 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">{errorMessage}</p>}
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isScanning}
-              className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleStart}
-              disabled={isScanning}
-              className="flex-1 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isScanning ? "Scanning..." : "Start Scan"}
-            </button>
-          </div>
+        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onClick={close} className="min-h-11 rounded-full border border-white/15 px-5 text-sm font-medium text-white/75 transition hover:bg-white/5">Continue with words</button>
+          {cameraState === "ready" ? (
+            <button type="button" onClick={takePhoto} disabled={!previewReady} className="min-h-11 rounded-full bg-amber-200 px-5 text-sm font-semibold text-slate-950 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60">{previewReady ? "Use this photo" : "Starting preview…"}</button>
+          ) : (
+            <button type="button" onClick={openCamera} disabled={cameraState === "opening"} className="min-h-11 rounded-full bg-amber-200 px-5 text-sm font-semibold text-slate-950 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60">{cameraState === "opening" ? "Opening camera…" : "Open camera"}</button>
+          )}
         </div>
       </div>
     </div>

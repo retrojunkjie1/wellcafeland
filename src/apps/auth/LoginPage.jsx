@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { signInWithEmailAndPassword, signInAnonymously } from "firebase/auth";
+import { reload, sendEmailVerification, signInWithEmailAndPassword, signInAnonymously, signOut as firebaseSignOut } from "firebase/auth";
 import { auth } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
@@ -12,14 +12,15 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const fromLocation = location.state?.from;
+  const destination = fromLocation?.pathname ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}` : "/";
 
   React.useEffect(() => {
-    if (isAuthenticated) {
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
+    if (isAuthenticated && user && !user.isAnonymous && user.emailVerified) {
+      navigate(destination, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, user, navigate, destination]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,9 +34,27 @@ const LoginPage = () => {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      await reload(credential.user);
+      if (!credential.user.emailVerified) {
+        let deliveryError = false;
+        try {
+          const verificationUrl = new URL("/verify-email", window.location.origin);
+          verificationUrl.searchParams.set("verified", "1");
+          verificationUrl.searchParams.set("next", destination);
+          await sendEmailVerification(credential.user, { url: verificationUrl.toString(), handleCodeInApp: false });
+        } catch (verificationError) {
+          deliveryError = true;
+          console.error("Verification email resend failed:", verificationError?.code || "unknown error");
+        }
+        await firebaseSignOut(auth);
+        navigate("/verify-email", {
+          replace: true,
+          state: { email: credential.user.email, destination, deliveryError },
+        });
+        return;
+      }
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error("Login error:", err);
       let errorMessage = "Failed to sign in. Please try again.";
@@ -75,7 +94,7 @@ const LoginPage = () => {
       if (!onboardingComplete && !from) {
         navigate("/onboarding", { replace: true });
       } else {
-        navigate(from || "/", { replace: true });
+        navigate(destination, { replace: true });
       }
     } catch (err) {
       console.error("Anonymous login error:", err);

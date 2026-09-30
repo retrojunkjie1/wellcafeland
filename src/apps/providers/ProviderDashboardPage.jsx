@@ -55,11 +55,8 @@ const ProviderDashboardPage = () => {
       if (result.ok) {
         setClients(result.clients || []);
       } else {
+        setClients([]);
         setError(result.error || "Failed to load clients");
-        // Still show mock data if available
-        if (result.clients && result.clients.length > 0) {
-          setClients(result.clients);
-        }
       }
     } catch (err) {
       console.error("Error loading clients:", err);
@@ -261,7 +258,7 @@ const ProviderDashboardPage = () => {
                 <div>
                   <h3 className="text-sm font-medium text-white mb-1">Alerts & Risks</h3>
                   <p className="text-xs text-white/70">
-                    Risk signals and alerts will appear here. This feature is being enhanced with real-time monitoring.
+                    This panel shows risk snapshots recorded in WellnessCafe. It is not continuous monitoring; follow your organization’s safety and escalation process for urgent concerns.
                   </p>
                 </div>
               </div>
@@ -272,7 +269,7 @@ const ProviderDashboardPage = () => {
               <div className="text-sm font-semibold text-white/80 mb-2">Risk & Signals</div>
 
               {riskEvents.length === 0 && (
-                <div className="text-xs text-white/40">No recent risk signals.</div>
+                <div className="text-xs leading-relaxed text-white/60">No saved risk snapshots are available for this view. An empty list does not confirm that a client is safe.</div>
               )}
 
               {riskEvents.length > 0 && (

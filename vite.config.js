@@ -16,7 +16,10 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: "jsdom",
       setupFiles: "./src/test/setup.js",
-      include: ["src/**/*.test.{js,jsx}"]
+      include: ["src/**/*.test.{js,jsx}"],
+      // Keep the JSDOM-heavy UI suite below the host's CPU limit so the
+      // default 5s interaction tests do not time out under worker contention.
+      maxWorkers: 2,
     },
     resolve: {
       alias: {
@@ -62,6 +65,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      // Vite measures raw minified bytes: this route-only LiveKit chunk is 561 KB / 148 KB gzip.
+      // Keep an explicit ceiling for this lazy media vendor instead of warning at the generic 500 KB mark.
+      chunkSizeWarningLimit: 575,
       rollupOptions: {
         output: {
           manualChunks: {

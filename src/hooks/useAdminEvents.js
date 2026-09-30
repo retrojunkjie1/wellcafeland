@@ -1,89 +1,43 @@
-// src/hooks/useAdminEvents.js
+import { useEffect, useMemo, useState } from "react";
+import { getAdminOperationalSnapshot, invalidateAdminOperationalSnapshot } from "../services/adminObservability";
 
-import { useEffect, useState, useCallback } from "react";
-import { db } from "../firebase";
-import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
-
-/**
- * Hook for live event stream from agent_events collection
- * Provides real-time updates with filtering capabilities
- */
 export function useAdminEvents(options = {}) {
-  const {
-    limit: eventLimit = 100,
-    agentId = null,
-    eventType = null,
-    autoRefresh = true,
-  } = options;
-
+  const { limit: eventLimit = 100, agentId = null, eventType = null } = options;
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(() => !!db); // Start loading if db available
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
-    if (!db) {
-      // Use setTimeout to avoid setState in effect
-      const timer = setTimeout(() => setLoading(false), 0);
-      return () => clearTimeout(timer);
-    }
-
-    // Build query
-    let q = query(
-      collection(db, "agent_events"),
-      orderBy("timestamp", "desc"),
-      limit(eventLimit)
-    );
-
-    // Apply filters
-    if (agentId) {
-      q = query(q, where("agentId", "==", agentId));
-    }
-    if (eventType) {
-      q = query(q, where("eventType", "==", eventType));
-    }
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        try {
-          if (!snapshot || !snapshot.docs) {
-            setEvents([]);
-            setLoading(false);
-            return;
-          }
-          const eventList = snapshot.docs
-            .filter((doc) => doc.exists())
-            .map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            }));
-          setEvents(eventList);
-          setError(null);
-          setLoading(false);
-        } catch (err) {
-          console.warn("Admin events callback error (non-critical):", err.message);
-          setError(err.message);
-          setLoading(false);
-        }
-      },
-      (err) => {
-        console.warn("Admin events subscription error (non-critical):", err.message);
-        setError(err.message);
-        setLoading(false);
+    let active = true;
+    const load = async () => {
+      try {
+        const snapshot = await getAdminOperationalSnapshot();
+        if (!active) return;
+        setEvents(snapshot?.events || []);
+        setError(null);
+      } catch (err) {
+        if (!active) return;
+        setEvents([]);
+        setError(err?.message || "The event stream is temporarily unavailable.");
+      } finally {
+        if (active) setLoading(false);
       }
-    );
+    };
+    load();
+    const interval = setInterval(load, 30_000);
+    return () => { active = false; clearInterval(interval); };
+  }, [revision]);
 
-    return () => unsubscribe();
-  }, [eventLimit, agentId, eventType, autoRefresh]);
-
-  const clearEvents = useCallback(() => {
-    setEvents([]);
-  }, []);
+  const filteredEvents = useMemo(() => events
+    .filter((event) => !agentId || event.agentId === agentId)
+    .filter((event) => !eventType || event.eventType === eventType)
+    .slice(0, eventLimit), [events, eventLimit, agentId, eventType]);
 
   return {
-    events,
+    events: filteredEvents,
     loading,
     error,
-    clearEvents,
+    refresh: () => { invalidateAdminOperationalSnapshot(); setLoading(true); setRevision((value) => value + 1); },
   };
 }

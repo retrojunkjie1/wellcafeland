@@ -34,8 +34,8 @@ const ToolsPage = () => {
           Daily practice
         </p>
         <p className="text-xs text-white/70">
-          Breathwork, grounding, journaling, micro-rituals, and nervous-system
-          resets designed for recovery in motion.
+          Different ways to find support: practical next steps, reflection,
+          recovery support, rest, movement, connection, or a quiet pause.
         </p>
       </header>
 

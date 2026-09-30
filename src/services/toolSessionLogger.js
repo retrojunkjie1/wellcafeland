@@ -18,8 +18,6 @@ export async function logToolSessionBegin(slug) {
   const payload = {
     slug,
     startAt: new Date().toISOString(),
-    distressBefore: null,
-    distressAfter: null,
     completed: false,
   };
 
@@ -46,15 +44,13 @@ export async function logToolSessionBegin(slug) {
 }
 
 /**
- * Update session with outcomes on complete.
+ * Record whether the user completed or left a practice. Do not collect ratings.
  * @param {object} opts
  * @param {string} opts.slug - Tool slug
- * @param {number} [opts.distressBefore] - 0-10 before
- * @param {number} [opts.distressAfter] - 0-10 after
  * @param {boolean} [opts.completed] - Whether user completed the protocol
  */
-export async function logToolSessionComplete({ slug, distressBefore, distressAfter, completed }) {
-  const payload = { slug, distressBefore, distressAfter, completed };
+export async function logToolSessionComplete({ slug, completed }) {
+  const payload = { slug, completed };
   try {
     if (db && auth?.currentUser) {
       await addDoc(collection(db, TOOL_SESSIONS_COLLECTION), {
@@ -74,8 +70,6 @@ export async function logToolSessionComplete({ slug, distressBefore, distressAft
   const pending = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
   const last = pending.find((p) => p.slug === slug && !p.completed);
   if (last) {
-    last.distressBefore = distressBefore;
-    last.distressAfter = distressAfter;
     last.completed = completed;
     last.completedAt = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pending));

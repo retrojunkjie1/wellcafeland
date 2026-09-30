@@ -226,7 +226,7 @@ Short, clear steps; simple, body-based focus.
 - Invitational tone
 
 **Examples:**
-- ✅ "5-4-3-2-1 Senses Grounding"
+- ✅ "Choose an Anchor"
 - ✅ "Hand-on-Heart Shame Soften"
 - ❌ "Cognitive Behavioral Grounding Technique"
 
@@ -246,7 +246,7 @@ Short, clear steps; simple, body-based focus.
 - Clear and simple
 
 **Examples:**
-- ✅ "Gently look around and name 5 things you can see, either out loud or silently."
+- ✅ "Rest your eyes on one steady object or color, if that feels comfortable. Nothing needs to be named."
 - ❌ "You must identify exactly 5 visual objects"
 
 ### **Notes**
@@ -306,4 +306,3 @@ When user begins an intervention:
 ---
 
 **Phase 57 Ultra - Healer Toolkit Integration Guide** ✅
-

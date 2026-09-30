@@ -57,7 +57,7 @@ const PlanStartPage = () => {
           <div className="space-y-2">
             {(firstThree.length > 0 ? firstThree : [
               { id: "1", domain: "body", title: "4-7-8 Breath", durationMinutes: 2 },
-              { id: "2", domain: "mind", title: "5-4-3-2-1 Grounding", durationMinutes: 3 },
+              { id: "2", domain: "mind", title: "Choose an Anchor", durationMinutes: 3 },
               { id: "3", domain: "spirit", title: "Self-Compassion Phrase", durationMinutes: 2 },
             ]).map((item) => {
               const Icon = DOMAIN_ICONS[item.domain] || Activity;

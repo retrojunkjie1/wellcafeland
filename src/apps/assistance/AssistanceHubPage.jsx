@@ -1,141 +1,144 @@
 import React from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
-import { withFrom } from "@/navigation/linkState";
-import { LifeBuoy, Home, Wallet, Hospital, MapPin, PhoneCall, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  ArrowRight,
+  BriefcaseMedical,
+  HandHeart,
+  HeartHandshake,
+  Home,
+  MapPin,
+  PhoneCall,
+  UsersRound,
+  Wallet,
+} from "lucide-react";
 
-const CARDS = [
+const NEEDS = [
   {
     id: "housing",
-    title: "Housing & Sober Living",
-    description: "Find sober homes, transitional housing, and emergency shelter options.",
+    title: "A safe place to stay",
+    description: "Shelter, sober living, or a place to land.",
     icon: Home,
-    action: "navigate",
-    to: "/workspace/real-help?priority=housing",
+    to: "/assistance?priority=housing",
+    tone: "amber",
   },
   {
     id: "food",
-    title: "Food & Groceries",
-    description: "Look for food assistance, pantries, and community kitchens near you.",
+    title: "Food and essentials",
+    description: "Meals, groceries, and everyday necessities.",
     icon: MapPin,
-    action: "navigate",
-    to: "/workspace/real-help?priority=food",
+    to: "/assistance?priority=food",
+    tone: "emerald",
   },
   {
-    id: "grants",
-    title: "Grants & Funding",
-    description: "Search for treatment funding, grants, and financial aid programs.",
+    id: "meetings",
+    title: "A.A. or N.A. meetings",
+    description: "Find online or in-person recovery meetings.",
+    icon: UsersRound,
+    to: "/recovery/meetings",
+    tone: "blue",
+  },
+  {
+    id: "care",
+    title: "Treatment and programs",
+    description: "Explore care options and recovery services.",
+    icon: BriefcaseMedical,
+    to: "/assistance?priority=programs",
+    tone: "violet",
+  },
+  {
+    id: "funding",
+    title: "Money or benefits",
+    description: "Look for treatment funding and practical aid.",
     icon: Wallet,
-    action: "navigate",
-    to: "/workspace/real-help?priority=funding",
+    to: "/assistance?priority=funding",
+    tone: "teal",
   },
   {
-    id: "programs",
-    title: "Programs & Treatment",
-    description: "Detox, residential, PHP, IOP, and outpatient programs.",
-    icon: Hospital,
-    action: "navigate",
-    to: "/workspace/real-help?priority=programs",
-  },
-  {
-    id: "emergency",
-    title: "Emergency & Crisis",
-    description: "Hotlines, crisis lines, and urgent support options.",
+    id: "urgent",
+    title: "I need urgent support",
+    description: "See crisis options and immediate contacts.",
     icon: PhoneCall,
-    action: "navigate",
-    to: "/workspace/real-help?priority=emergency",
-  },
-  {
-    id: "custom",
-    title: "Help Me Find Something Else",
-    description: "Describe what you need and let WellnessCafe search across all categories.",
-    icon: Search,
-    action: "navigate",
-    to: "/workspace/real-help",
+    to: "/assistance?priority=emergency",
+    tone: "rose",
   },
 ];
 
+const TONES = {
+  amber: "border-amber-200/20 bg-amber-100/[0.045] text-amber-200 group-hover:border-amber-200/45",
+  emerald: "border-emerald-200/20 bg-emerald-100/[0.045] text-emerald-200 group-hover:border-emerald-200/45",
+  blue: "border-sky-200/20 bg-sky-100/[0.045] text-sky-200 group-hover:border-sky-200/45",
+  violet: "border-violet-200/20 bg-violet-100/[0.045] text-violet-200 group-hover:border-violet-200/45",
+  teal: "border-teal-200/20 bg-teal-100/[0.045] text-teal-200 group-hover:border-teal-200/45",
+  rose: "border-rose-200/20 bg-rose-100/[0.045] text-rose-200 group-hover:border-rose-200/45",
+};
+
+export const assistanceNeeds = NEEDS;
+
 const AssistanceHubPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   return (
-    <div className="flex h-full flex-col bg-slate-950">
-      <div className="mx-auto w-full max-w-5xl px-4 py-4 sm:px-6 sm:py-5">
-        {/* Header */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between mb-4 sm:mb-5">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-amber-200">
-              <LifeBuoy className="h-3 w-3" />
-              <span>Assistance Hub</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-light text-white">
-              Real-world help, not just talk.
-            </h1>
-            <p className="max-w-2xl text-xs sm:text-sm text-white/60">
-              Housing, food, treatment, grants, and emergency support — all in one place.
-              When life outside the app is loud, this is where WellnessCafe rolls up its sleeves.
-            </p>
-          </div>
-          {/* Phase A1: Link to AssistancePage with from state */}
-          <Link
-            to="/assistance/request"
-            {...withFrom(location)}
-            className="rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs text-white/80 hover:bg-white/10 transition"
+    <main className="min-h-full bg-slate-950 text-white">
+      <div className="mx-auto w-full max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
+        <header className="mb-6 sm:mb-8">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200/80">Real-world support</p>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">What would help today?</h1>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-white/65 sm:text-lg">Choose one need to start. You can change direction at any time.</p>
+        </header>
+
+        <section aria-label="Choose the kind of help you need" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {NEEDS.map(({ id, title, description, icon: Icon, to, tone }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => navigate(to)}
+              className={`group flex min-h-28 items-center gap-4 rounded-2xl border bg-slate-900/70 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 sm:min-h-32 sm:p-5 ${TONES[tone]}`}
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/20 sm:h-14 sm:w-14">
+                <Icon aria-hidden="true" className="h-6 w-6 sm:h-7 sm:w-7" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-semibold leading-snug text-white sm:text-xl">{title}</span>
+                <span className="mt-1 block text-sm leading-relaxed text-white/65 sm:text-base">{description}</span>
+              </span>
+              <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-white/45 transition group-hover:translate-x-1 group-hover:text-white" />
+            </button>
+          ))}
+        </section>
+
+        <section className="mt-6 grid grid-cols-1 gap-3 border-t border-white/10 pt-5 sm:grid-cols-2" aria-label="Other ways to find support">
+          <button
+            type="button"
+            onClick={() => navigate("/assistance/community")}
+            className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
           >
-            Request Help
-          </Link>
-        </div>
+            <HandHeart aria-hidden="true" className="h-6 w-6 shrink-0 text-emerald-200" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold text-white">Give or receive community support</span>
+              <span className="mt-0.5 block text-sm text-white/55">Practical help offered by real people.</span>
+            </span>
+            <ArrowRight aria-hidden="true" className="h-4 w-4 text-white/40" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/providers")}
+            className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
+          >
+            <HeartHandshake aria-hidden="true" className="h-6 w-6 shrink-0 text-sky-200" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold text-white">Find a practitioner</span>
+              <span className="mt-0.5 block text-sm text-white/55">Browse wellness and recovery providers.</span>
+            </span>
+            <ArrowRight aria-hidden="true" className="h-4 w-4 text-white/40" />
+          </button>
+        </section>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {CARDS.map((card) => {
-            const Icon = card.icon;
-            return (
-              <button
-                key={card.id}
-                type="button"
-                onClick={() => {
-                  if (card.action === "navigate" && card.to) {
-                    navigate(card.to, withFrom(location));
-                  }
-                }}
-                className="flex min-h-[88px] flex-col items-start rounded-xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/95 p-3 text-left shadow-sm transition hover:border-amber-300/40 hover:shadow-[0_0_30px_-12px_rgba(251,191,36,0.4)]"
-              >
-                <div className="mb-2 flex items-center gap-2.5 w-full">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400/10 border border-amber-400/30 flex-shrink-0">
-                    <Icon className="h-4 w-4 text-amber-300" />
-                  </div>
-                  <h2 className="text-sm font-medium text-white truncate flex-1">
-                    {card.title}
-                  </h2>
-                </div>
-                <p className="text-xs text-white/60 line-clamp-2 mb-auto">
-                  {card.description}
-                </p>
-                <span className="mt-2 text-[10px] font-medium text-amber-300/80 uppercase tracking-wider">
-                  Open
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Hint about chat integration */}
-        <div className="mt-4 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-white/70">
-          You can also just type{" "}
-          <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[11px]">
-            "help me find housing"
-          </span>{" "}
-          or{" "}
-          <span className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[11px]">
-            "I need food assistance"
-          </span>{" "}
-          in the chat, and WellnessCafe will route you here automatically.
-        </div>
+        <p className="mt-6 rounded-xl border border-rose-200/15 bg-rose-200/[0.04] px-4 py-3 text-sm text-white/70">
+          In immediate danger? Call your local emergency number. In the U.S., call or text <a className="font-semibold text-rose-200 underline underline-offset-4" href="tel:988">988</a> for crisis support.
+        </p>
       </div>
-    </div>
+    </main>
   );
 };
 
 export default AssistanceHubPage;
-

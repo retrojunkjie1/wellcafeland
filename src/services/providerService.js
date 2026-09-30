@@ -3,6 +3,45 @@
 
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "@/firebase";
+import { listAssignmentsForProvider } from "@/services/assignmentService";
+import { getClient } from "@/services/clientRegistry";
+
+/**
+ * Load a provider's active assignments and their real client profiles.
+ * Client data remains subject to the Firestore authorization rules.
+ */
+export async function listAssignedClients(providerId) {
+  if (!providerId) {
+    return { ok: false, clients: [], error: "A signed-in provider is required." };
+  }
+
+  if (!db) {
+    return { ok: false, clients: [], error: "Client records are unavailable right now." };
+  }
+
+  try {
+    const assignments = await listAssignmentsForProvider(providerId);
+    const clients = await Promise.all(assignments.map(async (assignment) => {
+      if (!assignment.clientId) return null;
+      const profile = await getClient(assignment.clientId);
+      if (!profile) return null;
+
+      return {
+        clientId: assignment.clientId,
+        displayName: profile.alias || `Client ${assignment.clientId.slice(0, 8)}`,
+        currentRiskLevel: profile.riskLevel || profile.currentRiskLevel || null,
+        tags: Array.isArray(profile.tags) ? profile.tags : [],
+        lastSeenAt: profile.lastContactAt || profile.lastSeenAt || null,
+        primaryConcerns: Array.isArray(profile.primaryConcerns) ? profile.primaryConcerns : [],
+      };
+    }));
+
+    return { ok: true, clients: clients.filter(Boolean) };
+  } catch (err) {
+    console.error("Failed to load assigned client profiles:", err);
+    return { ok: false, clients: [], error: "Assigned clients could not be loaded. Please try again." };
+  }
+}
 
 /**
  * List verified providers by category and region

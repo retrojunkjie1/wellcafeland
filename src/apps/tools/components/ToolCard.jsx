@@ -38,6 +38,7 @@ const ToolCard = ({ tool, variant = "list" }) => {
     "mind-thoughts": "Mind & Thoughts",
     "stress-crisis": "Stress & Crisis",
     "sleep-winddown": "Sleep & Wind-down",
+    "everyday-support": "Everyday Support",
   };
 
   // List variant: compact row

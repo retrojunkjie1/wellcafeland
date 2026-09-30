@@ -19,13 +19,13 @@ export const ritualSequences = {
     title: "Morning Grounding Ritual",
     steps: [
       { type: "breathing", pattern: "box", duration: 60 },
-      { type: "instruction", text: "Notice one thing you can see, touch, and hear." },
+      { type: "instruction", text: "Choose one steady point in the space, or skip this step." },
       { type: "tool", key: "ritual-grounding" },
     ],
     variants: {
       anxious: [
         { type: "breathing", pattern: "4-7-8", duration: 90 },
-        { type: "instruction", text: "Place both feet on the floor. Slow your exhale." },
+        { type: "instruction", text: "Choose one option that feels manageable, or skip ahead." },
         { type: "tool", key: "ritual-grounding" },
       ],
       low: [
@@ -53,4 +53,3 @@ export const ritualSequences = {
     },
   },
 };
-

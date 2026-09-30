@@ -1,148 +1,42 @@
-// src/services/toolTelemetry.js
+// Only record the fact that a practice was completed and its duration.
+// Notes, ratings, mood, concern labels, and practice context stay on-device.
 
-import { db, auth } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { getAnonymousUserId } from "../lib/userId";
 import { trackAction } from "./telemetry";
-import { handleTelemetryWithFusion, normalizeToolUsageEvent } from "../ai/fusion/fusionEngine";
 import { recordToolCompletion } from "./milestoneService";
 
+const SAFE_TOOL_ID = /^[a-z0-9][a-z0-9._-]{0,79}$/i;
+const MAX_DURATION_MS = 24 * 60 * 60 * 1000;
+
+function safeToolId(value) {
+  return typeof value === "string" && SAFE_TOOL_ID.test(value) ? value.toLowerCase() : "other";
+}
+
+function safeDurationMs(value) {
+  const duration = Number(value);
+  if (!Number.isFinite(duration) || duration < 0) return 0;
+  return Math.min(MAX_DURATION_MS, Math.round(duration));
+}
+
 /**
- * Log tool usage to Firestore and telemetry
- * @param {string} toolId - Tool identifier
- * @param {object} eventData - Tool-specific event data
- * @returns {Promise<boolean>} Success status (always returns true to not break UI)
+ * Record a privacy-minimal practice breadcrumb. Event details supplied by a
+ * tool are intentionally ignored; practice notes and self-ratings are not
+ * operational telemetry and are never used for automatic risk labels.
  */
 export async function logToolUsage(toolId, eventData = {}) {
+  const id = safeToolId(toolId);
+  const durationMs = safeDurationMs(eventData?.durationMs);
+
   try {
-  // Use Firebase Auth UID if available, otherwise fall back to anonymous ID
-  const userId = auth?.currentUser?.uid || getAnonymousUserId();
-  const now = new Date().getTime();
-
-  const toolEvent = {
-    userId,
-    toolId,
-    startedAt: eventData.startedAt || now,
-    completedAt: eventData.completedAt || now,
-    durationMs: eventData.durationMs || 0,
-    context: {
-      intensityBefore: eventData.intensityBefore,
-      intensityAfter: eventData.intensityAfter,
-      moodTag: eventData.moodTag,
-      notes: eventData.notes,
-      preset: eventData.preset,
-      duration: eventData.duration,
-      concernType: eventData.concernType,
-      ...(eventData.context || {}),
-    },
-    createdAt: now,
-  };
-
-  // Track via telemetry service
-  trackAction("tool_usage", {
-    toolId,
-    durationMs: toolEvent.durationMs,
-    ...toolEvent.context,
-  });
-
-  // Store in Firestore if available
-  if (db) {
-    try {
-      await addDoc(collection(db, "tool_usage"), {
-        ...toolEvent,
-        createdAt: new Date(toolEvent.createdAt),
-        startedAt: eventData.startedAt
-          ? new Date(eventData.startedAt)
-          : new Date(),
-        completedAt: eventData.completedAt
-          ? new Date(eventData.completedAt)
-          : new Date(),
-      });
-    } catch (err) {
-      console.error("Failed to log tool usage to Firestore:", err);
-      // Don't throw - telemetry still tracked
-    }
+    await trackAction("tool_usage", { toolId: id, durationMs });
+  } catch {
+    // Telemetry must not block a practice or expose content through error logs.
   }
 
-  // NEW: Route through emotional telemetry matrix and fusion engine
   try {
-    const normalizedEvent = normalizeToolUsageEvent(toolId, {
-      ...eventData,
-      userId,
-      completedAt: toolEvent.completedAt,
-      startedAt: toolEvent.startedAt,
-    });
-    
-    await handleTelemetryWithFusion(normalizedEvent);
-  } catch (err) {
-    // Don't break tool usage if fusion fails
-    console.error("Failed to process telemetry fusion:", err);
-  }
-  
-  // Record milestone event (non-blocking)
-  try {
-    await recordToolCompletion(toolId, eventData);
-  } catch (err) {
-    // Don't break tool logging if milestone tracking fails
-    console.warn(`Milestone tracking failed for tool ${toolId} (non-critical):`, err.message);
+    await recordToolCompletion(id);
+  } catch {
+    // Progress bookkeeping is best effort and contains no practice details.
   }
 
-    // Legacy: If high intensity (e.g., urge surfing >= 8), also create agent event
-    // This is now redundant but kept for backward compatibility
-    if (
-      eventData.intensityBefore >= 8 ||
-      eventData.intensityAfter >= 8 ||
-      eventData.severity === "high"
-    ) {
-      try {
-        await logHighIntensityEvent(toolId, eventData);
-      } catch (err) {
-        console.warn("High-intensity event logging failed (non-critical):", err.message);
-      }
-    }
-
-    return true;
-  } catch (err) {
-    // Catch-all: never break UI
-    console.warn("logToolUsage failed (non-critical):", err.message);
-    return true; // Always return success to not break UI
-  }
+  return true;
 }
-
-/**
- * Log high-intensity events to agent_events for Admin Console
- */
-async function logHighIntensityEvent(toolId, eventData) {
-  if (!db) return;
-
-  try {
-    const agentId =
-      toolId === "urge-surfing" ? "sentinel" : "seer";
-    const severity =
-      eventData.intensityBefore >= 9 || eventData.intensityAfter >= 9
-        ? "critical"
-        : "warning";
-
-    // Use Firebase Auth UID if available, otherwise fall back to anonymous ID
-    const userId = auth?.currentUser?.uid || getAnonymousUserId();
-
-    await addDoc(collection(db, "agent_events"), {
-      userId,
-      agentId,
-      eventType: "risk_signal",
-      severity,
-      message: `High intensity detected in ${toolId} tool`,
-      meta: {
-        toolId,
-        intensityBefore: eventData.intensityBefore,
-        intensityAfter: eventData.intensityAfter,
-        ...eventData.context,
-      },
-      timestamp: new Date(),
-      success: true,
-    });
-  } catch (err) {
-    console.error("Failed to log high-intensity event:", err);
-  }
-}
-

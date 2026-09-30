@@ -35,6 +35,7 @@ function validateAndNormalizeInput(data) {
 exports.buildClinicalPlan = onCall(
   {
     region: "us-central1",
+    enforceAppCheck: true,
   },
   async (request) => {
     if (!request.auth) {

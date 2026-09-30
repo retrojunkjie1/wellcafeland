@@ -22,33 +22,26 @@ const sendToLivingGuide = async (text, setThinking, addLivingGuideMessage, setEr
     });
 
     if (!result.ok) {
-      const errorMsg = result.error || "I reached for our higher counsel but the line was faint. Try again in a few breaths.";
-      setError("The guide is quiet for a moment. Try again shortly.");
-      addLivingGuideMessage(errorMsg);
+      setError(result.error || "The AI guide couldn't respond. Please retry or open real-world support.");
       return;
     }
 
-    const reply = result.content || "I'm here. Let's take this one breath at a time.";
+    const reply = result.content;
+    if (!reply?.trim()) {
+      setError("The AI guide returned an empty response. Please retry.");
+      return;
+    }
     addLivingGuideMessage(reply);
   } catch (err) {
     console.error("Living Guide request failed:", err);
     
     // More specific error handling
     if (err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")) {
-      setError("Network connection failed. Please check your internet connection.");
-      addLivingGuideMessage(
-        "I couldn't reach the wider network, but I'm still right here with you. Please check your connection and try again."
-      );
+      setError("I couldn't connect to the AI guide. Please check your internet connection and retry.");
     } else if (err.message?.includes("timeout") || err.name === "TimeoutError") {
       setError("The request took too long. Please try again.");
-      addLivingGuideMessage(
-        "The connection timed out. I'm still here with you. Try again when you're ready."
-      );
     } else {
       setError("Network error. Please try again.");
-      addLivingGuideMessage(
-        "I couldn't reach the wider network, but I'm still right here with you. Try again in a moment."
-      );
     }
   } finally {
     setThinking(false);
@@ -261,4 +254,3 @@ const AssistantConsole = () => {
 };
 
 export default AssistantConsole;
-

@@ -5,6 +5,30 @@ import { doc, getDoc, collection, query, where, getDocs, addDoc, orderBy, limit 
 import { db, auth } from "@/firebase";
 import { getAnonymousUserId } from "@/lib/userId";
 import { logError, logInfo } from "./logService";
+import { formatHousingAddress, isRetiredDemoHelpRecord } from "./helpDirectoryRecordQuality";
+import { searchPublicHelpListings } from "./helpDirectory";
+
+function normalizeHousingProvider(id, data = {}) {
+  const contact = data.contact && typeof data.contact === "object" ? data.contact : {};
+  const address = formatHousingAddress(data);
+  return {
+    id,
+    sourceManaged: data.sourceManaged === true,
+    name: data.name || "",
+    type: data.type || "sober_home",
+    region: data.region || [data.city, data.state].filter(Boolean).join(", "),
+    address,
+    description: data.description || "",
+    cost_range: data.cost_range || "",
+    insurance: data.insurance || [],
+    capacity_status: data.capacity_status || "open",
+    contact,
+    phone: data.phone || contact.phone || null,
+    website: data.website || contact.website || "",
+    tags: data.tags || [],
+    createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
+  };
+}
 
 /**
  * Get current user ID (authenticated or anonymous)
@@ -27,40 +51,15 @@ function getCurrentUserId() {
  */
 export async function listHousingProviders(filters = {}) {
   try {
-    const housingRef = collection(db, "housing_providers");
-    let q = query(housingRef);
-
-    if (filters.region) {
-      q = query(housingRef, where("region", "==", filters.region));
-    }
-    if (filters.type) {
-      q = query(housingRef, where("type", "==", filters.type));
-    }
-    if (filters.capacity_status) {
-      q = query(housingRef, where("capacity_status", "==", filters.capacity_status));
-    }
-
-    const snapshot = await getDocs(q);
-    const providers = [];
-
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      providers.push({
-        id: docSnap.id,
-        name: data.name || "",
-        type: data.type || "sober_home",
-        region: data.region || "",
-        cost_range: data.cost_range || "",
-        insurance: data.insurance || [],
-        capacity_status: data.capacity_status || "open",
-        contact: data.contact || {},
-        website: data.website || "",
-        tags: data.tags || [],
-        createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
-      });
-    });
-
-    return providers;
+    if (!filters.region || filters.region.trim().length < 3) return [];
+    const response = await searchPublicHelpListings("housing", filters.region);
+    return (response.listings || []).map((listing) => normalizeHousingProvider(listing.id, {
+      ...listing,
+      contact: { phone: listing.phone || null },
+      type: "sober_home",
+      region: [listing.city, listing.state].filter(Boolean).join(", "),
+      capacity_status: "unknown",
+    }));
   } catch (err) {
     logError("housingService", err, { function: "listHousingProviders", filters });
     return [];
@@ -82,19 +81,7 @@ export async function getHousingProvider(housingId) {
     if (!housingDoc.exists()) return null;
 
     const data = housingDoc.data();
-    return {
-      id: housingDoc.id,
-      name: data.name || "",
-      type: data.type || "sober_home",
-      region: data.region || "",
-      cost_range: data.cost_range || "",
-      insurance: data.insurance || [],
-      capacity_status: data.capacity_status || "open",
-      contact: data.contact || {},
-      website: data.website || "",
-      tags: data.tags || [],
-      createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
-    };
+    return isRetiredDemoHelpRecord(data) ? null : normalizeHousingProvider(housingDoc.id, data);
   } catch (err) {
     logError("housingService", err, { function: "getHousingProvider", housingId });
     return null;
@@ -174,4 +161,3 @@ export default {
   getHousingReviews,
   addHousingReview,
 };
-

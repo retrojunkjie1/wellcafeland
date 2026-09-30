@@ -5,6 +5,8 @@ import { doc, getDoc, collection, query, where, getDocs, addDoc, orderBy, delete
 import { db, auth } from "@/firebase";
 import { getAnonymousUserId } from "@/lib/userId";
 import { logError, logInfo } from "./logService";
+import { isRetiredDemoHelpRecord } from "./helpDirectoryRecordQuality";
+import { matchesHelpLocation } from "./helpLocationMatch";
 
 /**
  * Get current user ID (authenticated or anonymous)
@@ -39,17 +41,25 @@ export async function listCircles(filters = {}) {
 
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
+      if (isRetiredDemoHelpRecord(data)) return;
       circles.push({
         id: docSnap.id,
         theme: data.theme || "general",
+        name: data.name || data.title || `${data.theme || "Community"} circle`,
         description: data.description || "",
         cadence: data.cadence || "daily",
         prompts: data.prompts || [],
+        city: data.city || "",
+        state: data.state || "",
+        address: data.address || "",
+        locationLine: data.locationLine || "",
+        url: data.url || "",
+        phone: data.phone || "",
         createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
       });
     });
 
-    return circles;
+    return filters.region ? circles.filter((circle) => matchesHelpLocation(circle, filters.region)) : circles;
   } catch (err) {
     logError("circlesService", err, { function: "listCircles", filters });
     return [];
@@ -71,12 +81,20 @@ export async function getCircle(circleId) {
     if (!circleDoc.exists()) return null;
 
     const data = circleDoc.data();
+    if (isRetiredDemoHelpRecord(data)) return null;
     return {
       id: circleDoc.id,
       theme: data.theme || "general",
+      name: data.name || data.title || `${data.theme || "Community"} circle`,
       description: data.description || "",
       cadence: data.cadence || "daily",
       prompts: data.prompts || [],
+      city: data.city || "",
+      state: data.state || "",
+      address: data.address || "",
+      locationLine: data.locationLine || "",
+      url: data.url || "",
+      phone: data.phone || "",
       createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
     };
   } catch (err) {
@@ -505,4 +523,3 @@ export default {
   getCircleThreads,
   getThreadMessages,
 };
-

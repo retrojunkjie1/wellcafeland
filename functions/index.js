@@ -9,10 +9,11 @@ const functions = require("firebase-functions");
 const aiBrain = require("./aiBrain");
 const { withCors } = require("./corsHelper");
 const { ingestResources } = require("./src/ingestResources");
+const { verifyHttpAppCheck } = require("./src/httpAppCheck");
 
 // Legacy onRequest functions with CORS support
-exports.aiSession = functions.https.onRequest(withCors(aiBrain.handleSession));
-exports.aiMedia = functions.https.onRequest(withCors(aiBrain.handleMedia));
+exports.aiSession = functions.runWith({ secrets: ["OPENAI_API_KEY"] }).https.onRequest(withCors(aiBrain.handleSession));
+exports.aiMedia = functions.runWith({ secrets: ["OPENAI_API_KEY"] }).https.onRequest(withCors(aiBrain.handleMedia));
 
 // ---------------------------
 // LIVE RESOURCE SEARCH (FindTreatment.gov)
@@ -56,6 +57,7 @@ setInterval(() => {
 
 exports.searchLiveResources = functions.https.onRequest(withCors(async (req, res) => {
   try {
+    if (!await verifyHttpAppCheck(req, res)) return;
     // Rate limiting
     const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || 
                      req.connection?.remoteAddress || 
@@ -247,63 +249,6 @@ exports.searchLiveResources = functions.https.onRequest(withCors(async (req, res
 }));
 
 // ---------------------------
-// TEMPLATES (STATIC SAMPLES)
-// ---------------------------
-async function handleTemplates(req, res) {
-  // TEMP: Until you add Firestore storage, we return a static sample list.
-  const templates = [
-    {
-      id: "grounding-10",
-      title: "10-minute grounding reset",
-      summary: "A quick grounding practice to settle your nervous system.",
-      category: "Grounding",
-      durationMinutes: 10,
-    },
-    {
-      id: "cravings-fast",
-      title: "Cravings wave-surf",
-      summary: "Ride the wave instead of fighting it.",
-      category: "Cravings / urges",
-      durationMinutes: 7,
-    },
-  ];
-
-  return res.json({ templates });
-}
-
-// ---------------------------
-// TEMPLATE DETAIL
-// ---------------------------
-async function handleTemplateDetail(req, res, body) {
-  const id = body.templateId;
-
-  // For now return a simple placeholder.
-  // Later we will store real sessions in Firestore.
-  const session = {
-    id,
-    title: "Sample Session Detail",
-    summary: "A practice to help you return to your body and settle.",
-    durationMinutes: 10,
-    category: "Grounding",
-
-    opening:
-      "Find a comfortable position. Let your shoulders drop. Take one slow breath.",
-
-    body: [
-      "Notice your feet on the floor.",
-      "Feel your hands resting gently.",
-      "Let your jaw unclench.",
-      "Stay with one breath in… and one breath out.",
-    ],
-
-    closing:
-      "When you're ready, take one final slow breath and return to the room.",
-  };
-
-  return res.json({ template: session });
-}
-
-// ---------------------------
 // GENERATE CUSTOM SESSION
 // ---------------------------
 async function handleGenerateSession(req, res, body) {
@@ -360,21 +305,23 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
+const adminAuthorization = require("./src/adminAuthorization");
 
-// Helper: Check admin claim
-async function requireAdmin(context) {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Must be authenticated");
-  }
-  const userRecord = await admin.auth().getUser(context.auth.uid);
-  const claims = userRecord.customClaims || {};
-  if (!claims.admin) {
-    throw new functions.https.HttpsError("permission-denied", "Admin access required");
+// The legacy admin surface has broad, global powers and no scoped-role model.
+// Restrict it to the Alpha Owner until each capability has a scoped replacement.
+function requireAlphaOwner(context) {
+  try {
+    return adminAuthorization.requireGodAdmin({ auth: context.auth });
+  } catch (error) {
+    const code = ["unauthenticated", "permission-denied"].includes(error?.code)
+      ? error.code
+      : "internal";
+    throw new functions.https.HttpsError(code, error?.message || "Alpha Owner access is required.");
   }
 }
 
-exports.adminGetOverview = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.adminGetOverview = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const deployDoc = await db.doc("admin/deploy").get();
   return {
     serverTime: new Date().toISOString(),
@@ -386,8 +333,8 @@ exports.adminGetOverview = functions.https.onCall(async (data, context) => {
   };
 });
 
-exports.adminListUsers = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.adminListUsers = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const listUsersResult = await admin.auth().listUsers(1000);
   const users = listUsersResult.users.map((user) => ({
     uid: user.uid,
@@ -400,8 +347,8 @@ exports.adminListUsers = functions.https.onCall(async (data, context) => {
   return { users };
 });
 
-exports.adminSetClaims = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.adminSetClaims = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { uid, claimsPatch } = data;
   if (!uid || !claimsPatch) {
     throw new functions.https.HttpsError("invalid-argument", "uid and claimsPatch required");
@@ -412,8 +359,8 @@ exports.adminSetClaims = functions.https.onCall(async (data, context) => {
   return { claims: mergedClaims };
 });
 
-exports.adminUpdateFeatureFlags = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.adminUpdateFeatureFlags = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { patch } = data;
   if (!patch) {
     throw new functions.https.HttpsError("invalid-argument", "patch required");
@@ -424,8 +371,8 @@ exports.adminUpdateFeatureFlags = functions.https.onCall(async (data, context) =
   return updated.data();
 });
 
-exports.adminUpdateSystemSettings = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.adminUpdateSystemSettings = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { patch } = data;
   if (!patch) {
     throw new functions.https.HttpsError("invalid-argument", "patch required");
@@ -441,8 +388,8 @@ exports.adminUpdateSystemSettings = functions.https.onCall(async (data, context)
 // ==============================
 
 // Set user role (admin claim)
-exports.setUserRole = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.setUserRole = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { uid, admin: adminClaim } = data;
   if (!uid || typeof adminClaim !== "boolean") {
     throw new functions.https.HttpsError("invalid-argument", "uid and admin (boolean) required");
@@ -469,8 +416,8 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
 });
 
 // Revoke user sessions (set sessionRevokedAt)
-exports.revokeUserSessions = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.revokeUserSessions = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { uid } = data;
   if (!uid) {
     throw new functions.https.HttpsError("invalid-argument", "uid required");
@@ -497,8 +444,8 @@ exports.revokeUserSessions = functions.https.onCall(async (data, context) => {
 });
 
 // Disable user (soft disable)
-exports.disableUser = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.disableUser = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { uid, disabled } = data;
   if (!uid || typeof disabled !== "boolean") {
     throw new functions.https.HttpsError("invalid-argument", "uid and disabled (boolean) required");
@@ -529,8 +476,8 @@ exports.disableUser = functions.https.onCall(async (data, context) => {
 });
 
 // Reset user state (clear session data)
-exports.resetUserState = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.resetUserState = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { uid } = data;
   if (!uid) {
     throw new functions.https.HttpsError("invalid-argument", "uid required");
@@ -725,8 +672,8 @@ async function executeAdminAction(action, context) {
 }
 
 // Update adminExecuteAction to use enhanced executor
-exports.adminExecuteAction = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.adminExecuteAction = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   const { actionId } = data;
   if (!actionId) {
     throw new functions.https.HttpsError("invalid-argument", "actionId required");
@@ -844,8 +791,8 @@ exports.computeRiskForecasts = functions.pubsub.schedule("every 15 minutes").onR
         predictedIssues.push({ type: "crash_risk", probability: 0.6, windowMinutes: 30 });
       }
 
-      // - Rapid emotion swings (if present)
-      // This would require emotion data in telemetry - placeholder
+      // Rapid emotion swing analysis is omitted until the telemetry schema
+      // provides consented, reliable signal data.
       
       // - Abandonment during tool session
       const toolAbandonments = events.filter(e => e.type === "tool" && e.metadata?.action === "tool_open").length - 
@@ -998,8 +945,8 @@ exports.scheduledIngestResources = functions.pubsub
 // ---------------------------
 // MANUAL INGESTION TRIGGER (Admin-only callable)
 // ---------------------------
-exports.manualIngestResources = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.manualIngestResources = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   
   const { states, maxPagesPerState } = data || {};
   
@@ -1019,8 +966,8 @@ exports.manualIngestResources = functions.https.onCall(async (data, context) => 
 // ---------------------------
 const { seedVerifiedProviders } = require("./src/seedVerifiedProviders");
 
-exports.seedVerifiedProviders = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
+exports.seedVerifiedProviders = functions.runWith({ enforceAppCheck: true }).https.onCall(async (data, context) => {
+  requireAlphaOwner(context);
   
   try {
     const result = await seedVerifiedProviders(data, context);
@@ -1032,4 +979,3 @@ exports.seedVerifiedProviders = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
-

@@ -43,7 +43,7 @@ function setCorsHeaders(req, res) {
   const allowedOrigin = getCorsOrigin(req);
   if (allowedOrigin) res.set("Access-Control-Allow-Origin", allowedOrigin);
   res.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Firebase-AppCheck");
   res.set("Access-Control-Max-Age", "3600");
 }
 
@@ -99,4 +99,3 @@ module.exports = {
   handleCorsPreflight,
   withCors,
 };
-
