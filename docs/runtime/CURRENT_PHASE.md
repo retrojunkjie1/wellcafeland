@@ -1,8 +1,8 @@
 # WELLNESSCAFE — CURRENT PHASE
 
-## Admin governance — assignment audit visibility (local implementation, 2026-10-02)
+## Admin governance — assignment audit visibility (deployed, 2026-10-02)
 
-Closed the visibility gap between admin-role changes and their server-only audit records. Added an App Check-enforced, Alpha Owner-only callable that returns the latest 100 sanitized assignment, update, and revocation events; direct Firestore reads remain denied. The Roles workspace now presents those events in a collapsed, readable history panel with account, responsibility, service area, reason, and time. This does not expose client records or change anyone's access. Validation and release remain open.
+Closed the visibility gap between admin-role changes and their server-only audit records. Added an App Check-enforced, Alpha Owner-only callable that returns the latest 100 sanitized assignment, update, and revocation events; direct Firestore reads remain denied. The Roles workspace now presents those events in a collapsed, readable history panel with account, responsibility, service area, reason, and time. This does not expose client records or change anyone's access. Validation: Roles UI (2), admin authorization and App Check (45), production build, deployment preflight, Functions syntax, and `git diff --check` passed. Commit `648e768` is pushed to `main`; `listAdminAssignmentAudit` and Hosting deployed successfully to `wellnesscafelanding`. The live signed-in Alpha Owner Roles page loaded the panel and its empty history state. This verifies the retrieval and display path, not a new grant/revocation event; no account access changed.
 
 ## Legacy admin entry consolidation — local implementation (2026-10-02)
 
