@@ -19,6 +19,7 @@ import InAppWebView from "@/components/InAppWebView";
 import { reportHelpListingIssue, searchPublicHelpListings } from "@/services/helpDirectory";
 import { dedupeResourceListings } from "./assistanceListingUtils";
 import { getAssistanceSearchStatus, getCuratedSearchStatus } from "./assistanceSearchStatus";
+import { getPracticeReturnPath } from "../assistance/assistanceReturnPath";
 
 const DOMAIN_TO_PRIORITY = {
   "food.essentials": "food",
@@ -65,6 +66,7 @@ const RealHelpWorkspace = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAssistanceRoute = location.pathname === "/assistance";
+  const returnToPractice = getPracticeReturnPath(location.state);
   const qp = searchParams;
   const urlPriority = qp.get("priority");
   const urlDomain = qp.get("domain");
@@ -532,7 +534,7 @@ const RealHelpWorkspace = () => {
           {isAssistanceRoute ? (
             <a href="tel:988" className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-rose-200/25 bg-rose-100/[0.06] px-2.5 text-[13px] font-semibold text-rose-100 hover:bg-rose-100/10 sm:px-4 sm:text-sm">Call or text 988</a>
           ) : (
-            <button type="button" onClick={() => navigate("/assistance")} className="text-xs text-white/60 hover:text-white">← Back</button>
+            <button type="button" onClick={() => navigate(returnToPractice || "/assistance")} className="min-h-11 rounded-lg px-2 text-sm text-white/60 hover:bg-white/5 hover:text-white">← {returnToPractice ? "Back to your practice" : "Back to support choices"}</button>
           )}
         </div>
       </div>

@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { Check, HeartPulse, Flower2, HandHeart, UsersRound, ArrowRight, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useOSStore } from "@/stores/useOSStore";
 import CheckIn, { GUEST_CHECKINS_STORAGE_KEY } from "@/components/CheckIn";
 import PageHeader from "@/components/navigation/PageHeader";
 import { getCheckInNextStep } from "./checkInNextStep";
+import { getPracticeReturnPath } from "../assistance/assistanceReturnPath";
 
 export default function DailyCheckInPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToPractice = getPracticeReturnPath(location.state);
   const storySuggestionsEnabled = useOSStore((state) => state.settings?.recoveryStorySuggestionsEnabled === true);
   const [completed, setCompleted] = useState(false);
   const [savedTo, setSavedTo] = useState(null);
@@ -53,7 +56,7 @@ export default function DailyCheckInPage() {
         title="A moment for you"
         subtitle="Check in with yourself at your own pace. You can leave any reflection blank."
         showBack
-        backTo="/home"
+        backTo={returnToPractice || "/home"}
       />
       {completed ? (
         <section className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-[#14202a] p-5 text-center text-white shadow-[0_20px_70px_rgba(0,0,0,0.32)] sm:p-8" aria-live="polite">
@@ -78,7 +81,7 @@ export default function DailyCheckInPage() {
             )}
             <button
               type="button"
-              onClick={() => navigate(recommendedStep.path, { state: { from: "daily-check-in" } })}
+              onClick={() => navigate(recommendedStep.path, { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
               className="group mt-4 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-amber-200/35 bg-gradient-to-r from-amber-200/10 to-emerald-200/[0.06] p-4 text-left transition hover:border-amber-200/60 hover:bg-amber-100/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold sm:p-5"
             >
               <span className="rounded-xl bg-amber-100/10 p-3 text-amber-100"><ArrowRight aria-hidden="true" className="h-5 w-5" /></span>
@@ -100,7 +103,7 @@ export default function DailyCheckInPage() {
             {storySuggestionsEnabled && (
               <button
                 type="button"
-                onClick={() => navigate("/recovery/stories", { state: { from: "daily-check-in" } })}
+                onClick={() => navigate("/recovery/stories", { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
                 className="mx-auto mt-2 inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-200/20 px-4 text-sm text-amber-100/90 transition hover:border-amber-200/45 hover:bg-amber-100/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold"
               >
                 <HeartPulse aria-hidden="true" className="h-4 w-4" />Explore a recovery story
@@ -113,7 +116,7 @@ export default function DailyCheckInPage() {
               <button
                 key={action.path}
                 type="button"
-                onClick={() => navigate(action.path, { state: { from: "daily-check-in" } })}
+                onClick={() => navigate(action.path, { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
                 className={`group flex min-h-36 items-start gap-3 rounded-2xl border bg-slate-800/70 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-wcGold/50 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold ${action.color}`}
               >
                 <span className="rounded-xl bg-white/10 p-2 text-wcGold"><ActionIcon aria-hidden="true" className="h-5 w-5" /></span>

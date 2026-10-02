@@ -5,15 +5,20 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import AssistanceHubPage from "./AssistanceHubPage";
 
 function LocationOutput() {
-  const { pathname, search } = useLocation();
-  return <output data-testid="location">{pathname}{search}</output>;
+  const { pathname, search, state } = useLocation();
+  return <output data-testid="location" data-return-to={state?.returnTo || ""}>{pathname}{search}</output>;
 }
 
-function renderHub() {
+function AssistanceRouteTest() {
+  const { search } = useLocation();
+  return search ? <LocationOutput /> : <AssistanceHubPage />;
+}
+
+function renderHub(initialEntry = "/assistance") {
   return render(
-    <MemoryRouter initialEntries={["/assistance"]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
-        <Route path="/assistance" element={<AssistanceHubPage />} />
+        <Route path="/assistance" element={<AssistanceRouteTest />} />
         <Route path="/assistance/community" element={<LocationOutput />} />
         <Route path="/recovery/meetings" element={<LocationOutput />} />
         <Route path="/providers" element={<LocationOutput />} />
@@ -52,5 +57,14 @@ describe("Assistance hub", () => {
     renderHub();
     fireEvent.click(screen.getByRole("button", { name: /Find a practitioner/i }));
     expect(screen.getByTestId("location").textContent).toBe("/providers");
+  });
+
+  it("carries a safe Daily Practice return path into a selected help category", () => {
+    renderHub({ pathname: "/assistance", state: { returnTo: "/tools/grounding" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /Food and essentials/i }));
+
+    expect(screen.getByTestId("location").textContent).toBe("/assistance?priority=food");
+    expect(screen.getByTestId("location")).toHaveAttribute("data-return-to", "/tools/grounding");
   });
 });

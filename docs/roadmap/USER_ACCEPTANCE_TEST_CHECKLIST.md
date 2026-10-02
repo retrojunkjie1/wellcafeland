@@ -49,6 +49,7 @@ Do not include passwords, verification links, API keys, private client notes, or
 | CL-05 | Open a help result and inspect its contact/location actions. | The display prioritizes useful address and available phone details. Provider/source internals and irrelevant listing metadata are not exposed as user copy. Links behave as labeled and offer a clear way back. |
 | CL-06 | Search a region/category with sparse or no reviewed records. | The page does not pretend the directory has coverage. It distinguishes a genuine no-listing/coverage state from a failed search service, and gives a useful next action without presenting an empty page as live results. |
 | CL-07 | Open the recovery meeting finder, choose A.A. or N.A. and online/in-person, then use a meeting-source action and return. | Choice/search context remains understandable; source navigation does not strand the user; the return action brings them back to the finder. Do not treat an external directory as WellnessCafe-owned data. |
+| CL-08 | Finish a guided practice, open “Need another kind of support?”, choose a check-in or Find Help, then return to the originating practice. From Find Help, choose a category and use its return action. | Alternatives stay collapsed until requested; no reflection text is passed into help search; return navigation goes to the exact local practice and never accepts an external return URL. |
 
 ## Practitioner workspace
 

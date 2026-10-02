@@ -366,6 +366,8 @@ const ToolDetailPage = () => {
         title={toolMeta.name || toolMeta.title}
         description={toolMeta.description || toolMeta.summary}
         onClose={onCloseModule}
+        onFindSupport={() => navigate("/assistance", { state: { returnTo: `/tools/${encodeURIComponent(decodedId)}` } })}
+        onCheckIn={() => navigate("/check-in", { state: { returnTo: `/tools/${encodeURIComponent(decodedId)}` } })}
         completed={moduleCompleted}
       >
         <DirectToolModule

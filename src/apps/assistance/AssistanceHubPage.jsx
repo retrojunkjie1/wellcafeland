@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BriefcaseMedical,
@@ -11,6 +11,7 @@ import {
   UsersRound,
   Wallet,
 } from "lucide-react";
+import { getPracticeReturnPath } from "./assistanceReturnPath";
 
 const NEEDS = [
   {
@@ -76,11 +77,15 @@ export const assistanceNeeds = NEEDS;
 
 const AssistanceHubPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToPractice = getPracticeReturnPath(location.state);
+  const continueTo = (to) => navigate(to, { state: location.state });
 
   return (
     <main className="min-h-full bg-slate-950 text-white">
       <div className="mx-auto w-full max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
         <header className="mb-6 sm:mb-8">
+          {returnToPractice && <button type="button" onClick={() => navigate(returnToPractice)} className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"><ArrowRight aria-hidden="true" className="h-4 w-4 rotate-180" />Back to your practice</button>}
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200/80">Real-world support</p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">What would help today?</h1>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-white/65 sm:text-lg">Choose one need to start. You can change direction at any time.</p>
@@ -91,7 +96,7 @@ const AssistanceHubPage = () => {
             <button
               key={id}
               type="button"
-              onClick={() => navigate(to)}
+              onClick={() => continueTo(to)}
               className={`group flex min-h-28 items-center gap-4 rounded-2xl border bg-slate-900/70 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 sm:min-h-32 sm:p-5 ${TONES[tone]}`}
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/20 sm:h-14 sm:w-14">
@@ -109,7 +114,7 @@ const AssistanceHubPage = () => {
         <section className="mt-6 grid grid-cols-1 gap-3 border-t border-white/10 pt-5 sm:grid-cols-2" aria-label="Other ways to find support">
           <button
             type="button"
-            onClick={() => navigate("/assistance/community")}
+            onClick={() => continueTo("/assistance/community")}
             className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
           >
             <HandHeart aria-hidden="true" className="h-6 w-6 shrink-0 text-emerald-200" />
@@ -121,7 +126,7 @@ const AssistanceHubPage = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate("/providers")}
+            onClick={() => continueTo("/providers")}
             className="flex min-h-16 items-center gap-3 rounded-xl px-2 py-3 text-left transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
           >
             <HeartHandshake aria-hidden="true" className="h-6 w-6 shrink-0 text-sky-200" />
