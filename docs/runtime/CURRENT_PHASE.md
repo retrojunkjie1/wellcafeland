@@ -1,5 +1,9 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+## Admin governance — assignment audit visibility (local implementation, 2026-10-02)
+
+Closed the visibility gap between admin-role changes and their server-only audit records. Added an App Check-enforced, Alpha Owner-only callable that returns the latest 100 sanitized assignment, update, and revocation events; direct Firestore reads remain denied. The Roles workspace now presents those events in a collapsed, readable history panel with account, responsibility, service area, reason, and time. This does not expose client records or change anyone's access. Validation and release remain open.
+
 ## Legacy admin entry consolidation — local implementation (2026-10-02)
 
 Removed the browser-local admin-key gate and its hard-coded fallback from the legacy admin entry surfaces. Legacy operational routes now resolve through the server-hydrated admin assignment snapshot and require the matching capability before entering; regional assignments still rely on server-side region checks for data actions. Retired routes lead to the supported God-Eye, operational-control, or reviewed-help surfaces. Removed the old Sessions Admin page because it offered edit/remove actions that were not connected to server workflows. This aligns route visibility with the Alpha Owner/delegated-admin model; it does not replace callable authorization or Firestore Rules. **Local only; not deployed.** Build validation and the release remain open.

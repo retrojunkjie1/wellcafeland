@@ -1,30 +1,37 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { KeyRound, MapPin, RefreshCw, ShieldCheck, UserRoundPlus, UserX } from "lucide-react";
-import { ADMIN_SCOPE_GROUPS, listAdminAssignments, setAdminAssignment, US_REGION_OPTIONS } from "@/services/adminAuthorization";
+import { ADMIN_SCOPE_GROUPS, listAdminAssignmentAudit, listAdminAssignments, setAdminAssignment, US_REGION_OPTIONS } from "@/services/adminAuthorization";
 
 const EMPTY_FORM = { email: "", scopes: [], regions: [], allRegions: false, expiresAt: "", reason: "" };
 const tomorrow = () => { const date = new Date(); date.setDate(date.getDate() + 1); return date.toISOString().slice(0, 10); };
 
 export default function AdminRolesPage() {
   const [assignments, setAssignments] = useState([]);
+  const [auditEvents, setAuditEvents] = useState([]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingUid, setEditingUid] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [auditError, setAuditError] = useState("");
   const [notice, setNotice] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
-    try {
-      const result = await listAdminAssignments();
-      setAssignments(Array.isArray(result.assignments) ? result.assignments : []);
-    } catch (reason) {
-      setError(reason?.message || "Admin assignments could not be loaded.");
-    } finally {
-      setLoading(false);
+    setAuditError("");
+    const [assignmentResult, auditResult] = await Promise.allSettled([listAdminAssignments(), listAdminAssignmentAudit()]);
+    if (assignmentResult.status === "fulfilled") {
+      setAssignments(Array.isArray(assignmentResult.value.assignments) ? assignmentResult.value.assignments : []);
+    } else {
+      setError(assignmentResult.reason?.message || "Admin assignments could not be loaded.");
     }
+    if (auditResult.status === "fulfilled") {
+      setAuditEvents(Array.isArray(auditResult.value.events) ? auditResult.value.events : []);
+    } else {
+      setAuditError(auditResult.reason?.message || "Administrator access history could not be loaded.");
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -95,6 +102,14 @@ export default function AdminRolesPage() {
   };
 
   const activeCount = useMemo(() => assignments.filter((item) => item.active && !item.disabled).length, [assignments]);
+  const scopeLabel = (scope) => ADMIN_SCOPE_GROUPS.flatMap((group) => group.options).find(([id]) => id === scope)?.[1] || scope;
+  const eventScopes = (event) => {
+    const scopeIds = event.action === "assignment_revoked"
+      ? event.previousScopes || []
+      : event.scopes || [];
+    const regional = event.action === "assignment_revoked" ? event.previousRegionalScopes : event.regionalScopes;
+    return [...new Set([...scopeIds, ...Object.keys(regional || {})])].map(scopeLabel);
+  };
 
   return <main className="space-y-5 text-white">
     <header className="rounded-2xl border border-amber-100/15 bg-gradient-to-br from-amber-100/[0.08] via-slate-900 to-slate-950 p-5 sm:p-7">
@@ -123,5 +138,26 @@ export default function AdminRolesPage() {
         {loading ? <p role="status" className="py-8 text-center text-sm text-white/50">Loading assignments…</p> : assignments.length ? <ul className="mt-4 space-y-3">{assignments.map((item) => <li key={item.uid} className="rounded-xl border border-white/10 bg-slate-950/35 p-3"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="break-all text-sm font-medium">{item.email}</p><p className="mt-1 text-xs text-white/45">{item.displayName || "No display name"} · {item.emailVerified ? "Email verified" : "Email not verified"}</p></div><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] ${item.active && !item.disabled ? "bg-emerald-100/10 text-emerald-100" : "bg-rose-100/10 text-rose-100"}`}>{item.disabled ? "Account disabled" : item.active ? "Active" : "Inactive"}</span></div><p className="mt-2 text-xs leading-relaxed text-white/60">{(item.scopes || []).map((scope) => ADMIN_SCOPE_GROUPS.flatMap((group) => group.options).find(([id]) => id === scope)?.[1] || scope).join(" · ")}</p>{Object.entries(item.regionalScopes || {}).map(([scope, regions]) => <p key={scope} className="mt-1 text-xs text-sky-100/70">{ADMIN_SCOPE_GROUPS.flatMap((group) => group.options).find(([id]) => id === scope)?.[1]} · {regions.includes("*") ? "All service areas" : regions.join(", ")}</p>)}{item.expiresAt && <p className="mt-1 text-xs text-white/40">Expires {new Date(item.expiresAt).toLocaleDateString()}</p>}<div className="mt-3 flex gap-2"><button type="button" onClick={() => edit(item)} disabled={saving || !item.emailVerified} className="min-h-9 rounded-lg border border-white/12 px-3 text-xs text-white/70 disabled:opacity-40">Review assignment</button><button type="button" onClick={() => revoke(item)} disabled={saving || !item.active} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-200/15 px-3 text-xs text-rose-100/80 disabled:opacity-40"><UserX className="h-3.5 w-3.5" />Revoke</button></div></li>)}</ul> : <div className="mt-4 rounded-xl border border-dashed border-white/12 p-6 text-center"><KeyRound className="mx-auto h-5 w-5 text-white/35" /><p className="mt-2 text-sm text-white/70">No delegated admins yet</p><p className="mt-1 text-xs leading-relaxed text-white/45">You remain the Alpha Owner. Add a trusted, verified account and choose only the work that person needs to perform.</p></div>}
       </section>
     </div>
+
+    <details className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+        <span><span className="block text-base font-semibold">Recent access changes</span><span className="mt-1 block text-sm text-white/50">Owner-only history of administrator grants, updates, and revocations.</span></span>
+        <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/60">{auditEvents.length}{auditEvents.length === 100 ? "+" : ""}</span>
+      </summary>
+      {auditError && <p role="alert" className="mt-4 rounded-xl border border-rose-200/20 bg-rose-950/30 p-3 text-sm text-rose-100">{auditError}</p>}
+      {auditEvents.length ? <ol className="mt-4 space-y-3">{auditEvents.map((event) => {
+        const revoked = event.action === "assignment_revoked";
+        const regions = revoked ? event.previousRegionalScopes : event.regionalScopes;
+        const date = event.createdAt ? new Date(event.createdAt) : null;
+        return <li key={event.id} className="rounded-xl border border-white/10 bg-slate-950/30 p-3">
+          <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-medium text-white/85">{revoked ? "Administrator access revoked" : "Administrator access granted or updated"}</p><p className="mt-1 break-all text-sm text-white/65">{event.targetEmail || "Account email unavailable"}</p></div><time className="text-xs text-white/45" dateTime={event.createdAt || undefined}>{date && Number.isFinite(date.getTime()) ? date.toLocaleString() : "Time unavailable"}</time></div>
+          <p className="mt-2 text-xs leading-relaxed text-white/60">{eventScopes(event).join(" · ") || "No responsibilities recorded"}</p>
+          {Object.entries(regions || {}).map(([scope, assignedRegions]) => <p key={scope} className="mt-1 text-xs text-sky-100/70">{scopeLabel(scope)} · {assignedRegions.includes("*") ? "All service areas" : assignedRegions.join(", ")}</p>)}
+          {event.expiresAt && !revoked && <p className="mt-1 text-xs text-white/45">Expires {new Date(event.expiresAt).toLocaleDateString()}</p>}
+          {event.reason && <p className="mt-2 border-t border-white/8 pt-2 text-sm leading-relaxed text-white/65">{event.reason}</p>}
+        </li>;
+      })}</ol> : <p className="mt-4 rounded-xl border border-dashed border-white/12 p-5 text-sm text-white/55">{auditError ? "History is unavailable right now." : "No administrator access changes have been recorded yet."}</p>}
+      <p className="mt-3 text-xs text-white/40">Showing the most recent 100 changes. The full audit record remains protected from direct client access.</p>
+    </details>
   </main>;
 }

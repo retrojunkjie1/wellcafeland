@@ -10,6 +10,7 @@ const protectedCallables = [
   ["helpDirectory.js", "searchPublicHelpListings"],
   ["adminAuthorization.js", "getMyAdminAccess"],
   ["adminAuthorization.js", "listAdminAssignments"],
+  ["adminAuthorization.js", "listAdminAssignmentAudit"],
   ["adminAuthorization.js", "setAdminAssignment"],
   ["adminUserAccess.js", "findAdminWorkspaceAccount"],
   ["adminUserAccess.js", "listAdminWorkspaceAccessEvents"],

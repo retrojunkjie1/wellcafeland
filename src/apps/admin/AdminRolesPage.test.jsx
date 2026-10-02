@@ -5,6 +5,7 @@ import AdminRolesPage from "./AdminRolesPage";
 
 const mocks = vi.hoisted(() => ({
   listAdminAssignments: vi.fn(),
+  listAdminAssignmentAudit: vi.fn(),
   setAdminAssignment: vi.fn(),
 }));
 
@@ -22,6 +23,7 @@ afterEach(() => { cleanup(); vi.clearAllMocks(); });
 describe("AdminRolesPage", () => {
   it("can assign one verified account a global responsibility and a separate regional responsibility", async () => {
     mocks.listAdminAssignments.mockResolvedValue({ assignments: [] });
+    mocks.listAdminAssignmentAudit.mockResolvedValue({ events: [] });
     mocks.setAdminAssignment.mockResolvedValue({ ok: true, email: "reviewer@example.com" });
     render(<AdminRolesPage />);
 
@@ -42,5 +44,29 @@ describe("AdminRolesPage", () => {
       active: true,
     })));
     expect(await screen.findByText(/Admin access saved for reviewer@example.com/)).toBeTruthy();
+  });
+
+  it("shows owner-readable access history without exposing raw scope identifiers", async () => {
+    mocks.listAdminAssignments.mockResolvedValue({ assignments: [] });
+    mocks.listAdminAssignmentAudit.mockResolvedValue({ events: [{
+      id: "event-1",
+      targetEmail: "reviewer@example.com",
+      action: "assignment_set",
+      scopes: ["platform.operations.view"],
+      regionalScopes: { "support_directory.manage": ["CO"] },
+      previousScopes: [],
+      previousRegionalScopes: {},
+      reason: "Review the Colorado support directory.",
+      createdAt: "2026-10-02T18:00:00.000Z",
+    }] });
+    render(<AdminRolesPage />);
+
+    await screen.findByText("Recent access changes");
+    fireEvent.click(screen.getByText("Recent access changes"));
+    expect(await screen.findByText("Administrator access granted or updated")).toBeTruthy();
+    expect(screen.getByText("System visibility · Support directory")).toBeTruthy();
+    expect(screen.getByText("Support directory · CO")).toBeTruthy();
+    expect(screen.getByText("Review the Colorado support directory.")).toBeTruthy();
+    expect(screen.queryByText("platform.operations.view")).toBeNull();
   });
 });

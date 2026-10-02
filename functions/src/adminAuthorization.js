@@ -7,6 +7,7 @@ const REGION = "us-central1";
 const ACCESS_COLLECTION = "admin_access_assignments";
 const AUDIT_COLLECTION = "admin_access_audit";
 const MAX_ASSIGNMENT_DAYS = 365;
+const ADMIN_AUDIT_LIMIT = 100;
 const SCOPES = Object.freeze([
   "admin.roles.manage",
   "platform.operations.view",
@@ -242,6 +243,42 @@ const listAdminAssignments = onCall({ region: REGION, enforceAppCheck: true }, a
   }
 });
 
+const listAdminAssignmentAudit = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+  requireGodAdmin(request);
+  try {
+    const records = await db().collection(AUDIT_COLLECTION)
+      .orderBy("createdAt", "desc")
+      .limit(ADMIN_AUDIT_LIMIT)
+      .get();
+    return {
+      events: records.docs.map((record) => {
+        const data = record.data();
+        return {
+          id: record.id,
+          targetEmail: typeof data.targetEmail === "string" ? data.targetEmail : "",
+          action: data.action === "assignment_revoked" ? "assignment_revoked" : "assignment_set",
+          scopes: Array.isArray(data.scopes) ? data.scopes.filter((scope) => SCOPES.includes(scope)) : [],
+          previousScopes: Array.isArray(data.previousScopes) ? data.previousScopes.filter((scope) => SCOPES.includes(scope)) : [],
+          regionalScopes: Object.fromEntries(Object.entries(data.regionalScopes || {})
+            .filter(([scope, regions]) => REGIONAL_SCOPES.has(scope) && Array.isArray(regions))
+            .map(([scope, regions]) => [scope, regions.filter((region) => region === "*" || STATE_CODES.has(region))])),
+          previousRegionalScopes: Object.fromEntries(Object.entries(data.previousRegionalScopes || {})
+            .filter(([scope, regions]) => REGIONAL_SCOPES.has(scope) && Array.isArray(regions))
+            .map(([scope, regions]) => [scope, regions.filter((region) => region === "*" || STATE_CODES.has(region))])),
+          expiresAt: data.expiresAt?.toDate?.()?.toISOString?.() || null,
+          reason: typeof data.reason === "string" ? data.reason : "",
+          createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null,
+        };
+      }),
+      limit: ADMIN_AUDIT_LIMIT,
+    };
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    console.error("[adminAuthorization] Assignment audit lookup failed", { uid: request.auth.uid, code: error?.code || "UNKNOWN" });
+    throw new HttpsError("unavailable", "Administrator access history could not be loaded. Try again.");
+  }
+});
+
 const setAdminAssignment = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
   const actorUid = requireGodAdmin(request);
   const email = cleanEmail(request.data?.email);
@@ -333,6 +370,7 @@ module.exports = {
   requireGodAdmin,
   getMyAdminAccess,
   listAdminAssignments,
+  listAdminAssignmentAudit,
   setAdminAssignment,
   _normalizeScopes: normalizeScopes,
   _normalizeRegions: normalizeRegions,

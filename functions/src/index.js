@@ -187,6 +187,7 @@ exports.grantPractitionerWorkspace = adminUserAccess.grantPractitionerWorkspace;
 exports.listAdminWorkspaceAccessEvents = adminUserAccess.listAdminWorkspaceAccessEvents;
 exports.getMyAdminAccess = adminAuthorization.getMyAdminAccess;
 exports.listAdminAssignments = adminAuthorization.listAdminAssignments;
+exports.listAdminAssignmentAudit = adminAuthorization.listAdminAssignmentAudit;
 exports.setAdminAssignment = adminAuthorization.setAdminAssignment;
 exports.recordSupportActivity = supportActivity.recordSupportActivity;
 exports.listSupportActivityForAdmin = supportActivity.listSupportActivityForAdmin;

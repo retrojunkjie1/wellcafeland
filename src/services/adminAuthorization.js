@@ -21,6 +21,10 @@ export function listAdminAssignments() {
   return invoke("listAdminAssignments");
 }
 
+export function listAdminAssignmentAudit() {
+  return invoke("listAdminAssignmentAudit");
+}
+
 export function setAdminAssignment(input) {
   return invoke("setAdminAssignment", input);
 }
