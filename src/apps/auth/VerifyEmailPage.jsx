@@ -19,12 +19,13 @@ export default function VerifyEmailPage() {
   const query = new URLSearchParams(location.search);
   const destination = location.state?.destination || query.get("next") || "/home";
   const email = location.state?.email || user?.email || "your email address";
+  const emailVerifiedFromLink = query.get("verified") === "1";
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(() => {
-    if (location.state?.deliveryError) return "Your account was created, but we couldn’t send the verification email. Sign in to try again.";
-    if (location.state?.setupIssue) return "Your account was created and the verification email was sent, but setup did not finish. Verify your email, then sign in to continue.";
-    if (query.get("verified") === "1") return "Email verified. Sign in to continue to your WellnessCafe space.";
-    return "We sent a verification link. Open it to verify your email, then sign in to continue.";
+    if (location.state?.deliveryError) return "Your account was created, but Firebase could not send the verification email. Sign in below to try sending a fresh link.";
+    if (location.state?.setupIssue) return "Your account was created and Firebase accepted the verification email request, but setup did not finish. Verify your email, then sign in to continue.";
+    if (emailVerifiedFromLink) return "Your email is verified. Sign in to continue to your WellnessCafe space.";
+    return "Your account is ready. We requested a verification email for this address. Open the link in that email before entering your WellnessCafe space.";
   });
   const [error, setError] = useState("");
 
@@ -61,11 +62,11 @@ export default function VerifyEmailPage() {
         url: getContinueUrl(destination),
         handleCodeInApp: false,
       });
-      setMessage(`A fresh verification link was sent to ${auth.currentUser.email}.`);
+      setMessage(`We requested a fresh verification email for ${auth.currentUser.email}. It may take a few minutes to arrive.`);
     } catch (sendError) {
       setError(sendError?.code === "auth/too-many-requests"
         ? "Too many requests in a short time. Wait a few minutes before trying again."
-        : "We couldn’t send the email. Sign in again to retry, or check that the address is correct.");
+        : "We couldn’t request another email. Check that the address is correct and try again in a few minutes.");
     } finally {
       setBusy(false);
     }
@@ -77,8 +78,8 @@ export default function VerifyEmailPage() {
         <div className="mb-7 flex justify-center"><Logo variant="default" size="md" showText /></div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/70">One quick account check</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Verify your email</h1>
-        <p className="mt-3 leading-relaxed text-white/70">We sent a secure link to <span className="font-medium text-white">{email}</span>. Verify your address before continuing to your WellnessCafe space.</p>
-        <p className="mt-3 text-sm leading-relaxed text-white/55">If it’s not in your inbox, check spam or promotions. You can sign in to request a fresh link.</p>
+        <p className="mt-3 break-words leading-relaxed text-white/70">Verification email for <span className="font-medium text-white">{email}</span></p>
+        <p className="mt-3 text-sm leading-relaxed text-white/65">Check Inbox, Spam/Junk, and Promotions. Search for “verify your email” and allow a few minutes for delivery. If you still can’t find it, sign in below with the same email and password; we’ll request a fresh link and return you here.</p>
         {message && <p role="status" className="mt-5 rounded-xl border border-emerald-200/15 bg-emerald-100/[0.05] p-4 text-sm leading-relaxed text-emerald-50">{message}</p>}
         {error && <p role="alert" className="mt-4 rounded-xl border border-rose-200/20 bg-rose-100/[0.05] p-4 text-sm leading-relaxed text-rose-100">{error}</p>}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -88,7 +89,9 @@ export default function VerifyEmailPage() {
               <button type="button" onClick={resend} disabled={busy} className="min-h-12 rounded-xl border border-white/15 px-5 text-white/85 disabled:opacity-60">Send a fresh link</button>
             </>
           ) : (
-            <Link to="/login" state={{ from: { pathname: destination } }} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-amber-200 px-5 font-semibold text-slate-950">Sign in after verifying</Link>
+            <Link to="/login" state={{ from: { pathname: destination } }} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-amber-200 px-5 text-center font-semibold text-slate-950">
+              {emailVerifiedFromLink ? "Sign in to continue" : "Sign in to resend the verification email"}
+            </Link>
           )}
         </div>
         <p className="mt-6 text-xs leading-relaxed text-white/40">Your application or workspace will be waiting after verification. Practitioner access still requires profile review and approval.</p>

@@ -286,7 +286,7 @@ describe("real-world assistance search states", () => {
     expect(await screen.findByRole("heading", { name: "Dallas County utility-bill assistance" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Dallas County short-term financial assistance" })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Call" }).map((link) => link.getAttribute("href"))).toContain("tel:214-819-1848");
-    expect(screen.getAllByRole("status")[0]).toHaveTextContent("Call to confirm eligibility, current applications, and available assistance");
+    expect(screen.getAllByRole("status")[0]).toHaveTextContent("Contact them to confirm eligibility, current applications, and available assistance");
     expect(screen.queryByText(/Live local matches are unavailable/)).not.toBeInTheDocument();
   });
 
@@ -339,7 +339,7 @@ describe("real-world assistance search states", () => {
     renderSearch("/assistance?priority=circles&region=Denver%2C%20CO");
 
     expect(await screen.findByRole("heading", { name: "Dallas peer support contact" })).toBeInTheDocument();
-    expect(screen.getAllByRole("status")[0]).toHaveTextContent("local availability for Denver, CO is not confirmed");
+    expect(screen.getAllByRole("status")[0]).toHaveTextContent("The options below are broader support pathways; contact them to ask about local help.");
     expect(screen.queryByText(/Dallas-area peer-support contacts/)).toBeNull();
     expect(screen.queryByText(/No nearby listing was confirmed for/)).toBeNull();
     expect(screen.queryByRole("list", { name: "Location-matched support resources" })).toBeNull();
@@ -368,7 +368,7 @@ describe("real-world assistance search states", () => {
     expect(mocks.searchResources).toHaveBeenCalledWith(expect.objectContaining({ domain: "peer", region: "Dallas, TX" }));
     expect(mocks.getCuratedFallback).toHaveBeenCalledWith("peer", expect.any(String), "Dallas, TX");
     expect(screen.getByText(/Wider-area and online options/)).toBeInTheDocument();
-    expect(screen.getByText(/Call to confirm group times and whether you can join/i)).toBeInTheDocument();
+    expect(screen.getAllByRole("status")[0]).toHaveTextContent("Contact them to confirm group times and whether you can join");
   });
 
   it("shows Denver peer support as nearby and keeps statewide and national paths collapsed separately", async () => {

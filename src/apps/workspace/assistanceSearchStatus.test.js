@@ -10,7 +10,7 @@ describe("assistance search status", () => {
   it("does not claim broader contacts are local to the searched area", () => {
     const status = getAssistanceSearchStatus({ category: "circles", region: "Denver, CO", localCount: 0 });
     expect(status).toContain("No peer support listing with a confirmed location in Denver, CO is available yet.");
-    expect(status).toContain("local availability for Denver, CO is not confirmed");
+    expect(status).toContain("The options below are broader support pathways; contact them to ask about local help.");
     expect(status).not.toContain("Dallas");
   });
 

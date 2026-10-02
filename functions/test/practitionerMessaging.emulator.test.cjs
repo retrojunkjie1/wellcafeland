@@ -20,11 +20,11 @@ const otherClientId = "message-other-client";
 const assignmentId = `${clientId}-${providerId}`;
 
 function clientRequest(data = {}, uid = clientId) {
-  return { auth: { uid, token: { firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid, token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function providerRequest(data = {}, uid = providerId) {
-  return { auth: { uid, token: { role: "provider", firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid, token: { email_verified: true, role: "provider", firebase: { sign_in_provider: "password" } } }, data };
 }
 
 async function clean() {
@@ -182,6 +182,14 @@ test("anonymous and signed-out users cannot use practitioner messaging", async (
   await assert.rejects(
     sendClientMessage({ auth: { uid: clientId, token: { firebase: { sign_in_provider: "anonymous" } } }, data: { practitionerId: providerId, content: "Hello" } }),
     (error) => error.code === "unauthenticated",
+  );
+  await assert.rejects(
+    sendClientMessage({ auth: { uid: clientId, token: { email_verified: false, firebase: { sign_in_provider: "password" } } }, data: { practitionerId: providerId, content: "Verify first" } }),
+    (error) => error.code === "failed-precondition" && /verify your email/i.test(error.message),
+  );
+  await assert.rejects(
+    listClientMessages({ auth: { uid: clientId, token: { email_verified: false, firebase: { sign_in_provider: "password" } } }, data: { practitionerId: providerId } }),
+    (error) => error.code === "failed-precondition" && /verify your email/i.test(error.message),
   );
   await assert.rejects(
     listProviderMessages({ auth: null, data: { clientId } }),

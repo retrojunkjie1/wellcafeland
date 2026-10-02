@@ -19,6 +19,8 @@
     "test:practitioner-messaging": "npm --prefix functions run test:practitioner-messaging",
     "test:provider-scheduling": "npm --prefix functions run test:provider-scheduling",
     "test:admin-user-access": "npm --prefix functions run test:admin-user-access",
+    "test:account-access": "npm --prefix functions run test:account-access",
+    "test:workspace-lifecycle": "npm --prefix functions run test:workspace-lifecycle",
     "test:recovery-sources": "npm --prefix functions run test:recovery-sources",
     "test:help-directory": "npm --prefix functions run test:help-directory",
     "test:food-directory": "npm --prefix functions run test:food-directory",

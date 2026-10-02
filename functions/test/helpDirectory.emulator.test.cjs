@@ -15,6 +15,7 @@ const search = directory.searchPublicHelpListings.run;
 const reportIssue = directory.reportHelpListingIssue.run;
 const reviewCorrection = directory.reviewHelpDirectoryCorrection.run;
 const adminAuth = { uid: "directory-reviewer", token: { godAdmin: true } };
+const regionalAdminUid = "directory-colorado-reviewer";
 const clientAuth = { uid: "directory-client", token: { role: "client" } };
 const base = {
   name: "Northside Community Pantry", category: "food", description: "Weekly grocery support.",
@@ -29,7 +30,10 @@ async function clear(name) {
   if (snapshot.empty) return;
   const batch = db.batch(); snapshot.docs.forEach((doc) => batch.delete(doc.ref)); await batch.commit();
 }
-async function clean() { await Promise.all(["help_directory_listings", "help_directory_audit", "help_directory_corrections"].map(clear)); }
+async function clean() {
+  await Promise.all(["help_directory_listings", "help_directory_audit", "help_directory_corrections"].map(clear));
+  await db.collection("admin_access_assignments").doc(regionalAdminUid).delete().catch(() => {});
+}
 
 before(async () => { assert.ok(process.env.FIRESTORE_EMULATOR_HOST, "Run this suite through the Firestore emulator"); await clean(); });
 beforeEach(clean);
@@ -50,6 +54,30 @@ test("draft intake is admin-only, requires source permission evidence and recent
   assert.equal(adminList.events[0].listingName, base.name);
   assert.equal(adminList.events[0].action, "draft_created");
   await assert.rejects(listAdmin({ auth: clientAuth, data: {} }), (error) => error.code === "permission-denied");
+});
+
+test("regional directory reviewers receive only assigned-state listings, corrections, and audit events", async () => {
+  const checkedAt = admin.firestore.Timestamp.now();
+  const updatedAt = admin.firestore.Timestamp.now();
+  await db.collection("admin_access_assignments").doc(regionalAdminUid).set({
+    active: true,
+    scopes: [],
+    regionalScopes: { "support_directory.manage": ["CO"] },
+    expiresAt: null,
+  });
+  await Promise.all([
+    db.collection("help_directory_listings").doc("regional-co").set({ ...base, state: "CO", name: "Colorado service", status: "draft", checkedAt, updatedAt }),
+    db.collection("help_directory_listings").doc("regional-tx").set({ ...base, state: "TX", name: "Texas service", status: "draft", checkedAt, updatedAt }),
+    db.collection("help_directory_audit").doc("regional-co-event").set({ listingId: "regional-co", listingName: "Colorado service", action: "draft_created", createdAt: updatedAt }),
+    db.collection("help_directory_audit").doc("regional-tx-event").set({ listingId: "regional-tx", listingName: "Texas service", action: "draft_created", createdAt: updatedAt }),
+    db.collection("help_directory_corrections").doc("regional-co-correction").set({ listingId: "regional-co", state: "CO", status: "open", createdAt: updatedAt }),
+    db.collection("help_directory_corrections").doc("regional-tx-correction").set({ listingId: "regional-tx", state: "TX", status: "open", createdAt: updatedAt }),
+  ]);
+
+  const scoped = await listAdmin({ auth: { uid: regionalAdminUid, token: {} }, data: {} });
+  assert.deepEqual(scoped.listings.map((listing) => listing.id), ["regional-co"]);
+  assert.deepEqual(scoped.events.map((event) => event.id), ["regional-co-event"]);
+  assert.deepEqual(scoped.corrections.map((correction) => correction.id), ["regional-co-correction"]);
 });
 
 test("published help listings automatically leave search when the source check ages past 90 days", async () => {

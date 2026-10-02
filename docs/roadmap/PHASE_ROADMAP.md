@@ -1,7 +1,7 @@
 # WellnessCafe OS — Execution Roadmap
 
 **Roadmap authority:** [Master Blueprint and Definition of Done](../architecture/MASTER_VISION_BLUEPRINT.md)
-**Status date:** 2026-09-29
+**Status date:** 2026-10-02
 **Purpose:** sequence delivery across the whole OS without getting stuck in one role or repeating audits without closing journeys.
 
 The blueprint defines the vision, compartments, and exit criteria. This file is the shorter execution view. `CURRENT_PHASE.md` is the release/build diary, and `RETURN_TO_BACKLOG.md` holds open/deferred work. Existing Phase 1–6 labels remain useful capability groupings, but they are not a rule that only one part of the OS may improve at a time.
@@ -13,6 +13,8 @@ The build has deployed meaningful work in practitioner experience, client-shared
 Recovery Meeting Finder work is now a bounded capability track: permission requests, admin review, manual approved-feed validation/import, publication approval, search, and audited pause/restore are deployed. Do not keep polishing this slice in isolation. Remaining feed acquisition, freshness, source partnerships, and coverage stay in the backlog; return when the broader directory milestone is selected or a concrete production issue is found.
 
 The current work is the **pre-release Definition-of-Done build**; it is not being declared Version 1. The user has configured and enabled first-party rooms through an existing free LiveKit Build project. The free media quota is a hard cap; do not upgrade or provision paid media infrastructure without explicit direction. Complete an authorized client/practitioner call test and verify usage before broader rollout. Final V1/V2 naming and scope remain to be set at the release-planning gate.
+
+Server-side account verification is now enforced for practitioner application entry, client-practitioner connection requests, appointment and practitioner scheduling access, practitioner/client messages, practitioner-shared support actions, and video-room token issuance. The frontend gate is no longer the only enforcement layer for these paths. Emulator authorization coverage passed and the affected callable functions are deployed. Real verification-email delivery and a production unverified-account attempt remain untested; do not call the account-verification journey fully accepted until both are checked.
 
 ### 1. Now: connect and verify the built OS
 
@@ -38,7 +40,7 @@ Server-authoritative pause/enable controls and audit events are implemented for 
 
 **Exit:** authorized admins can complete a review and operate the central agent system with auditable outcomes and no unnecessary access to private client content.
 
-**Governance gate status (partially production-verified):** Alpha Owner authority is separated from delegated admin assignments. The verified Alpha Owner account is provisioned, and the live God-Eye console plus its App Check-enforced access, operations, settings, queue-count, and review callables have been confirmed. Queue counts disclose only aggregates; the meeting-source total also checks its dedicated review scope. Delegated assignment lifecycle, the full Firestore Rules release, scoped-admin access, and multi-account role tests remain open; private reflections and broad user-profile reads remain out of scope. Do not mark the governance gate complete until those boundaries have production or Rules Emulator evidence.
+**Governance gate status (partially production-verified):** Alpha Owner authority is separated from delegated admin assignments. The verified Alpha Owner account is provisioned, and the live God-Eye console plus its App Check-enforced access, operations, settings, queue-count, and review callables have been confirmed. Queue counts disclose only aggregates; the meeting-source total also checks its dedicated review scope. Regional practitioner, giver, and local-help review queues now constrain Firestore reads to assigned service areas, with emulator coverage for mixed-region data. Delegated assignment lifecycle, the full Firestore Rules release, production scoped-admin access, and multi-account role tests remain open; private reflections and broad user-profile reads remain out of scope. Do not mark the governance gate complete until those boundaries have production or Rules Emulator evidence.
 
 **Security gate status (local implementation):** Firebase App Check protects 86 callable endpoints and all nine HTTP exports from the current `functions/src/index.js` package entrypoint. A read-only live inventory found 90 active Functions (87 Gen 2 including one event trigger, 3 Gen 1: `aiMedia`, `aiSession`, `globalResourceSearchV1`) and no active broad legacy admin callables. Link preview DNS is validated and pinned to a public address, with redirects disabled and response size limited. The separate `functions/index.js` contains 12 broad v1 admin callables source-hardened for Alpha Owner + App Check, but is not the current package main or present in the live inventory. Keep guest discovery available while requiring app attestation; continue to require Firebase identity and server authorization separately. **Next:** validate emulator/debug-token workflows, inventory additional entrypoints, and verify deployed acceptance/rejection with authorized accounts. App Check is attestation, not identity verification or a replacement for authorization and rate limits. The live inventory showed names, not current App Check behavior. This gate is not released until production token behavior is verified and Functions + Hosting are deployed together.
 
@@ -68,6 +70,8 @@ Audit every client, practitioner, and admin route for responsive layouts, dark/l
 Pick the next tranche from the highest-risk or most-blocking end-to-end journey, then include the roles and platform services it touches. Do not reopen finished leaf screens without new evidence. Do not call a phase complete until its blueprint exit gate is evidenced in the release log.
 
 ## Hands-on acceptance test plan
+
+For the tester-ready case list, priorities, and copyable defect report, use the [User Acceptance Test Checklist](USER_ACCEPTANCE_TEST_CHECKLIST.md).
 
 Use this checklist during the later hands-on testing phase. Automated checks and a successful deployment do not replace these real, role-separated workflows. Record each item as **Pass**, **Fail**, **Blocked**, or **Not tested**; do not count a blocker as a pass.
 

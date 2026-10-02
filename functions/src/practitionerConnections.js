@@ -3,6 +3,7 @@ const admin = require("firebase-admin");
 const { createHash } = require("node:crypto");
 const providerScheduling = require("./providerScheduling");
 const { recordTrustedSupportActivity } = require("./supportActivity");
+const { requireVerifiedAccount } = require("./accountAccess");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -17,7 +18,7 @@ function requireAccount(request) {
 }
 
 exports.requestPractitionerConnection = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const requesterUid = requireAccount(request);
+  const requesterUid = requireVerifiedAccount(request, "request practitioner support");
   const practitionerId = typeof request.data?.practitionerId === "string" ? request.data.practitionerId : "";
   const introduction = typeof request.data?.introduction === "string" ? request.data.introduction.trim().slice(0, 500) : "";
   if (!practitionerId || practitionerId === requesterUid) throw new HttpsError("invalid-argument", "Choose a practitioner to contact.");

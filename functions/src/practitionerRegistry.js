@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { requireAdminScope, requireAdminScopeForListing } = require("./adminAuthorization");
+const { requireAdminScope, requireAdminScopeForListing, constrainQueryToAdminRegions } = require("./adminAuthorization");
+const { requireVerifiedAccount } = require("./accountAccess");
 const admin = require("firebase-admin");
 const { isProductFeatureEnabled } = require("./agentOperations");
 
@@ -23,11 +24,7 @@ const PUBLIC_TAXONOMIES = {
 const nppesCache = new Map();
 
 function requireUser(request) {
-  const uid = request.auth?.uid;
-  if (!uid || request.auth.token.firebase?.sign_in_provider === "anonymous") {
-    throw new HttpsError("unauthenticated", "Sign in to create a practitioner profile.");
-  }
-  return uid;
+  return requireVerifiedAccount(request, "create or manage a practitioner profile");
 }
 
 function cleanText(value, max, label, required = false) {
@@ -150,7 +147,9 @@ exports.listPractitionersForReview = onCall({ region: REGION, enforceAppCheck: t
   const access = await requireAdminScopeForListing(request, "practitioner.review");
   const assignedRegions = access.regionalScopes?.["practitioner.review"] || [];
   const regionalOnly = !access.isGodAdmin && !access.scopes.includes("practitioner.review");
-  const snapshot = await db.collection("practitioner_applications").get();
+  let applicationsQuery = db.collection("practitioner_applications");
+  applicationsQuery = constrainQueryToAdminRegions(applicationsQuery, access, "practitioner.review", "region");
+  const snapshot = await applicationsQuery.get();
   return {
     applications: snapshot.docs.filter((doc) => !regionalOnly || assignedRegions.includes("*") || assignedRegions.includes(String(doc.get("region") || "").toUpperCase())).map((doc) => {
       const { email, credentialSummary, ...publicFields } = doc.data();

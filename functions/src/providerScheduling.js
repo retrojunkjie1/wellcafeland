@@ -1,6 +1,7 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { recordTrustedSupportActivity } = require("./supportActivity");
+const { requireVerifiedAccount } = require("./accountAccess");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -8,15 +9,14 @@ const { Timestamp, FieldValue } = admin.firestore;
 const REGION = "us-central1";
 
 async function requireProvider(request) {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError("unauthenticated", "Sign in with your practitioner account to manage appointments.");
+  const uid = requireVerifiedAccount(request, "use practitioner scheduling");
   const profile = await db.collection("users").doc(uid).get();
   const data = profile.exists ? profile.data() : {};
   const role = request.auth.token.role || data.role || "";
   const roles = Array.isArray(data.roles) ? data.roles : [];
   const allowed = request.auth.token.provider === true
-    || ["provider", "provider_admin", "admin", "superadmin"].includes(role)
-    || roles.some((item) => ["provider", "provider_admin", "admin", "superadmin"].includes(item));
+    || ["provider", "provider_admin"].includes(role)
+    || roles.some((item) => ["provider", "provider_admin"].includes(item));
   if (!allowed) throw new HttpsError("permission-denied", "Practitioner access is required.");
   // Never let profile data redirect a practitioner token to another account.
   return uid;
@@ -169,11 +169,7 @@ async function upcomingProviderSlots(providerId, availability, durationMinutes) 
 }
 
 function requireClientAccount(request, action) {
-  const uid = request.auth?.uid;
-  if (!uid || request.auth.token.firebase?.sign_in_provider === "anonymous") {
-    throw new HttpsError("unauthenticated", `Sign in to ${action}.`);
-  }
-  return uid;
+  return requireVerifiedAccount(request, action);
 }
 
 exports.listMyConnectedPractitioners = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {

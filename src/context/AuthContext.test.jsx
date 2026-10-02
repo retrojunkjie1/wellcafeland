@@ -48,7 +48,7 @@ describe("AuthContext workspace-role mapping", () => {
   it("maps a Firebase admin boolean claim to the admin role even when the profile says client", async () => {
     renderSignedInUser({ admin: true });
 
-    expect(await screen.findByText("admin|true|true")).toBeInTheDocument();
+    expect(await screen.findByText("admin|true|false")).toBeInTheDocument();
   });
 
   it("maps a Firebase provider boolean claim to the provider role without a role string", async () => {

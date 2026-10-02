@@ -2,7 +2,7 @@
 
 Living list of work explicitly deferred or still unresolved while WellnessCafe OS progresses toward the DoD. Update status when an item is resumed and verified.
 
-Last reviewed: 2026-09-30
+Last reviewed: 2026-10-02
 
 ## Current priority
 
@@ -16,6 +16,8 @@ Follow the [Master Blueprint](../architecture/MASTER_VISION_BLUEPRINT.md) and [E
 - **Voice capture and playback — return later.** User asked to pause audio repair to keep Phase 4 moving. Known problems: recording preview may be silent/0:00 or fail to play; microphone state and live capture feedback are unclear; transcription is shown immediately; sending audio can return “AI guide is not configured”; fallback/offline prompts can be unrelated to the user's words; the voice UI is overly technical and overlays the composer. Do not restart until user brings it back or the planned client-journey work is complete.
 
 ## Recently completed — client progress integration
+
+- **Verified email is enforced at server boundaries for workspace actions — Functions deployed 2026-10-02.** Added a shared callable guard and applied it to practitioner application submission/status, client connection requests, client and practitioner scheduling operations, practitioner-client messages, client-practitioner messages, and in-app video room tokens. Ending a practitioner relationship remains available without this gate so the client can still revoke access. Emulator tests verify verified, unverified, anonymous, and signed-out behavior. This protects direct callable use as well as the frontend's verify-before-entry route. It does not prove an email reached an inbox or validate the complete production sign-up path; those remain acceptance checks.
 
 - **Shared-practice progress queries are account-scoped and bounded — deployed 2026-09-30.** The practitioner overview now queries only the requested active client/practitioner pair, orders client-sent updates newest-first, and caps the read at 30; Daily Practice queries only the client's saved items, newest-first, capped at 100. This removes mixed-record in-memory filtering that could hide valid items as use grows. The indexes and both callable functions are deployed. Build, deploy preflight, syntax, index JSON, and `git diff --check` passed; tests were not run. The signed-in live Daily Practice view returns the correct empty state when no items are saved. Still verify the full flow using separate authorized browser accounts.
 
@@ -151,6 +153,8 @@ Use the [hands-on acceptance test plan](../roadmap/PHASE_ROADMAP.md#hands-on-acc
 - Later program idea from the user: offer Twelve Steps as its own optional recovery program; keep it separate from the A.A./N.A. meeting finder and do not assume all users want it.
 
 ## Client/practitioner journey integration checkpoint (2026-09-28)
+
+- **Regional admin query isolation (2026-10-02):** deployed constraints on practitioner, giver, and help-directory review queries; help corrections and listing audit events follow the assigned-region boundary. Mixed CO/TX emulator records prove a CO reviewer receives only CO queue data. Firestore confirmed index deployment, but index readiness was not queried because this shell has no active gcloud account. A controlled scoped-admin production walkthrough remains; no private client reflection access is introduced.
 
 - A single Firestore Emulator test now exercises request/acceptance, consent-scoped sharing, two-way messages, practitioner-shared support and client progress, appointment request/acceptance/confirmation, and access denial after connection termination. It passes with `npm run test:client-practitioner-journey`.
 - Production walkthrough remains open: run the same journey with separate authorized accounts and verify the real browser surfaces and role-specific queues. Emulator success does not demonstrate live account data or compliance readiness.

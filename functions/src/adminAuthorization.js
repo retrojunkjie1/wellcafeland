@@ -171,6 +171,17 @@ async function requireAdminScopeForListing(request, scope, firestore = db()) {
   return access;
 }
 
+function constrainQueryToAdminRegions(query, access, scope, field) {
+  if (access?.isGodAdmin || access?.scopes?.includes(scope)) return query;
+  const regions = access?.regionalScopes?.[scope];
+  if (!Array.isArray(regions) || regions.length === 0) {
+    throw new HttpsError("permission-denied", "Your admin assignment does not include a service region for this responsibility.");
+  }
+  if (regions.includes("*")) return query;
+  if (regions.length === 1) return query.where(field, "==", regions[0]);
+  return query.where(field, "in", regions);
+}
+
 function requireGodAdmin(request) {
   requireSignedIn(request);
   if (!isConfiguredOwner(request)) {
@@ -318,6 +329,7 @@ module.exports = {
   getAdminAccess,
   requireAdminScope,
   requireAdminScopeForListing,
+  constrainQueryToAdminRegions,
   requireGodAdmin,
   getMyAdminAccess,
   listAdminAssignments,

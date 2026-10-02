@@ -17,6 +17,7 @@
     "test:provider-scheduling": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-scheduling \"node test/providerScheduling.emulator.test.cjs\"",
     "test:video-sessions": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-video-sessions \"node test/videoSessions.emulator.test.cjs\"",
     "test:admin-user-access": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only auth,firestore --project demo-wellnesscafe-admin-access \"node test/adminUserAccess.emulator.test.cjs\"",
+    "test:account-access": "node --test test/accountAccess.test.cjs",
     "test:support-activity": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-support-activity \"node test/supportActivity.emulator.test.cjs\"",
     "test:recovery-sources": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-meeting-sources \"node test/recoveryMeetingSources.emulator.test.cjs\"",
     "test:help-directory": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-help-directory \"node test/helpDirectory.emulator.test.cjs\"",

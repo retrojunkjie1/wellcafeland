@@ -123,6 +123,9 @@ const SignupPage = () => {
             <p className="text-sm text-muted-foreground">
               Choose how you’re joining WellnessCafe
             </p>
+            <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
+              After you create your account, check your email for a verification link. You’ll need to verify your address before entering your WellnessCafe workspace. Check your inbox, spam/junk, and promotions folders.
+            </p>
           </div>
 
           <fieldset className="space-y-2">

@@ -2,7 +2,7 @@ const { randomUUID } = require("node:crypto");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { addCommunityGiverRole } = require("./workspaceRoles");
-const { requireAdminScope, requireAdminScopeForListing } = require("./adminAuthorization");
+const { requireAdminScope, requireAdminScopeForListing, constrainQueryToAdminRegions } = require("./adminAuthorization");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -418,11 +418,9 @@ exports.listCommunityGiverApplications = onCall({ region: REGION, enforceAppChec
   const access = await requireAdminScopeForListing(request, "giving.review");
   const assignedRegions = access.regionalScopes?.["giving.review"] || [];
   const regionalOnly = !access.isGodAdmin && !access.scopes.includes("giving.review");
-  const snapshot = await db.collection("community_supporter_applications")
-    .where("status", "==", "pending")
-    .orderBy("submittedAt", "asc")
-    .limit(100)
-    .get();
+  let applicationsQuery = db.collection("community_supporter_applications").where("status", "==", "pending");
+  applicationsQuery = constrainQueryToAdminRegions(applicationsQuery, access, "giving.review", "state");
+  const snapshot = await applicationsQuery.orderBy("submittedAt", "asc").limit(100).get();
   return { ok: true, applications: snapshot.docs
     .filter((doc) => !regionalOnly || assignedRegions.includes("*") || assignedRegions.includes(String(doc.get("state") || "").toUpperCase()))
     .map((doc) => ({ id: doc.id, ...doc.data(), submittedAt: doc.get("submittedAt")?.toDate?.()?.toISOString?.() || null })) };

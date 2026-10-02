@@ -27,17 +27,17 @@ const requestIds = new Set();
 
 function signedInRequest(uid, appointment = appointmentId) {
   return {
-    auth: { uid, token: { firebase: { sign_in_provider: "password" } } },
+    auth: { uid, token: { email_verified: true, firebase: { sign_in_provider: "password" } } },
     data: { appointmentId: appointment },
   };
 }
 
 function clientSchedulingRequest(data = {}) {
-  return { auth: { uid: clientId, token: { firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid: clientId, token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function practitionerSchedulingRequest(data = {}) {
-  return { auth: { uid: providerId, token: { role: "provider", firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid: providerId, token: { email_verified: true, role: "provider", firebase: { sign_in_provider: "password" } } }, data };
 }
 
 async function seedAppointment({ connected = true, status = "confirmed" } = {}) {

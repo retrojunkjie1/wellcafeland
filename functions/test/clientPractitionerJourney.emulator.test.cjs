@@ -37,11 +37,11 @@ const listClientAppointments = scheduling.listMyUpcomingAppointments.run;
 const confirmClientAppointment = scheduling.respondToMyAppointment.run;
 
 function clientRequest(data = {}) {
-  return { auth: { uid: clientId, token: { firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid: clientId, token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function providerRequest(data = {}) {
-  return { auth: { uid: providerId, token: { role: "provider", firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid: providerId, token: { email_verified: true, role: "provider", firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function futureStart() {

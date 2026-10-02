@@ -44,11 +44,11 @@ describe("PractitionerPortalPage", () => {
       .mockResolvedValueOnce({ application: { status: "approved" }, profile: { services: [] } });
 
     renderPortal();
-    expect(await screen.findByText("Your profile is being reviewed")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Your profile is in review" })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Check review status" }));
+    fireEvent.click(screen.getByRole("button", { name: "Refresh review status" }));
 
-    expect(await screen.findByText("Your practitioner profile is approved")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Your practitioner profile is approved", level: 1 })).toBeTruthy();
     expect(mocks.getMyPractitionerApplication).toHaveBeenCalledTimes(2);
   });
 
@@ -57,7 +57,7 @@ describe("PractitionerPortalPage", () => {
     mocks.user.getIdToken.mockRejectedValueOnce(new Error("Token refresh failed"));
 
     renderPortal();
-    expect(await screen.findByText("Your practitioner profile is approved")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Your practitioner profile is approved", level: 1 })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Open practitioner workspace" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Token refresh failed");
@@ -91,7 +91,7 @@ describe("PractitionerPortalPage", () => {
       services: ["Gentle yoga"], serviceFormats: ["group"], accessibilityOptions: ["low-sensory-option"],
       priceDetails: "Free weekly class", sessionLength: "45",
     }));
-    expect(await screen.findByText("Your profile is being reviewed")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Your profile is in review" })).toBeTruthy();
   });
 
   it("carries a public NPI directory invitation through to the submitted application", async () => {

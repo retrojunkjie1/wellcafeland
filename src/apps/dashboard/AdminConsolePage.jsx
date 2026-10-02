@@ -45,6 +45,7 @@ import EventItem from "./components/EventItem";
 import { getFeatureSwitchPresentation } from "./featureSwitchCatalog";
 import AdminNotificationPolicy from "./AdminNotificationPolicy";
 import AdminReviewQueues from "./AdminReviewQueues";
+import { INTELLIGENCE_AGENTS } from "../../ai/agents/agentRegistry";
 
 const AdminConsolePage = () => {
   const navigate = useNavigate();
@@ -59,6 +60,9 @@ const AdminConsolePage = () => {
   const [testAgentId, setTestAgentId] = useState("");
   const [testResult, setTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState(null);
+  const agentDetailsOpenerRef = React.useRef(null);
+  const agentDetailsCloseRef = React.useRef(null);
   const [reviewQueueCounts, setReviewQueueCounts] = useState({ practitioner: null, communityGivers: null, meetingSources: null });
   const [systemSettingsStatus, setSystemSettingsStatus] = useState({ state: "loading", message: "Loading saved settings…" });
   const [agentControls, setAgentControls] = useState({
@@ -226,6 +230,28 @@ const AdminConsolePage = () => {
   const dashboardSubtitle = config.dashboardSubtitle;
 
   const healthSummary = getHealthSummary();
+  const selectedAgent = selectedAgentId
+    ? agents.find((agent) => agent.id === selectedAgentId)
+    : null;
+  const selectedAgentDefinition = selectedAgentId
+    ? INTELLIGENCE_AGENTS.find((agent) => agent.id === selectedAgentId)
+    : null;
+
+  React.useEffect(() => {
+    if (!selectedAgentId) return undefined;
+    agentDetailsCloseRef.current?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setSelectedAgentId(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      agentDetailsOpenerRef.current?.focus();
+    };
+  }, [selectedAgentId]);
 
   const agentIcons = {
     seer: Eye,
@@ -463,17 +489,57 @@ const AdminConsolePage = () => {
               <span className="text-xs text-amber-200/75">No enabled production agent is available. Enable a supported agent below.</span>
             )}
             {agentControls.notice && <span role="status" className="text-xs text-emerald-300">{agentControls.notice}</span>}
-
-            {testResult && (
-              <div className="text-xs text-muted-foreground ml-2">
-                {testResult.error ? (
-                  <span className="text-destructive">Error: {testResult.error}</span>
-                ) : (
-                  <span>Response from {testResult.agentName} received</span>
-                )}
-              </div>
-            )}
           </div>
+
+          {testResult && (
+            testResult.error ? (
+              <div
+                role="alert"
+                className="lux-card mt-3 border-destructive/40 bg-destructive/10 p-4"
+              >
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  <p className="text-sm font-semibold">Agent test failed</p>
+                </div>
+                <p className="mt-2 text-sm text-foreground">
+                  {String(testResult.error)}
+                </p>
+              </div>
+            ) : (
+              <div
+                role="status"
+                aria-live="polite"
+                className="lux-card mt-3 space-y-3 border-emerald-300/20 p-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Test response
+                    </p>
+                    <p className="mt-1 truncate text-base font-semibold text-foreground">
+                      {testResult.agentName ||
+                        agents.find((agent) => agent.id === testAgentId)?.name ||
+                        testAgentId}
+                    </p>
+                  </div>
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300/20 bg-emerald-300/5 px-2.5 py-1 text-xs font-medium text-emerald-200">
+                    <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    Completed
+                  </span>
+                </div>
+                <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+                  {[
+                    testResult.reply,
+                    testResult.result?.reply,
+                    testResult.data?.message,
+                    testResult.result?.summary,
+                    testResult.message,
+                  ].find((value) => typeof value === "string" && value.trim()) ||
+                    "The agent completed the call but did not return a readable response."}
+                </p>
+              </div>
+            )
+          )}
 
           <div className="grid gap-4 md:grid-cols-4">
             {agents.map((agent) => {
@@ -507,6 +573,19 @@ const AdminConsolePage = () => {
                       <X className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                     )}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      agentDetailsOpenerRef.current = event.currentTarget;
+                      setSelectedAgentId(agent.id);
+                    }}
+                    className="inline-flex min-h-9 w-full items-center justify-between rounded-lg border border-border/60 px-3 text-left text-xs font-medium text-foreground/85 transition hover:border-amber-200/35 hover:bg-amber-100/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
+                    aria-label={`View ${agent.name} details`}
+                  >
+                    <span>Agent details</span>
+                    <span aria-hidden="true">→</span>
+                  </button>
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
                     <div className="col-span-2">
@@ -556,6 +635,126 @@ const AdminConsolePage = () => {
               );
             })}
           </div>
+
+          {selectedAgent && (
+            <div
+              className="fixed inset-0 z-[150] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-sm"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) setSelectedAgentId(null);
+              }}
+            >
+              <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="agent-details-title"
+                tabIndex={-1}
+                onKeyDown={(event) => {
+                  if (event.key !== "Tab") return;
+                  const focusable = event.currentTarget.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])');
+                  if (!focusable.length) return;
+                  const first = focusable[0];
+                  const last = focusable[focusable.length - 1];
+                  if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                  } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                  }
+                }}
+                className="max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-amber-100/15 bg-slate-900 p-5 text-white shadow-2xl sm:p-7"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-amber-100/15 bg-amber-100/[0.06] text-2xl" aria-hidden="true">
+                      {selectedAgent.icon || "✦"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-100/65">Agent profile</p>
+                      <h3 id="agent-details-title" className="mt-1 text-2xl font-semibold tracking-tight">
+                        {selectedAgent.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-white/60">{selectedAgent.role}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    ref={agentDetailsCloseRef}
+                    onClick={() => setSelectedAgentId(null)}
+                    aria-label="Close agent details"
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 text-white/65 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200"
+                  >
+                    <X className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <p className="mt-5 text-sm leading-6 text-white/75">
+                  {selectedAgentDefinition?.notes || selectedAgent.description || "No description has been added to this agent’s registry entry yet."}
+                </p>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <p className="text-xs uppercase tracking-wide text-white/45">Production readiness</p>
+                    <p className={`mt-1 text-sm font-semibold ${agentControls.implementedAgentIds.includes(selectedAgent.id) ? "text-emerald-200" : "text-amber-100"}`}>
+                      {agentControls.implementedAgentIds.includes(selectedAgent.id) ? "Production handler available" : "Registered · handler not connected"}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-white/50">
+                      {agentControls.implementedAgentIds.includes(selectedAgent.id)
+                        ? agentControls.error ? "Server control status could not be verified." : agentControls.enabled[selectedAgent.id] ? "Enabled for new requests." : "Paused for new requests."
+                        : "This agent is visible in the registry but cannot run in production yet."}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                    <p className="text-xs uppercase tracking-wide text-white/45">Priority and scope</p>
+                    <p className="mt-1 text-sm font-semibold text-white/90">Priority {selectedAgentDefinition?.priority ?? "—"} · {selectedAgentDefinition?.scope || "Scope not recorded"}</p>
+                    <p className="mt-1 text-xs text-white/50">Health: {selectedAgent.health || "unknown"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Measured runs</p>
+                    <p className="mt-1 text-lg font-semibold">{selectedAgent.runCount ?? 0}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Recorded errors</p>
+                    <p className="mt-1 text-lg font-semibold">{selectedAgent.errorCount ?? 0}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 p-3">
+                    <p className="text-xs text-white/45">Average response</p>
+                    <p className="mt-1 text-lg font-semibold">{selectedAgent.avgResponseTime > 0 ? `${Math.round(selectedAgent.avgResponseTime)} ms` : "Not measured"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold">When it is called</h4>
+                    {selectedAgentDefinition?.triggersWhen?.length ? (
+                      <ul className="mt-2 flex flex-wrap gap-2">
+                        {selectedAgentDefinition.triggersWhen.map((trigger) => (
+                          <li key={trigger} className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-xs text-white/70">
+                            {trigger.replaceAll(".", " · ").replaceAll("_", " ")}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : <p className="mt-1 text-sm text-white/50">No trigger signals are listed.</p>}
+                  </div>
+                  {selectedAgentDefinition?.produces?.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold">What it contributes</h4>
+                      <ul className="mt-2 flex flex-wrap gap-2">
+                        {selectedAgentDefinition.produces.map((item) => (
+                          <li key={item} className="rounded-full border border-emerald-100/10 bg-emerald-100/[0.04] px-3 py-1.5 text-xs text-emerald-50/75">
+                            {item.replaceAll(".", " · ").replaceAll("_", " ")}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </section>
+            </div>
+          )}
 
           {/* Health Summary */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

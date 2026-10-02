@@ -1,7 +1,7 @@
 const crypto = require("node:crypto");
 const admin = require("firebase-admin");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { requireAdminScope, requireAdminScopeForListing } = require("./adminAuthorization");
+const { requireAdminScope, requireAdminScopeForListing, constrainQueryToAdminRegions } = require("./adminAuthorization");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -143,13 +143,29 @@ const listHelpDirectoryForAdmin = onCall({ region: REGION, enforceAppCheck: true
   if (["draft", "published", "paused", "archived"].includes(status)) {
     query = db.collection(COLLECTION).where("status", "==", status).orderBy("updatedAt", "desc").limit(100);
   }
+  if (region) query = query.where("state", "==", region);
+  else query = constrainQueryToAdminRegions(query, access, "support_directory.manage", "state");
   let snapshot;
   let eventsSnapshot;
   let correctionsSnapshot;
   try {
     snapshot = await query.get();
-    eventsSnapshot = await db.collection(AUDIT).orderBy("createdAt", "desc").limit(60).get();
-    correctionsSnapshot = await db.collection(CORRECTIONS).orderBy("createdAt", "desc").limit(100).get();
+    const regionalOnly = !access.isGodAdmin && !access.scopes.includes("support_directory.manage");
+    if (regionalOnly) {
+      const listingIds = snapshot.docs.map((doc) => doc.id);
+      const batches = Array.from({ length: Math.ceil(listingIds.length / 30) }, (_, index) => listingIds.slice(index * 30, (index + 1) * 30));
+      const eventSnapshots = await Promise.all(batches.map((ids) => db.collection(AUDIT)
+        .where("listingId", "in", ids).orderBy("createdAt", "desc").limit(60).get()));
+      const uniqueEvents = new Map(eventSnapshots.flatMap((eventBatch) => eventBatch.docs.map((doc) => [doc.id, doc])));
+      const events = [...uniqueEvents.values()].sort((a, b) => (b.get("createdAt")?.toMillis?.() || 0) - (a.get("createdAt")?.toMillis?.() || 0)).slice(0, 60);
+      eventsSnapshot = { docs: events };
+    } else {
+      eventsSnapshot = await db.collection(AUDIT).orderBy("createdAt", "desc").limit(60).get();
+    }
+    let correctionsQuery = db.collection(CORRECTIONS).orderBy("createdAt", "desc").limit(100);
+    correctionsQuery = region ? correctionsQuery.where("state", "==", region)
+      : constrainQueryToAdminRegions(correctionsQuery, access, "support_directory.manage", "state");
+    correctionsSnapshot = await correctionsQuery.get();
   } catch (error) {
     rethrowDirectoryReadError(error);
   }

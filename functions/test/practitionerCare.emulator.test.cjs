@@ -29,11 +29,11 @@ const unrelatedClientId = "other-client";
 const assignmentId = `${clientId}-${providerId}`;
 
 function clientRequest(data = {}) {
-  return { auth: { uid: clientId, token: { firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid: clientId, token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function providerRequest(data = {}, uid = providerId) {
-  return { auth: { uid, token: { role: "provider", firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid, token: { email_verified: true, role: "provider", firebase: { sign_in_provider: "password" } } }, data };
 }
 
 async function seed() {
@@ -199,7 +199,7 @@ test("an unconnected or unrelated practitioner cannot view a client's shared wor
 
 test("a signed-in client without a practitioner role cannot call the provider overview", async () => {
   await assert.rejects(
-    providerOverview({ auth: { uid: "ordinary-client", token: { firebase: { sign_in_provider: "password" } } }, data: { clientId } }),
+    providerOverview({ auth: { uid: "ordinary-client", token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data: { clientId } }),
     (error) => error.code === "permission-denied",
   );
 });
@@ -238,10 +238,8 @@ test("practice follow-up is sent only by its client while the connection is acti
   assert.equal(overview.practiceProgress[0].note, "Used it after work.");
 
   await db.collection("clientProviderAssignments").doc(assignmentId).update({ status: "ended" });
-  await assert.rejects(
-    submitPracticeProgress(clientRequest({ supportId: item.id, outcome: "not-yet" })),
-    (error) => error.code === "failed-precondition",
-  );
+  const safeRetry = await submitPracticeProgress(clientRequest({ supportId: item.id, outcome: "not-yet" }));
+  assert.equal(safeRetry.alreadySubmitted, true, "a retry must acknowledge the existing update without creating another after disconnection");
 });
 
 test("a practitioner cannot send a shared practice to an unconnected client", async () => {
@@ -293,10 +291,9 @@ test("connection request through consent and practitioner-shared support works a
 
   const sent = await requestConnection(clientRequest({ practitionerId: nextProviderId, introduction: "I would like help building a steady routine." }));
   assert.equal(sent.status, "pending");
-  await assert.rejects(
-    requestConnection(clientRequest({ practitionerId: nextProviderId, introduction: "A duplicate request." })),
-    (error) => error.code === "already-exists",
-  );
+  const duplicate = await requestConnection(clientRequest({ practitionerId: nextProviderId, introduction: "A duplicate request." }));
+  assert.equal(duplicate.requestId, sent.requestId);
+  assert.equal(duplicate.alreadyPending, true, "retries converge on the original pending request");
   assert.equal((await listMyConnectionRequests(clientRequest())).requests[0].status, "pending");
 
   const [inboxRequest] = (await listProviderConnectionRequests(providerRequest({}, nextProviderId))).requests;
@@ -307,7 +304,8 @@ test("connection request through consent and practitioner-shared support works a
     respondToConnection(providerRequest({ requestId: sent.requestId, decision: "accept" }, nextProviderId)),
     respondToConnection(providerRequest({ requestId: sent.requestId, decision: "accept" }, nextProviderId)),
   ]);
-  assert.equal(decisions.filter((result) => result.status === "fulfilled").length, 1);
+  assert.equal(decisions.filter((result) => result.status === "fulfilled").length, 2, "a duplicate accept safely returns the accepted state");
+  assert.ok(decisions.every((result) => result.value.status === "accepted"));
   const activeAssignments = await db.collection("clientProviderAssignments")
     .where("clientId", "==", clientId)
     .where("providerId", "==", nextProviderId)

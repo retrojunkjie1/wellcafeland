@@ -23,11 +23,11 @@ const providerId = "schedule-provider";
 const assignmentId = `${clientId}-${providerId}`;
 
 function clientRequest(data = {}, uid = clientId) {
-  return { auth: { uid, token: { firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid, token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function providerRequest(data = {}, uid = providerId) {
-  return { auth: { uid, token: { role: "provider", firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: { uid, token: { email_verified: true, role: "provider", firebase: { sign_in_provider: "password" } } }, data };
 }
 
 function futureStart(hoursAhead = 48) {

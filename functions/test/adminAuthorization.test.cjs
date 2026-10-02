@@ -85,6 +85,23 @@ test("a regional administrator can load an assigned-scope queue without seeing u
   );
 });
 
+test("regional queue query uses only the assigned region set", () => {
+  const filters = [];
+  const query = { where(...args) { filters.push(args); return this; } };
+  const access = { isGodAdmin: false, scopes: [], regionalScopes: { "support_directory.manage": ["CO", "WY"] } };
+  assert.equal(authorization.constrainQueryToAdminRegions(query, access, "support_directory.manage", "state"), query);
+  assert.deepEqual(filters, [["state", "in", ["CO", "WY"]]]);
+
+  const oneRegionFilters = [];
+  authorization.constrainQueryToAdminRegions({ where(...args) { oneRegionFilters.push(args); return this; } }, {
+    isGodAdmin: false, scopes: [], regionalScopes: { "practitioner.review": ["CO"] },
+  }, "practitioner.review", "region");
+  assert.deepEqual(oneRegionFilters, [["region", "==", "CO"]]);
+  assert.throws(() => authorization.constrainQueryToAdminRegions(query, {
+    isGodAdmin: false, scopes: [], regionalScopes: {},
+  }, "giving.review", "state"), { code: "permission-denied" });
+});
+
 test("verified owner email can bootstrap Alpha Owner when a stable UID is not configured", () => {
   const priorEmail = process.env.ALPHA_OWNER_EMAIL;
   process.env.ALPHA_OWNER_EMAIL = "owner@example.com";

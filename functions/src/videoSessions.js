@@ -3,6 +3,7 @@ const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const { AccessToken, TrackSource } = require("livekit-server-sdk");
 const { deriveVideoRoomAccess } = require("./videoSessionPolicy");
+const { requireVerifiedAccount } = require("./accountAccess");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -41,10 +42,7 @@ exports.createAppointmentVideoToken = onCall({
   secrets: [LIVEKIT_API_KEY, LIVEKIT_API_SECRET],
   enforceAppCheck: true,
 }, async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid || request.auth.token.firebase?.sign_in_provider === "anonymous") {
-    throw new HttpsError("unauthenticated", "Sign in to join your WellnessCafe session.");
-  }
+  const uid = requireVerifiedAccount(request, "join your WellnessCafe session");
 
   const appointmentId = typeof request.data?.appointmentId === "string" ? request.data.appointmentId.trim() : "";
   if (!appointmentId || appointmentId.length > 128 || appointmentId.includes("/")) {

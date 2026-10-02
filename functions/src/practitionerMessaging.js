@@ -4,6 +4,7 @@ const providerScheduling = require("./providerScheduling");
 const { consumeMessageRequestQuota } = require("../aiRateLimiter");
 const { recordMessageQuotaBlock } = require("./securitySignals");
 const { recordTrustedSupportActivity } = require("./supportActivity");
+const { requireVerifiedAccount } = require("./accountAccess");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -97,10 +98,7 @@ exports.sendProviderMessage = onCall({ region: REGION, enforceAppCheck: true }, 
 });
 
 exports.listMyPractitionerMessages = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const clientId = request.auth?.uid;
-  if (!clientId || request.auth.token.firebase?.sign_in_provider === "anonymous") {
-    throw new HttpsError("unauthenticated", "Sign in to open practitioner messages.");
-  }
+  const clientId = requireVerifiedAccount(request, "open practitioner messages");
   const practitionerId = typeof request.data?.practitionerId === "string" ? request.data.practitionerId.trim() : "";
   if (!practitionerId || practitionerId.length > 128) throw new HttpsError("invalid-argument", "Choose a connected practitioner.");
   return db.runTransaction(async (transaction) => {
@@ -112,10 +110,7 @@ exports.listMyPractitionerMessages = onCall({ region: REGION, enforceAppCheck: t
 });
 
 exports.sendClientMessage = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const clientId = request.auth?.uid;
-  if (!clientId || request.auth.token.firebase?.sign_in_provider === "anonymous") {
-    throw new HttpsError("unauthenticated", "Sign in to send practitioner messages.");
-  }
+  const clientId = requireVerifiedAccount(request, "send practitioner messages");
   const practitionerId = typeof request.data?.practitionerId === "string" ? request.data.practitionerId.trim() : "";
   const content = typeof request.data?.content === "string" ? request.data.content.trim() : "";
   if (!practitionerId || practitionerId.length > 128) throw new HttpsError("invalid-argument", "Choose a connected practitioner.");

@@ -1,98 +1,109 @@
-// src/hooks/useAdminClaim.js
-import { useEffect, useState } from "react";
-import { getAuth } from "firebase/auth";
+import { useSyncExternalStore } from "react";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getMyAdminAccess } from "@/services/adminAuthorization";
 
-export function useAdminClaim() {
-  const [state, setState] = useState({
-    adminReady: false,
-    isAdmin: false,
-    claims: null,
-  });
+const EMPTY_STATE = Object.freeze({ adminReady: false, isAdmin: false, claims: null });
+let state = EMPTY_STATE;
+let authListener = null;
+let requestVersion = 0;
+let pendingRequest = null;
+const subscribers = new Set();
 
-  const refreshClaims = async () => {
+function publish(nextState) {
+  state = nextState;
+  subscribers.forEach((subscriber) => subscriber());
+}
+
+function subscribe(subscriber) {
+  subscribers.add(subscriber);
+  if (!authListener) {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (!user) {
-        setState({
-          adminReady: true,
-          isAdmin: false,
-          claims: null,
-        });
-        return;
-      }
-
-      try {
-        const tokenResult = await user.getIdTokenResult(false);
-        const tokenClaims = tokenResult?.claims || {};
-        let access;
-        try {
-          access = await getMyAdminAccess();
-        } catch (accessError) {
-          // Local development may run a newer UI against Functions that have
-          // not yet been deployed. This fallback is UI-only; callable and
-          // Firestore authorization remain server enforced.
-          if (!import.meta.env.DEV) throw accessError;
-          access = {
-            // The UI may recognize a trusted root token during local Functions
-            // development, but legacy admin labels never confer access.
-            isAdmin: tokenClaims.godAdmin === true,
-            isGodAdmin: tokenClaims.godAdmin === true,
-            scopes: [],
-            regionalScopes: {},
-            regions: [],
-          };
-        }
-        const claims = {
-          ...tokenClaims,
-          admin: access.isAdmin === true,
-          godAdmin: access.isGodAdmin === true,
-          adminScopes: access.scopes || [],
-          adminRegionalScopes: access.regionalScopes || {},
-          adminRegions: access.regions || [],
-        };
-
-        setState({
-          adminReady: true,
-          isAdmin: access.isAdmin === true,
-          claims,
-        });
-      } catch (tokenErr) {
-        console.error("Failed to get token result:", tokenErr);
-        setState({
-          adminReady: true,
-          isAdmin: false,
-          claims: null,
-        });
-      }
-    } catch (err) {
-      console.error("Failed to get admin claims:", err);
-      setState({
-        adminReady: true,
-        isAdmin: false,
-        claims: null,
+      authListener = onAuthStateChanged(getAuth(), (user) => {
+        void loadAccess(user, true);
+      }, () => {
+        requestVersion += 1;
+        pendingRequest = null;
+        publish({ adminReady: true, isAdmin: false, claims: null });
       });
+    } catch {
+      publish({ adminReady: true, isAdmin: false, claims: null });
     }
-  };
+  }
+  return () => subscribers.delete(subscriber);
+}
 
-  useEffect(() => {
-    refreshClaims();
-    
-    // Listen to auth state changes to refresh claims
-    const auth = getAuth();
-    const unsubscribe = auth.onAuthStateChanged(() => {
-      refreshClaims();
-    });
-    
-    return () => unsubscribe();
-  }, []);
+function getSnapshot() {
+  return state;
+}
 
-  return {
-    adminReady: state.adminReady,
-    isAdmin: state.isAdmin,
-    claims: state.claims,
-    refreshClaims,
-  };
+async function loadAccess(user, force = false) {
+  if (!user) {
+    requestVersion += 1;
+    pendingRequest = null;
+    publish({ adminReady: true, isAdmin: false, claims: null });
+    return;
+  }
+
+  const uid = user.uid;
+  if (!force && state.adminReady && state.claims?.uid === uid) return;
+  if (pendingRequest?.uid === uid) return pendingRequest.promise;
+
+  const version = ++requestVersion;
+  publish({ adminReady: false, isAdmin: false, claims: null });
+
+  const promise = (async () => {
+    let tokenClaims = {};
+    try {
+      const tokenResult = await user.getIdTokenResult(false);
+      tokenClaims = tokenResult?.claims || {};
+
+      let access;
+      try {
+        access = await getMyAdminAccess();
+      } catch (accessError) {
+        // Local development may run a newer UI against Functions that have
+        // not yet been deployed. This fallback affects navigation only; server
+        // callables and Firestore rules remain the authorization boundary.
+        if (!import.meta.env.DEV) throw accessError;
+        access = {
+          isAdmin: tokenClaims.godAdmin === true,
+          isGodAdmin: tokenClaims.godAdmin === true,
+          scopes: [],
+          regionalScopes: {},
+        };
+      }
+
+      if (version !== requestVersion || getAuth().currentUser?.uid !== uid) return;
+      const claims = {
+        ...tokenClaims,
+        uid,
+        admin: access.isAdmin === true,
+        godAdmin: access.isGodAdmin === true,
+        adminScopes: access.scopes || [],
+        adminRegionalScopes: access.regionalScopes || {},
+        adminRegions: access.regions || [],
+      };
+      publish({ adminReady: true, isAdmin: access.isAdmin === true, claims });
+    } catch (error) {
+      if (version !== requestVersion) return;
+      if (import.meta.env.DEV) console.error("Failed to load admin access:", error);
+      publish({ adminReady: true, isAdmin: false, claims: null });
+    }
+  })();
+
+  pendingRequest = { uid, promise };
+  try {
+    await promise;
+  } finally {
+    if (pendingRequest?.promise === promise) pendingRequest = null;
+  }
+}
+
+export function refreshAdminAccess() {
+  return loadAccess(getAuth().currentUser, true);
+}
+
+export function useAdminClaim() {
+  const current = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return { ...current, refreshClaims: refreshAdminAccess };
 }
