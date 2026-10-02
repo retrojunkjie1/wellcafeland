@@ -18,9 +18,9 @@ Server-side account verification is now enforced for practitioner application en
 
 ### 1. Now: connect and verify the built OS
 
-Close a real authorized client → practitioner → admin journey: role-aware entry, application review, connection, consent, shared practice, client choice, scheduling, and optional follow-up. Record what is blocked by missing role claims or accounts. Fix only demonstrated access or integration gaps.
+Backend emulator coverage now passes for scoped-admin application approval, client/practitioner connection, consent, messaging, support, scheduling, practice follow-up, and Firestore account boundaries. Close the real authorized client → practitioner → admin browser journey next: role-aware entry, application review, connection, consent, shared practice, client choice, scheduling, and optional follow-up. Record what is blocked by missing role claims or accounts. Fix only demonstrated access or integration gaps.
 
-**Exit:** intended roles reach the correct workspace, server-side permission checks are demonstrated, consent is respected, and the current release record distinguishes passed paths from blocked ones.
+**Exit:** intended roles reach the correct workspace, server-side permission checks are demonstrated in emulators and production, consent is respected, and the current release record distinguishes passed paths from blocked ones. Emulator evidence does not substitute for production role switching or a real video-call acceptance test.
 
 ### 2. Next: simplify and complete the client journey
 
