@@ -1,5 +1,9 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+## Legacy admin entry consolidation — local implementation (2026-10-02)
+
+Removed the browser-local admin-key gate and its hard-coded fallback from the legacy admin entry surfaces. Legacy operational routes now resolve through the server-hydrated admin assignment snapshot and require the matching capability before entering; regional assignments still rely on server-side region checks for data actions. Retired routes lead to the supported God-Eye, operational-control, or reviewed-help surfaces. Removed the old Sessions Admin page because it offered edit/remove actions that were not connected to server workflows. This aligns route visibility with the Alpha Owner/delegated-admin model; it does not replace callable authorization or Firestore Rules. **Local only; not deployed.** Build validation and the release remain open.
+
 ## Admin access hydration — single shared source (local, 2026-10-02)
 
 Admin navigation, route guards, the account header, and admin panels now subscribe to one shared access snapshot instead of each creating an auth listener and making duplicate `getMyAdminAccess` calls. Initial Firebase auth restoration triggers one lookup; simultaneous refreshes for the same account share the in-flight request, and results from a previous account are discarded after sign-out or account switching. Authorization still comes from server callables and Firestore Rules; this shared state only drives navigation. **Local only; not deployed.** No role or account data changed. Browser verification and the coordinated release remain open.

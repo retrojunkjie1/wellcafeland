@@ -113,7 +113,6 @@ const SessionPlayerPage = lazy(() => import("./apps/ai/SessionPlayerPage"));
 const SessionViewerPage = lazy(() => import("./apps/ai/SessionViewerPage"));
 const SessionComposerPage = lazy(() => import("./apps/ai/SessionComposerPage"));
 const SessionPreviewPage = lazy(() => import("./apps/ai/SessionPreviewPage"));
-const SessionsAdminPage = lazy(() => import("./apps/dashboard/SessionsAdminPage"));
 
 const LoginPage = lazy(() => import("./apps/auth/LoginPage"));
 const SignupPage = lazy(() => import("./apps/auth/SignupPage"));
@@ -125,15 +124,9 @@ const PlanStartPage = lazy(() => import("./apps/plan/PlanStartPage"));
 const AdminConsolePage = lazy(() => import("./apps/dashboard/AdminConsolePage"));
 const AdminWorkspaceAccessPage = lazy(() => import("./apps/admin/AdminWorkspaceAccessPage"));
 
-const ThemeControlPanel = lazy(() => import("./admin/ThemeControlPanel"));
-const TemplatesManagerPage = lazy(() => import("./apps/admin/TemplatesManagerPage"));
-const OverseerConsoleUltra = lazy(() => import("./apps/overseer/OverseerConsoleUltra").then((module) => ({ default: module.OverseerConsoleUltra })));
-const ContentStudioPage = lazy(() => import("./apps/admin/ContentStudioPage"));
-const SeedDataPage = lazy(() => import("./apps/admin/SeedDataPage"));
-import AdminRoute from "./components/AdminRoute";
 import ToolRouteBoundary from "./components/system/ToolRouteBoundary";
 import RequireAuth from "./components/routing/RequireAuth";
-import RequireRole, { RequireAdmin } from "./components/routing/RequireRole";
+import RequireRole, { RequireAdmin, RequireAdminScope } from "./components/routing/RequireRole";
 import WorkspaceLandingPage from "./components/routing/WorkspaceLandingPage";
 import UnauthorizedPage from "./components/routing/UnauthorizedPage";
 import AdminAccessPage from "./components/routing/AdminAccessPage";
@@ -416,11 +409,9 @@ const App = () => {
             path="/admin/theme"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminRoute>
-                    <ThemeControlPanel />
-                  </AdminRoute>
-                </RequireAdmin>
+                <RequireAdminScope scope="platform.operations.control">
+                  <Navigate to="/admin/control" replace />
+                </RequireAdminScope>
               </RequireAuth>
             }
           />
@@ -428,11 +419,9 @@ const App = () => {
             path="/admin/templates"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminRoute>
-                    <TemplatesManagerPage />
-                  </AdminRoute>
-                </RequireAdmin>
+                <RequireAdminScope scope="platform.operations.control">
+                  <Navigate to="/admin/control" replace />
+                </RequireAdminScope>
               </RequireAuth>
             }
           />
@@ -440,11 +429,9 @@ const App = () => {
             path="/admin/sessions"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminRoute>
-                    <SessionsAdminPage />
-                  </AdminRoute>
-                </RequireAdmin>
+                <RequireAdminScope scope="platform.operations.view">
+                  <Navigate to="/admin/console" replace />
+                </RequireAdminScope>
               </RequireAuth>
             }
           />
@@ -462,11 +449,9 @@ const App = () => {
             path="/admin/overseer-ultra"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminRoute>
-                    <OverseerConsoleUltra />
-                  </AdminRoute>
-                </RequireAdmin>
+                <RequireAdminScope scope="platform.operations.control">
+                  <Navigate to="/admin/console" replace />
+                </RequireAdminScope>
               </RequireAuth>
             }
           />
@@ -474,11 +459,9 @@ const App = () => {
             path="/admin/content"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminRoute>
-                    <ContentStudioPage />
-                  </AdminRoute>
-                </RequireAdmin>
+                <RequireAdminScope scope="platform.operations.control">
+                  <Navigate to="/admin/control" replace />
+                </RequireAdminScope>
               </RequireAuth>
             }
           />
@@ -486,11 +469,9 @@ const App = () => {
             path="/admin/seed"
             element={
               <RequireAuth>
-                <RequireAdmin>
-                  <AdminRoute>
-                    <SeedDataPage />
-                  </AdminRoute>
-                </RequireAdmin>
+                <RequireAdminScope scope="support_directory.manage">
+                  <Navigate to="/admin/help-directory" replace />
+                </RequireAdminScope>
               </RequireAuth>
             }
           />

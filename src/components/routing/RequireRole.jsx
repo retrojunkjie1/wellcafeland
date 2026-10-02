@@ -72,4 +72,36 @@ export const RequireAdmin = ({ children, redirectTo = "/unauthorized" }) => {
   return <>{children}</>;
 };
 
+/**
+ * Gate legacy admin surfaces by the same server-hydrated capability snapshot
+ * used by the main God-Eye workspace. A regional assignment grants entry to
+ * the review surface; each data action still enforces its region server-side.
+ */
+export const RequireAdminScope = ({ children, scope, ownerOnly = false, redirectTo = "/admin/access" }) => {
+  const { user, loading } = useAuth();
+  const { isAdmin, adminReady, claims } = useAdminClaim();
+
+  if (loading || !adminReady) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-400 border-r-transparent" />
+          <p className="text-sm text-muted-foreground">Checking administrator access…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) return <Navigate to={redirectTo} replace />;
+
+  const isOwner = claims?.godAdmin === true;
+  const hasGlobalScope = scope && claims?.adminScopes?.includes(scope);
+  const hasRegionalScope = scope
+    && Array.isArray(claims?.adminRegionalScopes?.[scope])
+    && claims.adminRegionalScopes[scope].length > 0;
+  const allowed = isOwner || (!ownerOnly && (hasGlobalScope || hasRegionalScope));
+
+  return allowed ? <>{children}</> : <Navigate to={redirectTo} replace />;
+};
+
 export default RequireRole;
