@@ -2,7 +2,7 @@ const admin = require("firebase-admin");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { requireAdminScope } = require("./adminAuthorization");
 
-const IMPLEMENTED_AGENT_IDS = Object.freeze(["seer", "oracle", "overseer", "sentinel", "healer_spiritual"]);
+const IMPLEMENTED_AGENT_IDS = Object.freeze(["seer", "oracle", "overseer", "sentinel", "healer_spiritual", "cherubim"]);
 const CONTROLS_REF = "admin/agentControls";
 const SYSTEM_SETTINGS_REF = "admin/systemSettings";
 const MAX_RECENT_EVENTS = 100;

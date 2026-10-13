@@ -65,6 +65,7 @@ export const ROUTE_META = [
 
   // Circles
   { pattern: "/circles", title: "Circles", parent: "/home", rootFallback: "/home" },
+  { pattern: "/circles/invite/:inviteToken", title: "Friend group invitation", parent: "/circles", rootFallback: "/circles" },
   { pattern: "/circles/:circleId", title: "Circle", parent: "/circles", rootFallback: "/circles" },
   { pattern: "/circles/:circleId/threads/new", title: "New Thread", parent: "/circles/:circleId", rootFallback: "/circles/:circleId" },
   { pattern: "/circles/:circleId/threads/:threadId", title: "Thread", parent: "/circles/:circleId", rootFallback: "/circles/:circleId" },

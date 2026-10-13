@@ -46,6 +46,7 @@ const adminUserAccess = require("./adminUserAccess");
 const adminAuthorization = require("./adminAuthorization");
 const supportActivity = require("./supportActivity");
 const securitySignals = require("./securitySignals");
+const friendCircles = require("./friendCircles");
 // Link Preview (v2)
 const { linkPreview } = require("./linkPreview");
 const recoveryMeetings = require("./recoveryMeetings");
@@ -207,6 +208,24 @@ exports.recordSupportActivity = supportActivity.recordSupportActivity;
 exports.listSupportActivityForAdmin = supportActivity.listSupportActivityForAdmin;
 exports.listOpenAccountSecuritySignals = securitySignals.listOpenAccountSecuritySignals;
 exports.reviewAccountSecuritySignal = securitySignals.reviewAccountSecuritySignal;
+exports.createPrivateFriendCircle = friendCircles.createPrivateFriendCircle;
+exports.listMyPrivateFriendCircles = friendCircles.listMyPrivateFriendCircles;
+exports.createPrivateFriendCircleInvite = friendCircles.createPrivateFriendCircleInvite;
+exports.previewPrivateFriendCircleInvite = friendCircles.previewPrivateFriendCircleInvite;
+exports.acceptPrivateFriendCircleInvite = friendCircles.acceptPrivateFriendCircleInvite;
+exports.revokePrivateFriendCircleInvite = friendCircles.revokePrivateFriendCircleInvite;
+exports.listPrivateFriendCircleMessages = friendCircles.listPrivateFriendCircleMessages;
+exports.blockPrivateFriendCircleMember = friendCircles.blockPrivateFriendCircleMember;
+exports.unblockPrivateFriendCircleMember = friendCircles.unblockPrivateFriendCircleMember;
+exports.reportPrivateFriendCircleMessage = friendCircles.reportPrivateFriendCircleMessage;
+exports.listOpenPrivateFriendCircleReports = friendCircles.listOpenPrivateFriendCircleReports;
+exports.reviewPrivateFriendCircleReport = friendCircles.reviewPrivateFriendCircleReport;
+exports.deletePrivateFriendCircleMessage = friendCircles.deletePrivateFriendCircleMessage;
+exports.postPrivateFriendCircleMessage = friendCircles.postPrivateFriendCircleMessage;
+exports.removePrivateFriendCircleMember = friendCircles.removePrivateFriendCircleMember;
+exports.leavePrivateFriendCircle = friendCircles.leavePrivateFriendCircle;
+exports.transferPrivateFriendCircleOwnership = friendCircles.transferPrivateFriendCircleOwnership;
+exports.closePrivateFriendCircle = friendCircles.closePrivateFriendCircle;
 
 // ---------------------------
 // v1 LEGACY FUNCTIONS (SAFE)

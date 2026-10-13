@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { withFrom } from "@/navigation/linkState";
 import { Users, Heart, Sparkles, Calendar } from "lucide-react";
 import { listCircles, joinCircle, getUserCircles } from "@/services/circlesService";
+import PrivateFriendGroupsPanel from "./PrivateFriendGroupsPanel";
 
 const CirclesPage = () => {
   const navigate = useNavigate();
@@ -81,11 +82,12 @@ const CirclesPage = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <div className="lux-shell py-10">
+        <PrivateFriendGroupsPanel />
         {actionError && <p role="alert" className="mb-4 rounded-xl border border-rose-300/20 bg-rose-400/[0.06] px-4 py-3 text-sm text-rose-100/85">{actionError}</p>}
         {circles.length === 0 ? (
           <div className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center sm:p-8">
-            <h2 className="text-lg font-medium text-white">No circles are available right now</h2>
-            <p className="mt-2 text-sm leading-relaxed text-white/60">You can explore other ways to connect or find local support while community circles are unavailable.</p>
+            <h2 className="text-lg font-medium text-white">No public circles are available right now</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/60">You can create an invite-only group above, explore the wider community, or find local support.</p>
             <div className="mt-5 flex flex-wrap justify-center gap-3">
               <button type="button" onClick={() => navigate("/social/feed")} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-white/85 hover:bg-white/5">Explore community</button>
               <button type="button" onClick={() => navigate("/assistance")} className="min-h-11 rounded-full border border-amber-200/20 px-4 text-sm text-amber-100/85 hover:bg-amber-100/5">Find local support</button>

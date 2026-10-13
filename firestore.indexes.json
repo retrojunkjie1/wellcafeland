@@ -501,6 +501,13 @@
   ],
   "fieldOverrides": [
     {
+      "collectionGroup": "private_members",
+      "fieldPath": "uid",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION_GROUP" }
+      ]
+    },
+    {
       "collectionGroup": "support_activity_events",
       "fieldPath": "expiresAt",
       "ttl": true,

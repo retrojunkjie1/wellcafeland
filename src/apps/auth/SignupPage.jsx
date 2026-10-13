@@ -18,7 +18,10 @@ const SignupPage = () => {
   const [accountIntent, setAccountIntent] = useState(cameFromProvider ? "support" : "client");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const destination = ["support", "both"].includes(accountIntent) ? "/provider" : location.state?.from?.pathname || "/home";
+  const requestedDestination = location.state?.from?.pathname || "/home";
+  const destination = requestedDestination.startsWith("/circles/invite/")
+    ? requestedDestination
+    : ["support", "both"].includes(accountIntent) ? "/provider" : requestedDestination;
 
   React.useEffect(() => {
     if (isAuthenticated && user && !user.isAnonymous && user.emailVerified) {

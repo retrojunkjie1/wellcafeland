@@ -141,6 +141,7 @@ const CirclesPage = lazy(() => import("./apps/circles/CirclesPage"));
 const CircleDetailPage = lazy(() => import("./apps/circles/CircleDetailPage"));
 const CircleThreadPage = lazy(() => import("./apps/circles/CircleThreadPage"));
 const CircleThreadCreation = lazy(() => import("./apps/circles/CircleThreadCreation"));
+const PrivateFriendInvitePage = lazy(() => import("./apps/circles/PrivateFriendInvitePage"));
 const SocialFeedPage = lazy(() => import("./apps/social/SocialFeedPage"));
 const DirectMessagePage = lazy(() => import("./apps/social/DirectMessagePage"));
 const ConnectionsPage = lazy(() => import("./apps/social/ConnectionsPage"));
@@ -214,6 +215,7 @@ const App = () => {
           <Route path="/tools/grounding/54321" element={<ToolRouteBoundary><Grounding54321 /></ToolRouteBoundary>} />
           <Route path="/support" element={<SupportHubPage />} />
           <Route path="/circles" element={<CirclesPage />} />
+          <Route path="/circles/invite/:inviteToken" element={<PrivateFriendInvitePage />} />
           <Route path="/circles/:circleId" element={<CircleDetailPage />} />
           <Route path="/circles/:circleId/threads/new" element={<CircleThreadCreation />} />
           <Route path="/circles/:circleId/threads/:threadId" element={<CircleThreadPage />} />

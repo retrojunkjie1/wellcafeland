@@ -54,6 +54,7 @@ import EventItem from "./components/EventItem";
 import { getFeatureSwitchPresentation } from "./featureSwitchCatalog";
 import AdminNotificationPolicy from "./AdminNotificationPolicy";
 import AdminReviewQueues from "./AdminReviewQueues";
+import PrivateFriendGroupReportsQueue from "./PrivateFriendGroupReportsQueue";
 import { INTELLIGENCE_AGENTS } from "../../ai/agents/agentRegistry";
 import { AgentHealthBar, AgentReadinessMeter, MemberBaseVisual, RiskSeverityMeter, RiskTrendChart, RingMeter } from "./components/ConsoleVisuals";
 import "./components/GodEyeVisuals.css";
@@ -544,6 +545,7 @@ const AdminConsolePage = () => {
             giverCount={reviewQueueCounts.communityGivers}
             meetingSourceCount={reviewQueueCounts.meetingSources}
           />
+          <PrivateFriendGroupReportsQueue />
         </section>
 
         <section hidden={activeConsoleTab !== "queues"} className="flex flex-col justify-between gap-3 rounded-2xl border border-sky-200/15 bg-sky-100/[0.025] p-4 sm:flex-row sm:items-center" aria-label="Workspace access management">

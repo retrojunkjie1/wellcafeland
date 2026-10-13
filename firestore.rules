@@ -160,6 +160,16 @@ service cloud.firestore {
     match /community_supporters/{id} { allow read, write: if false; }
     match /community_support_audit/{id} { allow read, write: if false; }
 
+    // Private friend groups, memberships, invite tokens, and audit records are
+    // callable-only. Invite URLs are single-use bearer links; clients never
+    // read or write group records directly from Firestore.
+    match /private_friend_circles/{circleId} { allow read, write: if false; }
+    match /private_friend_circles/{circleId}/{nested=**} { allow read, write: if false; }
+    match /private_friend_circle_invites/{inviteId} { allow read, write: if false; }
+    match /private_friend_circle_audit/{eventId} { allow read, write: if false; }
+    match /private_friend_circle_reports/{reportId} { allow read, write: if false; }
+    match /private_friend_circle_report_limits/{uid} { allow read, write: if false; }
+
     // Recovery meeting publication is read and written only by callable
     // functions so release pointers, source permissions, and revisions stay
     // consistent. The public finder consumes sanitized results from its API.
