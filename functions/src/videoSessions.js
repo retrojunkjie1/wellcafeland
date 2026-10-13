@@ -4,6 +4,7 @@ const admin = require("firebase-admin");
 const { AccessToken, TrackSource } = require("livekit-server-sdk");
 const { deriveVideoRoomAccess } = require("./videoSessionPolicy");
 const { requireVerifiedAccount } = require("./accountAccess");
+const providerScheduling = require("./providerScheduling");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -60,6 +61,14 @@ exports.createAppointmentVideoToken = onCall({
     if (access.reason === "not-confirmed") throw new HttpsError("failed-precondition", "Both people must confirm the appointment before joining.");
     if (access.reason === "outside-join-window") throw new HttpsError("failed-precondition", "The room opens 10 minutes before the appointment and closes shortly after it ends.");
     throw new HttpsError("failed-precondition", "The appointment details are incomplete, so this room cannot open.");
+  }
+
+  // Appointment participation alone is not sufficient for practitioners:
+  // their workspace may have been revoked after the appointment was created.
+  // Re-read the trusted account document before minting a room credential so
+  // stale ID-token claims cannot preserve video access.
+  if (access.role === "practitioner") {
+    await providerScheduling.requireProviderCapability(request, "provider.appointments.read");
   }
 
   const connection = await db.collection("clientProviderAssignments")

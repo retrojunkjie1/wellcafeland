@@ -19,8 +19,6 @@ export function LearningPathView({ topicId, onBack }) {
     activeTileId,
     currentInsight,
     openTile,
-    refreshInsight,
-    closeInsight,
   } = useLearningTopic(topicId);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -150,11 +148,8 @@ export function LearningPathView({ topicId, onBack }) {
       {currentInsight && (
         <LearningInsightPanel
           insight={currentInsight}
-          onRefresh={refreshInsight}
-          onClose={closeInsight}
         />
       )}
     </div>
   );
 }
-

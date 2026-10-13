@@ -1,447 +1,554 @@
 // src/components/tools/BreathingSessionView.jsx
-// Luxury cinematic orb-based breathing session with premium voice guide
-// Multi-million dollar wellness experience
+// Calm, phase-synced breathing field with optional spoken guidance.
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Volume2, VolumeX } from "lucide-react";
-import { speakText, unlockAudio, stopSpeaking, getDiagnostics } from "@/utils/voiceGuide";
-import { useAudio } from "@/experience/audio/AudioProvider";
-import { useSpokenGuidance } from "@/experience/audio/useSpokenGuidance";
+import { speakText as generateNarration } from "@/services/multimodalClient";
+import { CANONICAL_TOOL_GUIDE_FACE } from "./toolCharacterIdentity";
+
+function getBreathingNarration(pattern) {
+  const closingNote = "I’ll guide the first three cycles, then leave space for your own pace while the visual continues.";
+  const inhale = [
+    "Let the breath arrive easily; nothing to force.",
+    "Notice the air coming in, just as it is.",
+    "Feel the support beneath you as this breath arrives.",
+  ];
+  const exhale = [
+    "Let it leave slowly; ease your shoulders if comfortable.",
+    "Imagine setting down one small thing for now.",
+    "Let the exhale end on its own; no pushing.",
+  ];
+
+  if (pattern[1] === 4 && pattern[2] === 4 && pattern[3] === 4) {
+    return {
+      opening: `Box breathing has four clear steps: breathe in, pause, breathe out, pause. The even rhythm can give your attention a simple place to return. Let the chair or floor support you. Keep each breath comfortable; both pauses are optional. If you feel strain, skip a pause or return to your natural breath. When your mind wanders, that is ordinary. Notice it kindly, then come back to the next easy step. ${closingNote}`,
+      inhale,
+      hold1: "Pause only if easy; breathe sooner if you need.",
+      exhale,
+      hold2: "This pause is optional. Continue when your body is ready.",
+    };
+  }
+
+  if (pattern[1] === 7 && pattern[2] === 8) {
+    return {
+      opening: `This pattern has a four-count inhale, a seven-count pause, and an eight-count exhale. The long pause and exhale can feel demanding; this is an option, never a test. Keep the breath easy, and skip the pause or return to natural breathing if you prefer. Feel the support beneath you. If your attention wanders, that is okay. Notice, then gently meet the next breath. Stop whenever you need. ${closingNote}`,
+      inhale,
+      hold1: "Stay only if comfortable. Let the breath move whenever you need.",
+      exhale,
+    };
+  }
+
+  return {
+    opening: `This is a gentle four-in, six-out rhythm: an easy inhale, then a little longer to breathe out. The steady count gives your attention one simple place to rest; there is no result you have to reach. Feel where the chair or floor supports you. If your mind wanders, that is normal. Notice it without judgment and return to the next breath. Keep the breath comfortable, or breathe naturally at any time. ${closingNote}`,
+    inhale,
+    exhale,
+  };
+}
+
+function getPhaseCue(narration, phaseName, cycle) {
+  const cue = narration[phaseName];
+  return Array.isArray(cue) ? cue[cycle % cue.length] : cue;
+}
+
+const getNarrationErrorMessage = (error) => {
+  if (error?.code === "APP_CHECK_REQUIRED" || error?.code === "APP_CHECK_INVALID" || /app verification/i.test(error?.message || "")) {
+    return "Local voice needs a registered Firebase App Check debug token. After it is registered, sign in here to use the natural voice guide.";
+  }
+  if (error?.code === "AUTH_REQUIRED" || error?.code === "AUTH_INVALID" || /verify this session|sign in/i.test(error?.message || "")) {
+    return "Sign in to use the natural voice guide. The visual breathing pace is still available.";
+  }
+  return "Natural narration could not be prepared. The visual breathing pace is still available.";
+};
+
+const SPOKEN_GUIDANCE_CYCLES = 3;
+
+const drawBreathingFrame = (context, sourcePixels, outputPixels, phaseName, progress, motionScale = 1) => {
+  const { width, height, data: source } = sourcePixels;
+  const output = outputPixels.data;
+  const eased = 0.5 - Math.cos(Math.PI * Math.max(0, Math.min(1, progress))) / 2;
+  const inhaleAmount = (phaseName === "inhale" ? eased : phaseName === "hold1" ? 1 : phaseName === "exhale" ? 1 - eased : 0) * motionScale;
+
+  if (inhaleAmount < 0.002) {
+    output.set(source);
+    context.putImageData(outputPixels, 0, 0);
+    return;
+  }
+
+  // Inverse-map a low-resolution image mesh into its breathing pose. This keeps
+  // the photo continuous (no tile seams) and pins the face, hands, room, and camera.
+  const gaussian = (value, center, spread) => Math.exp(-((value - center) ** 2) / (2 * spread ** 2));
+  for (let y = 0; y < height; y += 1) {
+    const ny = y / (height - 1);
+    const chestY = gaussian(ny, 0.425, 0.105);
+    const abdomenY = gaussian(ny, 0.545, 0.09);
+    for (let x = 0; x < width; x += 1) {
+      const nx = x / (width - 1);
+      const chest = gaussian(nx, 0.5, 0.16) * chestY;
+      const abdomen = gaussian(nx, 0.5, 0.145) * abdomenY;
+      // Expand the ribcage and lift the sternum enough to read at phone size,
+      // while keeping the face, arms, clothing edges, and camera still.
+      const sourceX = Math.max(0, Math.min(width - 1, x - (nx - 0.5) * inhaleAmount * (118 * chest + 62 * abdomen)));
+      const sourceY = Math.max(0, Math.min(height - 1, y - inhaleAmount * (-32 * chest + 18 * abdomen)));
+      const x0 = Math.floor(sourceX);
+      const y0 = Math.floor(sourceY);
+      const x1 = Math.min(width - 1, x0 + 1);
+      const y1 = Math.min(height - 1, y0 + 1);
+      const xWeight = sourceX - x0;
+      const yWeight = sourceY - y0;
+      const topLeft = (y0 * width + x0) * 4;
+      const topRight = (y0 * width + x1) * 4;
+      const bottomLeft = (y1 * width + x0) * 4;
+      const bottomRight = (y1 * width + x1) * 4;
+      const outputIndex = (y * width + x) * 4;
+      for (let channel = 0; channel < 4; channel += 1) {
+        const top = source[topLeft + channel] * (1 - xWeight) + source[topRight + channel] * xWeight;
+        const bottom = source[bottomLeft + channel] * (1 - xWeight) + source[bottomRight + channel] * xWeight;
+        output[outputIndex + channel] = top * (1 - yWeight) + bottom * yWeight;
+      }
+    }
+  }
+  context.putImageData(outputPixels, 0, 0);
+};
 
 export const BreathingSessionView = ({
   isActive,
   onCycleComplete,
   pattern = [4, 4, 4, 4], // inhale, hold, exhale, hold
-  voiceEnabled = false, // Voice guide option
+  voiceEnabled = true,
+  audioContext = null,
   darkMode = true,
 }) => {
-  const audio = useAudio();
-  const { playGuidance } = useSpokenGuidance();
+  const isLocalHost = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  // Local narration is allowed only when the developer has opted into Firebase's
+  // registered App Check debug-token flow. Never weaken the server verification.
+  const localAppCheckDebugConfigured = Boolean(
+    import.meta.env.VITE_FIREBASE_APPCHECK_DEBUG_TOKEN
+      && (import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_RECAPTCHA_KEY)
+  );
+  const localVoiceBlocked = isLocalHost && !localAppCheckDebugConfigured;
   const [phase, setPhase] = useState("idle");
-  const [cycleCount, setCycleCount] = useState(0);
-  const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(voiceEnabled);
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const audioRef = useRef(null);
-  const ambienceRef = useRef(null);
+  const [cycleCueIndex, setCycleCueIndex] = useState(0);
+  const [phaseSecondsLeft, setPhaseSecondsLeft] = useState(0);
+  const [motionPhase, setMotionPhase] = useState("idle");
+  const [guideImageReady, setGuideImageReady] = useState(false);
+  const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(voiceEnabled && !localVoiceBlocked);
+  const [voiceStatus, setVoiceStatus] = useState("idle");
+  const [voiceError, setVoiceError] = useState("");
+  const narration = useMemo(() => getBreathingNarration(pattern), [pattern]);
+  const cueCacheRef = useRef(new Map());
+  const currentSourceRef = useRef(null);
+  const breathFieldRef = useRef(null);
+  const breathCanvasRef = useRef(null);
+  const guideImageRef = useRef(null);
+  const motionStartedAtRef = useRef(0);
+  const motionPhaseDurationRef = useRef(0);
+  const onCycleCompleteRef = useRef(onCycleComplete);
 
-  // Voice guide using voiceGuide module
-  const speakPhase = React.useCallback(async (phaseName, count) => {
-    if (!voiceGuideEnabled || !audioUnlocked) return;
-    
-    stopSpeaking();
-    
-    let instruction = "";
-    if (phaseName === "inhale") {
-      instruction = `Breathe in at a comfortable pace for a count of ${count}.`;
-    } else if (phaseName === "exhale") {
-      instruction = `Breathe out at a comfortable pace for a count of ${count}.`;
-    } else if (phaseName === "hold1" || phaseName === "hold2") {
-      instruction = "Pause only if that feels comfortable; otherwise breathe naturally.";
-    }
-    
-    if (instruction) {
-      await speakText(instruction, { rate: 0.85, pitch: 1.0, volume: 0.8 });
-    }
-  }, [voiceGuideEnabled, audioUnlocked]);
+  useEffect(() => {
+    onCycleCompleteRef.current = onCycleComplete;
+  }, [onCycleComplete]);
 
-  // Start optional ambience with the practice. The visual cadence below is the single timing source.
+  useEffect(() => {
+    if (!isActive) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      breathFieldRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isActive]);
+
   useEffect(() => {
     if (!isActive) {
-      try {
-        audio?.stopAll?.();
-      } catch (e) {}
-      if (ambienceRef.current) {
-        try {
-          ambienceRef.current.pause();
-        } catch (e) {}
-        ambienceRef.current = null;
-      }
-      setCycleCount(0);
-      return;
+      setPhaseSecondsLeft(0);
+      return undefined;
     }
-    try {
-      playGuidance("breathing_intro");
-    } catch (e) {}
-    try {
-      if (audio?.play) {
-        audio.play("ambience_soft", { loop: true, volume: 0.15 });
-      } else {
-        const amb = new Audio("/audio/ambience_soft.mp3");
-        amb.loop = true;
-        amb.volume = 0.15;
-        amb.play().catch(() => {});
-        ambienceRef.current = amb;
-      }
-    } catch (e) {
-      // Sound is optional; the visual guidance remains available.
-    }
-    return () => {
-      try {
-        audio?.stopAll?.();
-      } catch (e) {}
-      if (ambienceRef.current) {
-        try {
-          ambienceRef.current.pause();
-        } catch (e) {}
-        ambienceRef.current = null;
+    let timeoutId = null;
+    const updateCountdown = () => {
+      const deadline = motionStartedAtRef.current + motionPhaseDurationRef.current;
+      const remaining = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
+      setPhaseSecondsLeft(remaining);
+      if (remaining > 0) {
+        const elapsed = performance.now() - motionStartedAtRef.current;
+        const untilNextSecond = 1000 - (elapsed % 1000);
+        timeoutId = window.setTimeout(updateCountdown, Math.max(40, untilNextSecond));
       }
     };
-  }, [isActive, audio, playGuidance]);
+    updateCountdown();
+    return () => window.clearTimeout(timeoutId);
+  }, [isActive, phase]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopSpeaking();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+  const getCueBuffer = useCallback((text) => {
+    if (!audioContext) return Promise.reject(new Error("Audio playback is unavailable."));
+    if (cueCacheRef.current.has(text)) return cueCacheRef.current.get(text);
+    const request = generateNarration(text, { voice: "marin" }).then(async (result) => {
+      if (!result.ok || !result.audioBlob) {
+        const error = new Error(result.error || "Natural narration is unavailable.");
+        error.status = result.status;
+        error.code = result.code;
+        throw error;
       }
-    };
-  }, []);
+      const bytes = await result.audioBlob.arrayBuffer();
+      if (result.audioUrl) URL.revokeObjectURL(result.audioUrl);
+      return audioContext.decodeAudioData(bytes);
+    }).catch((error) => {
+      cueCacheRef.current.delete(text);
+      throw error;
+    });
+    cueCacheRef.current.set(text, request);
+    return request;
+  }, [audioContext]);
 
   useEffect(() => {
     if (!isActive) {
       setPhase("idle");
-      // Stop audio when session ends
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      setMotionPhase("idle");
+      setVoiceStatus("idle");
+      setVoiceError("");
+      currentSourceRef.current?.stop?.();
+      currentSourceRef.current = null;
+      cueCacheRef.current.clear();
       return;
     }
 
-    // Determine phases based on pattern (4-6 breathing has no holds)
-    const hasHolds = pattern[1] > 0 || pattern[3] > 0;
-    const phases = hasHolds ? ["inhale", "hold1", "exhale", "hold2"] : ["inhale", "exhale"];
-    setPhase(phases[0]);
-
+    // Include only holds that the selected rhythm actually contains. In 4–7–8,
+    // the inhale, first hold, and exhale total 19 seconds; there is no fourth
+    // post-exhale hold. Box breathing explicitly includes both holds.
+    const phases = ["inhale"];
+    if (pattern[1] > 0) phases.push("hold1");
+    phases.push("exhale");
+    if (pattern[3] > 0) phases.push("hold2");
     let cancelled = false;
+    let narrationReady = false;
+    let narrationFailed = false;
+    let timeoutId = null;
+    let cycleNumber = 0;
+    let phaseToken = 0;
+    const unavailableCues = new Set();
+
+    const playPhaseNarration = (phaseName, currentCycle = cycleNumber) => {
+      if (!voiceGuideEnabled || !narrationReady || !audioContext || currentCycle >= SPOKEN_GUIDANCE_CYCLES) return;
+      // Say the hold guidance once at the beginning, then leave later holds
+      // quiet so the repeated rhythm does not become a loop of filler phrases.
+      if ((phaseName === "hold1" || phaseName === "hold2") && currentCycle > 0) return;
+      // Rotate through short phase-specific prompts. Keep the measured count
+      // clear while bringing attention back to support, breath, and an optional
+      // image of setting something down on the exhale.
+      const text = getPhaseCue(narration, phaseName, currentCycle);
+      if (!text || unavailableCues.has(text)) return;
+      const thisPhaseToken = phaseToken;
+      void getCueBuffer(text).then(async (buffer) => {
+        if (cancelled || !voiceGuideEnabled || thisPhaseToken !== phaseToken) return;
+        if (audioContext.state === "suspended") await audioContext.resume();
+        if (cancelled || !voiceGuideEnabled || thisPhaseToken !== phaseToken) return;
+        const phaseDeadline = motionStartedAtRef.current + motionPhaseDurationRef.current;
+        const remainingMs = phaseDeadline - performance.now();
+        // Never cut a spoken sentence at the next breath transition. If
+        // generation or decoding ran late, skip this cue and catch the next
+        // phase on time.
+        if (remainingMs <= 0 || buffer.duration * 1000 + 250 > remainingMs) return;
+        currentSourceRef.current?.stop?.();
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.onended = () => {
+          if (currentSourceRef.current === source) {
+            currentSourceRef.current = null;
+            if (!cancelled && thisPhaseToken === phaseToken) setVoiceStatus("ready");
+          }
+        };
+        currentSourceRef.current = source;
+        source.start(0);
+        setVoiceStatus("playing");
+      }).catch((error) => {
+        if (!cancelled && thisPhaseToken === phaseToken) {
+          unavailableCues.add(text);
+          setVoiceStatus("ready");
+          setVoiceError("One spoken phase cue could not be prepared. The next available cue will continue.");
+        }
+      });
+    };
 
     const runCycle = (currentIndex) => {
       if (cancelled) return;
 
       const phaseName = phases[currentIndex];
-      const count = pattern[currentIndex] || pattern[0] || 4;
-      const ms = count * 1000;
-      
+      const patternIndex = { inhale: 0, hold1: 1, exhale: 2, hold2: 3 }[phaseName];
+      const durationSeconds = pattern[patternIndex] || pattern[0] || 4;
+      const ms = durationSeconds * 1000;
+      setCycleCueIndex(cycleNumber);
+      phaseToken += 1;
+      currentSourceRef.current?.stop?.();
+      currentSourceRef.current = null;
+      motionStartedAtRef.current = performance.now();
+      motionPhaseDurationRef.current = ms;
+      setPhaseSecondsLeft(durationSeconds);
       setPhase(phaseName);
-      
-      // Speak phase instruction if voice guide enabled
-      // Note: iOS requires user interaction - ensure voice toggle was user-initiated
-      if (voiceGuideEnabled && speakPhase) {
-        speakPhase(phaseName, count);
-      }
-
-      const timeoutId = setTimeout(() => {
+      setMotionPhase(phaseName);
+      if (narrationFailed) setVoiceStatus("unavailable");
+      else if (voiceGuideEnabled && !narrationReady) setVoiceStatus("preparing");
+      else if (voiceGuideEnabled && narrationReady && cycleNumber >= SPOKEN_GUIDANCE_CYCLES) setVoiceStatus("complete");
+      else if (voiceGuideEnabled) setVoiceStatus("ready");
+      playPhaseNarration(phaseName, cycleNumber);
+      timeoutId = setTimeout(() => {
         if (cancelled) return;
 
         const nextIndex = (currentIndex + 1) % phases.length;
         if (nextIndex === 0) {
-          setCycleCount((count) => count + 1);
-          if (onCycleComplete) {
-            onCycleComplete();
-          }
+          cycleNumber += 1;
+          onCycleCompleteRef.current?.();
         }
         runCycle(nextIndex);
       }, ms);
 
-      return () => clearTimeout(timeoutId);
     };
 
-    const cleanup = runCycle(0);
+    const prepareNarration = async () => {
+      if (voiceGuideEnabled) {
+        setVoiceStatus("preparing");
+        setVoiceError("");
+        try {
+          if (!audioContext) throw new Error("Audio playback is unavailable.");
+          await audioContext.resume();
+          const uniqueCues = [...new Set([
+            narration.opening,
+            ...phases.flatMap((name) => Array.isArray(narration[name]) ? narration[name] : narration[name]),
+          ].filter(Boolean))];
+          const cueResults = await Promise.allSettled(uniqueCues.map((text) => getCueBuffer(text)));
+          if (cancelled) return;
+          cueResults.forEach((result, index) => {
+            if (result.status === "rejected") unavailableCues.add(uniqueCues[index]);
+          });
+          const openingIndex = uniqueCues.indexOf(narration.opening);
+          const openingResult = cueResults[openingIndex];
+          if (openingResult?.status !== "fulfilled") {
+            const hasPhaseCue = phases.some((name) => {
+              const phaseCues = Array.isArray(narration[name]) ? narration[name] : [narration[name]];
+              return phaseCues.some((text) => {
+                const index = uniqueCues.indexOf(text);
+                return index >= 0 && cueResults[index]?.status === "fulfilled";
+              });
+            });
+            if (!hasPhaseCue) throw openingResult?.reason || new Error("The spoken overview could not be prepared.");
+            unavailableCues.add(narration.opening);
+            narrationReady = true;
+            setVoiceError("The spoken overview could not be prepared. Available phase cues will still guide the pace.");
+            setVoiceStatus("ready");
+            runCycle(0);
+            return;
+          }
+          if (unavailableCues.size) setVoiceError("Some spoken phase cues could not be prepared. The visual pace will continue.");
+          narrationReady = true;
+          setPhase("orientation");
+          setMotionPhase("idle");
+          const source = audioContext.createBufferSource();
+          source.buffer = openingResult.value;
+          source.connect(audioContext.destination);
+          source.onended = () => {
+            if (cancelled || currentSourceRef.current !== source) return;
+            currentSourceRef.current = null;
+            setVoiceStatus("ready");
+            runCycle(0);
+          };
+          currentSourceRef.current = source;
+          setVoiceStatus("playing");
+          source.start();
+        } catch (error) {
+          if (cancelled) return;
+          narrationFailed = true;
+          setVoiceStatus("unavailable");
+          setVoiceError(getNarrationErrorMessage(error));
+          runCycle(0);
+        }
+      } else {
+        setVoiceStatus("off");
+      }
+    };
+
+    if (voiceGuideEnabled && audioContext) {
+      setPhase("orientation");
+      setMotionPhase("idle");
+      void prepareNarration();
+    } else {
+      setVoiceStatus("off");
+      runCycle(0);
+    }
 
     return () => {
       cancelled = true;
-      if (typeof cleanup === "function") cleanup();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      clearTimeout(timeoutId);
+      currentSourceRef.current?.stop?.();
+      currentSourceRef.current = null;
     };
-  }, [isActive, pattern, onCycleComplete, voiceGuideEnabled]);
+  }, [isActive, pattern, voiceGuideEnabled, audioContext, getCueBuffer, narration]);
 
-  const displayPhase = phase;
-  const getScale = () => {
-    if (!isActive) return 1;
-    if (displayPhase === "inhale" || displayPhase === "hold1") return 1.4;
-    if (displayPhase === "exhale") return 0.75;
-    if (displayPhase === "hold" || displayPhase === "hold2") return 1.0;
-    return 1.0;
-  };
-
-  const getOpacity = () => {
-    if (!isActive) return 1;
-    if (displayPhase === "inhale" || displayPhase === "hold1") return 1.0;
-    if (displayPhase === "exhale") return 0.85;
-    return 0.9;
-  };
-
-  // Determine pattern type (4-6 vs 4-7-8)
-  const is46Breathing = pattern[0] === 4 && pattern[2] === 6 && pattern[1] === 0 && pattern[3] === 0;
-  const patternLabel = is46Breathing ? "4 – 6" : `${pattern[0]} – ${pattern[1] || 0} – ${pattern[2] || pattern[0]}`;
-  
-  const phaseLabel =
-    phase === "inhale"
-      ? `Breathe in at a comfortable pace for ${pattern[0]}`
-      : phase === "exhale"
-      ? `Breathe out at a comfortable pace for ${pattern[2] || pattern[0]}`
-      : phase === "hold1"
-      ? "Pause only if comfortable; natural breathing is always okay"
-      : phase === "hold2"
-      ? "Rest or breathe naturally"
+  const phaseLabel = phase === "orientation"
+    ? "Listen to a short explanation. The measured breathing cycle starts when it finishes."
+    : phase === "inhale" || phase === "exhale" || phase === "hold1" || phase === "hold2"
+      ? cycleCueIndex < SPOKEN_GUIDANCE_CYCLES
+        ? getPhaseCue(narration, phase, cycleCueIndex)
+        : "The guided cues are complete. Stay with the visual pace or return to your natural breath."
       : "Press Begin to start";
 
+  const phaseName = phase === "inhale"
+      ? "Breathe in"
+    : phase === "exhale"
+      ? "Breathe out"
+      : phase === "hold1"
+      ? "Optional pause · after inhale"
+      : phase === "hold2"
+      ? "Optional pause · before next inhale"
+      : phase === "orientation"
+      ? "A note about this rhythm"
+      : "Find an easy rhythm";
+  const cycleDurationSeconds = pattern.reduce((total, duration) => total + (Number(duration) || 0), 0);
+  const voiceAvailable = typeof window !== "undefined" && Boolean(window.AudioContext || window.webkitAudioContext) && !localVoiceBlocked;
+  const phaseDurationSeconds = phase === "inhale"
+    ? pattern[0] || 4
+    : phase === "hold1"
+      ? pattern[1] || 4
+      : phase === "exhale"
+        ? pattern[2] || pattern[0] || 4
+        : phase === "hold2"
+          ? pattern[3] || 4
+          : 0.6;
+  // These clipped image layers follow the breathing cadence, so only the chest
+  // and abdomen move. Anchor each layer at its own anatomical center; scaling the
+  // full portrait made the old movement almost impossible to notice.
+
+  useEffect(() => {
+    const canvas = breathCanvasRef.current;
+    const image = guideImageRef.current;
+    const context = canvas?.getContext("2d", { alpha: false });
+    if (!canvas || !image || !context || !guideImageReady || !image.complete || !image.naturalWidth) return undefined;
+
+    canvas.width = 512;
+    canvas.height = 768;
+    const sourceCanvas = document.createElement("canvas");
+    sourceCanvas.width = canvas.width;
+    sourceCanvas.height = canvas.height;
+    const sourceContext = sourceCanvas.getContext("2d", { willReadFrequently: true });
+    if (!sourceContext) return undefined;
+    sourceContext.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const sourcePixels = sourceContext.getImageData(0, 0, canvas.width, canvas.height);
+    const outputPixels = context.createImageData(canvas.width, canvas.height);
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let frameId = 0;
+    let lastDrawAt = 0;
+    const draw = (now) => {
+      if (!isActive) {
+        drawBreathingFrame(context, sourcePixels, outputPixels, "idle", 0);
+        return;
+      }
+      if (now - lastDrawAt >= 40) {
+        lastDrawAt = now;
+        const progress = Math.max(0, Math.min(1, (now - motionStartedAtRef.current) / (phaseDurationSeconds * 1000)));
+        // Keep the user-initiated breathing movement visible for reduced-motion
+        // users, with a gentler chest displacement and no extra decorative loops.
+        drawBreathingFrame(context, sourcePixels, outputPixels, motionPhase, progress, reducedMotion ? 0.42 : 1);
+      }
+      frameId = window.requestAnimationFrame(draw);
+    };
+    frameId = window.requestAnimationFrame(draw);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [guideImageReady, isActive, motionPhase, phaseDurationSeconds]);
+
   return (
-    <>
-      {/* Luxury Orb zone - premium design with depth */}
-      <div className="flex flex-col items-center justify-center gap-4 overflow-visible min-h-[28vh] py-4 sm:min-h-[50vh] sm:gap-6 sm:py-10">
-        {/* Premium breathing orb with luxury materials — wrapper relative z-10 so rails/decor sit behind */}
-        <div
-          className="relative z-10 flex aspect-square w-48 sm:w-80 items-center justify-center overflow-visible"
-          style={{
-            opacity: getOpacity(),
-            transition: "opacity 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-          }}
-        >
-          {/* Outer atmospheric glow - behind orb (z-0) */}
-          <div 
-            className="breath-aura absolute inset-[-18%] z-0 rounded-full blur-3xl"
-            style={{
-              background: "radial-gradient(ellipse at 48% 48%, rgba(249, 199, 111, 0.42) 0%, rgba(210, 143, 65, 0.24) 28%, rgba(71, 153, 173, 0.13) 52%, transparent 74%)",
-              transform: `scale(${1.18 + (getScale() - 1) * 0.46})`,
-              transition: "transform 2.2s cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          />
-          
-          {/* Secondary glow ring - behind orb (z-0) */}
-          <div 
-            className="breath-aura-secondary absolute inset-[-7%] z-0 rounded-full blur-2xl"
-            style={{
-              background: "radial-gradient(circle, rgba(255, 232, 184, 0.14) 0%, rgba(68, 180, 198, 0.16) 42%, rgba(57, 105, 156, 0.12) 58%, transparent 72%)",
-              transform: `scale(${1.08 + (getScale() - 1) * 0.25})`,
-              transition: "transform 2.2s cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          />
+    <div className="w-full min-w-0 space-y-4">
+      <section
+        ref={breathFieldRef}
+        className={`breath-field scroll-mt-20 relative h-[clamp(22rem,48svh,30rem)] w-full overflow-hidden rounded-[1.6rem] border ${darkMode ? "border-white/10" : "border-slate-300"}`}
+        aria-label={`Breathing guide: ${motionPhase === "inhale" ? "breathing in, ribs and abdomen gently expanding" : motionPhase === "exhale" ? "breathing out, ribs and abdomen gently settling" : "resting"}`}
+        role="group"
+        style={{
+          background: darkMode
+            ? "radial-gradient(ellipse at 50% 53%, #314138 0%, #202b29 35%, #101923 78%)"
+            : "radial-gradient(ellipse at 50% 53%, #f4eee1 0%, #e6ece7 45%, #dce5e2 100%)",
+        }}
+      >
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 45%, rgba(220,195,137,.11), transparent 42%), linear-gradient(180deg, rgba(5,10,14,.12), transparent 24%, transparent 75%, rgba(5,10,14,.24))" }} />
+        <img
+          src={CANONICAL_TOOL_GUIDE_FACE}
+          alt=""
+          ref={guideImageRef}
+          onLoad={() => setGuideImageReady(true)}
+          className="absolute h-px w-px opacity-0"
+          aria-hidden="true"
+          draggable="false"
+        />
+        <canvas
+          ref={breathCanvasRef}
+          className="absolute bottom-0 left-1/2 z-20 h-full w-auto max-w-[96%] -translate-x-1/2 object-contain object-bottom"
+          aria-hidden="true"
+        />
+        <div className={`absolute bottom-3 left-3 z-40 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs backdrop-blur-md sm:bottom-4 sm:left-4 ${darkMode ? "border-white/15 bg-slate-950/75 text-white/85" : "border-slate-300 bg-white/90 text-slate-800"}`} aria-live="polite" aria-atomic="true">
+          <span className={`h-2 w-2 rounded-full ${darkMode ? "bg-amber-200/80" : "bg-amber-700/80"}`} aria-hidden="true" />
+          <span className="leading-tight">
+            <span className="block">{isActive ? `Breath · ${phaseName}` : "Guided breath ready"}</span>
+            <span className={`block text-[10px] ${darkMode ? "text-white/60" : "text-slate-600"}`}>{cycleDurationSeconds}-second measured cycle</span>
+          </span>
+        </div>
+      </section>
 
-          {/* Main luxury orb - premium glassmorphism with depth (sits above glow stack) */}
-          <div 
-            className="breath-orb relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-full"
-            style={{
-              background: "radial-gradient(ellipse at 30% 18%, rgba(255,255,255,.88) 0%, rgba(255,246,222,.42) 5%, rgba(255,255,255,.09) 17%, transparent 30%), radial-gradient(ellipse at 68% 74%, rgba(60,175,195,.34) 0%, transparent 35%), radial-gradient(circle at 43% 42%, #e8c783 0%, #c4904d 25%, #8c6846 43%, #3c5159 68%, #101c2b 100%)",
-              border: "1px solid rgba(255, 245, 222, 0.66)",
-              boxShadow: `
-                0 0 34px rgba(250, 203, 125, 0.34),
-                0 0 92px rgba(229, 167, 91, 0.23),
-                0 0 150px rgba(71, 158, 178, 0.13),
-                inset 10px 14px 30px rgba(255, 255, 255, 0.25),
-                inset -18px -24px 44px rgba(4, 15, 29, 0.62),
-                0 24px 58px rgba(0, 0, 0, 0.38)
-              `,
-              transform: `scale(${getScale()})`,
-              transition: "transform 2.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 2.2s ease",
-            }}
-          >
-            {/* Inner depth layer - premium materials */}
-            <div 
-              className="absolute inset-[7%] rounded-full border border-white/15"
-              style={{
-                background: "radial-gradient(ellipse at 32% 23%, rgba(255,255,255,.3) 0%, rgba(255,255,255,.1) 18%, transparent 48%), radial-gradient(ellipse at 66% 76%, rgba(51,157,179,.18), transparent 50%)",
-                boxShadow: "inset 0 1px 18px rgba(255,255,255,.19), inset 0 -18px 28px rgba(4,15,29,.2)",
-              }}
-            />
-            <div className="breath-orb-sheen pointer-events-none absolute inset-y-[-25%] left-[-45%] w-[42%] skew-x-[-18deg] bg-gradient-to-r from-transparent via-white/20 to-transparent blur-md" />
-
-            {/* Central text content - premium typography */}
-            <div className="relative z-10 flex flex-col items-center gap-2 text-center px-8">
-              <span 
-                className="text-lg font-light tracking-[0.3em]"
-                style={{
-                  background: darkMode
-                    ? "linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(251, 191, 36, 0.9) 50%, rgba(255, 255, 255, 0.8) 100%)"
-                    : "linear-gradient(135deg, #263449 0%, #876316 52%, #38556a 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                  textShadow: "0 0 30px rgba(251, 191, 36, 0.5)",
-                  letterSpacing: "0.4em",
-                }}
-              >
-                {patternLabel}
-              </span>
-              <span 
-                className="text-xs font-extralight uppercase tracking-wider"
-                style={{
-                  color: darkMode ? "rgba(255, 255, 255, 0.9)" : "#263449",
-                  textShadow: darkMode ? "0 0 20px rgba(251, 191, 36, 0.4)" : "none",
-                }}
-              >
-                {phase === "idle" ? "Ready" : phase.toUpperCase()}
-              </span>
+      <section className={`min-h-[7.5rem] rounded-2xl border px-5 py-4 sm:px-6 ${darkMode ? "border-white/10 bg-white/[0.035]" : "border-slate-200 bg-white/65"}`} aria-live="polite" aria-atomic="true">
+        <div className="flex min-h-[4rem] items-center gap-4">
+          <span className={`h-10 w-1 shrink-0 rounded-full ${darkMode ? "bg-amber-200/70" : "bg-amber-700/55"}`} aria-hidden="true" />
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className={`text-lg font-medium tracking-tight sm:text-xl ${darkMode ? "text-amber-50" : "text-slate-900"}`}>{isActive ? phaseName : "A quiet place to begin"}</h2>
+            <p className={`mt-1 text-sm leading-relaxed sm:text-base ${darkMode ? "text-slate-300" : "text-slate-600"}`} role="status">{phaseLabel}</p>
             </div>
-
-            {/* Pulse ring - organic breathing animation */}
-            {isActive && (
-              <div 
-                className="breath-orb-ring absolute inset-[-8px] rounded-full border border-amber-300/40"
-                style={{
-                  animation: "breathRing 5s ease-in-out infinite",
-                  borderColor: "rgba(255, 226, 178, 0.48)",
-                  boxShadow: "0 0 26px rgba(250, 203, 125, 0.22), inset 0 0 20px rgba(255,255,255,.05)",
-                }}
-              />
-            )}
-
-            {/* Particle effects - luxury detail */}
-            {isActive && Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="breath-particle absolute rounded-full"
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  background: "radial-gradient(circle, rgba(251, 191, 36, 0.8), transparent)",
-                  boxShadow: "0 0 12px rgba(251, 191, 36, 0.6)",
-                  left: `${30 + (i * 12)}%`,
-                  top: `${20 + (i % 3) * 30}%`,
-                  animation: `luxuryFloat ${5 + (i % 3)}s ease-in-out infinite`,
-                  animationDelay: `${i * 0.45}s`,
-                }}
-              />
-            ))}
+            {isActive && phase !== "orientation" && <span role="timer" aria-label={`${phaseSecondsLeft} seconds remaining in this phase`} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium tabular-nums ${darkMode ? "border-amber-100/20 bg-amber-100/[0.06] text-amber-100" : "border-amber-700/20 bg-amber-50 text-amber-900"}`}>{phaseSecondsLeft}s</span>}
           </div>
         </div>
+      </section>
 
-        {/* Phase 56 Day 2: minimal phase indicator + optional cycle count */}
-        {isActive && (
-          <div className="flex items-center justify-center gap-3 mt-2">
-            <span className="text-[11px] uppercase tracking-widest text-amber-200/90">
-              {displayPhase === "inhale" ? "Inhale" : displayPhase.startsWith("hold") ? "Hold" : "Exhale"}
-            </span>
-            {cycleCount > 0 && (
-              <span className="text-[10px] text-white/50">{cycleCount} cycles</span>
-            )}
-          </div>
-        )}
-
-        {/* Premium instruction text */}
-        <p 
-          className="max-w-sm text-center text-sm leading-relaxed font-light"
-          style={{
-            color: darkMode ? "rgba(255, 255, 255, 0.9)" : "#334155",
-            textShadow: darkMode ? "0 2px 20px rgba(0, 0, 0, 0.5)" : "none",
-          }}
-        >
-          {phaseLabel}
-        </p>
-        
-        {/* Voice Guide Toggle - iOS-safe user interaction */}
-        <div className="mt-4 flex flex-col items-center gap-2">
+      <div className="flex justify-center pt-1">
+        {/* Use the existing protected neural-voice endpoint; no device TTS fallback. */}
+        <div className="flex flex-col items-center gap-2">
           <button
             type="button"
-            onClick={async (e) => {
-              e.preventDefault();
-              const newState = !voiceGuideEnabled;
-              
-              if (newState) {
-                // Unlock audio on first enable (iOS requirement)
-                const unlocked = unlockAudio();
-                setAudioUnlocked(unlocked);
-                
-                if (unlocked && isActive && phase !== "idle") {
-                  // Test voice immediately on user gesture
-                  const currentCount = pattern[phase === "inhale" ? 0 : phase === "exhale" ? 2 : 0] || 4;
-                  await speakPhase(phase, currentCount);
-                }
-              } else {
-                stopSpeaking();
-              }
-              
-              setVoiceGuideEnabled(newState);
-            }}
-            className="flex items-center gap-2.5 rounded-full border border-white/30 bg-gradient-to-r from-white/10 via-white/5 to-transparent backdrop-blur-xl px-5 py-2.5 text-sm font-light text-white/90 hover:from-white/15 hover:to-white/10 transition-all duration-300 shadow-lg shadow-black/20 hover:scale-105"
+            disabled={!voiceAvailable || isActive}
+            aria-pressed={voiceAvailable && voiceGuideEnabled}
+            onClick={() => setVoiceGuideEnabled((enabled) => !enabled)}
+            className={`flex min-h-11 items-center gap-2.5 rounded-full border px-5 py-2.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${darkMode ? "border-white/15 bg-white/[0.04] text-white/85 hover:bg-white/[0.08]" : "border-slate-300 bg-white/70 text-slate-700 hover:bg-white"}`}
           >
-            {voiceGuideEnabled ? (
+            {localVoiceBlocked ? (
               <>
-                <Volume2 className="h-4 w-4 text-amber-300" />
-                <span>Voice Guide On</span>
+                <VolumeX className={`h-4 w-4 ${darkMode ? "text-white/50" : "text-slate-500"}`} />
+                <span>Voice unavailable in local preview</span>
+              </>
+            ) : !voiceAvailable ? (
+              <>
+                <VolumeX className={`h-4 w-4 ${darkMode ? "text-white/50" : "text-slate-500"}`} />
+                <span>Voice audio unavailable here</span>
+              </>
+            ) : voiceGuideEnabled ? (
+              <>
+                <Volume2 className={`h-4 w-4 ${darkMode ? "text-amber-200" : "text-amber-700"}`} />
+                <span>Natural voice on</span>
               </>
             ) : (
               <>
-                <VolumeX className="h-4 w-4 text-white/50" />
-                <span>Voice Guide Off</span>
+                <VolumeX className={`h-4 w-4 ${darkMode ? "text-white/50" : "text-slate-500"}`} />
+                <span>Natural voice off</span>
               </>
             )}
           </button>
-          {voiceGuideEnabled && !getDiagnostics().voiceSupported && (
-            <p className="text-xs text-amber-200/70">Voice guide unavailable on this device.</p>
-          )}
-          {voiceGuideEnabled && getDiagnostics().voiceSupported && getDiagnostics().lastError && (
-            <p className="text-xs text-amber-200/70">Voice had a hiccup. Tap the button to retry.</p>
-          )}
+          {localVoiceBlocked && <p className={`max-w-sm text-center text-xs ${darkMode ? "text-white/65" : "text-slate-600"}`}>Natural voice is protected by Firebase App Check. To use it locally, configure a registered App Check debug token; otherwise use the signed-in deployed app.</p>}
+          {voiceStatus === "preparing" && <p className={`text-sm ${darkMode ? "text-amber-100/80" : "text-amber-800"}`}>Preparing the natural voice guide…</p>}
+          {voiceStatus === "playing" && <p className={`text-sm ${darkMode ? "text-emerald-100/80" : "text-emerald-800"}`}>{phase === "orientation" ? "Explaining the selected rhythm" : "Speaking with this breath phase"}</p>}
+          {voiceStatus === "ready" && voiceGuideEnabled && <p className={`text-xs ${darkMode ? "text-emerald-100/75" : "text-emerald-800"}`}>Voice guide ready</p>}
+          {voiceStatus === "complete" && voiceGuideEnabled && <p className={`text-sm ${darkMode ? "text-emerald-100/80" : "text-emerald-800"}`}>Voice guidance complete · the visual pace continues</p>}
+          {voiceStatus === "unavailable" && <p className={`max-w-sm text-center text-xs ${darkMode ? "text-amber-100/80" : "text-amber-800"}`}>{voiceError}</p>}
+          {voiceError && voiceStatus !== "unavailable" && <p role="status" className={`max-w-sm text-center text-xs ${darkMode ? "text-amber-100/80" : "text-amber-800"}`}>{voiceError}</p>}
           
         </div>
       </div>
 
-      {/* Luxury animations */}
       <style>{`
-        .breath-aura {
-          animation: breathAura 8s ease-in-out infinite;
-          will-change: opacity, filter;
-        }
-        .breath-aura-secondary {
-          animation: breathAuraSecondary 11s ease-in-out infinite;
-        }
-        .breath-orb {
-          will-change: transform;
-          isolation: isolate;
-        }
-        .breath-orb-sheen {
-          animation: breathSheen 9s cubic-bezier(.4, 0, .2, 1) infinite;
-        }
-        @keyframes breathAura {
-          0%, 100% { opacity: .62; filter: saturate(.88) blur(32px); }
-          50% { opacity: .9; filter: saturate(1.16) blur(37px); }
-        }
-        @keyframes breathAuraSecondary {
-          0%, 100% { opacity: .42; }
-          50% { opacity: .72; }
-        }
-        @keyframes breathSheen {
-          0%, 24% { transform: translateX(0) skewX(-18deg); opacity: 0; }
-          38% { opacity: .75; }
-          66%, 100% { transform: translateX(360%) skewX(-18deg); opacity: 0; }
-        }
-        @keyframes breathRing {
-          0%, 100% { opacity: .24; transform: scale(.99); }
-          50% { opacity: .58; transform: scale(1.025); }
-        }
-        @keyframes luxuryFloat {
-          0%, 100% { 
-            transform: translateY(0px) translateX(0px);
-            opacity: 0.6;
-          }
-          50% { 
-            transform: translateY(-15px) translateX(5px);
-            opacity: 1;
-          }
-        }
         @media (prefers-reduced-motion: reduce) {
-          .breath-aura, .breath-aura-secondary, .breath-orb-sheen,
-          .breath-orb-ring, .breath-particle {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-          }
-          .breath-orb, .breath-aura, .breath-aura-secondary {
-            transition: none !important;
-          }
+          canvas { animation: none !important; }
         }
       `}</style>
-    </>
+    </div>
   );
 };

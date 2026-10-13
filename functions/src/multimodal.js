@@ -25,11 +25,14 @@ const ALLOWED_ORIGINS = [
 ];
 
 const WELLNESS_VOICE_INSTRUCTIONS = [
-  "Speak as a grounded, compassionate wellness guide: warm, clear, emotionally present, and quietly confident.",
-  "Use natural conversational pacing with gentle variation and small pauses between thoughts.",
-  "Sound reassuring without being saccharine, breathy, theatrical, or clinical. Avoid a polished commercial-announcer delivery.",
+  "Speak as a grounded, compassionate person guiding one listener through a quiet wellness practice.",
+  "Use a natural, human conversational cadence with relaxed phrasing, gentle warmth, subtle emotional variation, and an easy, steady pace.",
+  "Keep the voice warm and full, with smooth, softly articulated s, sh, and t sounds; avoid a sharp hiss, excessive sibilance, brittle brightness, and exaggerated breath noise without muffling consonants.",
+  "Sound present and reassuring, never robotic, breathy, theatrical, overly polished, or like a commercial announcer.",
+  "Connect phrases smoothly. Use only brief natural pauses at punctuation, and avoid long gaps or stretched words.",
   "Pronounce names and resource acronyms clearly. Read the provided words faithfully; do not add advice, interpretation, or extra words.",
 ].join(" ");
+const ALLOWED_TTS_VOICES = new Set(["marin", "cedar"]);
 const MAX_SPEECH_CHARACTERS = 4096;
 const MAX_AUDIO_BASE64_CHARACTERS = 8_000_000;
 const MAX_CHAT_MESSAGES = 30;
@@ -208,7 +211,7 @@ exports.chat = onRequest(
         try {
           const speech = await openai.audio.speech.create({
             model: "gpt-4o-mini-tts",
-            voice: "coral",
+            voice: "marin",
             input: reply.slice(0, MAX_SPEECH_CHARACTERS),
             instructions: WELLNESS_VOICE_INSTRUCTIONS,
             speed: 0.96,
@@ -261,6 +264,7 @@ exports.tts = onRequest(
 
     try {
       const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+      const requestedVoice = typeof req.body?.voice === "string" ? req.body.voice.trim().toLowerCase() : "";
       if (!text) return res.status(400).json({ error: "Missing text" });
       if (text.length > MAX_SPEECH_CHARACTERS) {
         return res.status(413).json({ error: "Text is too long for a single voice response" });
@@ -268,7 +272,7 @@ exports.tts = onRequest(
 
       const speech = await openai.audio.speech.create({
         model: "gpt-4o-mini-tts",
-        voice: "coral",
+        voice: ALLOWED_TTS_VOICES.has(requestedVoice) ? requestedVoice : "marin",
         input: text,
         instructions: WELLNESS_VOICE_INSTRUCTIONS,
         speed: 0.96,

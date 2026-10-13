@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { addDoc, collection } from "firebase/firestore";
+import { collection, doc, getDocFromServer, setDoc } from "firebase/firestore";
 import { trackSupportAction } from "@/telemetry/telemetry";
 import { db } from "../firebase";
 import { GUEST_CHECKINS_STORAGE_KEY } from "@/apps/core/checkInConstants";
@@ -58,6 +58,9 @@ const CheckIn = ({ onComplete }) => {
   const [sleep, setSleep] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [retryPending, setRetryPending] = useState(false);
+  const submittingRef = useRef(false);
+  const pendingAccountSaveRef = useRef(null);
 
   const hasResponse = Boolean(
     mood || daysSinceLastUse !== "" || cravingStatus || cravingDetails.trim() ||
@@ -128,9 +131,10 @@ const CheckIn = ({ onComplete }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (loading || !hasResponse) return;
+    if (submittingRef.current || !hasResponse) return;
 
     setErrorMessage("");
+    submittingRef.current = true;
     setLoading(true);
     const data = checkInData();
 
@@ -144,6 +148,7 @@ const CheckIn = ({ onComplete }) => {
         console.error("Could not save guest check-in on this device:", error);
         setErrorMessage("This check-in could not be saved on this device. Your answers are still here; please try again.");
       } finally {
+        submittingRef.current = false;
         setLoading(false);
       }
       return;
@@ -152,19 +157,47 @@ const CheckIn = ({ onComplete }) => {
     if (!db) {
       trackSupportAction("check_in", "check_in_save_failed", "firestore/unavailable");
       setErrorMessage("Check-ins can’t connect to your account right now. Your answers are still here; please try again later.");
+      submittingRef.current = false;
       setLoading(false);
       return;
     }
 
     try {
-      await addDoc(collection(db, "checkins"), data);
+      let pending = pendingAccountSaveRef.current;
+      if (!pending) {
+        const requestId = globalThis.crypto?.randomUUID?.()
+          || `checkin-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        pending = {
+          requestId,
+          data: { ...data, clientRequestId: requestId },
+        };
+        pendingAccountSaveRef.current = pending;
+      }
+      const recordRef = doc(collection(db, "checkins"), `checkin_${user.uid}_${pending.requestId}`);
+      try {
+        await setDoc(recordRef, pending.data);
+      } catch (writeError) {
+        // The server may have committed the create even if its response was lost.
+        // Confirm that exact owner-scoped record before deciding the save failed.
+        const confirmed = await getDocFromServer(recordRef);
+        const saved = confirmed.exists() ? confirmed.data() : null;
+        if (saved?.userId !== user.uid || saved?.clientRequestId !== pending.requestId || saved?.completed !== true) {
+          throw writeError;
+        }
+      }
+      setRetryPending(false);
+      pendingAccountSaveRef.current = null;
       trackSupportAction("check_in", "check_in_saved");
-      finish(data, "account");
+      const savedData = { ...pending.data };
+      delete savedData.clientRequestId;
+      finish(savedData, "account");
     } catch (error) {
       trackSupportAction("check_in", "check_in_save_failed", error?.code);
       console.error("Error saving check-in:", error);
+      setRetryPending(Boolean(pendingAccountSaveRef.current));
       setErrorMessage("We couldn’t save this check-in. Your answers are still here; please try again.");
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -178,6 +211,7 @@ const CheckIn = ({ onComplete }) => {
       </header>
 
       <form onSubmit={handleSubmit} className="checkin-form">
+        <fieldset disabled={loading || retryPending} className="m-0 min-w-0 border-0 p-0">
         <p className="checkin-message" role="note">
           {isAccountUser
             ? "Saved to your account. These answers are not automatically sent to a provider or monitored for emergencies."
@@ -276,6 +310,7 @@ const CheckIn = ({ onComplete }) => {
             <textarea id="checkin-journal" value={journal} onChange={(event) => setJournal(event.target.value.slice(0, 5000))} placeholder="Write a note for yourself, or leave this blank" rows={5} maxLength={5000} />
           </div>
         </details>
+        </fieldset>
 
         {errorMessage && <p className="checkin-message checkin-error" role="alert">{errorMessage}</p>}
         <button type="submit" className="checkin-submit-btn" disabled={loading || !hasResponse}>

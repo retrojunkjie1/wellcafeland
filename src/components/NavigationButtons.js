@@ -1,13 +1,16 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./NavigationButtons.css";
+import { resolveToolReturnTarget, returnFromTool } from "@/navigation/toolReturn";
 
 const NavigationButtons = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    if (location.state?.returnTo) {
+      returnFromTool(navigate, resolveToolReturnTarget(location.state));
+    } else if (window.history.length > 1) {
       navigate(-1);
     } else {
       navigate("/");

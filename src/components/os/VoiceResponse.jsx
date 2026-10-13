@@ -103,7 +103,7 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
 
     setStatus("loading");
     try {
-      const result = await speakText(speechText.slice(0, 4096), { voice: "coral" });
+      const result = await speakText(speechText.slice(0, 4096), { voice: "marin" });
       if (requestId !== playRequestRef.current) {
         if (result.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(result.audioUrl);
         return;

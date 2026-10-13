@@ -5,6 +5,16 @@ import { auth } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
 
+function safeInternalPath(value, origin) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/";
+  try {
+    const target = new URL(value, origin);
+    return target.origin === origin ? `${target.pathname}${target.search}${target.hash}` : "/";
+  } catch {
+    return "/";
+  }
+}
+
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,7 +24,10 @@ const LoginPage = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const fromLocation = location.state?.from;
-  const destination = fromLocation?.pathname ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}` : "/";
+  const stateDestination = fromLocation?.pathname ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}` : "";
+  const queryDestination = new URLSearchParams(location.search).get("returnTo") || "";
+  const destination = safeInternalPath(stateDestination || queryDestination, window.location.origin);
+  const passwordResetComplete = new URLSearchParams(location.search).get("passwordReset") === "1";
 
   React.useEffect(() => {
     if (isAuthenticated && user && !user.isAnonymous && user.emailVerified) {
@@ -123,6 +136,11 @@ const LoginPage = () => {
               {error}
             </div>
           )}
+          {passwordResetComplete && !error && (
+            <p role="status" aria-live="polite" className="rounded-xl border border-emerald-200/20 bg-emerald-100/[0.05] px-4 py-3 text-sm leading-relaxed text-emerald-50">
+              Your password was updated. Sign in with your new password.
+            </p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -143,9 +161,10 @@ const LoginPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-medium text-muted-foreground">
-                Password
-              </label>
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="password" className="block text-xs font-medium text-muted-foreground">Password</label>
+                <Link to="/forgot-password" state={location.state} className="text-xs text-amber-400 underline underline-offset-2 hover:text-amber-300">Forgot password?</Link>
+              </div>
               <input
                 id="password"
                 name="password"

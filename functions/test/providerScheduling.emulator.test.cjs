@@ -54,6 +54,7 @@ async function seed() {
     db.collection("clientProviderAssignments").doc(assignmentId).set({ clientId, providerId, status: "active" }),
     db.collection("provider_availability").doc(providerId).set({ providerId, timezone: "UTC", weeklyHours: days }),
     db.collection("realHelpProviders").doc(providerId).set({ name: "Jordan Lee" }),
+    db.collection("users").doc(providerId).set({ uid: providerId, role: "provider", roles: ["provider"], practitionerWorkspaceActive: true }),
   ]);
 }
 
@@ -174,6 +175,7 @@ test("a WellnessCafe room can be selected only when the native video release is 
 });
 
 test("only the assigned practitioner can respond to a session request", async () => {
+  await db.collection("users").doc("other-provider").set({ uid: "other-provider", role: "provider", roles: ["provider"], practitionerWorkspaceActive: true });
   const startAt = futureStart();
   const submitted = await requestProviderAppointment(clientRequest({ providerId, requestedStartAt: startAt, requestedEndAt: new Date(startAt.getTime() + 45 * 60_000) }));
   await assert.rejects(

@@ -5,7 +5,7 @@ import { matchPath } from "react-router-dom";
 
 // Known roots: no back button, minimal chrome
 export const ROOT_ROUTES = [
-  "/", "/chat", "/login", "/signup", "/unauthorized"
+  "/", "/chat", "/login", "/signup", "/forgot-password", "/reset-password", "/unauthorized"
 ];
 
 // Route meta entries (pattern-based)
@@ -19,7 +19,7 @@ export const ROUTE_META = [
   { pattern: "/explore", title: "Explore", parent: "/home", breadcrumb: false },
   { pattern: "/tools", title: "Tools", parent: "/home", breadcrumb: false },
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", breadcrumb: true },
-  { pattern: "/tools/grounding/54321", title: "Choose an Anchor", parent: "/tools", breadcrumb: true },
+  { pattern: "/tools/grounding/54321", title: "Reconnect with the room", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", breadcrumb: true },

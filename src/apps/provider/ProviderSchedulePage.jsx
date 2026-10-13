@@ -83,6 +83,8 @@ const ProviderSchedulePage = () => {
   const [availabilityScope, setAvailabilityScope] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
   const [availabilitySaving, setAvailabilitySaving] = useState(false);
+  const [availabilityNotice, setAvailabilityNotice] = useState("");
+  const [availabilitySaveError, setAvailabilitySaveError] = useState("");
   const [hoursExpanded, setHoursExpanded] = useState(false);
   const requestsCanRefresh = !identityLoading && !loading && loadedScope === identityScope;
 
@@ -238,6 +240,8 @@ const ProviderSchedulePage = () => {
     setError("");
     setScheduleUnavailable(false);
     setAvailabilitySaving(false);
+    setAvailabilityNotice("");
+    setAvailabilitySaveError("");
     setSaving(false);
   }, [identityScope]);
 
@@ -245,24 +249,28 @@ const ProviderSchedulePage = () => {
     const requestScope = identityScope;
     if (availabilityLoading || availabilityScope !== requestScope || availabilityError) return;
     setAvailabilitySaving(true);
-    setError("");
-    setNotice("");
+    setAvailabilityNotice("");
+    setAvailabilitySaveError("");
     try {
       const result = await saveMyProviderAvailability(availability);
       if (identityScopeRef.current !== requestScope) return;
-      if (!result.ok) setError(result.error || "Your appointment hours could not be saved. Please try again.");
-      else setNotice("Your appointment hours are saved. Connected clients can now request times within these hours.");
+      if (!result.ok) setAvailabilitySaveError(result.error || "Your appointment hours could not be saved. Please try again.");
+      else setAvailabilityNotice("Appointment hours saved. Connected clients can now request times within these hours.");
     } catch (err) {
-      if (identityScopeRef.current === requestScope) setError(err?.message || "Your appointment hours could not be saved. Please try again.");
+      if (identityScopeRef.current === requestScope) setAvailabilitySaveError(err?.message || "Your appointment hours could not be saved. Please try again.");
     } finally {
       if (identityScopeRef.current === requestScope) setAvailabilitySaving(false);
     }
   };
 
-  const updateAvailabilityDay = (dayOfWeek, changes) => setAvailability((current) => ({
-    ...current,
-    weeklyHours: current.weeklyHours.map((day) => day.dayOfWeek === dayOfWeek ? { ...day, ...changes } : day),
-  }));
+  const updateAvailabilityDay = (dayOfWeek, changes) => {
+    setAvailabilityNotice("");
+    setAvailabilitySaveError("");
+    setAvailability((current) => ({
+      ...current,
+      weeklyHours: current.weeklyHours.map((day) => day.dayOfWeek === dayOfWeek ? { ...day, ...changes } : day),
+    }));
+  };
 
   const enabledDays = availability.weeklyHours.filter((day) => day.enabled).map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day.dayOfWeek]);
   const availabilityReady = !identityLoading && !availabilityLoading && availabilityScope === identityScope && !availabilityError;
@@ -321,7 +329,6 @@ const ProviderSchedulePage = () => {
         : await createAppointment({
           clientId: formData.clientId,
           providerId: providerIdToUse,
-          orgId,
           startAt,
           endAt,
           note: formData.note || null,
@@ -453,7 +460,7 @@ const ProviderSchedulePage = () => {
           {hoursExpanded && <div id="appointment-hours-panel" className="border-t border-white/[0.08] px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <p className="max-w-2xl text-sm leading-relaxed text-white/55">Choose the days and times clients may request. You can update these whenever your schedule changes.</p>
-            {availabilityReady && <label className="min-w-56 text-sm text-white/70">Time zone<select aria-label="Appointment time zone" value={availability.timezone} onChange={(event) => setAvailability((current) => ({ ...current, timezone: event.target.value }))} className="mt-1.5 min-h-10 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-white">{!TIME_ZONES.includes(availability.timezone) && <option value={availability.timezone}>{timeZoneLabel(availability.timezone)}</option>}{TIME_ZONES.map((zone) => <option key={zone} value={zone}>{timeZoneLabel(zone)}</option>)}</select><span className="mt-1 block text-xs text-white/40">Clients see appointment times in this zone.</span></label>}
+            {availabilityReady && <label className="min-w-56 text-sm text-white/70">Time zone<select aria-label="Appointment time zone" value={availability.timezone} onChange={(event) => { setAvailabilityNotice(""); setAvailabilitySaveError(""); setAvailability((current) => ({ ...current, timezone: event.target.value })); }} className="mt-1.5 min-h-10 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-white">{!TIME_ZONES.includes(availability.timezone) && <option value={availability.timezone}>{timeZoneLabel(availability.timezone)}</option>}{TIME_ZONES.map((zone) => <option key={zone} value={zone}>{timeZoneLabel(zone)}</option>)}</select><span className="mt-1 block text-xs text-white/40">Clients see appointment times in this zone.</span></label>}
           </div>
           {availabilityError ? <div className="mt-4 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-4 text-sm text-amber-50/80" role="alert"><p>Your appointment hours could not be loaded.</p><button type="button" onClick={() => void loadAvailability()} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs text-white/80"><RefreshCw className="h-3.5 w-3.5" />Try again</button></div> : availabilityLoading || availabilityScope !== identityScope ? <p className="mt-4 text-sm text-white/50" role="status">Loading your hours…</p> : <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{availability.weeklyHours.map((day) => <div key={day.dayOfWeek} className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.08] bg-slate-950/35 p-3">
             <input id={`availability-day-${day.dayOfWeek}`} type="checkbox" checked={day.enabled} onChange={(event) => updateAvailabilityDay(day.dayOfWeek, { enabled: event.target.checked })} className="h-4 w-4 accent-emerald-300" />
@@ -461,6 +468,8 @@ const ProviderSchedulePage = () => {
             {day.enabled ? <><input aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day.dayOfWeek]} start`} type="time" value={day.start} onChange={(event) => updateAvailabilityDay(day.dayOfWeek, { start: event.target.value })} className="min-h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950 px-2 text-xs text-white" /><span className="text-white/40">to</span><input aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day.dayOfWeek]} end`} type="time" value={day.end} onChange={(event) => updateAvailabilityDay(day.dayOfWeek, { end: event.target.value })} className="min-h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950 px-2 text-xs text-white" /></> : <span className="text-xs text-white/40">Unavailable</span>}
           </div>)}</div>}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-white/40">A requested time is not confirmed until you accept it.</p>{availabilityReady && <button type="button" onClick={saveAvailability} disabled={availabilitySaving} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-200 px-4 text-sm font-semibold text-slate-950 disabled:opacity-50"><Save className="h-4 w-4" />{availabilitySaving ? "Saving hours…" : "Save appointment hours"}</button>}</div>
+          {availabilityNotice && <p role="status" className="mt-3 rounded-xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{availabilityNotice}</p>}
+          {availabilitySaveError && <p role="alert" className="mt-3 rounded-xl border border-rose-300/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{availabilitySaveError}</p>}
           </div>}
         </section>
         <div className="flex items-center justify-between mb-6">
@@ -469,7 +478,7 @@ const ProviderSchedulePage = () => {
             type="button"
             onClick={() => {
               if (clients.length === 0) {
-                navigate("/provider/dashboard");
+                navigate("/provider/dashboard#connection-requests-panel", { state: { from: { pathname: "/provider/schedule" } } });
                 return;
               }
               if (showForm) resetForm();
@@ -492,7 +501,7 @@ const ProviderSchedulePage = () => {
                 <p className="mt-1 max-w-2xl text-sm leading-relaxed text-white/60">Appointments are only for people who have an active, accepted connection with you. Their private check-ins remain private unless they choose to share them.</p>
               </div>
             </div>
-            <button type="button" onClick={() => navigate("/provider/dashboard")} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/15 px-4 text-sm text-white/85 transition hover:bg-white/[0.06]">
+            <button type="button" onClick={() => navigate("/provider/dashboard#connection-requests-panel", { state: { from: { pathname: "/provider/schedule" } } })} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/15 px-4 text-sm text-white/85 transition hover:bg-white/[0.06]">
               <Users className="h-4 w-4" />Open connection requests
             </button>
           </section>

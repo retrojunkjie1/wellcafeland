@@ -2,26 +2,77 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const { recordTrustedSupportActivity } = require("./supportActivity");
 const { requireVerifiedAccount } = require("./accountAccess");
+const { CAPABILITY_NAMES, getProviderCapabilities } = require("./practitionerWorkspacePolicy");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 const { Timestamp, FieldValue } = admin.firestore;
 const REGION = "us-central1";
 
-async function requireProvider(request) {
+async function loadProviderAccess(request, transaction = null) {
   const uid = requireVerifiedAccount(request, "use practitioner scheduling");
-  const profile = await db.collection("users").doc(uid).get();
-  const data = profile.exists ? profile.data() : {};
-  const role = request.auth.token.role || data.role || "";
+  const accountRef = db.collection("users").doc(uid);
+  const profileRef = db.collection("realHelpProviders").doc(uid);
+  const [account, practitionerProfile] = transaction
+    ? await Promise.all([transaction.get(accountRef), transaction.get(profileRef)])
+    : await Promise.all([accountRef.get(), profileRef.get()]);
+  const data = account.exists ? account.data() : {};
+  // The account document is updated only through trusted server workflows and
+  // is the current authorization source. ID-token claims are snapshots and
+  // may remain stale after workspace access changes.
+  const role = data.role || "";
   const roles = Array.isArray(data.roles) ? data.roles : [];
-  const allowed = request.auth.token.provider === true
-    || ["provider", "provider_admin"].includes(role)
-    || roles.some((item) => ["provider", "provider_admin"].includes(item));
+  const allowed = data.practitionerWorkspaceActive === false
+    ? false
+    : ["provider", "provider_admin"].includes(role)
+      || roles.some((item) => ["provider", "provider_admin"].includes(item));
   if (!allowed) throw new HttpsError("permission-denied", "Practitioner access is required.");
-  // Never let profile data redirect a practitioner token to another account.
-  return uid;
+  const approvedProfile = practitionerProfile.exists
+    && practitionerProfile.get("verification.status") === "verified"
+    ? practitionerProfile.data()
+    : {};
+  return {
+    uid,
+    providerType: typeof data.providerType === "string" && data.providerType
+      ? data.providerType
+      : (approvedProfile.type || approvedProfile.category || ""),
+  };
+}
+
+async function requireProvider(request) {
+  return (await loadProviderAccess(request)).uid;
 }
 exports.requireProvider = requireProvider;
+
+async function requireProviderCapability(request, capability) {
+  if (!CAPABILITY_NAMES.includes(capability)) {
+    throw new HttpsError("internal", "The practitioner capability is not configured.");
+  }
+  const { uid, providerType } = await loadProviderAccess(request);
+  if (!getProviderCapabilities(providerType).has(capability)) {
+    throw new HttpsError("permission-denied", "This practitioner workspace is not authorized for that action.");
+  }
+  return uid;
+}
+exports.requireProviderCapability = requireProviderCapability;
+
+async function requireProviderCapabilityInTransaction(transaction, request, capability) {
+  if (!CAPABILITY_NAMES.includes(capability)) {
+    throw new HttpsError("internal", "The practitioner capability is not configured.");
+  }
+  const { uid, providerType } = await loadProviderAccess(request, transaction);
+  if (!getProviderCapabilities(providerType).has(capability)) {
+    throw new HttpsError("permission-denied", "This practitioner workspace is not authorized for that action.");
+  }
+  return uid;
+}
+exports.requireProviderCapabilityInTransaction = requireProviderCapabilityInTransaction;
+
+async function getProviderCapabilitiesForRequest(request, transaction = null) {
+  const { uid, providerType } = await loadProviderAccess(request, transaction);
+  return { uid, capabilities: getProviderCapabilities(providerType) };
+}
+exports.getProviderCapabilitiesForRequest = getProviderCapabilitiesForRequest;
 
 const AVAILABILITY_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const DEFAULT_TIMEZONE = "America/Denver";
@@ -43,7 +94,7 @@ function cleanWeeklyHours(value) {
 }
 
 exports.getMyProviderAvailability = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.availability.manage");
   const snapshot = await db.collection("provider_availability").doc(providerId).get();
   const data = snapshot.exists ? snapshot.data() : {};
   return {
@@ -54,7 +105,7 @@ exports.getMyProviderAvailability = onCall({ region: REGION, enforceAppCheck: tr
 });
 
 exports.saveMyProviderAvailability = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.availability.manage");
   const timezone = request.data?.timezone;
   if (!isTimezone(timezone)) throw new HttpsError("invalid-argument", "Choose a valid time zone.");
   const weeklyHours = cleanWeeklyHours(request.data?.weeklyHours);
@@ -68,10 +119,16 @@ exports.getConnectedPractitionerAvailability = onCall({ region: REGION, enforceA
   const clientId = requireClientAccount(request, "view practitioner appointment times");
   const providerId = typeof request.data?.providerId === "string" ? request.data.providerId.trim() : "";
   if (!providerId) throw new HttpsError("invalid-argument", "Choose a practitioner.");
-  const assignment = await db.collection("clientProviderAssignments")
-    .where("providerId", "==", providerId).where("clientId", "==", clientId).where("status", "==", "active").limit(1).get();
+  const [assignment, account, snapshot] = await db.runTransaction(async (transaction) => Promise.all([
+    transaction.get(db.collection("clientProviderAssignments")
+      .where("providerId", "==", providerId).where("clientId", "==", clientId).where("status", "==", "active").limit(1)),
+    transaction.get(db.collection("users").doc(providerId)),
+    transaction.get(db.collection("provider_availability").doc(providerId)),
+  ]));
   if (assignment.empty) throw new HttpsError("permission-denied", "You can view scheduling hours only for a practitioner you’re connected to.");
-  const snapshot = await db.collection("provider_availability").doc(providerId).get();
+  if (account.exists && account.get("practitionerWorkspaceActive") === false) {
+    return { timezone: null, weeklyHours: [], upcomingSlots: [] };
+  }
   if (!snapshot.exists) return { timezone: null, weeklyHours: [], upcomingSlots: [] };
   const data = snapshot.data();
   const durationMinutes = Number(request.data?.durationMinutes || 45);
@@ -179,12 +236,18 @@ exports.listMyConnectedPractitioners = onCall({ region: REGION, enforceAppCheck:
     .where("status", "==", "active")
     .limit(100)
     .get();
-  const practitioners = await Promise.all(snapshot.docs.map(async (doc) => {
-    const providerId = doc.get("providerId");
-    if (!providerId) return null;
-    const profile = await db.collection("realHelpProviders").doc(providerId).get();
+  const providerIds = [...new Set(snapshot.docs.map((doc) => doc.get("providerId")).filter(Boolean))];
+  if (!providerIds.length) return { practitioners: [] };
+  const [accounts, profiles] = await Promise.all([
+    db.getAll(...providerIds.map((providerId) => db.collection("users").doc(providerId))),
+    db.getAll(...providerIds.map((providerId) => db.collection("realHelpProviders").doc(providerId))),
+  ]);
+  const practitioners = providerIds.map((providerId, index) => {
+    const account = accounts[index];
+    if (account.exists && account.get("practitionerWorkspaceActive") === false) return null;
+    const profile = profiles[index];
     return { id: providerId, name: profile.exists ? (profile.get("name") || "Your practitioner") : "Your practitioner" };
-  }));
+  });
   return { practitioners: practitioners.filter(Boolean) };
 });
 
@@ -229,7 +292,13 @@ exports.requestProviderAppointment = onCall({ region: REGION, enforceAppCheck: t
   if (note.length > 240) throw new HttpsError("invalid-argument", "Keep your note under 240 characters.");
   const requestRef = db.collection("appointment_requests").doc();
   await db.runTransaction(async (transaction) => {
-    const availabilitySnapshot = await transaction.get(db.collection("provider_availability").doc(providerId));
+    const [providerAccount, availabilitySnapshot] = await Promise.all([
+      transaction.get(db.collection("users").doc(providerId)),
+      transaction.get(db.collection("provider_availability").doc(providerId)),
+    ]);
+    if (providerAccount.exists && providerAccount.get("practitionerWorkspaceActive") === false) {
+      throw new HttpsError("failed-precondition", "This practitioner is not currently accepting session requests.");
+    }
     if (!availabilitySnapshot.exists) throw new HttpsError("failed-precondition", "This practitioner hasn’t published appointment times yet. Contact them to ask about scheduling.");
     const availability = availabilitySnapshot.data();
     if (!isWithinProviderHours(startAt, endAt, availability.timezone, availability.weeklyHours)) {
@@ -283,7 +352,7 @@ exports.requestProviderAppointment = onCall({ region: REGION, enforceAppCheck: t
 });
 
 exports.listProviderAppointmentRequests = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.manage");
   const snapshot = await db.collection("appointment_requests")
     .where("providerId", "==", providerId)
     .where("status", "==", "pending")
@@ -304,7 +373,7 @@ exports.listProviderAppointmentRequests = onCall({ region: REGION, enforceAppChe
 });
 
 exports.respondToProviderAppointmentRequest = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.manage");
   const requestId = typeof request.data?.requestId === "string" ? request.data.requestId.trim() : "";
   const decision = request.data?.decision;
   const responseMessage = typeof request.data?.responseMessage === "string" ? request.data.responseMessage.trim().slice(0, 240) : "";
@@ -312,6 +381,7 @@ exports.respondToProviderAppointmentRequest = onCall({ region: REGION, enforceAp
   const requestRef = db.collection("appointment_requests").doc(requestId);
   const appointmentRef = db.collection("appointments").doc();
   const outcome = await db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.appointments.manage");
     const requestDoc = await transaction.get(requestRef);
     if (!requestDoc.exists || requestDoc.get("providerId") !== providerId) {
       throw new HttpsError("not-found", "This session request is no longer available.");
@@ -387,26 +457,28 @@ exports.respondToProviderAppointmentRequest = onCall({ region: REGION, enforceAp
 });
 
 exports.listProviderClients = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
-  const snapshot = await db.collection("clientProviderAssignments")
-    .where("providerId", "==", providerId)
-    .where("status", "==", "active")
-    .limit(500)
-    .get();
-  return {
-    assignments: snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        clientId: data.clientId,
-        providerId: data.providerId,
-        orgId: data.orgId || null,
-        relationshipType: data.relationshipType || "primary",
-        status: data.status || "active",
-        createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null,
-      };
-    }),
-  };
+  const providerId = await requireProviderCapability(request, "provider.connections.read");
+  return db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.connections.read");
+    const snapshot = await transaction.get(db.collection("clientProviderAssignments")
+      .where("providerId", "==", providerId)
+      .where("status", "==", "active")
+      .limit(500));
+    return {
+      assignments: snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          clientId: data.clientId,
+          providerId: data.providerId,
+          orgId: data.orgId || null,
+          relationshipType: data.relationshipType || "primary",
+          status: data.status || "active",
+          createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null,
+        };
+      }),
+    };
+  });
 });
 
 function asDate(value, field) {
@@ -474,19 +546,21 @@ function serialize(doc) {
 }
 
 exports.listProviderAppointments = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.read");
   const from = request.data?.from ? asDate(request.data.from, "Start date") : new Date();
   const until = request.data?.to ? asDate(request.data.to, "End date") : new Date(from.getTime() + 90 * 24 * 60 * 60 * 1000);
   if (until <= from) throw new HttpsError("invalid-argument", "Choose an end date after the start date.");
 
-  const snapshot = await db.collection("appointments")
-    .where("providerId", "==", providerId)
-    .where("startAt", ">=", Timestamp.fromDate(from))
-    .where("startAt", "<=", Timestamp.fromDate(until))
-    .orderBy("startAt", "asc")
-    .limit(250)
-    .get();
-  return { appointments: snapshot.docs.map(serialize).filter((item) => item.status !== "cancelled") };
+  return db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.appointments.read");
+    const snapshot = await transaction.get(db.collection("appointments")
+      .where("providerId", "==", providerId)
+      .where("startAt", ">=", Timestamp.fromDate(from))
+      .where("startAt", "<=", Timestamp.fromDate(until))
+      .orderBy("startAt", "asc")
+      .limit(250));
+    return { appointments: snapshot.docs.map(serialize).filter((item) => item.status !== "cancelled") };
+  });
 });
 
 exports.listMyUpcomingAppointments = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
@@ -528,7 +602,7 @@ exports.listMyUpcomingAppointments = onCall({ region: REGION, enforceAppCheck: t
     }));
   const names = new Map(providers);
   return {
-    appointments: upcoming.map(({ providerId, ...item }) => ({ ...item, practitionerName: names.get(providerId) || "Your practitioner" })),
+    appointments: upcoming.map((item) => ({ ...item, practitionerName: names.get(item.providerId) || "Your practitioner" })),
   };
 });
 
@@ -564,29 +638,30 @@ exports.respondToMyAppointment = onCall({ region: REGION, enforceAppCheck: true 
 });
 
 exports.listAppointmentsForProviderClient = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.read");
   const clientId = typeof request.data?.clientId === "string" ? request.data.clientId.trim() : "";
   if (!clientId) throw new HttpsError("invalid-argument", "Choose a client.");
-  const assignment = await db.collection("clientProviderAssignments")
-    .where("providerId", "==", providerId)
-    .where("clientId", "==", clientId)
-    .where("status", "==", "active")
-    .limit(1)
-    .get();
-  if (assignment.empty) throw new HttpsError("permission-denied", "You can only view appointments for a client currently assigned to you.");
   const from = request.data?.from ? asDate(request.data.from, "Start date").getTime() : Date.now();
   const to = request.data?.to ? asDate(request.data.to, "End date").getTime() : Number.POSITIVE_INFINITY;
   if (to <= from) throw new HttpsError("invalid-argument", "Choose an end date after the start date.");
-  const snapshot = await db.collection("appointments")
-    .where("providerId", "==", providerId)
-    .where("clientId", "==", clientId)
-    .limit(250)
-    .get();
-  const appointments = snapshot.docs.map(serialize)
-    .filter((item) => item.status !== "cancelled" && item.startAt
-      && new Date(item.startAt).getTime() >= from && new Date(item.startAt).getTime() <= to)
-    .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
-  return { appointments };
+  return db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.appointments.read");
+    const assignment = await transaction.get(db.collection("clientProviderAssignments")
+      .where("providerId", "==", providerId)
+      .where("clientId", "==", clientId)
+      .where("status", "==", "active")
+      .limit(1));
+    if (assignment.empty) throw new HttpsError("permission-denied", "You can only view appointments for a client currently assigned to you.");
+    const snapshot = await transaction.get(db.collection("appointments")
+      .where("providerId", "==", providerId)
+      .where("clientId", "==", clientId)
+      .limit(250));
+    const appointments = snapshot.docs.map(serialize)
+      .filter((item) => item.status !== "cancelled" && item.startAt
+        && new Date(item.startAt).getTime() >= from && new Date(item.startAt).getTime() <= to)
+      .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+    return { appointments };
+  });
 });
 
 exports.requestAppointmentChange = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
@@ -627,7 +702,7 @@ exports.requestAppointmentChange = onCall({ region: REGION, enforceAppCheck: tru
 });
 
 exports.respondToAppointmentChangeRequest = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.manage");
   const appointmentId = typeof request.data?.appointmentId === "string" ? request.data.appointmentId.trim() : "";
   const decision = request.data?.decision;
   if (!appointmentId) throw new HttpsError("invalid-argument", "Choose an appointment.");
@@ -636,6 +711,7 @@ exports.respondToAppointmentChangeRequest = onCall({ region: REGION, enforceAppC
   if (responseMessage.length > 240) throw new HttpsError("invalid-argument", "Keep your response under 240 characters.");
   const ref = db.collection("appointments").doc(appointmentId);
   return db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.appointments.manage");
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists || snapshot.get("providerId") !== providerId) {
       throw new HttpsError("not-found", "This appointment is not available in your schedule.");
@@ -656,7 +732,7 @@ exports.respondToAppointmentChangeRequest = onCall({ region: REGION, enforceAppC
 });
 
 exports.createProviderAppointment = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.manage");
   const { clientId, note = "" } = request.data || {};
   if (typeof clientId !== "string" || !clientId.trim()) throw new HttpsError("invalid-argument", "Choose a client.");
   const startAt = asDate(request.data?.startAt, "Start time");
@@ -671,19 +747,24 @@ exports.createProviderAppointment = onCall({ region: REGION, enforceAppCheck: tr
 
   const appointmentRef = db.collection("appointments").doc();
   await db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.appointments.manage");
     const assignment = await transaction.get(db.collection("clientProviderAssignments")
       .where("providerId", "==", providerId)
       .where("clientId", "==", clientId.trim())
       .where("status", "==", "active")
       .limit(1));
     if (assignment.empty) throw new HttpsError("permission-denied", "You can only schedule for a client currently assigned to you.");
+    const activeAssignment = assignment.docs[0].data();
     if (await hasAppointmentCollision(transaction, providerId, startAt, endAt)) {
       throw new HttpsError("already-exists", "You already have an appointment during that time.");
     }
     transaction.create(appointmentRef, {
       clientId: clientId.trim(),
       providerId,
-      orgId: request.data?.orgId || null,
+      // Organization scope comes from the server-owned active assignment.
+      // Never trust an orgId supplied by the browser; facility membership is
+      // not yet a user-manageable authorization boundary in this system.
+      orgId: typeof activeAssignment.orgId === "string" ? activeAssignment.orgId : null,
       startAt: Timestamp.fromDate(startAt),
       endAt: Timestamp.fromDate(endAt),
       status: "scheduled",
@@ -697,7 +778,7 @@ exports.createProviderAppointment = onCall({ region: REGION, enforceAppCheck: tr
 });
 
 exports.updateProviderAppointment = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await requireProvider(request);
+  const providerId = await requireProviderCapability(request, "provider.appointments.manage");
   const appointmentId = typeof request.data?.appointmentId === "string" ? request.data.appointmentId.trim() : "";
   if (!appointmentId) throw new HttpsError("invalid-argument", "Choose an appointment to update.");
   const ref = db.collection("appointments").doc(appointmentId);
@@ -719,6 +800,7 @@ exports.updateProviderAppointment = onCall({ region: REGION, enforceAppCheck: tr
   }
 
   return db.runTransaction(async (transaction) => {
+    await requireProviderCapabilityInTransaction(transaction, request, "provider.appointments.manage");
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists || snapshot.get("providerId") !== providerId) {
       throw new HttpsError("not-found", "This appointment is not available in your schedule.");

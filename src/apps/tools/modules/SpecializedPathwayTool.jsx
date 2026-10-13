@@ -48,6 +48,7 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
   const pathway = useMemo(() => PATHWAYS[tool?.id] || PATHWAYS["emotion-regulator"], [tool?.id]);
   const [stepIndex, setStepIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+  const [completionSaved, setCompletionSaved] = useState(false);
   const [answers, setAnswers] = useState({});
   const [startedAt] = useState(() => Date.now());
   const step = pathway.steps[stepIndex];
@@ -59,6 +60,7 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
   };
 
   const complete = () => {
+    if (completionSaved) return;
     const durationSeconds = Math.floor((Date.now() - startedAt) / 1000);
     const result = createToolResult(tool?.id || "specialized-support", pathway.title, `Completed ${pathway.title}: ${pathway.method}.`, {
       method: pathway.method,
@@ -70,6 +72,7 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
       durationMs: durationSeconds * 1000,
       context: { stepsCompleted: pathway.steps.length },
     }).catch(() => {});
+    setCompletionSaved(true);
     safeComplete(onComplete, result);
   };
 
@@ -87,8 +90,10 @@ export default function SpecializedPathwayTool({ tool, onComplete, onCancel }) {
           <p className="mt-3 text-base leading-relaxed text-white/85">{pathway.closing(answers)}</p>
           <p className="mt-3 text-sm leading-relaxed text-white/55">This practice does not measure success. Keep what helps, change the plan, or leave it here.</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button type="button" onClick={() => setIsFinished(false)} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/75"><RotateCcw aria-hidden="true" className="h-4 w-4" /> Review answers</button>
-            <button type="button" onClick={complete} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-5 text-sm font-medium text-slate-950"><Check aria-hidden="true" className="h-4 w-4" /> Save completion</button>
+            <button type="button" onClick={() => { setIsFinished(false); setCompletionSaved(false); }} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/75"><RotateCcw aria-hidden="true" className="h-4 w-4" /> Review answers</button>
+            <button type="button" onClick={complete} disabled={completionSaved} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-5 text-sm font-medium text-slate-950 disabled:cursor-default disabled:opacity-80">
+              <Check aria-hidden="true" className="h-4 w-4" /> {completionSaved ? "Completion saved" : "Save completion"}
+            </button>
           </div>
         </section>
       ) : (

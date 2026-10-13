@@ -64,24 +64,36 @@ export default function LowEnergyPlanTool({ onComplete }) {
 
   if (finished) {
     return (
-      <section className="rounded-2xl border border-emerald-200/20 bg-emerald-100/[0.05] p-5 text-white" aria-live="polite">
-        <div className="flex items-center gap-2 text-emerald-100"><Check aria-hidden="true" className="h-5 w-5" /><h2 className="font-semibold">Your plan is ready</h2></div>
-        <p className="mt-3 text-sm leading-relaxed text-white/80">{capacity === "none" ? "For now, I can" : `For the next ${capacity === "brief" ? "couple of minutes" : "ten minutes"}, I can`} {action.charAt(0).toLowerCase() + action.slice(1)}.</p>
-        <p className="mt-2 text-xs leading-relaxed text-white/55">You can pause, change this, or ask someone to join you. This is a small option, not another task you have to complete.</p>
-      </section>
+      <div className="space-y-4">
+        <section className="rounded-2xl border border-emerald-200/20 bg-gradient-to-br from-emerald-100/[0.08] to-white/[0.02] p-5 text-white sm:p-6" aria-live="polite">
+          <div className="flex items-center gap-3 text-emerald-100"><span className="grid h-10 w-10 place-items-center rounded-full border border-emerald-100/20 bg-emerald-100/10"><Check aria-hidden="true" className="h-5 w-5" /></span><h2 className="text-lg font-semibold">Your next step</h2></div>
+          <p className="mt-4 text-lg leading-relaxed text-white/90">{capacity === "none" ? "For now, I can" : `For the next ${capacity === "brief" ? "couple of minutes" : "ten minutes"}, I can`} {action.charAt(0).toLowerCase() + action.slice(1)}.</p>
+          <p className="mt-3 text-sm leading-relaxed text-white/60">You can pause, change this, or ask someone to join you. This is an option, not another task you have to complete.</p>
+        </section>
+      </div>
     );
   }
 
   return (
     <div className="space-y-5 text-white">
+      <div className="grid grid-cols-3 gap-2" aria-label="Plan steps">
+        {[{ label: "Need", done: Boolean(need) }, { label: "Capacity", done: Boolean(capacity) }, { label: "Next step", done: Boolean(action) }].map((step, index) => (
+          <div key={step.label} className={`relative overflow-hidden rounded-xl border px-3 py-2.5 ${step.done ? "border-emerald-100/25 bg-emerald-100/[0.07]" : "border-white/10 bg-white/[0.025]"}`}>
+            <span className={`block text-[10px] font-semibold uppercase tracking-[.16em] ${step.done ? "text-emerald-100" : "text-white/40"}`}>0{index + 1}</span>
+            <span className="mt-1 block text-xs text-white/80">{step.label}</span>
+            <span className={`absolute inset-x-0 bottom-0 h-0.5 origin-left transition-transform duration-500 ${step.done ? "scale-x-100 bg-emerald-200/75" : "scale-x-0 bg-transparent"}`} />
+          </div>
+        ))}
+      </div>
+
       <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5">
         <h2 className="text-lg font-semibold">What feels most important right now?</h2>
         <p className="mt-1 text-sm leading-relaxed text-white/65">Choose one area. You do not have to catch up on everything.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {NEEDS.map(({ id, label, icon: Icon }) => (
-            <button key={id} type="button" aria-pressed={need === id} onClick={() => { setNeed(id); setCapacity(""); setAction(""); }} className="flex min-h-12 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 transition hover:border-sky-200/40 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
-              {React.createElement(Icon, { "aria-hidden": true, className: "h-4 w-4 shrink-0 text-sky-200" })}
-              {label}
+            <button key={id} type="button" aria-pressed={need === id} onClick={() => { setNeed(id); setCapacity(""); setAction(""); }} className="group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 transition hover:-translate-y-0.5 hover:border-sky-200/40 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[0.055] text-sky-200 transition group-hover:scale-105 group-aria-pressed:bg-sky-100/10">{React.createElement(Icon, { "aria-hidden": true, className: "h-5 w-5" })}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>
@@ -91,14 +103,14 @@ export default function LowEnergyPlanTool({ onComplete }) {
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5" aria-live="polite">
           <h2 className="text-base font-semibold">How much capacity do you have for this?</h2>
           <p className="mt-1 text-sm text-white/60">There is no wrong answer, including ‘not right now.’</p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-4 grid grid-cols-3 gap-2">
             {[
               { id: "brief", label: "About 2 minutes" },
               { id: "fuller", label: "About 10 minutes" },
               { id: "none", label: "Not able right now" },
             ].map((option) => (
-              <button key={option.id} type="button" aria-pressed={capacity === option.id} onClick={() => { setCapacity(option.id); setAction(""); }} className="min-h-11 rounded-full border border-white/15 px-4 text-sm text-white/75 hover:bg-white/5 aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
-                {option.label}
+              <button key={option.id} type="button" aria-pressed={capacity === option.id} onClick={() => { setCapacity(option.id); setAction(""); }} className="min-h-[4.25rem] rounded-xl border border-white/15 px-2 py-2 text-xs text-white/75 transition hover:bg-white/5 aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50 sm:text-sm">
+                <span className="block text-lg font-medium text-sky-100/80">{option.id === "none" ? "—" : option.id === "brief" ? "02" : "10"}</span><span className="mt-1 block">{option.id === "none" ? "Not now" : "minutes"}</span>
               </button>
             ))}
           </div>
@@ -110,8 +122,8 @@ export default function LowEnergyPlanTool({ onComplete }) {
           <h2 className="text-base font-semibold">Pick one option—or stop here</h2>
           <div className="mt-3 grid gap-2">
             {actions.map((option) => (
-              <button key={option} type="button" aria-pressed={action === option} onClick={() => setAction(option)} className="min-h-12 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
-                {option}
+            <button key={option} type="button" aria-pressed={action === option} onClick={() => setAction(option)} className="flex min-h-14 items-start gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 transition hover:border-sky-200/30 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
+              <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-sky-100/25 text-[10px] text-sky-100/80">{actions.indexOf(option) + 1}</span><span>{option}</span>
               </button>
             ))}
           </div>

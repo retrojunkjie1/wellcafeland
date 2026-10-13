@@ -30,9 +30,17 @@ export function useAgentsRegistry() {
         if (active) setError(err?.message || "Agent run data is temporarily unavailable.");
       }
     };
-    refresh();
-    const interval = setInterval(refresh, 30_000);
-    return () => { active = false; clearInterval(interval); };
+    const refreshWhenVisible = () => {
+      if (active && document.visibilityState === "visible") refresh();
+    };
+    refreshWhenVisible();
+    const interval = setInterval(refreshWhenVisible, 60_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [syncOperationalStats]);
 
   return {

@@ -10,13 +10,15 @@ const mocks = vi.hoisted(() => ({
   listAppointmentsForProvider: vi.fn(),
   getMyProviderAvailability: vi.fn(),
   getProviderClientOverview: vi.fn(),
+  listProviderCareHandoffs: vi.fn(),
+  listProviderVisitPreparations: vi.fn(),
 }));
 
-vi.mock("react-router-dom", async (importOriginal) => ({ ...(await importOriginal()), useNavigate: () => mocks.navigate }));
+vi.mock("react-router-dom", async (importOriginal) => ({ ...(await importOriginal()), useNavigate: () => mocks.navigate, useLocation: () => ({ hash: "" }) }));
 vi.mock("@/hooks/useSessionIdentity", () => ({ useSessionIdentity: mocks.useSessionIdentity }));
 vi.mock("@/services/assignmentService", () => ({ listAssignmentsForProvider: mocks.listAssignmentsForProvider }));
 vi.mock("@/services/appointmentService", () => ({ listAppointmentsForProvider: mocks.listAppointmentsForProvider, getMyProviderAvailability: mocks.getMyProviderAvailability }));
-vi.mock("@/services/practitionerRegistry", () => ({ getProviderClientOverview: mocks.getProviderClientOverview }));
+vi.mock("@/services/practitionerRegistry", () => ({ getProviderClientOverview: mocks.getProviderClientOverview, listProviderCareHandoffs: mocks.listProviderCareHandoffs, listProviderVisitPreparations: mocks.listProviderVisitPreparations }));
 vi.mock("@/components/navigation/PageHeader", () => ({ default: ({ title }) => <header>{title}</header> }));
 vi.mock("./components/ConnectionRequestsPanel", () => ({ default: () => <section>Connection requests</section> }));
 
@@ -33,7 +35,7 @@ describe("ProviderDashboardPage", () => {
 
     mocks.useSessionIdentity.mockReturnValue({ isLoading: false, isProvider: false, isAdmin: true, providerId: null, userId: "admin-1" });
     mocks.listAssignmentsForProvider.mockResolvedValue([]);
-    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.listAppointmentsForProvider.mockResolvedValue([{ id: "appointment-1", startAt: "2026-09-30T16:00:00.000Z", status: "confirmed" }]);
     mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
     view.rerender(<ProviderDashboardPage />);
 
@@ -49,8 +51,56 @@ describe("ProviderDashboardPage", () => {
 
     render(<ProviderDashboardPage />);
 
-    expect(await screen.findByText(/Next two weeks · times in America\/Denver/)).toBeTruthy();
+    expect(await screen.findByText(/times in America\/Denver/)).toBeTruthy();
     expect(screen.getByText(/10:00 AM MDT · confirmed/)).toBeTruthy();
+  });
+
+  it("shows only consented practical-help requests in the case-manager queue", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "case-manager-1", userId: "case-manager-1", providerType: "case-manager" });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-a", status: "active" }]);
+    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.getProviderClientOverview.mockResolvedValue({ shared: false, checkins: [], practiceProgress: [] });
+    mocks.listProviderCareHandoffs.mockResolvedValue({ handoffs: [{
+      id: "request-1", status: "requested", needType: "housing", goal: "Help me find a place to call.",
+      context: "This field was not shared and must not be shown.", sharedFields: ["needType", "goal"], updatedAt: "2026-10-12T12:00:00.000Z",
+    }] });
+
+    render(<ProviderDashboardPage />);
+
+    const queue = await screen.findByRole("region", { name: "Client-authorized support requests" });
+    expect(within(queue).getByText("Help me find a place to call.")).toBeTruthy();
+    expect(within(queue).getByText(/Needs response/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Requests to respond to: 1/ })).toHaveAttribute("href", "#shared-updates-title");
+    expect(screen.queryByText("This field was not shared and must not be shown.")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Messages" })).toBeNull();
+    fireEvent.click(within(queue).getByRole("button", { name: "Review next step" }));
+    expect(mocks.navigate).toHaveBeenCalledWith("/provider/clients/client-a");
+  });
+
+  it("shows patient-selected visit preparation in the primary-care dashboard", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "pcp-1", userId: "pcp-1", providerType: "primary-care" });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-a", status: "active" }]);
+    mocks.listAppointmentsForProvider.mockResolvedValue([{ id: "visit-1", startAt: "2026-10-14T16:00:00.000Z", status: "confirmed" }]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.getProviderClientOverview.mockResolvedValue({ shared: false, checkins: [], practiceProgress: [] });
+    mocks.listProviderVisitPreparations.mockResolvedValue({ preparations: [{
+      id: "prep-1", appointmentId: "visit-1", visitPurpose: "Discuss sleep changes", priorities: ["Ask about fatigue"], questions: ["What should I track?"], accessPreferences: ["writtenInstructions"],
+      sharedFields: ["visitPurpose", "priorities", "questions"], updatedAt: "2026-10-12T12:00:00.000Z",
+    }] });
+
+    render(<ProviderDashboardPage />);
+
+    const queue = await screen.findByRole("region", { name: "Patient-selected visit preparation" });
+    expect(within(queue).getByText(/Visit preparation/)).toBeTruthy();
+    expect(within(queue).getByText(/Purpose: Discuss sleep changes/)).toBeTruthy();
+    expect(within(queue).getByText(/Focus: Ask about fatigue/)).toBeTruthy();
+    expect(within(queue).getByText(/Question: What should I track/)).toBeTruthy();
+    expect(within(queue).getByText(/Awaiting your acknowledgement/)).toBeTruthy();
+    expect(within(queue).getByText(/For the upcoming visit on Oct 14/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Prep to review: 1/ })).toHaveAttribute("href", "#shared-updates-title");
+    expect(within(queue).getByRole("button", { name: "Review visit preparation" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Messages" })).toBeNull();
   });
 
   it("surfaces voluntary practice updates without exposing their private note on the dashboard", async () => {
@@ -76,7 +126,7 @@ describe("ProviderDashboardPage", () => {
 
     const updates = await screen.findByRole("region", { name: "Updates clients chose to share" });
     expect(within(updates).getByText("Client 1")).toBeTruthy();
-    expect(within(updates).getByText(/Choose an Anchor/)).toBeTruthy();
+    expect(within(updates).getByText(/Reconnect with the room/)).toBeTruthy();
     expect(within(updates).getByText(/Tried it/)).toBeTruthy();
     expect(screen.queryByText(/A private detail the client chose to share/)).toBeNull();
 

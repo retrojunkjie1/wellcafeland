@@ -4,12 +4,14 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, ChevronsDownUp, Sparkles } from "lucide-react";
 import { getTileIcons } from "@/engines/learningPaths/tileIconMap";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 import { getTopic, getTopicList } from "@/engines/learningPaths/learningPathsEngine";
 import {
   getJourneyNodes,
-  pickNextJourneyNode,
+  getJourneyFollowUps,
+  pickNextTopicJourneyNode,
   rememberNode,
 } from "@/engines/learningPaths/interactiveJourneyEngine";
 
@@ -21,6 +23,7 @@ function cx(...c) {
 
 export default function InteractiveJourneyView({ topicId }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const topic = useMemo(() => getTopic(topicId), [topicId]);
 
   // Dropdown state for topics (shame, trauma, boundaries, etc.)
@@ -31,7 +34,10 @@ export default function InteractiveJourneyView({ topicId }) {
   // Active tile + node (angle)
   const [activeTileId, setActiveTile] = useState(topic?.tiles?.[0]?.id || null);
   const [activeNode, setActiveNode] = useState(null);
+  const [activePerspective, setActivePerspective] = useState(null);
+  const [followUpIndex, setFollowUpIndex] = useState(-1);
   const scrollContainerRef = useRef(null);
+  const tileTabRefs = useRef([]);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const tiles = topic?.tiles || [];
@@ -80,21 +86,62 @@ export default function InteractiveJourneyView({ topicId }) {
   }, [tiles]);
 
   const handleAngleSelect = (node) => {
+    setActivePerspective(node);
+    setFollowUpIndex(-1);
     setActiveNode(node);
     rememberNode(topicId, activeTileId, node.nodeId);
   };
 
   const handleAnotherAngle = () => {
-    const next = pickNextJourneyNode(topicId, activeTileId);
+    const details = getJourneyFollowUps(activePerspective);
+    const nextIndex = followUpIndex + 1;
+    const next = details[nextIndex];
     if (next) {
+      setFollowUpIndex(nextIndex);
       setActiveNode(next);
       rememberNode(topicId, activeTileId, next.nodeId);
     }
   };
 
+  const handleNodeBack = () => {
+    if (followUpIndex >= 0) {
+      setFollowUpIndex(-1);
+      setActiveNode(activePerspective);
+      return;
+    }
+    setActivePerspective(null);
+    setActiveNode(null);
+  };
+
+  const handleSurpriseMe = () => {
+    const next = pickNextTopicJourneyNode(topicId, activeTileId);
+    if (next) {
+      setActiveTile(next.tileId);
+      setActivePerspective(next);
+      setFollowUpIndex(-1);
+      setActiveNode(next);
+      rememberNode(topicId, next.tileId, next.nodeId);
+    }
+  };
+
   const handleTileChange = (tileId) => {
     setActiveTile(tileId);
+    setActivePerspective(null);
+    setFollowUpIndex(-1);
     setActiveNode(null); // Reset node when changing tiles
+  };
+
+  const handleTileKeyDown = (event, index) => {
+    let nextIndex = null;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % tiles.length;
+    if (event.key === "ArrowLeft") nextIndex = (index - 1 + tiles.length) % tiles.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = tiles.length - 1;
+    if (nextIndex === null || !tiles[nextIndex]) return;
+
+    event.preventDefault();
+    handleTileChange(tiles[nextIndex].id);
+    tileTabRefs.current[nextIndex]?.focus();
   };
 
   if (!topic) {
@@ -136,7 +183,7 @@ export default function InteractiveJourneyView({ topicId }) {
                   key={t.id}
                   type="button"
                   onClick={() => {
-                    navigate(`/tools/recovery.${t.id}`);
+                    navigateToTool(navigate, `/tools/recovery.${t.id}`, location);
                     setTopicDropdown(false);
                   }}
                   className="w-full text-left px-4 py-2.5 text-sm text-slate-200 hover:text-amber-100 hover:bg-slate-800/60 transition-colors first:rounded-t-xl last:rounded-b-xl"
@@ -163,9 +210,9 @@ export default function InteractiveJourneyView({ topicId }) {
       <section className="relative">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs text-slate-400 uppercase tracking-widest">
-            Core Perspectives
+            {topicId === "sleep-and-recovery" ? "Sleep guide" : "Core Perspectives"}
           </p>
-          <p className="text-xs text-slate-500">{tiles.length} tiles</p>
+          <p className="text-xs text-slate-500">{tiles.length} sections</p>
         </div>
 
         {/* Scrollable Container */}
@@ -174,6 +221,9 @@ export default function InteractiveJourneyView({ topicId }) {
           <div 
             ref={scrollContainerRef}
             className="no-scrollbar flex gap-3 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory"
+            role="tablist"
+            aria-label={`${topic.title} sections`}
+            aria-orientation="horizontal"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -187,8 +237,15 @@ export default function InteractiveJourneyView({ topicId }) {
               return (
                 <button
                   key={tile.id}
+                  ref={(element) => { tileTabRefs.current[index] = element; }}
                   type="button"
                   onClick={() => handleTileChange(tile.id)}
+                  onKeyDown={(event) => handleTileKeyDown(event, index)}
+                  id={`topic-tab-${tile.id}`}
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls="learning-topic-panel"
+                  tabIndex={isActive ? 0 : -1}
                   className={cx(
                     "group relative flex-shrink-0 snap-center",
                     "transform transition-all duration-500 ease-out",
@@ -290,28 +347,31 @@ export default function InteractiveJourneyView({ topicId }) {
       </section>
 
       {/* Main body: Angles OR Node */}
-      {!activeNode && (
-        <AnglesGrid
-          nodes={nodes}
-          tile={tiles.find((t) => t.id === activeTileId)}
-          onSelect={handleAngleSelect}
-          onRandom={() => {
-            const next = pickNextJourneyNode(topicId, activeTileId);
-            if (next) {
-              setActiveNode(next);
-              rememberNode(topicId, activeTileId, next.nodeId);
-            }
-          }}
-        />
-      )}
+      <div
+        id="learning-topic-panel"
+        role="tabpanel"
+        aria-labelledby={`topic-tab-${activeTileId}`}
+        tabIndex={0}
+      >
+        {!activeNode && (
+          <AnglesGrid
+            nodes={nodes}
+            tile={tiles.find((t) => t.id === activeTileId)}
+            onSelect={handleAngleSelect}
+            onRandom={handleSurpriseMe}
+          />
+        )}
 
-      {activeNode && (
-        <NodeView
-          node={activeNode}
-          onBack={() => setActiveNode(null)}
-          onNext={handleAnotherAngle}
-        />
-      )}
+        {activeNode && (
+          <NodeView
+            node={activeNode}
+            isDetail={followUpIndex >= 0}
+            remainingAngles={Math.max(0, getJourneyFollowUps(activePerspective).length - followUpIndex - 1)}
+            onBack={handleNodeBack}
+            onNext={followUpIndex + 1 < getJourneyFollowUps(activePerspective).length ? handleAnotherAngle : null}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -388,14 +448,14 @@ function AnglesGrid({ nodes, tile, onSelect, onRandom }) {
               
               {/* Title */}
               <div className="mb-3">
-                <p className="text-sm font-semibold text-amber-50 group-hover:text-amber-100 leading-snug">
+                <p className="text-base font-semibold text-amber-50 group-hover:text-amber-100 leading-snug">
                   {n.angleTitle}
                 </p>
               </div>
               
               {/* Body content */}
               <div className="flex-1">
-                <p className="text-sm text-slate-300 leading-relaxed line-clamp-4 group-hover:text-slate-200 mb-3">
+                <p className="text-base text-slate-300 leading-relaxed line-clamp-4 group-hover:text-slate-200 mb-3">
                   {n.body}
                 </p>
               </div>
@@ -420,7 +480,7 @@ function AnglesGrid({ nodes, tile, onSelect, onRandom }) {
 // NODE VIEW (deep panel)
 //////////////////////////////////////////////////////////////////////////////////////////
 
-function NodeView({ node, onBack, onNext }) {
+function NodeView({ node, isDetail, remainingAngles, onBack, onNext }) {
   const insight = {
     ...node,
     title: node.angleTitle,
@@ -435,25 +495,18 @@ function NodeView({ node, onBack, onNext }) {
           className="px-3 py-1.5 rounded-full bg-slate-950/70 border border-slate-700/70 text-[11px] text-slate-300 hover:text-amber-100 hover:border-amber-400/60 inline-flex items-center gap-1.5 transition-all"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-          Back to angles
-        </button>
-
-        <button
-          type="button"
-          onClick={onNext}
-          className="px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/60 text-[11px] text-amber-100 hover:bg-amber-500/20 hover:shadow-[0_0_0_1px_rgba(251,191,36,0.4)] inline-flex items-center gap-1.5 transition-all"
-        >
-          Show another angle
-          <ChevronRight className="h-3.5 w-3.5" />
+          {isDetail ? `Back to ${node.parentAngleTitle}` : "Back to angles"}
         </button>
       </div>
 
       <LearningInsightPanel
         insight={insight}
         onRefresh={onNext}
-        onClose={onBack}
+        parentAngleTitle={isDetail ? node.parentAngleTitle : null}
+        detailPosition={isDetail ? node.detailPosition : null}
+        detailCount={isDetail ? node.detailCount : null}
+        remainingAngles={remainingAngles}
       />
     </div>
   );
 }
-

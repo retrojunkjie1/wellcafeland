@@ -1,13 +1,15 @@
 // src/apps/tools/components/ToolCard.jsx
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { trackAction } from "../../../services/telemetry";
 import { useOSStore } from "@/stores/useOSStore";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 const ToolCard = ({ tool, variant = "list" }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { injectToolIntoChat, setMode, MODES } = useOSStore();
 
   const handleOpenInChat = (e) => {
@@ -30,7 +32,7 @@ const ToolCard = ({ tool, variant = "list" }) => {
       toolId: tool.id,
       toolName: tool.name,
     });
-    navigate(`/tools/${tool.id}`);
+    navigateToTool(navigate, `/tools/${tool.id}`, location);
   };
 
   const categoryLabels = {

@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { HeartHandshake, Loader2, RefreshCw, Sparkles } from "lucide-react";
 import { listMyPractitionerSupport, markPractitionerSupportSeen } from "@/services/practitionerRegistry";
 import { TOOLS } from "@/apps/tools/toolsRegistry";
 import { useAuth } from "@/context/AuthContext";
 import { trackSupportAction } from "@/telemetry/telemetry";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 export default function PractitionerSupportInbox() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const activeUserId = user && !user.isAnonymous ? user.uid : "";
   const [inbox, setInbox] = useState({ uid: "", items: [] });
@@ -88,7 +90,7 @@ export default function PractitionerSupportInbox() {
       trackSupportAction("practice", "practice_opened");
       if (activeUserIdRef.current === actionUid) {
         setInbox((current) => current.uid === actionUid ? { ...current, items: current.items.filter((entry) => entry.id !== item.id) } : current);
-        navigate(`/tools/${item.toolId}`);
+        navigateToTool(navigate, `/tools/${item.toolId}`, location);
       }
     } catch (err) { trackSupportAction("practice", "practice_action_failed", err?.code); if (activeUserIdRef.current === actionUid) setError(err?.message || "This tool could not be opened. Please try again."); }
     finally { if (activeUserIdRef.current === actionUid) setWorkingId(""); }

@@ -19,7 +19,11 @@ export const callAgent = async (agent, payload = {}) => {
   const response = await callAiSession({ mode: "agent", agent, ...payload });
   if (!response || response.success !== true) {
     const message = response?.error?.message || response?.error || `Agent ${agent} did not complete successfully.`;
-    throw new Error(typeof message === "string" ? message : `Agent ${agent} did not complete successfully.`);
+    const error = new Error(typeof message === "string" ? message : `Agent ${agent} did not complete successfully.`);
+    error.code = response?.error?.code || "AGENT_ERROR";
+    error.status = response?.status || null;
+    error.retryAfterSeconds = Number(response?.retryAfterSeconds) || null;
+    throw error;
   }
   const result = response.result || {};
   const reply = result.phrases?.length

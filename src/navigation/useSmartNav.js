@@ -89,6 +89,13 @@ export function useSmartNav() {
       return;
     }
 
+    // A provider schedule opened directly still has one predictable return:
+    // the provider dashboard, never an unrelated browser-history entry.
+    if (pathname === "/provider/schedule") {
+      navigate("/provider/dashboard");
+      return;
+    }
+
     // 2) Try browser history
     try {
       if (window.history.length > 1) {
@@ -119,4 +126,3 @@ export function useSmartNav() {
     meta,
   };
 }
-

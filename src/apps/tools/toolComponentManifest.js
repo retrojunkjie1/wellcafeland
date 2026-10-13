@@ -3,6 +3,7 @@
 export const TOOL_COMPONENT_MANIFEST = Object.freeze({
   breathing: "BreathingTool",
   grounding: "GroundingTool",
+  pmr: "ProgressiveMuscleRelaxationTool",
   journaling: "JournalingTool",
   "urge-surfing": "UrgeSurfingTool",
   cravings: "UrgeSurfingTool",
@@ -16,6 +17,8 @@ export const TOOL_COMPONENT_MANIFEST = Object.freeze({
   "shame-release": "SpecializedPathwayTool",
   "sleep-reset": "SpecializedPathwayTool",
   "low-energy-plan": "LowEnergyPlanTool",
+  "visit-prep": "VisitPrepTool",
+  "care-coordination": "CareHandoffTool",
 });
 
 export function createToolComponentRegistry(implementations, manifest = TOOL_COMPONENT_MANIFEST) {

@@ -1,32 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Volume2, Pause, Play, Square } from "lucide-react";
 import { createToolResult, safeComplete } from "@/utils/toolContract";
-
-// --- Local narration hook (safe, no external imports) ----------------------
-
-function useSimpleNarration() {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  const speak = (text) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    if (!text) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const stop = React.useCallback(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-  }, []);
-
-  return { isSpeaking, speak, stop };
-}
+import ToolCharacterGuide from "@/components/tools/ToolCharacterGuide";
+import { useNaturalVoice } from "@/hooks/useNaturalVoice";
 
 const TOPICS = [
   { id: "shame-and-recovery", label: "Shame and Recovery" },
@@ -171,9 +147,8 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
       : TOPICS[0].id
   );
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const { isSpeaking, speak, stop } = useSimpleNarration();
-
-  useEffect(() => () => stop(), [stop]);
+  const { status: voiceStatus, error: voiceError, playbackProgress, play, pause, resume, stop } = useNaturalVoice("marin");
+  const isSpeaking = voiceStatus === "playing";
 
   const selectedTopic = useMemo(
     () => TOPICS.find((t) => t.id === selectedId) || TOPICS[0],
@@ -199,17 +174,21 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
     if (!content || !content.understanding) return;
     if (!soundEnabled) return;
 
-    if (isSpeaking) {
-      stop();
+    if (voiceStatus === "playing") {
+      void pause();
+      return;
+    }
+    if (voiceStatus === "paused") {
+      void resume();
       return;
     }
 
-    const textToRead = `${selectedTopic.label}. ${content.understanding}`;
-    speak(textToRead);
+    const lesson = content.understanding.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    void play(`${selectedTopic.label}. ${lesson}`);
   };
 
   const handleToggleSound = () => {
-    if (isSpeaking) stop();
+    stop();
     setSoundEnabled((prev) => !prev);
   };
 
@@ -222,6 +201,7 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
 
   return (
     <div className="wc-education space-y-5 px-4 pb-24 pt-5 text-foreground sm:space-y-6 sm:px-8 sm:pt-7">
+      {(voiceStatus === "playing" || voiceStatus === "paused" || voiceStatus === "preparing") && <ToolCharacterGuide compact mood={isSpeaking ? "listening" : "present"} speaking={isSpeaking} speakingProgress={playbackProgress} message={`I’m reading ${selectedTopic.label.toLowerCase()} with you.`} context="The guide follows the spoken explanation. Pause or stop whenever you want." />}
       <header className="max-w-3xl">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Learn at your pace</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Choose a topic</h1>
@@ -255,16 +235,23 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">A short starting point</p>
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{selectedTopic.label}</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleReadAloud}
               disabled={!soundEnabled}
+              aria-label={voiceStatus === "playing" ? "Pause reading" : voiceStatus === "paused" ? "Resume reading" : "Read this topic aloud"}
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/60 px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              {isSpeaking ? "Stop reading" : "Read aloud"}
+              {voiceStatus === "playing" ? <Pause size={16} /> : voiceStatus === "paused" ? <Play size={16} /> : <Volume2 size={16} />}
+              {voiceStatus === "preparing" ? "Preparing voice…" : voiceStatus === "playing" ? "Pause reading" : voiceStatus === "paused" ? "Resume reading" : voiceStatus === "finished" ? "Read again" : "Read aloud"}
             </button>
+            {(voiceStatus === "playing" || voiceStatus === "paused" || voiceStatus === "preparing") && (
+              <button type="button" onClick={stop} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/60 px-4 text-sm text-foreground transition hover:bg-muted">
+                <Square size={14} /> Stop
+              </button>
+            )}
             <button
               type="button"
               onClick={handleToggleSound}
@@ -274,6 +261,10 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
             >
               {soundEnabled ? "Voice on" : "Voice off"}
             </button>
+            </div>
+            <p role={voiceError ? "alert" : "status"} aria-live="polite" className={`min-h-5 text-sm ${voiceError ? "text-rose-300" : "text-muted-foreground"}`}>
+              {voiceError || (voiceStatus === "preparing" ? "Preparing the natural voice…" : voiceStatus === "playing" ? "Reading aloud. You can pause or stop at any time." : voiceStatus === "paused" ? "Reading paused." : "Natural voice is ready when you choose Read aloud.")}
+            </p>
           </div>
         </div>
 

@@ -3,14 +3,12 @@ const { requireAdminScope, requireAdminScopeForListing, constrainQueryToAdminReg
 const { requireVerifiedAccount } = require("./accountAccess");
 const admin = require("firebase-admin");
 const { isProductFeatureEnabled } = require("./agentOperations");
+const { CURRENT_PROVIDER_TYPES } = require("./practitionerWorkspacePolicy");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 const REGION = "us-central1";
-const TYPES = new Set([
-  "therapist", "counselor", "recovery-coach", "peer-support", "yoga",
-  "massage", "bodywork", "acupuncture", "spiritual-counselor", "community-supporter",
-]);
+const TYPES = new Set(CURRENT_PROVIDER_TYPES);
 const SERVICE_FORMATS = new Set(["one-to-one", "group", "community-event", "practical-giving"]);
 const ACCESS_OPTIONS = new Set(["wheelchair-accessible", "interpreter-available", "low-sensory-option"]);
 const DELIVERY_OPTIONS = new Set(["online", "in-person"]);
@@ -162,6 +160,42 @@ exports.listPractitionersForReview = onCall({ region: REGION, enforceAppCheck: t
   };
 });
 
+// God-Eye's practitioner network is a read-only, public-profile projection.
+// It deliberately excludes applicant email, credential material, private notes,
+// client relationships, and account documents while still showing whether a
+// published practitioner workspace has since been revoked.
+exports.listAdminPractitionerNetwork = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+  await requireAdminScope(request, "practitioner.directory.manage");
+  const snapshot = await db.collection("realHelpProviders")
+    .where("verification.status", "==", "verified")
+    .limit(200)
+    .get();
+  const candidates = snapshot.docs.filter((entry) => TYPES.has(entry.get("category") || entry.get("type")));
+  const accounts = candidates.length
+    ? await db.getAll(...candidates.map((entry) => db.collection("users").doc(entry.id)))
+    : [];
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
+  const practitioners = candidates.map((entry) => {
+    const data = entry.data();
+    const account = accountById.get(entry.id);
+    const active = !account?.exists || account.get("practitionerWorkspaceActive") !== false;
+    return {
+      id: entry.id,
+      name: cleanText(data.name, 120, "Practitioner name"),
+      organization: cleanText(data.organization, 120, "Organization"),
+      type: data.category || data.type,
+      city: cleanText(data.city, 80, "City"),
+      region: cleanText(data.region, 16, "Region").toUpperCase(),
+      services: Array.isArray(data.services) ? data.services.filter((item) => typeof item === "string").slice(0, 12) : [],
+      delivery: data.delivery === "online" || data.delivery === "in-person" ? data.delivery : "both",
+      directoryStatus: "verified",
+      workspaceAccess: active ? "active" : "revoked",
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || null,
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+  return { practitioners, count: practitioners.length, capped: snapshot.size >= 200 };
+});
+
 exports.reviewPractitionerApplication = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
   const uid = cleanText(request.data?.uid, 128, "Practitioner account", true);
   const decision = request.data?.decision;
@@ -248,6 +282,7 @@ exports.reviewPractitionerApplication = onCall({ region: REGION, enforceAppCheck
     transaction.set(userRef, {
       role: "provider",
       providerId: uid,
+      providerType: application.type,
       roles: [...new Set([...storedRoles, "provider"])],
       updatedAt: reviewedAt,
     }, { merge: true });
@@ -284,6 +319,13 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
     .where("verification.status", "==", "verified")
     .limit(200)
     .get();
+  const providerIds = snapshot.docs.map((doc) => doc.id);
+  const accounts = providerIds.length
+    ? await db.getAll(...providerIds.map((uid) => db.collection("users").doc(uid)))
+    : [];
+  const revokedProviderIds = new Set(accounts
+    .filter((account) => account.exists && account.get("practitionerWorkspaceActive") === false)
+    .map((account) => account.id));
   const type = cleanText(request.data?.type, 48, "Support type");
   const search = cleanText(request.data?.search, 100, "Search").toLowerCase();
   const serviceFormat = SERVICE_FORMATS.has(request.data?.serviceFormat) ? request.data.serviceFormat : "";
@@ -293,7 +335,7 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
   const city = cleanText(request.data?.city, 80, "City").toLowerCase();
   const region = cleanText(request.data?.region, 16, "State or region").toLowerCase();
   const acceptingNewClients = request.data?.acceptingNewClients === true;
-  const practitioners = snapshot.docs.map((doc) => {
+  const practitioners = snapshot.docs.filter((doc) => !revokedProviderIds.has(doc.id)).map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,

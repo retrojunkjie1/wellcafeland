@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, ChevronDown, ChevronRight, CircleHelp } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronRight, CircleHelp } from "lucide-react";
 import { logToolSessionBegin, logToolSessionComplete } from "@/services/toolSessionLogger";
+import { recordPrivatePracticeCompletion } from "@/services/privatePracticeProgress";
 
 function SafetyDetails({ message }) {
   const [expanded, setExpanded] = useState(false);
@@ -32,6 +33,7 @@ export function ToolProtocolView({ tool, onClose }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const completedRef = useRef(false);
   const steps = Array.isArray(tool?.steps) ? tool.steps : [];
   const currentStep = steps[stepIndex];
   const isFirstStep = stepIndex === 0;
@@ -41,8 +43,8 @@ export function ToolProtocolView({ tool, onClose }) {
   if (!tool) return null;
 
   const close = () => {
-    onClose?.();
-    navigate("/tools");
+    if (onClose) onClose();
+    else navigate("/tools");
   };
 
   const begin = async () => {
@@ -55,8 +57,11 @@ export function ToolProtocolView({ tool, onClose }) {
   };
 
   const finish = () => {
+    if (completedRef.current) return;
+    completedRef.current = true;
     setCompleted(true);
     void logToolSessionComplete({ slug: tool.slug || tool.id, completed: true }).catch(() => {});
+    void recordPrivatePracticeCompletion().catch(() => {});
   };
 
   const leave = () => {
@@ -84,7 +89,7 @@ export function ToolProtocolView({ tool, onClose }) {
         className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 bg-white/[0.035] px-4 text-sm text-white/75 transition hover:bg-white/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Back to practices
+        Back to where you were
       </button>
 
       <header className="mb-6 space-y-3 sm:mb-8">
@@ -128,7 +133,10 @@ export function ToolProtocolView({ tool, onClose }) {
             </div>
           </div>
           {tool.aftercare?.length > 0 && <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4"><h3 className="text-sm font-medium text-white/85">If you want to carry something with you</h3><ul className="mt-2 space-y-2 text-sm leading-relaxed text-white/65">{tool.aftercare.map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</ul></div>}
-          <button type="button" onClick={close} className="mt-6 min-h-12 w-full rounded-full bg-amber-300 px-6 text-base font-semibold text-slate-950 transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">Return to practices</button>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={close} className="min-h-12 rounded-full bg-amber-300 px-6 text-base font-semibold text-slate-950 transition hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">Return to where you were</button>
+            <button type="button" onClick={() => navigate("/milestones")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 px-5 text-sm font-medium text-white/80 transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">View my progress <ArrowRight aria-hidden="true" className="h-4 w-4" /></button>
+          </div>
         </section>
       ) : (
         <section className="wc-tool-session-panel rounded-3xl border border-white/10 bg-white/[0.035] p-5 sm:p-7">

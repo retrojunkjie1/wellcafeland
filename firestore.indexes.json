@@ -193,6 +193,41 @@
       ]
     },
     {
+      "collectionGroup": "client_visit_preparations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clientId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "client_care_handoffs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clientId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "client_care_handoffs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clientId", "order": "ASCENDING" },
+        { "fieldPath": "share.practitionerId", "order": "ASCENDING" },
+        { "fieldPath": "share.enabled", "order": "ASCENDING" },
+        { "fieldPath": "share.careCoordinationVersion", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "client_visit_preparations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "clientId", "order": "ASCENDING" },
+        { "fieldPath": "share.practitionerId", "order": "ASCENDING" },
+        { "fieldPath": "share.enabled", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "clientProviderAssignments",
       "queryScope": "COLLECTION",
       "fields": [

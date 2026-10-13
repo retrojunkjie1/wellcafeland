@@ -2,16 +2,19 @@
 // Voice journal tool - 10-90 second recordings
 
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Mic, MicOff, Save, Loader2, CheckCircle } from "lucide-react";
 import { transcribeAudio } from "@/services/multimodalClient";
 import { callAgent } from "@/agents/aiAgents";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { resolveToolReturnTarget, returnFromTool } from "@/navigation/toolReturn";
 
 const VoiceJournal = ({ onComplete, onCancel }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTarget = resolveToolReturnTarget(location.state);
   const { user } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -179,7 +182,7 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
     <div className="flex flex-col h-full bg-slate-950 text-white">
       <div className="flex-1 overflow-y-auto p-4 pb-24 sm:p-6 space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <button type="button" onClick={() => onCancel ? onCancel() : navigate("/tools")} className="min-h-11 rounded-lg px-3 text-sm text-white/65 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">Back to tools</button>
+          <button type="button" onClick={() => onCancel ? onCancel() : returnFromTool(navigate, returnTarget)} className="min-h-11 rounded-lg px-3 text-sm text-white/65 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">Back to where you were</button>
           <div className="text-center">
             <h2 className="text-xl font-medium text-white mb-2">Voice Journal</h2>
             <p className="text-sm text-white/70">Record up to 90 seconds; stop whenever you choose.</p>

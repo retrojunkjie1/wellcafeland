@@ -19,20 +19,20 @@
   },
   {
     "slug": "grounding-54321",
-    "title": "Choose an Anchor",
+    "title": "Reconnect with the room",
     "category": ["Grounding"],
     "intensity": "low",
-    "durationSec": 90,
-    "clinicalIntent": "An optional way to choose one point of orientation. No counting, ratings, or written answers are required.",
-    "indications": ["anxiety", "overwhelm", "panic", "freeze", "dissociation"],
-    "contraindications": ["If a sense or prompt feels uncomfortable, skip it or stop the practice."],
+    "durationSec": 0,
+    "clinicalIntent": "An optional sensory pause that may help bring attention back to the present. It is a coping option, not a treatment or a test.",
+    "indications": ["present-moment orientation", "scattered attention"],
+    "contraindications": ["Stop or switch if a prompt feels uncomfortable or makes things worse."],
     "steps": [
-      { "label": "One steady object", "description": "Rest your eyes on one still object or color, if that feels comfortable. Nothing needs to be counted or named.", "durationSec": 30 },
-      { "label": "One familiar sound—or quiet", "description": "Listen for one familiar sound, or choose a quieter space.", "durationSec": 30 },
-      { "label": "A familiar texture", "description": "Hold a familiar object if that feels useful. No description is needed.", "durationSec": 30 },
-      { "label": "A more comfortable place", "description": "Stay, turn, or move to a part of the space that suits you.", "durationSec": 30 }
+      { "label": "Look", "description": "Notice a still object or color, if that feels comfortable." },
+      { "label": "Listen", "description": "Notice a familiar sound—or let quiet be enough." },
+      { "label": "Touch", "description": "Hold a familiar object, if you want." },
+      { "label": "Adjust your space", "description": "Change the light, sound, or where you sit—or stay as you are." }
     ],
-    "aftercare": ["Finish here, choose another support, or return to what you were doing. No particular result is expected."],
+    "aftercare": ["There is no score or required feeling. Stop or choose another kind of support if this did not help or felt uncomfortable."],
     "whenToEscalate": "If you feel increasingly disconnected or distressed, stop and consider reaching out to someone you trust. In the U.S. and its territories, call or text 988 for emotional crisis support. For immediate danger, contact local emergency services."
   },
   {

@@ -5,8 +5,9 @@
 import React from "react";
 import { useSmartBack } from "@/lib/useSmartBack";
 
-const PageHeader = ({ title, subtitle, showBack = false, backTo }) => {
-  const onBack = useSmartBack(backTo || "/home");
+const PageHeader = ({ title, subtitle, showBack = false, backTo, onBack: onBackOverride }) => {
+  const smartBack = useSmartBack(backTo || "/home");
+  const onBack = onBackOverride || smartBack;
 
   return (
     <header className="mb-6 space-y-2">
@@ -32,4 +33,3 @@ const PageHeader = ({ title, subtitle, showBack = false, backTo }) => {
 };
 
 export default PageHeader;
-

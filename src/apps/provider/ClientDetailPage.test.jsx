@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import ClientDetailPage from "./ClientDetailPage";
 
 const mocks = vi.hoisted(() => ({
@@ -9,6 +9,10 @@ const mocks = vi.hoisted(() => ({
   listAppointmentsForProviderClient: vi.fn(),
   getMyProviderAvailability: vi.fn(),
   getProviderClientOverview: vi.fn(),
+  listProviderVisitPreparations: vi.fn(),
+  listProviderCareHandoffs: vi.fn(),
+  acknowledgeVisitPreparation: vi.fn(),
+  updateProviderCareHandoff: vi.fn(),
   navigate: vi.fn(),
   params: { clientId: "client-1" },
 }));
@@ -18,6 +22,10 @@ vi.mock("@/services/assignmentService", () => ({ listAssignmentsForProvider: moc
 vi.mock("@/services/appointmentService", () => ({ listAppointmentsForProviderClient: mocks.listAppointmentsForProviderClient, getMyProviderAvailability: mocks.getMyProviderAvailability }));
 vi.mock("@/services/practitionerRegistry", () => ({
   getProviderClientOverview: mocks.getProviderClientOverview,
+  listProviderVisitPreparations: mocks.listProviderVisitPreparations,
+  listProviderCareHandoffs: mocks.listProviderCareHandoffs,
+  acknowledgeVisitPreparation: mocks.acknowledgeVisitPreparation,
+  updateProviderCareHandoff: mocks.updateProviderCareHandoff,
   sendPractitionerSupportTool: vi.fn(),
 }));
 vi.mock("react-router-dom", async (importOriginal) => {
@@ -36,11 +44,17 @@ function deferred() {
 
 afterEach(() => { cleanup(); vi.clearAllMocks(); mocks.params.clientId = "client-1"; });
 
+function mockEmptyCoordinationServices() {
+  mocks.listProviderVisitPreparations.mockResolvedValue({ preparations: [] });
+  mocks.listProviderCareHandoffs.mockResolvedValue({ handoffs: [] });
+}
+
 describe("ClientDetailPage", () => {
   it("loads an active connection through the authorized service and shows consent plus appointments", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", isLoading: false });
     mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);
     mocks.getProviderClientOverview.mockResolvedValue({ shared: true, scopes: { recoveryProgress: true, wellnessPatterns: false, writtenReflections: false, assessments: false }, checkins: [], totalRecentCheckins: 1 });
+    mockEmptyCoordinationServices();
     mocks.listAppointmentsForProviderClient.mockResolvedValue([{ id: "appointment-1", startAt: "2026-09-30T16:00:00.000Z", status: "confirmed" }]);
     mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
 
@@ -77,12 +91,76 @@ describe("ClientDetailPage", () => {
     });
     mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
     mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mockEmptyCoordinationServices();
 
     render(<ClientDetailPage />);
 
     expect(await screen.findByText("Client sharing is temporarily paused")).toBeInTheDocument();
     expect(screen.getByText("Recovery progress: paused")).toBeInTheDocument();
     expect(screen.getByText(/Shared check-in details and support tools · client-1/)).toBeInTheDocument();
+  });
+
+  it("shows only client-selected practical-help fields and confirms practitioner updates", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", providerType: "recovery-coach", isLoading: false });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);
+    mocks.getProviderClientOverview.mockResolvedValue({ shared: false, scopes: { careCoordination: true }, checkins: [], totalRecentCheckins: 0 });
+    mocks.listProviderVisitPreparations.mockResolvedValue({ preparations: [] });
+    mocks.listProviderCareHandoffs.mockResolvedValue({ handoffs: [{
+      id: "handoff-1", status: "requested", needType: "follow-up", goal: "Help me call the evening group.",
+      context: "Unselected private context must stay hidden.", preferredTiming: "this-week", contactPreference: "next-appointment",
+      sharedFields: ["needType", "goal"],
+    }] });
+    mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.updateProviderCareHandoff.mockResolvedValue({ ok: true, status: "acknowledged" });
+
+    render(<ClientDetailPage />);
+
+    expect(await screen.findByText("Help me call the evening group.")).toBeInTheDocument();
+    expect(screen.queryByText("Unselected private context must stay hidden.")).toBeNull();
+    expect(screen.queryByText(/Follow up:/)).toBeNull();
+    expect(screen.getByText("Client shared 2 fields")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Acknowledge" }));
+    await waitFor(() => expect(mocks.updateProviderCareHandoff).toHaveBeenCalledWith("handoff-1", "acknowledged", ""));
+    expect(await screen.findByText("Acknowledged")).toBeInTheDocument();
+  });
+
+  it("keeps case-manager client detail limited to shared requests and coordination", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", providerType: "case-manager", isLoading: false });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);
+    mocks.getProviderClientOverview.mockResolvedValue({ shared: false, scopes: { careCoordination: true }, scopeAccess: { recoveryProgress: false }, checkins: [], practiceProgress: [] });
+    mocks.listProviderCareHandoffs.mockResolvedValue({ handoffs: [] });
+    mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+
+    render(<ClientDetailPage />);
+
+    expect(await screen.findByRole("heading", { name: "Practical-help requests" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Visit preparation shared with you" })).toBeNull();
+    expect(screen.queryByText(/Shared check-in details and support tools/)).toBeNull();
+    expect(screen.queryByRole("link", { name: /Open secure messages/ })).toBeNull();
+    expect(mocks.listProviderVisitPreparations).not.toHaveBeenCalled();
+  });
+
+  it("shows only visit preparation a primary-care clinician is authorized to review", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "pcp-1", userId: "pcp-1", providerType: "primary-care", isLoading: false });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);
+    mocks.getProviderClientOverview.mockResolvedValue({ shared: false, scopes: { recoveryProgress: true }, scopeAccess: { recoveryProgress: false }, checkins: [], practiceProgress: [] });
+    mocks.listProviderVisitPreparations.mockResolvedValue({ preparations: [{
+      id: "prep-1", visitPurpose: "Discuss sleep changes", priorities: ["Ask about fatigue"], questions: ["What should I track?"],
+      sharedFields: ["visitPurpose", "priorities", "questions"],
+    }] });
+    mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+
+    render(<ClientDetailPage />);
+
+    expect(await screen.findByText("Discuss sleep changes")).toBeInTheDocument();
+    expect(screen.getByText("Recovery progress: not in this workspace")).toBeInTheDocument();
+    expect(screen.queryByText(/Shared check-in details and support tools/)).toBeNull();
+    expect(screen.queryByRole("link", { name: /Open secure messages/ })).toBeNull();
+    expect(mocks.listProviderCareHandoffs).not.toHaveBeenCalled();
   });
 
   it("hides the previous account's client while switching identities and ignores its late consent response", async () => {
@@ -98,6 +176,7 @@ describe("ClientDetailPage", () => {
       : Promise.resolve({ shared: false, scopes: { recoveryProgress: false }, checkins: [], totalRecentCheckins: 0 }));
     mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
     mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mockEmptyCoordinationServices();
 
     const { rerender } = render(<ClientDetailPage />);
     await waitFor(() => expect(mocks.listAssignmentsForProvider).toHaveBeenCalledWith("provider-a"));

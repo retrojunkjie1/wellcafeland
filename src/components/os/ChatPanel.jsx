@@ -83,7 +83,7 @@ const STYLE_HINTS_54K = ["warm_concise", "coach", "clinical_calm", "grounded_spi
 
 const TOOL_NAMES = {
   breathing: "Breathing Exercise",
-  grounding: "Choose an Anchor",
+  grounding: "Reconnect with the room",
   journaling: "Journaling",
   "urge-surfing": "Urge Surfing",
   "body-scan": "Steady Ground",
@@ -281,7 +281,7 @@ const ChatPanel = () => {
   const [expandedMessageIds, setExpandedMessageIds] = useState({});
   const [speakError, setSpeakError] = useState(null);
   const [groundingModalOpen, setGroundingModalOpen] = useState(false);
-  const [overlayTick, setOverlayTick] = useState(0);
+  const [showThinkingOverlay, setShowThinkingOverlay] = useState(false);
   const composerRef = useRef(null);
   const [composerH, setComposerH] = useState(0);
   const COMPOSER_MARGIN = 16;
@@ -321,12 +321,15 @@ const ChatPanel = () => {
   }, [messages, pending]);
 
   useEffect(() => {
-    if (!pending) return;
-    const t = setInterval(() => setOverlayTick((v) => v + 1), 100);
-    return () => clearInterval(t);
+    if (!pending) {
+      setShowThinkingOverlay(false);
+      return undefined;
+    }
+    // Avoid flashing the overlay for replies that arrive immediately. One
+    // timeout is enough; a recurring render timer is not needed.
+    const timeout = window.setTimeout(() => setShowThinkingOverlay(true), 250);
+    return () => window.clearTimeout(timeout);
   }, [pending]);
-
-  const thoughtMsForOverlay = pending?.startedAt != null ? Math.max(0, Date.now() - pending.startedAt) : 0;
 
   useEffect(() => {
     const el = composerRef.current;
@@ -2150,7 +2153,7 @@ const ChatPanel = () => {
 
       <GroundingModal open={groundingModalOpen} onClose={() => setGroundingModalOpen(false)} />
 
-      <ThinkingOverlay show={!!pending && thoughtMsForOverlay >= 250} seconds={(thoughtMsForOverlay || 0) / 1000} />
+      <ThinkingOverlay show={showThinkingOverlay && Boolean(pending)} />
 
       {/* In-app link preview (resource.preview intent) */}
       {webViewUrl && (

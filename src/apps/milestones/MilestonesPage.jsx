@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Award, ArrowRight, BookHeart, CalendarCheck2, Heart, RefreshCw, Sparkles, HandHeart } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";
 import { useAuth } from "@/context/AuthContext";
 import { GUEST_CHECKINS_STORAGE_KEY } from "@/apps/core/checkInConstants";
 import { getMyCheckInMilestoneSummary } from "@/services/checkInHistory";
+import { getGuestPrivatePracticeProgress, getPrivatePracticeProgress, transferGuestPracticeProgressToAccount } from "@/services/privatePracticeProgress";
 import { RECOVERY_MARKERS, summarizeMilestoneProgress, SUPPORT_CHOICE_OPTIONS } from "./milestoneProgress";
+import { getPracticeReturnTarget } from "@/apps/assistance/assistanceReturnPath";
+import { returnFromTool } from "@/navigation/toolReturn";
 
 function readGuestCheckIns() {
   try {
@@ -79,9 +82,15 @@ function SupportChoices({ counts = {} }) {
 
 export default function MilestonesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToPractice = getPracticeReturnTarget(location.state);
   const { user, loading: authLoading } = useAuth();
   const progressScope = user && !user.isAnonymous ? `account:${user.uid}` : "guest";
   const [summaryState, setSummaryState] = useState({ scope: "", value: null });
+  const [practiceState, setPracticeState] = useState({ scope: "", loading: true, error: "", value: null });
+  const [guestPracticeProgress, setGuestPracticeProgress] = useState({ totalCompleted: 0, activeDaysLast7: 0 });
+  const [transferringGuestProgress, setTransferringGuestProgress] = useState(false);
+  const [guestTransferError, setGuestTransferError] = useState("");
   const progressSummary = summaryState.scope === progressScope ? summaryState.value : null;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -92,6 +101,9 @@ export default function MilestonesPage() {
     progressScopeRef.current = progressScope;
     requestSequence.current += 1;
     setSummaryState({ scope: progressScope, value: null });
+    setPracticeState({ scope: progressScope, loading: true, error: "", value: null });
+    setGuestPracticeProgress({ totalCompleted: 0, activeDaysLast7: 0 });
+    setGuestTransferError("");
     setLoading(true);
     setError("");
   }, [progressScope]);
@@ -100,25 +112,51 @@ export default function MilestonesPage() {
     const requestId = ++requestSequence.current;
     const requestScope = progressScope;
     setLoading(true);
+    setPracticeState({ scope: requestScope, loading: true, error: "", value: null });
     setError("");
     try {
-      let result;
-      if (user && !user.isAnonymous) {
-        result = await getMyCheckInMilestoneSummary();
-      } else {
-        result = summarizeMilestoneProgress(readGuestCheckIns());
-      }
+      const checkInPromise = user && !user.isAnonymous
+        ? getMyCheckInMilestoneSummary()
+        : Promise.resolve(summarizeMilestoneProgress(readGuestCheckIns()));
+      const [checkInResult, practiceResult] = await Promise.allSettled([
+        checkInPromise,
+        getPrivatePracticeProgress(),
+      ]);
       if (requestId === requestSequence.current && requestScope === progressScopeRef.current) {
-        setSummaryState({ scope: requestScope, value: result });
+        if (checkInResult.status === "fulfilled") {
+          setSummaryState({ scope: requestScope, value: checkInResult.value });
+        } else {
+          setError(checkInResult.reason?.message || "Your check-in progress could not be loaded.");
+        }
+        setGuestPracticeProgress(user && !user.isAnonymous
+          ? getGuestPrivatePracticeProgress()
+          : { totalCompleted: 0, activeDaysLast7: 0 });
+        setPracticeState(practiceResult.status === "fulfilled"
+          ? { scope: requestScope, loading: false, error: "", value: practiceResult.value }
+          : { scope: requestScope, loading: false, error: "Practice progress could not load.", value: null });
       }
     } catch (loadError) {
       if (requestId === requestSequence.current && requestScope === progressScopeRef.current) {
         setError(loadError?.message || "Your check-in progress could not be loaded.");
+        setPracticeState({ scope: requestScope, loading: false, error: "Practice progress could not load.", value: null });
       }
     } finally {
       if (requestId === requestSequence.current && requestScope === progressScopeRef.current) setLoading(false);
     }
   }, [user, progressScope]);
+
+  const transferGuestProgress = useCallback(async () => {
+    setTransferringGuestProgress(true);
+    setGuestTransferError("");
+    try {
+      await transferGuestPracticeProgressToAccount();
+      await loadProgress();
+    } catch (transferError) {
+      setGuestTransferError(transferError?.message || "This device's practice count could not be added. Please try again.");
+    } finally {
+      setTransferringGuestProgress(false);
+    }
+  }, [loadProgress]);
 
   useEffect(() => {
     if (!authLoading) loadProgress();
@@ -136,10 +174,13 @@ export default function MilestonesPage() {
       : RECOVERY_MARKERS.find((days) => recordedDays < days) || null,
   };
   const isGuest = !user || user.isAnonymous;
+  const practiceProgress = practiceState.scope === progressScope ? practiceState.value : null;
+  const practiceProgressLoading = authLoading || practiceState.scope !== progressScope || practiceState.loading;
+  const practiceProgressError = practiceState.scope === progressScope ? practiceState.error : "";
 
   return (
     <main className="min-h-screen bg-slate-950 pb-10 text-white">
-      <PageHeader title="Your milestones" subtitle="Progress, in the words and choices you saved" />
+      <PageHeader title="Your milestones" subtitle="Progress, in the words and choices you saved" showBack={Boolean(returnToPractice)} backTo="/home" onBack={returnToPractice ? () => returnFromTool(navigate, returnToPractice) : undefined} />
       <div className="mx-auto max-w-4xl px-4 py-5 sm:px-6 sm:py-8">
         <header className="mb-6 rounded-3xl border border-amber-200/15 bg-gradient-to-br from-amber-100/[0.08] via-slate-900/80 to-slate-950 p-5 sm:p-7">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-100/75">Your path, your pace</p>
@@ -207,6 +248,49 @@ export default function MilestonesPage() {
             <SupportChoices counts={progress.supportChoiceCounts} />
           </>
         )}
+
+        <section aria-labelledby="practice-progress-title" className="mt-4 rounded-3xl border border-sky-100/15 bg-gradient-to-br from-sky-100/[0.05] via-white/[0.025] to-white/[0.015] p-5 sm:p-7">
+          <div className="flex items-start gap-3">
+            <Sparkles aria-hidden="true" className="mt-0.5 h-6 w-6 shrink-0 text-sky-100" />
+            <div className="min-w-0 flex-1">
+              <h2 id="practice-progress-title" className="text-lg font-semibold">Practices you completed</h2>
+              <p className="mt-1 text-sm leading-relaxed text-white/60">A private count of completed practices. It does not include your choices, notes, or reflections, and is not shared with practitioners.</p>
+            </div>
+          </div>
+          {user && !user.isAnonymous && guestPracticeProgress.totalCompleted > 0 && (
+            <div className="mt-4 flex flex-wrap items-center gap-4 rounded-2xl border border-amber-100/15 bg-amber-100/[0.035] p-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-100/20 bg-amber-100/[0.06] text-xl font-semibold tabular-nums text-amber-100" aria-label={`${guestPracticeProgress.totalCompleted} practices saved on this device`}>
+                {guestPracticeProgress.totalCompleted}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-white/85">Practice count saved on this device</p>
+                <p className="mt-1 text-xs leading-relaxed text-white/55">Add this private count to your account. Only totals and practice days move.</p>
+              </div>
+              <button type="button" onClick={transferGuestProgress} disabled={transferringGuestProgress} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-amber-100/25 px-4 text-sm font-medium text-amber-50 transition hover:bg-amber-100/[0.07] disabled:cursor-wait disabled:opacity-60">
+                {transferringGuestProgress ? "Adding…" : "Add to my account"}
+              </button>
+              {guestTransferError && <p role="alert" className="basis-full text-sm text-rose-100/80">{guestTransferError}</p>}
+            </div>
+          )}
+          {practiceProgressLoading ? (
+            <p role="status" className="mt-4 text-sm text-white/55">Loading your practice count…</p>
+          ) : practiceProgressError ? (
+            <div role="alert" className="mt-4 rounded-2xl border border-rose-200/15 bg-rose-100/[0.04] p-4">
+              <p className="text-sm text-white/75">Practice progress is unavailable right now.</p>
+              <button type="button" onClick={loadProgress} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/80 hover:bg-white/[0.05]"><RefreshCw aria-hidden="true" className="h-4 w-4" />Try again</button>
+            </div>
+          ) : practiceProgress?.totalCompleted > 0 ? (
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <ProgressCount icon={BookHeart} label="practices completed" count={practiceProgress.totalCompleted} />
+              <ProgressCount icon={CalendarCheck2} label="days with a practice in the last 7 days" count={practiceProgress.activeDaysLast7} />
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <p className="max-w-xl text-sm leading-relaxed text-white/65">No completed practices are recorded yet. This count starts from now; there is no streak to keep.</p>
+              <button type="button" onClick={() => navigate("/tools")} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-sky-100/20 px-4 text-sm font-medium text-sky-50 hover:bg-sky-100/[0.06]">Explore practices <ArrowRight aria-hidden="true" className="h-4 w-4" /></button>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

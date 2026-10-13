@@ -70,7 +70,7 @@ describe("AdminWorkspaceAccessPage", () => {
   it("loads a collapsed, privacy-limited onboarding status list on demand", async () => {
     mocks.listAdminWorkspaceAccessEvents.mockResolvedValue({ events: [{
       eventId: "grant-1", email: "candidate@example.com", providerType: "bodywork",
-      applicationStatus: "pending", assignedAt: "2026-09-26T12:00:00.000Z",
+      applicationStatus: "pending", workspaceAccessActive: true, assignedAt: "2026-09-26T12:00:00.000Z",
     }] });
     render(<MemoryRouter><AdminWorkspaceAccessPage /></MemoryRouter>);
     expect(mocks.listAdminWorkspaceAccessEvents).not.toHaveBeenCalled();

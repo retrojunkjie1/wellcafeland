@@ -18,6 +18,8 @@ export const ROOT_SET = new Set(ROOT_ROUTES);
 
 // Route metadata: path-prefix => { title, parent, rootFallback }
 export const ROUTE_META = [
+  { pattern: "/forgot-password", title: "Reset password", parent: "/login", rootFallback: "/login" },
+  { pattern: "/reset-password", title: "Reset password", parent: "/login", rootFallback: "/login" },
   // Core roots
   { pattern: "/home", title: "Home", parent: null, rootFallback: "/home" },
   { pattern: "/my-sessions", title: "My sessions", parent: "/home", rootFallback: "/home" },
@@ -38,7 +40,7 @@ export const ROUTE_META = [
 
   // Tools
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", rootFallback: "/tools" },
-  { pattern: "/tools/grounding/54321", title: "Choose an Anchor", parent: "/tools", rootFallback: "/tools" },
+  { pattern: "/tools/grounding/54321", title: "Reconnect with the room", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", rootFallback: "/tools" },

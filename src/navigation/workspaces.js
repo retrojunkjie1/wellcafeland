@@ -51,12 +51,13 @@ export function getWorkspacePath(identity = {}, workspace = "") {
 export function getAvailableWorkspaces(identity = {}) {
   const roles = new Set(Array.isArray(identity.roles) ? identity.roles : []);
   if (identity.role) roles.add(identity.role);
-  const practitioner = identity.isProvider || roles.has("provider") || roles.has("provider_admin");
-  const admin = identity.isAdmin || roles.has("admin") || roles.has("superadmin") || roles.has("org_admin") || roles.has("provider_admin");
-  const giver = identity.isGiver || roles.has("giver") || roles.has("community_giver");
-  const client = identity.workspaceIntent === "practitioner" && !practitioner
+  const godAdmin = identity.isGodAdmin || identity.godAdmin || identity.claims?.godAdmin;
+  const practitioner = godAdmin || identity.isProvider || roles.has("provider") || roles.has("provider_admin");
+  const admin = godAdmin || identity.isAdmin || roles.has("admin") || roles.has("superadmin") || roles.has("org_admin") || roles.has("provider_admin");
+  const giver = godAdmin || identity.isGiver || roles.has("giver") || roles.has("community_giver");
+  const client = godAdmin || (identity.workspaceIntent === "practitioner" && !practitioner
     ? false
-    : roles.has("client") || (!practitioner && !admin);
+    : roles.has("client") || (!practitioner && !admin));
   return [client && "client", practitioner && "practitioner", giver && "giver", admin && "admin"].filter(Boolean);
 }
 
@@ -118,14 +119,17 @@ export function useWorkspaceSelection(identity = {}, pathname = "") {
   React.useEffect(() => {
     const sync = (event) => {
       if (event.detail?.userId === userId && available.includes(event.detail.workspace)) {
-        setActiveWorkspace(event.detail.workspace);
+        // A workspace preference is shared across tabs, but each tab can still
+        // be displaying a route in a different workspace. Keep the label and
+        // navigation tied to the page this tab is actually showing.
+        setActiveWorkspace(routeSelection || event.detail.workspace);
       }
     };
     window.addEventListener("wc_workspace_change", sync);
     const syncStorage = (event) => {
       if (event.key === storageKey(userId)) {
         const stored = readWorkspacePreference(userId);
-        setActiveWorkspace(stored && available.includes(stored) ? stored : fallback);
+        setActiveWorkspace(routeSelection || (stored && available.includes(stored) ? stored : fallback));
       }
     };
     window.addEventListener("storage", syncStorage);
@@ -133,7 +137,7 @@ export function useWorkspaceSelection(identity = {}, pathname = "") {
       window.removeEventListener("wc_workspace_change", sync);
       window.removeEventListener("storage", syncStorage);
     };
-  }, [userId, fallback, available.join("|")]);
+  }, [userId, fallback, routeSelection, available.join("|")]);
 
   const selectWorkspace = (workspace) => {
     if (!available.includes(workspace)) return false;

@@ -17,6 +17,7 @@ const providerOverview = care.getProviderClientOverview.run;
 const listShares = care.listMyPractitionerShares.run;
 const setShare = care.setPractitionerShare.run;
 const exportWellnessData = care.exportMyWellnessData.run;
+const deleteMyCheckIns = care.deleteMyCheckIns.run;
 const connections = require("../src/practitionerConnections");
 const requestConnection = connections.requestPractitionerConnection.run;
 const listMyConnectionRequests = connections.listMyPractitionerConnectionRequests.run;
@@ -37,6 +38,14 @@ function providerRequest(data = {}, uid = providerId) {
 }
 
 async function seed() {
+  // Provider authorization reads the trusted account document rather than
+  // the potentially stale role claim. Keep emulator fixtures aligned with
+  // that production authorization source.
+  await db.collection("users").doc(providerId).set({
+    role: "provider",
+    providerType: "peer-support",
+    practitionerWorkspaceActive: true,
+  });
   await db.collection("clientProviderAssignments").doc(assignmentId).set({
     clientId,
     providerId,
@@ -128,6 +137,8 @@ test("provider receives only the check-in fields the client selected", async () 
     wellnessPatterns: false,
     writtenReflections: false,
     assessments: false,
+    visitPreparation: false,
+    careCoordination: false,
   });
   assert.equal(result.checkins.length, 1);
   assert.equal(result.checkins[0].daysSinceLastUse, 12);
@@ -149,7 +160,7 @@ test("revoking every sharing scope immediately removes check-ins and assessment 
   const afterRevoke = await providerOverview(providerRequest({ clientId }));
   assert.equal(afterRevoke.shared, false);
   assert.deepEqual(afterRevoke.checkins, []);
-  assert.equal("assessments" in afterRevoke, false);
+  assert.deepEqual(afterRevoke.assessments, []);
 });
 
 test("pausing session sharing hides personal records, preserves saved choices, and still permits revocation", async () => {
@@ -179,7 +190,14 @@ test("pausing session sharing hides personal records, preserves saved choices, a
   );
 
   const revoked = await setShare(clientRequest({ practitionerId: providerId, scopes: {} }));
-  assert.deepEqual(revoked.scopes, { recoveryProgress: false, wellnessPatterns: false, writtenReflections: false, assessments: false });
+  assert.deepEqual(revoked.scopes, {
+    recoveryProgress: false,
+    wellnessPatterns: false,
+    writtenReflections: false,
+    assessments: false,
+    visitPreparation: false,
+    careCoordination: false,
+  });
   const afterRevoke = await listShares(clientRequest());
   assert.equal(afterRevoke.shares[0].scopes.recoveryProgress, false);
   assert.equal(afterRevoke.shares[0].scopes.assessments, false);
@@ -280,8 +298,49 @@ test("account export includes the complete private care plan and account safety 
   assert.equal(JSON.stringify(result).includes("another-person-plan"), false);
 });
 
+test("a client can delete all of their check-ins in bounded batches without touching another account", async () => {
+  for (let offset = 0; offset < 4001; offset += 400) {
+    const batch = db.batch();
+    for (let index = offset; index < Math.min(offset + 400, 4001); index += 1) {
+      batch.set(db.collection("checkins").doc(`bulk-${index}`), {
+        userId: clientId,
+        completed: true,
+        journal: "private check-in content",
+      });
+    }
+    await batch.commit();
+  }
+
+  const result = await deleteMyCheckIns(clientRequest());
+  assert.equal(result.ok, true);
+  assert.equal(result.complete, false, "the server stops after ten bounded pages and asks the client to continue");
+  assert.equal(result.deletedCount, 4000);
+  const finalPage = await deleteMyCheckIns(clientRequest());
+  assert.equal(finalPage.complete, true);
+  assert.equal(finalPage.deletedCount, 2, "the last page includes the original account check-in");
+  assert.equal((await db.collection("checkins").where("userId", "==", clientId).get()).size, 0);
+  assert.equal((await db.collection("checkins").doc("other-client-checkin").get()).exists, true);
+});
+
+test("anonymous or signed-out callers cannot delete account check-ins", async () => {
+  await assert.rejects(
+    deleteMyCheckIns({ auth: { uid: "guest", token: { firebase: { sign_in_provider: "anonymous" } } }, data: {} }),
+    (error) => error.code === "unauthenticated",
+  );
+  await assert.rejects(
+    deleteMyCheckIns({ auth: null, data: {} }),
+    (error) => error.code === "unauthenticated",
+  );
+  assert.equal((await db.collection("checkins").where("userId", "==", clientId).get()).size, 1);
+});
+
 test("connection request through consent and practitioner-shared support works as one journey", async () => {
   const nextProviderId = "new-consent-provider";
+  await db.collection("users").doc(nextProviderId).set({
+    role: "provider",
+    providerType: "recovery-coach",
+    practitionerWorkspaceActive: true,
+  });
   await db.collection("realHelpProviders").doc(nextProviderId).set({
     name: "A verified recovery coach",
     type: "recovery-coach",

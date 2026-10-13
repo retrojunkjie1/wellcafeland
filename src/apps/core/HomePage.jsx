@@ -2,7 +2,7 @@
 // Phase 2E: Luxury clinical wellness OS — premium, non-repetitive layout
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   MessageCircle,
   HeartHandshake,
@@ -21,9 +21,11 @@ import { ensureDevAuth } from "@/dev/ensureAuth";
 import PractitionerSupportInbox from "@/components/PractitionerSupportInbox";
 import ClientNextSessionCard from "@/components/ClientNextSessionCard";
 import ClientWeekProgress from "./ClientWeekProgress";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [hasResources, setHasResources] = useState(null);
   const [showStabilizers, setShowStabilizers] = useState(false);
 
@@ -131,7 +133,7 @@ const HomePage = () => {
           <div className="flex flex-wrap gap-2 mt-2">
             <button
               type="button"
-              onClick={() => navigate("/tools/breathing")}
+              onClick={() => navigateToTool(navigate, "/tools/breathing", location)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-white/80 text-sm transition"
             >
               <Wind className="h-4 w-4" />
@@ -139,7 +141,7 @@ const HomePage = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/tools/grounding")}
+              onClick={() => navigateToTool(navigate, "/tools/grounding", location)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-white/80 text-sm transition"
             >
               <Mountain className="h-4 w-4" />
@@ -147,7 +149,7 @@ const HomePage = () => {
             </button>
             <button
               type="button"
-              onClick={() => navigate("/tools/recovery.sleep-and-recovery")}
+              onClick={() => navigateToTool(navigate, "/tools/recovery.sleep-and-recovery", location)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-white/80 text-sm transition"
             >
               <Moon className="h-4 w-4" />

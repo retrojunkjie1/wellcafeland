@@ -33,6 +33,18 @@ describe("PractitionerSharingPage", () => {
     expect(mocks.listMyPractitionerShares).toHaveBeenCalledTimes(2);
   });
 
+  it("shows the private-by-default sharing flow in the no-connection state", async () => {
+    mocks.listMyPractitionerShares.mockResolvedValue({ shares: [] });
+    renderPage();
+
+    expect(await screen.findByRole("region", { name: "How practitioner sharing works" })).toBeInTheDocument();
+    expect(screen.getByText("Your account")).toBeInTheDocument();
+    expect(screen.getByText("Private by default")).toBeInTheDocument();
+    expect(screen.getByText("No connection yet. Nothing is shared.")).toBeInTheDocument();
+    expect(screen.getByText("Recovery progress")).toBeInTheDocument();
+    expect(screen.getByText("Practical-help requests")).toBeInTheDocument();
+  });
+
   it("lets a client turn on only a chosen information category and explains what it includes", async () => {
     mocks.listMyPractitionerShares.mockResolvedValue({ shares: [{
       practitionerId: "provider-1", name: "Avery", type: "therapist", scopes: {},
@@ -42,11 +54,14 @@ describe("PractitionerSharingPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Avery" })).toBeInTheDocument();
     expect(screen.getByText(/skills you choose to record/i)).toBeInTheDocument();
+    expect(screen.getByText("Nothing is shared with Avery.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: /wellness patterns/i }));
+    expect(screen.getByText(/Draft: 1 of 6 categories selected/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /save sharing choices/i }));
 
     await waitFor(() => expect(mocks.setPractitionerShare).toHaveBeenCalledWith("provider-1", { wellnessPatterns: true }));
     expect(await screen.findByRole("status")).toHaveTextContent(/sharing choices were saved/i);
+    expect(screen.getByText("1 of 6 categories selected for Avery.")).toBeInTheDocument();
   });
 
   it("keeps existing choices revocable when global sharing is paused, but blocks new choices", async () => {
@@ -56,7 +71,7 @@ describe("PractitionerSharingPage", () => {
     mocks.setPractitionerShare.mockResolvedValue({ ok: true });
     renderPage();
 
-    expect(await screen.findByText(/Practitioners cannot view your shared check-ins/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Practitioners cannot view anything you have shared right now/i)).toBeInTheDocument();
     const recovery = screen.getByRole("checkbox", { name: /Recovery progress/i });
     const patterns = screen.getByRole("checkbox", { name: /Wellness patterns/i });
     expect(recovery).toBeChecked();
@@ -79,10 +94,11 @@ describe("PractitionerSharingPage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Prepare my data download" }));
 
-    const download = await screen.findByRole("link", { name: /Download ready file/i });
+    const download = await screen.findByRole("link", { name: /Download readable report/i });
     expect(download).toHaveAttribute("href", "blob:practitioner-sharing-export");
-    expect(download).toHaveAttribute("download", expect.stringMatching(/^wellnesscafe-data-.*\.json$/));
-    expect(await screen.findByRole("status")).toHaveTextContent(/select Download ready file/i);
+    expect(download).toHaveAttribute("download", expect.stringMatching(/^wellnesscafe-my-data-.*\.txt$/));
+    expect(await screen.findByRole("status")).toHaveTextContent(/select Download readable report/i);
+    expect(URL.createObjectURL.mock.calls[0][0].type).toBe("text/plain;charset=utf-8");
     expect(mocks.exportMyWellnessData).toHaveBeenCalledOnce();
   });
 });

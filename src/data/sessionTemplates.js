@@ -3,7 +3,7 @@
 export const DEFAULT_SESSION_TEMPLATES = [
   {
     id: "grounding-5min",
-    title: "Choose an Anchor",
+    title: "Reconnect with the room",
     tags: ["grounding", "anxiety", "body"],
     category: "Grounding",
     durationMinutes: 5,

@@ -11,7 +11,8 @@ import {
   UsersRound,
   Wallet,
 } from "lucide-react";
-import { getPracticeReturnPath } from "./assistanceReturnPath";
+import { getPracticeReturnTarget } from "./assistanceReturnPath";
+import { returnFromTool } from "@/navigation/toolReturn";
 
 const NEEDS = [
   {
@@ -78,14 +79,14 @@ export const assistanceNeeds = NEEDS;
 const AssistanceHubPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const returnToPractice = getPracticeReturnPath(location.state);
+  const returnToPractice = getPracticeReturnTarget(location.state);
   const continueTo = (to) => navigate(to, { state: location.state });
 
   return (
     <main className="min-h-full bg-slate-950 text-white">
       <div className="mx-auto w-full max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
         <header className="mb-6 sm:mb-8">
-          {returnToPractice && <button type="button" onClick={() => navigate(returnToPractice)} className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"><ArrowRight aria-hidden="true" className="h-4 w-4 rotate-180" />Back to your practice</button>}
+          {returnToPractice && <button type="button" onClick={() => returnFromTool(navigate, returnToPractice)} className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"><ArrowRight aria-hidden="true" className="h-4 w-4 rotate-180" />Back to your practice</button>}
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200/80">Real-world support</p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">What would help today?</h1>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-white/65 sm:text-lg">Choose one need to start. You can change direction at any time.</p>

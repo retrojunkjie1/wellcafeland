@@ -1,16 +1,25 @@
 // src/apps/tools/ToolsPage.jsx
 
-import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { trackPageView } from "../../services/telemetry";
 import { CATEGORIES, getToolsByCategory } from "./toolsRegistry";
 import ToolCard from "./components/ToolCard";
 import { listContentSummaries } from "@/services/contentService";
 import { CONTENT_SECTIONS } from "@/content/contentRegistry";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 const ToolsPage = () => {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = searchParams.get("category") || "all";
+  const selectCategory = (categoryId) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (categoryId === "all") nextParams.delete("category");
+    else nextParams.set("category", categoryId);
+    setSearchParams(nextParams, { replace: true });
+  };
   
   // Load content summaries once on mount
   const toolContent = useMemo(() => {
@@ -44,7 +53,7 @@ const ToolsPage = () => {
           <button
             key={category.id}
             type="button"
-            onClick={() => setSelectedCategory(category.id)}
+            onClick={() => selectCategory(category.id)}
             className={`menu-chip ${
               selectedCategory === category.id
                 ? "border-white/40 text-white"
@@ -81,7 +90,7 @@ const ToolsPage = () => {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                onClick={() => navigateToTool(navigate, `/tools/${encodeURIComponent(item.id)}`, location)}
                 className="text-left rounded-xl bg-white/5 border border-white/10 p-2.5 hover:bg-white/10 transition"
               >
                 <div className="text-xs font-medium text-white">

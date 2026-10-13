@@ -82,6 +82,12 @@ async function seedDirectoryAndAvailability() {
   }));
   await Promise.all([
     db.collection("users").doc(clientId).set({ uid: clientId, displayName: "Journey Client", role: "client" }),
+    db.collection("users").doc(providerId).set({
+      uid: providerId,
+      role: "provider",
+      providerType: "recovery-coach",
+      practitionerWorkspaceActive: true,
+    }),
     db.collection("realHelpProviders").doc(providerId).set({
       name: "Jordan Lee", type: "recovery-coach", acceptsReferrals: true, verification: { status: "verified" },
     }),

@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { CalendarDays, HandHeart, HeartHandshake, MessageSquare, Users } from "lucide-react";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { listAssignmentsForProvider } from "@/services/assignmentService";
 import { getMyProviderAvailability, listAppointmentsForProvider } from "@/services/appointmentService";
-import { getProviderClientOverview } from "@/services/practitionerRegistry";
+import { getProviderClientOverview, listProviderCareHandoffs, listProviderVisitPreparations } from "@/services/practitionerRegistry";
 import PageHeader from "@/components/navigation/PageHeader";
 import ConnectionRequestsPanel from "./components/ConnectionRequestsPanel";
 import { TOOLS } from "@/apps/tools/toolsRegistry";
+import { getPractitionerWorkspaceContract } from "./practitionerWorkspaceContracts";
 
 const OUTCOME_LABELS = {
   tried: "Tried it",
@@ -24,10 +25,22 @@ function formatAppointmentTime(value, timezone) {
   };
 }
 
+function formatWorkspaceUpdate(update, primaryCare, dateLabel) {
+  if (!primaryCare) return `${OUTCOME_LABELS[update.outcome] || "Update"} · ${dateLabel}`;
+  const details = [];
+  if (update.visitPurpose) details.push(`Purpose: ${update.visitPurpose}`);
+  if (update.priorities?.length) details.push(`Focus: ${update.priorities.slice(0, 2).join("; ")}`);
+  if (update.questions?.length) details.push(`Question: ${update.questions[0]}`);
+  if (update.accessPreferences?.length) details.push(`Support requested: ${update.accessPreferences.slice(0, 2).join(", ")}`);
+  return details.join(" · ") || "Patient-shared topics";
+}
+
 export default function ProviderDashboardPage() {
   const navigate = useNavigate();
-  const { isProvider, isAdmin, providerId, userId, isLoading: identityLoading } = useSessionIdentity();
-  const identityScope = `${providerId || userId || ""}:${isProvider ? "provider" : isAdmin ? "admin" : "guest"}`;
+  const location = useLocation();
+  const { isProvider, isAdmin, providerId, providerType, userId, isLoading: identityLoading } = useSessionIdentity();
+  const workspace = getPractitionerWorkspaceContract(providerType);
+  const identityScope = `${providerId || userId || ""}:${isProvider ? "provider" : isAdmin ? "admin" : "guest"}:${providerType || ""}`;
   const identityScopeRef = useRef(identityScope);
   const clientRequestSequence = useRef(0);
   identityScopeRef.current = identityScope;
@@ -43,15 +56,52 @@ export default function ProviderDashboardPage() {
   const [loadedScope, setLoadedScope] = useState("");
 
   const visibleClients = clientsScope === identityScope ? clients : [];
-  const sharedUpdates = visibleClients.flatMap((client) => (client.overview?.practiceProgress || []).map((update) => ({
-    ...update,
+  const careHandoffItems = visibleClients.flatMap((client) => (client.careHandoffs || []).map((handoff) => ({
+    ...handoff,
     clientId: client.clientId,
     alias: client.alias,
-  }))).sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0)).slice(0, 5);
+  }))).sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+  const careHandoffsUnavailable = visibleClients.some((client) => client.careHandoffsUnavailable);
+  const visitPreparationItems = visibleClients.flatMap((client) => (client.visitPreparations || []).map((preparation) => ({
+    ...preparation,
+    clientId: client.clientId,
+    alias: client.alias,
+  }))).sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+  const visitPreparationsUnavailable = visibleClients.some((client) => client.visitPreparationsUnavailable);
+  const sharedUpdates = workspace.primaryCare
+    ? visitPreparationItems
+    : visibleClients.flatMap((client) => (client.overview?.practiceProgress || []).map((update) => ({
+      ...update,
+      clientId: client.clientId,
+      alias: client.alias,
+    }))).sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0)).slice(0, 5);
+  const prepToAcknowledge = visitPreparationItems.filter((item) => !item.acknowledgedAt).length;
+  const prepAcknowledged = visitPreparationItems.length - prepToAcknowledge;
+  const requestsToRespond = careHandoffItems.filter((item) => item.status === "requested").length;
+  const followUpsInProgress = careHandoffItems.filter((item) => ["acknowledged", "in_progress"].includes(item.status)).length;
+  const waitingOnClient = careHandoffItems.filter((item) => item.status === "waiting_on_client").length;
+  const sharedPracticeUpdateCount = visibleClients.reduce((total, client) => total + (client.overview?.practiceProgress?.length || 0), 0);
+  const workAtAGlance = workspace.primaryCare
+    ? [
+      { label: "Upcoming visits", value: appointmentsUnavailable ? "—" : appointments.length, detail: "In your next two-week view", href: "#schedule-panel" },
+      { label: "Prep to review", value: visitPreparationsUnavailable ? "—" : prepToAcknowledge, detail: "Patient-shared; awaiting your receipt", href: "#shared-updates-title" },
+      { label: "Prep received", value: visitPreparationsUnavailable ? "—" : prepAcknowledged, detail: "Acknowledged for an upcoming visit", href: "#shared-updates-title" },
+    ]
+    : workspace.careCoordination
+      ? [
+        { label: "Requests to respond to", value: careHandoffsUnavailable ? "—" : requestsToRespond, detail: "Client asked for practical support", href: "#shared-updates-title" },
+        { label: "Follow-ups underway", value: careHandoffsUnavailable ? "—" : followUpsInProgress, detail: "Acknowledged or in progress", href: "#shared-updates-title" },
+        { label: "Waiting on client", value: careHandoffsUnavailable ? "—" : waitingOnClient, detail: "Next step needs their input", href: "#shared-updates-title" },
+      ]
+      : [
+        { label: "People connected", value: visibleClients.length, detail: "Your active client relationships", href: "#people-panel" },
+        { label: "Upcoming sessions", value: appointmentsUnavailable ? "—" : appointments.length, detail: "In your next two-week view", href: "#schedule-panel" },
+        { label: "Recent shared updates", value: sharedPracticeUpdateCount, detail: "Client-sent updates visible in your workspace", href: "#shared-updates-title" },
+      ];
 
   const refreshClients = useCallback(async () => {
     const id = providerId || userId;
-    const requestScope = `${providerId || userId || ""}:${isProvider ? "provider" : isAdmin ? "admin" : "guest"}`;
+    const requestScope = `${providerId || userId || ""}:${isProvider ? "provider" : isAdmin ? "admin" : "guest"}:${providerType || ""}`;
     const requestId = ++clientRequestSequence.current;
     const isCurrentRequest = () => clientRequestSequence.current === requestId && identityScopeRef.current === requestScope;
     if (!id) {
@@ -63,13 +113,27 @@ export default function ProviderDashboardPage() {
     }
     const assignments = await listAssignmentsForProvider(id);
     if (!isCurrentRequest()) return;
-    const overview = await Promise.all(assignments.map((assignment) =>
-      getProviderClientOverview(assignment.clientId).catch(() => ({ unavailable: true, shared: false, checkins: [], practiceProgress: [] }))
-    ));
+    const clientData = await Promise.all(assignments.map(async (assignment) => {
+      const [overview, handoffs] = await Promise.all([
+        getProviderClientOverview(assignment.clientId).catch(() => ({ unavailable: true, shared: false, checkins: [], practiceProgress: [] })),
+        workspace.careCoordination
+          ? listProviderCareHandoffs(assignment.clientId).then((result) => ({ items: result.handoffs || [], key: "careHandoffs" })).catch(() => ({ items: [], unavailable: true, key: "careHandoffs" }))
+          : workspace.primaryCare
+            ? listProviderVisitPreparations(assignment.clientId).then((result) => ({ items: result.preparations || [], key: "visitPreparations" })).catch(() => ({ items: [], unavailable: true, key: "visitPreparations" }))
+            : Promise.resolve({ items: [], key: "careHandoffs" }),
+      ]);
+      return {
+        overview,
+        careHandoffs: handoffs.key === "careHandoffs" ? handoffs.items : [],
+        careHandoffsUnavailable: handoffs.key === "careHandoffs" && handoffs.unavailable === true,
+        visitPreparations: handoffs.key === "visitPreparations" ? handoffs.items : [],
+        visitPreparationsUnavailable: handoffs.key === "visitPreparations" && handoffs.unavailable === true,
+      };
+    }));
     if (!isCurrentRequest()) return;
-    setClients(assignments.map((assignment, index) => ({ ...assignment, alias: `Client ${index + 1}`, overview: overview[index] })));
+    setClients(assignments.map((assignment, index) => ({ ...assignment, alias: `Client ${index + 1}`, ...clientData[index] })));
     setClientsScope(requestScope);
-  }, [isProvider, isAdmin, providerId, userId]);
+      }, [isProvider, isAdmin, providerId, providerType, userId, workspace.careCoordination, workspace.primaryCare]);
 
   useEffect(() => {
     let active = true;
@@ -99,7 +163,7 @@ export default function ProviderDashboardPage() {
         ]);
         if (active && identityScopeRef.current === requestScope) {
           setAppointmentsUnavailable(upcomingResult.unavailable === true);
-          if (!upcomingResult.unavailable) setAppointments((upcomingResult.value || []).slice(0, 6));
+          if (!upcomingResult.unavailable) setAppointments(upcomingResult.value || []);
           const configuredTimezone = availabilityResult.value?.timezone;
           setTimezoneFromAvailability(Boolean(configuredTimezone));
           setTimezone(configuredTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
@@ -123,17 +187,29 @@ export default function ProviderDashboardPage() {
     return () => { active = false; clientRequestSequence.current += 1; };
   }, [identityLoading, isProvider, isAdmin, providerId, userId, navigate, refreshClients, scheduleRetry, identityScope]);
 
+  useEffect(() => {
+    if (location.hash !== "#connection-requests-panel" || identityLoading || loadedScope !== identityScope) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const panel = document.getElementById("connection-requests-panel");
+      if (!panel) return;
+      panel.scrollIntoView({ behavior: "smooth", block: "start" });
+      panel.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [identityScope, identityLoading, loadedScope, location.hash]);
+
   if (identityLoading) return <div className="grid min-h-[45vh] place-items-center text-sm text-white/60" role="status">Checking your workspace…</div>;
   if (!isProvider && !isAdmin) return null;
   const currentScopeLoaded = loadedScope === identityScope;
-  return <div className="min-h-screen bg-slate-950 text-white"><PageHeader title="Practitioner workspace" subtitle="Your people, schedule, and next steps" />
+  return <div className="min-h-screen bg-slate-950 text-white"><PageHeader title={workspace.label} subtitle={workspace.focus} />
     <div className="lux-shell space-y-6 py-8">
-      <section className="rounded-3xl border border-white/10 bg-gradient-to-r from-amber-100/[0.09] via-white/[0.035] to-emerald-100/[0.04] p-5 sm:p-7"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/65">A thoughtful space to offer support</p><h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Start with what each person has chosen to share.</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">Connection never opens private check-ins automatically. People can choose what you see and can change those choices at any time.</p><div className="mt-5 flex flex-wrap gap-2"><button onClick={() => navigate("/provider/clients")} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-200 px-4 text-sm font-semibold text-slate-950"><Users className="h-4 w-4" />My people</button><button onClick={() => navigate("/provider/schedule")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><CalendarDays className="h-4 w-4" />Schedule</button><button onClick={() => navigate("/provider/messages")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><MessageSquare className="h-4 w-4" />Messages</button><button onClick={() => navigate("/assistance/community")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><HandHeart className="h-4 w-4" />Community giving</button></div></section>
+      <section className="rounded-3xl border border-white/10 bg-gradient-to-r from-amber-100/[0.09] via-white/[0.035] to-emerald-100/[0.04] p-5 sm:p-7"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/65">{workspace.label}</p><h1 className="mt-2 text-2xl font-semibold sm:text-3xl">{workspace.headline}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">{workspace.summary} {workspace.careCoordination ? "Only a client’s active connection and specifically shared practical-help request fields are available here." : workspace.primaryCare ? "Only upcoming appointments and preparation a patient specifically chose to share are available here." : "Connection never opens private check-ins automatically. People can choose what you see and can change those choices at any time."}</p><div className="mt-5 flex flex-wrap gap-2"><button onClick={() => navigate(workspace.primaryAction.path, workspace.primaryAction.path === "/provider/schedule" ? { state: { from: { pathname: "/provider/dashboard" } } } : undefined)} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-200 px-4 text-sm font-semibold text-slate-950">{workspace.primaryAction.path === "/provider/schedule" ? <CalendarDays className="h-4 w-4" /> : <Users className="h-4 w-4" />}{workspace.primaryAction.label}</button><button onClick={() => navigate("/provider/schedule", { state: { from: { pathname: "/provider/dashboard" } } })} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><CalendarDays className="h-4 w-4" />Schedule</button>{!workspace.limitedAccess && <><button onClick={() => navigate("/provider/messages")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><MessageSquare className="h-4 w-4" />Messages</button><button onClick={() => navigate("/assistance/community")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><HandHeart className="h-4 w-4" />Community giving</button></>}</div></section>
       {error && <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-400/10 p-3 text-sm text-rose-100">{error}</p>}
       {loading || !currentScopeLoaded ? <div className="py-10 text-center text-white/50">Loading your workspace…</div> : <>
-        <div className="grid gap-6 lg:grid-cols-2"><ConnectionRequestsPanel onAccepted={refreshClients} /><section className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="mb-4 flex items-center gap-3"><CalendarDays className="h-5 w-5 text-amber-100" /><div><h2 className="font-medium">Coming up</h2><p className="text-xs text-white/50">Next two weeks · {timezoneFromAvailability ? `times in ${timezone}` : `your local time (${timezone})`}</p></div><button onClick={() => navigate("/provider/schedule")} className="ml-auto text-sm text-amber-100">Open schedule</button></div>{appointmentsUnavailable ? <div role="status" className="rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-4 text-sm text-amber-50/75"><p>Appointment information couldn’t be loaded. Your schedule may have changed.</p><button type="button" onClick={() => setScheduleRetry((value) => value + 1)} className="mt-3 min-h-10 rounded-lg border border-amber-100/25 px-3 text-sm text-amber-50 hover:bg-amber-100/10">Try again</button></div> : appointments.length ? <div className="space-y-2">{appointments.map((appointment) => { const time = formatAppointmentTime(appointment.startAt, timezone); return <div key={appointment.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/45 px-3 py-3"><div><p className="text-sm font-medium">{time.day}</p><p className="mt-1 text-xs text-white/55">{time.time} · {appointment.status}</p></div></div>; })}</div> : <p className="rounded-xl bg-slate-950/35 p-4 text-sm text-white/55">No appointments in the next two weeks. You can add one from Schedule.</p>}</section></div>
-        <section className="rounded-2xl border border-sky-200/15 bg-sky-100/[0.025] p-5" aria-labelledby="shared-updates-title"><div className="flex items-center gap-3"><HeartHandshake className="h-5 w-5 text-sky-100" /><div><h2 id="shared-updates-title" className="font-semibold">Updates clients chose to share</h2><p className="text-xs text-white/50">Practice follow-ups sent directly to you</p></div><span className="ml-auto rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">{sharedUpdates.length}</span></div>{sharedUpdates.length ? <ul className="mt-4 divide-y divide-white/8">{sharedUpdates.map((update) => { const tool = TOOLS.find((item) => item.id === update.toolId); const date = update.submittedAt ? new Date(update.submittedAt) : null; const dateLabel = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date) : "Recently"; return <li key={update.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0"><div className="min-w-0 flex-1"><p className="text-sm font-medium text-white">{update.alias} <span className="font-normal text-white/45">· {tool?.name || "Shared practice"}</span></p><p className="mt-1 text-xs text-sky-100/70">{OUTCOME_LABELS[update.outcome] || "Update"} · {dateLabel}</p></div><button type="button" onClick={() => navigate(`/provider/clients/${encodeURIComponent(update.clientId)}`)} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-white/75 hover:bg-white/[0.05]">Review client</button></li>; })}</ul> : <p className="mt-4 rounded-xl bg-slate-950/35 p-4 text-sm leading-relaxed text-white/55">No client-shared practice updates yet. When a client chooses to send an update, it will appear here.</p>}</section>
-        <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:p-6"><div className="flex items-center gap-3"><HeartHandshake className="h-5 w-5 text-emerald-200" /><div><h2 className="font-semibold">Your connected people</h2><p className="text-xs text-white/50">Progress appears only when someone shares it with you.</p></div><span className="ml-auto rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">{visibleClients.length}</span></div>{visibleClients.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{visibleClients.map((client) => { const view = client.overview; const recent = view?.checkins?.[0]; return <button key={client.id} onClick={() => navigate(`/provider/clients/${client.clientId}`)} className="rounded-xl border border-white/10 bg-slate-950/45 p-4 text-left transition hover:border-amber-100/25"><h3 className="font-medium">{client.alias}</h3>{view?.unavailable ? <p className="mt-1 text-xs leading-relaxed text-amber-100/70">Sharing details couldn’t be confirmed. Open this client’s page or refresh before acting on their current sharing choices.</p> : view?.sharingPaused ? <p className="mt-1 text-xs leading-relaxed text-amber-100/70">{view.sharingStatusUnknown ? "Personal sharing is hidden because its status could not be confirmed." : "Personal sharing is temporarily paused. Existing client choices remain saved."}</p> : view?.shared ? <><p className="mt-1 text-xs text-white/55">{view.totalRecentCheckins} recent check-ins shared{view.latestCheckInAt ? ` · last ${new Date(view.latestCheckInAt).toLocaleDateString()}` : ""}</p><div className="mt-3 flex flex-wrap gap-2 text-xs">{recent?.mood && <span className="rounded-lg bg-white/5 px-2 py-1">Mood: {recent.mood}</span>}{recent?.cravingStatus && <span className="rounded-lg bg-white/5 px-2 py-1">Craving: {recent.cravingStatus}{recent.cravingIntensity != null ? ` ${recent.cravingIntensity}/10` : ""}</span>}{recent?.triggerStatus && <span className="rounded-lg bg-white/5 px-2 py-1">Trigger: {recent.triggerStatus}{recent.triggerIntensity != null ? ` ${recent.triggerIntensity}/10` : ""}</span>}</div></> : <p className="mt-1 text-xs text-white/45">No check-in details shared. Private by default.</p>}{view?.practiceProgress?.length > 0 && <p className="mt-3 text-xs text-sky-100/70">{view.practiceProgress.length} client-shared practice {view.practiceProgress.length === 1 ? "update" : "updates"}</p>}</button>; })}</div> : <p className="mt-4 rounded-xl bg-slate-950/35 p-4 text-sm text-white/55">People appear here after they request a connection and you accept.</p>}</section>
+        <section aria-label="Your work at a glance" className="grid gap-3 sm:grid-cols-3">{workAtAGlance.map((item) => <a key={item.label} href={item.href} aria-label={`${item.label}: ${item.value}. ${item.detail}`} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.02] p-4 transition hover:border-amber-100/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-100/70"><span className="block text-sm text-white/60">{item.label}</span><span className="mt-1 block text-3xl font-semibold tabular-nums text-white">{item.value}</span><span className="mt-1 block text-xs leading-relaxed text-white/45">{item.detail}</span></a>)}</section>
+        <div className="grid gap-6 lg:grid-cols-2"><ConnectionRequestsPanel id="connection-requests-panel" style={{ order: workspace.panelOrder.connections }} onAccepted={refreshClients} title={workspace.requestHeading} description={workspace.requestSummary} /><section id="schedule-panel" style={{ order: workspace.panelOrder.schedule }} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"><div className="mb-4 flex items-center gap-3"><CalendarDays className="h-5 w-5 text-amber-100" /><div><h2 className="font-medium">{workspace.scheduleHeading}</h2><p className="text-xs text-white/50">{workspace.scheduleSummary} · {timezoneFromAvailability ? `times in ${timezone}` : `your local time (${timezone})`}</p></div><button onClick={() => navigate("/provider/schedule", { state: { from: { pathname: "/provider/dashboard" } } })} className="ml-auto text-sm text-amber-100">Open schedule</button></div>{appointmentsUnavailable ? <div role="status" className="rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-4 text-sm text-amber-50/75"><p>Appointment information couldn’t be loaded. Your schedule may have changed.</p><button type="button" onClick={() => setScheduleRetry((value) => value + 1)} className="mt-3 min-h-10 rounded-lg border border-amber-100/25 px-3 text-sm text-amber-50 hover:bg-amber-100/10">Try again</button></div> : appointments.length ? <div className="space-y-2">{appointments.slice(0, 6).map((appointment) => { const time = formatAppointmentTime(appointment.startAt, timezone); return <div key={appointment.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-slate-950/45 px-3 py-3"><div><p className="text-sm font-medium">{time.day}</p><p className="mt-1 text-xs text-white/55">{time.time} · {appointment.status}</p></div></div>; })}</div> : <p className="rounded-xl bg-slate-950/35 p-4 text-sm text-white/55">No appointments in the next two weeks. You can add one from Schedule.</p>}</section></div>
+        {workspace.careCoordination ? <section style={{ order: workspace.panelOrder.updates }} className="rounded-2xl border border-emerald-200/15 bg-emerald-100/[0.025] p-5" aria-labelledby="shared-updates-title"><div className="flex items-center gap-3"><HeartHandshake className="h-5 w-5 text-emerald-100" /><div><h2 id="shared-updates-title" className="font-semibold">{workspace.updatesHeading}</h2><p className="text-xs text-white/50">{workspace.updatesSummary}</p></div><span className="ml-auto rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">{careHandoffItems.length}</span></div>{careHandoffsUnavailable && <p role="status" className="mt-3 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-3 text-sm text-amber-50/75">Some requests could not be checked. Refresh before relying on this queue.</p>}{careHandoffItems.length ? <ul className="mt-3 divide-y divide-white/8">{careHandoffItems.slice(0, 6).map((item) => { const fields = new Set(item.sharedFields || []); const when = item.updatedAt ? new Date(item.updatedAt) : null; const dateLabel = when && !Number.isNaN(when.getTime()) ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(when) : "Recently"; return <li key={item.id} className="flex flex-wrap items-start gap-3 py-3 first:pt-0 last:pb-0"><div className="min-w-0 flex-1"><p className="text-sm font-medium">{item.alias} <span className="font-normal text-white/45">· {(item.needType || "Practical support").replaceAll("-", " ")}</span></p>{fields.has("goal") && item.goal && <p className="mt-1 text-sm leading-relaxed text-white/75">{item.goal}</p>}{fields.has("timing") && item.timing && <p className="mt-1 text-xs text-white/55">Timing: {item.timing}</p>}{fields.has("contactPreference") && item.contactPreference && <p className="mt-1 text-xs text-white/55">Contact: {item.contactPreference}</p>}<p className="mt-1 text-xs text-emerald-100/65">{({ requested: "Needs response", acknowledged: "Acknowledged", in_progress: "Follow-up in progress", waiting_on_client: "Waiting on client", follow_up_complete: "Follow-up complete" })[item.status] || "Shared request"} · {dateLabel}</p></div><button type="button" onClick={() => navigate(`/provider/clients/${encodeURIComponent(item.clientId)}`)} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-white/75 hover:bg-white/[0.05]">Review next step</button></li>; })}</ul> : <p className="mt-4 rounded-xl bg-slate-950/35 p-4 text-sm leading-relaxed text-white/55">{careHandoffsUnavailable ? "The request queue is unavailable right now." : "No client-shared practical-help requests are waiting. New requests appear here after a client chooses what to share."}</p>}<p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-white/45"><span aria-hidden="true">🔒</span>Only client-selected request fields appear here. No clinical notes, private check-ins, or supervision records are included.</p></section> : <section style={{ order: workspace.panelOrder.updates }} className="rounded-2xl border border-sky-200/15 bg-sky-100/[0.025] p-5" aria-labelledby="shared-updates-title"><div className="flex items-center gap-3"><HeartHandshake className="h-5 w-5 text-sky-100" /><div><h2 id="shared-updates-title" className="font-semibold">{workspace.updatesHeading}</h2><p className="text-xs text-white/50">{workspace.updatesSummary}</p></div><span className="ml-auto rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">{sharedUpdates.length}</span></div>{sharedUpdates.length ? <ul className="mt-4 divide-y divide-white/8">{sharedUpdates.slice(0, 5).map((update) => { const tool = TOOLS.find((item) => item.id === update.toolId); const date = update.submittedAt ? new Date(update.submittedAt) : null; const dateLabel = date && !Number.isNaN(date.getTime()) ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" }).format(date) : "Recently"; const linkedAppointment = workspace.primaryCare ? appointments.find((appointment) => appointment.id === update.appointmentId) : null; const visitDate = linkedAppointment ? new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", timeZone: timezone }).format(new Date(linkedAppointment.startAt)) : ""; return <li key={update.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0"><div className="min-w-0 flex-1"><p className="text-sm font-medium text-white">{update.alias} <span className="font-normal text-white/45">· {workspace.primaryCare ? "Visit preparation" : tool?.name || "Shared practice"}</span></p>{workspace.primaryCare && visitDate && <p className="mt-1 text-xs text-white/55">For the upcoming visit on {visitDate}</p>}<p className="mt-1 text-xs text-sky-100/70">{formatWorkspaceUpdate(update, workspace.primaryCare, dateLabel)}</p>{workspace.primaryCare && <p className="mt-1 text-xs text-white/55">{update.acknowledgedAt ? "Receipt acknowledged" : "Awaiting your acknowledgement"}</p>}</div><button type="button" onClick={() => navigate(`/provider/clients/${encodeURIComponent(update.clientId)}`)} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-white/75 hover:bg-white/[0.05]">{workspace.primaryCare ? "Review visit preparation" : "Review client"}</button></li>; })}</ul> : <p className="mt-4 rounded-xl bg-slate-950/35 p-4 text-sm leading-relaxed text-white/55">{workspace.primaryCare ? visitPreparationsUnavailable ? "Visit preparation could not be checked. Refresh before relying on this queue." : "No patient-shared visit preparation is waiting for an upcoming appointment." : "No client-shared practice updates yet. When a client chooses to send an update, it will appear here."}</p>}</section>}
+        <section id="people-panel" style={{ order: workspace.panelOrder.people }} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5 sm:p-6"><div className="flex items-center gap-3"><HeartHandshake className="h-5 w-5 text-emerald-200" /><div><h2 className="font-semibold">{workspace.peopleHeading}</h2><p className="text-xs text-white/50">{workspace.peopleSummary}</p></div><span className="ml-auto rounded-full bg-white/5 px-3 py-1 text-sm text-white/70">{visibleClients.length}</span></div>{visibleClients.length ? <div className="mt-4 grid gap-3 sm:grid-cols-2">{visibleClients.map((client) => { const view = client.overview; const recent = view?.checkins?.[0]; return <button key={client.id} onClick={() => navigate(`/provider/clients/${client.clientId}`)} className="rounded-xl border border-white/10 bg-slate-950/45 p-4 text-left transition hover:border-amber-100/25"><h3 className="font-medium">{client.alias}</h3>{workspace.careCoordination ? <p className="mt-1 text-xs text-white/55">Open the person’s page to review currently shared requests and update follow-up.</p> : view?.unavailable ? <p className="mt-1 text-xs leading-relaxed text-amber-100/70">Sharing details couldn’t be confirmed. Open this client’s page or refresh before acting on their current sharing choices.</p> : view?.sharingPaused ? <p className="mt-1 text-xs leading-relaxed text-amber-100/70">{view.sharingStatusUnknown ? "Personal sharing is hidden because its status could not be confirmed." : "Personal sharing is temporarily paused. Existing client choices remain saved."}</p> : view?.shared ? <><p className="mt-1 text-xs text-white/55">{view.totalRecentCheckins} recent check-ins shared{view.latestCheckInAt ? ` · last ${new Date(view.latestCheckInAt).toLocaleDateString()}` : ""}</p><div className="mt-3 flex flex-wrap gap-2 text-xs">{recent?.mood && <span className="rounded-lg bg-white/5 px-2 py-1">Mood: {recent.mood}</span>}{recent?.cravingStatus && <span className="rounded-lg bg-white/5 px-2 py-1">Craving: {recent.cravingStatus}{recent.cravingIntensity != null ? ` ${recent.cravingIntensity}/10` : ""}</span>}{recent?.triggerStatus && <span className="rounded-lg bg-white/5 px-2 py-1">Trigger: {recent.triggerStatus}{recent.triggerIntensity != null ? ` ${recent.triggerIntensity}/10` : ""}</span>}</div></> : <p className="mt-1 text-xs text-white/45">No check-in details shared. Private by default.</p>}{!workspace.careCoordination && view?.practiceProgress?.length > 0 && <p className="mt-3 text-xs text-sky-100/70">{view.practiceProgress.length} client-shared practice {view.practiceProgress.length === 1 ? "update" : "updates"}</p>}</button>; })}</div> : <p className="mt-4 rounded-xl bg-slate-950/35 p-4 text-sm text-white/55">People appear here after they request a connection and you accept.</p>}</section>
       </>}
     </div>
   </div>;

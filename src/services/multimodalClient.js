@@ -619,7 +619,7 @@ export async function speakText(text, options = {}) {
       },
       body: JSON.stringify({
         text: text.trim(),
-        voice: options.voice || "coral",
+        voice: options.voice || "marin",
       }),
       signal: (() => {
         const controller = new AbortController();
@@ -629,12 +629,17 @@ export async function speakText(text, options = {}) {
     });
 
     if (!res.ok) {
-      const errorText = await res.text().catch(() => "Unknown error");
-      const safe = errorText?.slice(0, 400) || "Unknown error";
+      const errorText = await res.text().catch(() => "");
+      let payload = null;
+      try { payload = JSON.parse(errorText); } catch { /* Keep the message user-facing below. */ }
+      const safe = payload?.error || (res.status === 401
+        ? "The spoken guide could not verify this session. Try again after signing in."
+        : `The spoken guide is temporarily unavailable (${res.status}).`);
       return { 
-        ok: false, 
+        ok: false,
         status: res.status,
-        error: `Server error (${res.status}). ${safe}` 
+        code: payload?.code || null,
+        error: String(safe).slice(0, 240),
       };
     }
 
@@ -648,6 +653,7 @@ export async function speakText(text, options = {}) {
         return {
           ok: true,
           audioUrl,
+          audioBlob,
         };
       } catch (err) {
         console.error("Failed to create audio blob:", err);

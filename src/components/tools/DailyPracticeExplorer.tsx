@@ -6,8 +6,9 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { allTools } from '@/tools/toolResolver';
+import { navigateToTool } from '@/navigation/toolReturn';
 
 export interface DailyPracticeExplorerProps {
   /**
@@ -25,6 +26,7 @@ export const DailyPracticeExplorer: React.FC<DailyPracticeExplorerProps> = ({
   onSelectTool,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState('All Tools');
 
   // Filter tools by category
@@ -49,7 +51,7 @@ export const DailyPracticeExplorer: React.FC<DailyPracticeExplorerProps> = ({
       onSelectTool(toolId);
     } else {
       // Default: navigate to tool detail page
-      navigate(`/tools/${toolId}`);
+      navigateToTool(navigate, `/tools/${toolId}`, location);
     }
   };
 
@@ -143,4 +145,3 @@ export const DailyPracticeExplorer: React.FC<DailyPracticeExplorerProps> = ({
     </div>
   );
 };
-

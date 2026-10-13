@@ -26,6 +26,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useOSStore, MODES } from "@/stores/useOSStore";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
+import { navigateToTool } from "@/navigation/toolReturn";
 import clsx from "clsx";
 import logoImage from "@/assets/LogoWC.png";
 
@@ -341,7 +342,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/tools/voice-journal");
+                  navigateToTool(navigate, "/tools/voice-journal", location);
                   if (isMobile) onClose?.();
                 }}
                 className={clsx(
@@ -357,7 +358,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
               <button
                 type="button"
                 onClick={() => {
-                  navigate("/tools/voice-checkin");
+                  navigateToTool(navigate, "/tools/voice-checkin", location);
                   if (isMobile) onClose?.();
                 }}
                 className={clsx(
@@ -813,4 +814,3 @@ const Sidebar = ({ isMobile = false, onClose }) => {
 };
 
 export default Sidebar;
-

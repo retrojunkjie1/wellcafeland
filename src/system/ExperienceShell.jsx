@@ -54,7 +54,7 @@ export default function ExperienceShell() {
 
   const isAuthenticated = Boolean(user);
   const authReady = !authLoading && !identity.isLoading;
-  const verificationRoute = ["/verify-email", "/login", "/signup"].includes(location.pathname);
+  const verificationRoute = ["/verify-email", "/login", "/signup", "/forgot-password", "/reset-password"].includes(location.pathname);
   const mustVerifyEmail = authReady && user && !user.isAnonymous && user.emailVerified === false;
   const isGuest = authReady && !isAuthenticated && identity.mode === "guest";
   const chatRoute = isChatRoute(location.pathname);

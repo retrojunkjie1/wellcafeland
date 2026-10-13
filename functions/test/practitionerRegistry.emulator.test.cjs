@@ -106,6 +106,19 @@ test("approval publishes the reviewed profile and assigns practitioner claims wi
   const published = publicProfiles.practitioners.find((item) => item.uid === approvedUid || item.id === approvedUid);
   assert.ok(published);
   assert.equal("email" in published, false);
+
+  const network = await registry.listAdminPractitionerNetwork.run(adminRequest());
+  const rosterEntry = network.practitioners.find((item) => item.id === approvedUid);
+  assert.equal(network.count, 1);
+  assert.equal(rosterEntry.name, "Jordan Lee");
+  assert.equal(rosterEntry.directoryStatus, "verified");
+  assert.equal(rosterEntry.workspaceAccess, "active");
+  assert.equal("email" in rosterEntry, false);
+  assert.equal("credentialSummary" in rosterEntry, false);
+  await assert.rejects(
+    registry.listAdminPractitionerNetwork.run({ auth: { uid: approvedUid, token: {} }, data: {} }),
+    (error) => error.code === "permission-denied",
+  );
 });
 
 test("the God-Eye practitioner-directory switch pauses both reviewed and public discovery", async () => {

@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getRouteMeta, resolveParentPath, ROOT_ROUTES } from "./routeMeta";
+import { resolveToolReturnTarget, returnFromTool } from "./toolReturn";
 
 const NavigationContext = createContext(null);
 
@@ -44,6 +45,10 @@ export function NavigationProvider({ children }) {
       // 3) Else fallback to /home
       goBackSmart: ({ currentPathname, currentPattern } = {}) => {
         const path = currentPathname || location.pathname;
+        if (location.state?.returnTo) {
+          returnFromTool(navigate, resolveToolReturnTarget(location.state));
+          return;
+        }
         const meta = getRouteMeta(path);
 
         const parent = resolveParentPath(
@@ -71,7 +76,7 @@ export function NavigationProvider({ children }) {
       goHome: () => navigate("/home"),
       getMeta: (pathname) => getRouteMeta(pathname),
     };
-  }, [lastMeaningful, location.pathname, navigate]);
+  }, [lastMeaningful, location.pathname, location.state, navigate]);
 
   return <NavigationContext.Provider value={api}>{children}</NavigationContext.Provider>;
 }
@@ -81,4 +86,3 @@ export function useNavigation() {
   if (!ctx) throw new Error("useNavigation must be used within NavigationProvider");
   return ctx;
 }
-

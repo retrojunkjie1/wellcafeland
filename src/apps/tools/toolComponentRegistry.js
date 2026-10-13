@@ -1,5 +1,6 @@
 import BreathingTool from "@/apps/tools/modules/BreathingTool";
 import GroundingTool from "@/apps/tools/modules/GroundingTool";
+import ProgressiveMuscleRelaxationTool from "@/apps/tools/modules/ProgressiveMuscleRelaxationTool";
 import JournalingTool from "@/apps/tools/modules/JournalingTool";
 import UrgeSurfingTool from "@/apps/tools/modules/UrgeSurfingTool";
 import BodyScanTool from "@/apps/tools/modules/BodyScanTool";
@@ -10,11 +11,14 @@ import AcuwellnessTool from "@/apps/tools/modules/AcuwellnessTool";
 import AffirmationsTool from "@/apps/tools/modules/AffirmationsTool";
 import SpecializedPathwayTool from "@/apps/tools/modules/SpecializedPathwayTool";
 import LowEnergyPlanTool from "@/apps/tools/modules/LowEnergyPlanTool";
+import VisitPrepTool from "@/apps/tools/modules/VisitPrepTool";
+import CareHandoffTool from "@/apps/tools/modules/CareHandoffTool";
 import { createToolComponentRegistry } from "./toolComponentManifest";
 
 const COMPONENT_IMPLEMENTATIONS = {
   BreathingTool,
   GroundingTool,
+  ProgressiveMuscleRelaxationTool,
   JournalingTool,
   UrgeSurfingTool,
   BodyScanTool,
@@ -25,6 +29,8 @@ const COMPONENT_IMPLEMENTATIONS = {
   AffirmationsTool,
   SpecializedPathwayTool,
   LowEnergyPlanTool,
+  VisitPrepTool,
+  CareHandoffTool,
 };
 
 const TOOL_COMPONENTS = createToolComponentRegistry(COMPONENT_IMPLEMENTATIONS);

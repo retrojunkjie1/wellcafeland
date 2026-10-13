@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { ArrowDownToLine, ArrowRight, Database, LockKeyhole, Users } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, Database, LockKeyhole, Trash2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
-import { exportMyWellnessData } from "@/services/practitionerRegistry";
+import { deleteMyCheckIns, exportMyWellnessData } from "@/services/practitionerRegistry";
+import { formatWellnessDataReport } from "./wellnessDataReport";
 
 const PrivacySettingsPage = () => {
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
   const [exportUrl, setExportUrl] = useState("");
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deletingCheckIns, setDeletingCheckIns] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   useEffect(() => () => {
     if (exportUrl) URL.revokeObjectURL(exportUrl);
@@ -17,13 +21,39 @@ const PrivacySettingsPage = () => {
     setExportMessage("");
     try {
       const data = await exportMyWellnessData();
-      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+      if (exportUrl) URL.revokeObjectURL(exportUrl);
+      const url = URL.createObjectURL(new Blob([formatWellnessDataReport(data)], { type: "text/plain;charset=utf-8" }));
       setExportUrl(url);
-      setExportMessage("Your file is ready. Select Download ready file to save it to your device.");
+      setExportMessage("Your readable report is ready. Select Download readable report to save it to your device.");
     } catch (error) {
       setExportMessage(error?.message || "Your account export could not be prepared. Try again when you are online.");
     } finally {
       setExporting(false);
+    }
+  };
+
+  const removeCheckIns = async () => {
+    if (deleteConfirmation.trim().toUpperCase() !== "DELETE") return;
+    setDeletingCheckIns(true);
+    setDeleteMessage("");
+    try {
+      let totalDeleted = 0;
+      let complete = false;
+      while (!complete) {
+        const result = await deleteMyCheckIns();
+        if (typeof result.complete !== "boolean") throw new Error("Incomplete deletion response");
+        totalDeleted += Math.max(0, Number(result.deletedCount) || 0);
+        complete = result.complete;
+        if (!complete) setDeleteMessage(`Removing saved check-ins… ${totalDeleted} removed so far.`);
+      }
+      setDeleteMessage(totalDeleted
+        ? `Check-in deletion is complete. ${totalDeleted} saved ${totalDeleted === 1 ? "check-in was" : "check-ins were"} removed. Refresh to update progress views.`
+        : "No saved check-ins were found to remove. The request is complete.");
+      setDeleteConfirmation("");
+    } catch {
+      setDeleteMessage("Deletion did not finish. You can run it again; check-ins already removed will stay deleted.");
+    } finally {
+      setDeletingCheckIns(false);
     }
   };
 
@@ -48,7 +78,8 @@ const PrivacySettingsPage = () => {
           <ArrowDownToLine className="h-4 w-4" />{exporting ? "Preparing your file…" : "Download my data"}
         </button>
         {exportMessage && <p role="status" className="mt-3 text-sm text-white/75">{exportMessage}</p>}
-        {exportUrl && <a href={exportUrl} download={`wellnesscafe-data-${new Date().toISOString().slice(0, 10)}.json`} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-100"><ArrowDownToLine className="h-4 w-4" />Download ready file</a>}
+        {exportUrl && <a href={exportUrl} download={`wellnesscafe-my-data-${new Date().toISOString().slice(0, 10)}.txt`} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-100"><ArrowDownToLine className="h-4 w-4" />Download readable report</a>}
+        <p className="mt-3 text-sm text-white/55">Your download is a plain-text report you can read in Notes, Word, or any text editor.</p>
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -66,9 +97,27 @@ const PrivacySettingsPage = () => {
         </section>
       </div>
 
+      <section className="mt-4 rounded-2xl border border-rose-200/15 bg-rose-950/10 p-4 sm:p-5" aria-labelledby="delete-checkins-heading">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-300/10 text-rose-200"><Trash2 aria-hidden="true" className="h-5 w-5" /></span>
+          <div className="min-w-0 flex-1">
+            <h2 id="delete-checkins-heading" className="text-sm font-semibold text-white">Delete saved check-ins</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/65">This permanently removes check-in entries from your account. Your check-in history, milestones, and any practitioner view of those entries will change. It does not delete your account, plans, messages, appointments, or practitioner connections.</p>
+            <label className="mt-4 block text-sm text-white/75" htmlFor="delete-checkins-confirmation">Type <span className="font-semibold text-white">DELETE</span> to confirm</label>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <input id="delete-checkins-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} autoComplete="off" className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/15 bg-slate-950/70 px-3 text-white outline-none focus-visible:ring-2 focus-visible:ring-rose-200/60" />
+              <button type="button" onClick={removeCheckIns} disabled={deletingCheckIns || deleteConfirmation.trim().toUpperCase() !== "DELETE"} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-rose-200/30 px-4 text-sm font-semibold text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-45">
+                <Trash2 aria-hidden="true" className="h-4 w-4" />{deletingCheckIns ? "Deleting check-ins…" : "Delete my check-ins"}
+              </button>
+            </div>
+            {deleteMessage && <p role="status" className="mt-3 text-sm text-white/80">{deleteMessage}</p>}
+          </div>
+        </div>
+      </section>
+
       <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5" aria-labelledby="retention-heading">
         <h2 id="retention-heading" className="text-sm font-semibold text-white">How long is data kept?</h2>
-        <p className="mt-2 text-sm leading-relaxed text-white/60">Guide memory stays in your account until you clear it. A timed delete option is not available yet, so this page does not show a retention dropdown that could imply automatic deletion.</p>
+        <p className="mt-2 text-sm leading-relaxed text-white/60">Saved check-ins remain in your account until you delete them. Guide memory stays until you clear it. Automatic timed deletion is not available yet.</p>
       </section>
     </main>
   );

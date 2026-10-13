@@ -13,17 +13,17 @@ async function invokeAppointmentFunction(name, data) {
 
 /**
  * Create an appointment
- * @param {Object} data - { clientId, providerId, orgId, startAt, endAt, note }
+ * @param {Object} data - { clientId, providerId, startAt, endAt, note }
  * @returns {Promise<{ok: boolean, appointmentId?: string, error?: string}>}
  */
-export async function createAppointment({ clientId, providerId, orgId, startAt, endAt, note = null, sessionFormat = "in-person", meetingLink = "" }) {
+export async function createAppointment({ clientId, providerId, startAt, endAt, note = null, sessionFormat = "in-person", meetingLink = "" }) {
   try {
     if (!clientId || !providerId || !startAt || !endAt) {
       return { ok: false, error: "Missing required fields: clientId, providerId, startAt, endAt" };
     }
 
     const response = await invokeAppointmentFunction("createProviderAppointment", {
-      clientId, providerId, orgId: orgId || null, startAt, endAt, note: note || "", sessionFormat, meetingLink,
+      clientId, providerId, startAt, endAt, note: note || "", sessionFormat, meetingLink,
     });
     return { ok: true, appointmentId: response.appointmentId };
   } catch (err) {

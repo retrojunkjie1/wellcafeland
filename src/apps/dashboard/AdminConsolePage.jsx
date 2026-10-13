@@ -7,6 +7,7 @@ import { useAgentsRegistry } from "../../hooks/useAgentsRegistry";
 import { useAdminEvents } from "../../hooks/useAdminEvents";
 import { useSystemMetrics } from "../../hooks/useSystemMetrics";
 import { useRiskRadar } from "../../hooks/useRiskRadar";
+import { useAdminClaim } from "@/hooks/useAdminClaim";
 import OfflineFallback from "../../components/OfflineFallback";
 import { throttle } from "../../utils/rateLimiters";
 import { useAdminConfigStore } from "../../stores/adminConfigStore";
@@ -35,6 +36,14 @@ import {
   AlertTriangle,
   TrendingDown,
   UserRoundCog,
+  Download,
+  CircleDot,
+  LayoutDashboard,
+  ClipboardList,
+  Bot,
+  Radio,
+  Siren,
+  Settings2,
 } from "lucide-react";
 
 // NEW IMPORT - this is the only new import we added
@@ -46,9 +55,24 @@ import { getFeatureSwitchPresentation } from "./featureSwitchCatalog";
 import AdminNotificationPolicy from "./AdminNotificationPolicy";
 import AdminReviewQueues from "./AdminReviewQueues";
 import { INTELLIGENCE_AGENTS } from "../../ai/agents/agentRegistry";
+import { AgentHealthBar, AgentReadinessMeter, MemberBaseVisual, RiskSeverityMeter, RiskTrendChart, RingMeter } from "./components/ConsoleVisuals";
+import "./components/GodEyeVisuals.css";
+
+function presentAdminServiceError(error, fallback) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || error || "");
+  if (code.includes("unauthenticated") || /^unauthenticated$/i.test(message)) {
+    return "The server could not verify this admin session. Refresh access and try again.";
+  }
+  if (code.includes("permission-denied") || /permission denied/i.test(message)) {
+    return "This admin assignment does not include permission for this service.";
+  }
+  return message || fallback;
+}
 
 const AdminConsolePage = () => {
   const navigate = useNavigate();
+  const { refreshClaims } = useAdminClaim();
 
   // Filters state
   const [eventFilters, setEventFilters] = useState({
@@ -60,10 +84,13 @@ const AdminConsolePage = () => {
   const [testAgentId, setTestAgentId] = useState("");
   const [testResult, setTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
+  const [activeConsoleTab, setActiveConsoleTab] = useState("overview");
+  const [activeSettingsTab, setActiveSettingsTab] = useState("features");
   const [selectedAgentId, setSelectedAgentId] = useState(null);
   const agentDetailsOpenerRef = React.useRef(null);
   const agentDetailsCloseRef = React.useRef(null);
   const [reviewQueueCounts, setReviewQueueCounts] = useState({ practitioner: null, communityGivers: null, meetingSources: null });
+  const [refreshingAll, setRefreshingAll] = useState(false);
   const [systemSettingsStatus, setSystemSettingsStatus] = useState({ state: "loading", message: "Loading saved settings…" });
   const [agentControls, setAgentControls] = useState({
     loading: true,
@@ -78,6 +105,7 @@ const AdminConsolePage = () => {
   const {
     agents,
     getHealthSummary,
+    error: agentMetricsError,
   } = useAgentsRegistry();
 
   const availableTestAgents = React.useMemo(() => agents.filter((agent) => (
@@ -107,7 +135,7 @@ const AdminConsolePage = () => {
       setAgentControls((current) => ({
         ...current,
         loading: false,
-        error: error?.message || "Agent controls could not be loaded.",
+        error: presentAdminServiceError(error, "Agent controls could not be loaded."),
       }));
     }
   }, []);
@@ -130,7 +158,7 @@ const AdminConsolePage = () => {
       setAgentControls((current) => ({
         ...current,
         savingAgentId: null,
-        error: error?.message || "The agent setting was not changed.",
+        error: presentAdminServiceError(error, "The agent setting was not changed."),
       }));
     }
   };
@@ -150,6 +178,7 @@ const AdminConsolePage = () => {
     metrics,
     loading: metricsLoading,
     error: metricsError,
+    snapshotAt,
     refresh: refreshMetrics,
   } = useSystemMetrics();
 
@@ -194,7 +223,7 @@ const AdminConsolePage = () => {
         });
       })
       .catch((error) => {
-        if (active) setSystemSettingsStatus({ state: "error", message: error?.message || "Saved settings could not be loaded." });
+        if (active) setSystemSettingsStatus({ state: "error", message: presentAdminServiceError(error, "Saved settings could not be loaded.") });
       });
     return () => { active = false; };
   }, [loadSystemSettings]);
@@ -205,19 +234,22 @@ const AdminConsolePage = () => {
     [updateThreshold]
   );
 
-  React.useEffect(() => {
-    let active = true;
-    loadAdminApplicationQueueCounts()
-      .then((counts) => {
-        if (active) setReviewQueueCounts({
-          practitioner: Number.isInteger(counts.practitioner) ? counts.practitioner : null,
-          communityGivers: Number.isInteger(counts.communityGivers) ? counts.communityGivers : null,
-          meetingSources: Number.isInteger(counts.meetingSources) ? counts.meetingSources : null,
-        });
-      })
-      .catch(() => { if (active) setReviewQueueCounts({ practitioner: null, communityGivers: null, meetingSources: null }); });
-    return () => { active = false; };
+  const refreshReviewQueueCounts = React.useCallback(async () => {
+    try {
+      const counts = await loadAdminApplicationQueueCounts();
+      setReviewQueueCounts({
+        practitioner: Number.isInteger(counts.practitioner) ? counts.practitioner : null,
+        communityGivers: Number.isInteger(counts.communityGivers) ? counts.communityGivers : null,
+        meetingSources: Number.isInteger(counts.meetingSources) ? counts.meetingSources : null,
+      });
+    } catch {
+      setReviewQueueCounts({ practitioner: null, communityGivers: null, meetingSources: null });
+    }
   }, []);
+
+  React.useEffect(() => {
+    refreshReviewQueueCounts();
+  }, [refreshReviewQueueCounts]);
 
   const heroEyebrow = config.homeHeroEyebrow;
   const heroHeadline = config.homeHeroHeadline;
@@ -230,6 +262,83 @@ const AdminConsolePage = () => {
   const dashboardSubtitle = config.dashboardSubtitle;
 
   const healthSummary = getHealthSummary();
+  const knownQueueCounts = Object.values(reviewQueueCounts);
+  const pendingReviewCount = knownQueueCounts.every(Number.isInteger)
+    ? knownQueueCounts.reduce((total, count) => total + count, 0)
+    : null;
+  const enabledProductionAgentCount = agentControls.implementedAgentIds
+    .filter((agentId) => agentControls.enabled[agentId] === true).length;
+  const observedExecutionSuccess = metrics.systemHealth !== "not_measured" && Number.isFinite(metrics.errorRate)
+    ? Math.max(0, 100 - metrics.errorRate)
+    : null;
+  const maxRecentRuns = Math.max(...agents.map((candidate) => Number(candidate.runCount) || 0), 0);
+  const snapshotTime = snapshotAt ? new Date(snapshotAt) : null;
+  const snapshotAgeSeconds = snapshotTime && Number.isFinite(snapshotTime.getTime())
+    ? Math.max(0, Math.floor((Date.now() - snapshotTime.getTime()) / 1000))
+    : null;
+  const settingsUnavailable = systemSettingsStatus.state === "error";
+  const adminServiceErrors = [metricsError, eventsError, riskRadarError, agentControls.error, settingsUnavailable ? systemSettingsStatus.message : null].filter(Boolean);
+  const hasAdminServiceErrors = adminServiceErrors.length > 0;
+  const adminSessionRejected = adminServiceErrors.some((message) => /unauthenticated|sign in with an administrator/i.test(String(message)));
+
+  const handleRefreshAll = async () => {
+    setRefreshingAll(true);
+    refreshEvents();
+    refreshRiskRadar();
+    const refreshSettings = loadSystemSettings()
+      .then((result) => setSystemSettingsStatus({
+        state: result.hasSavedSettings ? "saved" : "pending",
+        message: result.updatedAt
+          ? `Saved settings loaded · updated ${new Date(result.updatedAt).toLocaleString()}`
+          : "Default settings loaded · save to store them for all admin sessions.",
+      }))
+      .catch((error) => setSystemSettingsStatus({ state: "error", message: presentAdminServiceError(error, "Saved settings could not be loaded.") }));
+    try {
+      await Promise.allSettled([refreshMetrics(), refreshAgentControls(), refreshReviewQueueCounts(), refreshSettings]);
+    } finally {
+      setRefreshingAll(false);
+    }
+  };
+
+  const handleExportReport = () => {
+    const report = {
+      reportType: "wellnesscafe-admin-operational-summary",
+      exportedAt: new Date().toISOString(),
+      snapshotAt: snapshotAt || null,
+      privacyNote: "Aggregate operational data only. No member identities, private reflections, or event payloads are included.",
+      metrics: {
+        totalUsers: metrics.totalUsers,
+        activeUsers24h: metrics.activeUsers,
+        totalSessions: metrics.totalSessions,
+        totalCheckins: metrics.totalCheckins,
+        checkinsLast7Days: metrics.checkinsLast7Days,
+        agentExecutions: metrics.agentExecutions,
+        agentRunHealth: metrics.systemHealth,
+        errorRatePercent: metrics.errorRate,
+        avgResponseTimeMs: metrics.avgResponseTime,
+      },
+      agents: {
+        registered: agents.length,
+        productionHandlers: agentControls.error ? null : agentControls.implementedAgentIds.length,
+        enabledProductionHandlers: agentControls.error ? null : enabledProductionAgentCount,
+      },
+      riskSignals: riskRadarError
+        ? { state: "unavailable" }
+        : riskRadarEnabled ? { warningCount, criticalCount, totalEvents, window: "7 days" } : { state: "paused" },
+      reviewQueues: {
+        practitioner: reviewQueueCounts.practitioner,
+        communityGivers: reviewQueueCounts.communityGivers,
+        meetingSources: reviewQueueCounts.meetingSources,
+      },
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `wellnesscafe-operations-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
+  };
   const selectedAgent = selectedAgentId
     ? agents.find((agent) => agent.id === selectedAgentId)
     : null;
@@ -283,170 +392,172 @@ const AdminConsolePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="lux-shell py-10 space-y-8">
+    <div className="god-eye-console min-h-screen bg-background text-foreground">
+      <div className="lux-shell god-eye-shell py-8 sm:py-10 space-y-8 lg:space-y-10" style={{ maxWidth: "2320px", paddingInline: "clamp(1rem, 3vw, 4rem)" }}>
         {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
-              Admin · God-Eye
+        <header className="god-eye-header flex flex-col gap-6 rounded-[2rem] border border-emerald-100/10 bg-[radial-gradient(ellipse_at_top_left,rgba(96,147,111,0.18),transparent_48%),linear-gradient(125deg,rgba(14,31,24,0.96),rgba(17,22,28,0.98)_64%,rgba(31,27,19,0.8))] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] sm:p-7 xl:flex-row xl:items-end xl:justify-between xl:p-9">
+          <div className="min-w-0">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/20 bg-emerald-100/[0.06] px-3 py-1.5 text-xs font-medium text-emerald-100">
+                <CircleDot className={`h-3.5 w-3.5 ${metricsLoading ? "animate-pulse" : ""}`} aria-hidden="true" />
+                {metricsError ? "Signals unavailable" : snapshotAgeSeconds === null ? "Waiting for first snapshot" : snapshotAgeSeconds <= 60 ? "Operational snapshot live" : "Snapshot may be stale"}
+              </span>
+              <span className="text-xs text-white/55">{snapshotTime && Number.isFinite(snapshotTime.getTime()) ? `Updated ${snapshotTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "No verified snapshot yet"}</span>
+            </div>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-100/75">WellnessCafe Alpha · God-Eye</p>
+            <h1 className="max-w-4xl text-3xl font-semibold tracking-tight text-white sm:text-4xl xl:text-5xl">Command Center</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/65 sm:text-base">
+              A live operational picture of WellnessCafe.
             </p>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
-              WellnessCafe OS Console
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground max-w-xl">
-              Watch how the OS is being used, monitor agents, and keep the system safe, honest, and healing.
-            </p>
+            <p className="mt-2 text-xs text-emerald-50/50">Privacy-protected operational signals</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate("/admin/telemetry")}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-200/20 bg-amber-100/[0.04] px-4 text-xs font-medium text-amber-100 hover:bg-amber-100/[0.09] transition-colors"
-            >
-              <Activity className="h-4 w-4" aria-hidden="true" />
-              Support Activity
+          <div className="flex flex-wrap items-center gap-2 xl:max-w-[620px] xl:justify-end">
+            <button type="button" onClick={handleRefreshAll} disabled={refreshingAll} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-100/20 bg-emerald-100/[0.08] px-4 text-sm font-medium text-emerald-50 transition hover:bg-emerald-100/[0.14] disabled:opacity-60">
+              <RefreshCw className={`h-4 w-4 ${refreshingAll ? "animate-spin" : ""}`} aria-hidden="true" />
+              {refreshingAll ? "Refreshing" : "Refresh all"}
             </button>
-            <button
-              type="button"
-              onClick={() => navigate("/profile")}
-              className="inline-flex min-h-11 items-center rounded-full border border-border px-4 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              Back to profile
+            <button type="button" onClick={handleExportReport} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-amber-100/20 bg-amber-100/[0.06] px-4 text-sm font-medium text-amber-50 transition hover:bg-amber-100/[0.12]">
+              <Download className="h-4 w-4" aria-hidden="true" /> Export report
             </button>
+            <button type="button" onClick={() => setActiveConsoleTab("risk")} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-rose-100/20 bg-rose-100/[0.05] px-4 text-sm font-medium text-rose-50 transition hover:bg-rose-100/[0.1]">
+              <AlertTriangle className="h-4 w-4" aria-hidden="true" /> Signals <span className="rounded-full bg-rose-200/15 px-2 py-0.5 text-xs tabular-nums">{riskRadarEnabled ? (riskRadarLoading ? "…" : riskRadarError ? "—" : criticalCount + warningCount) : "Off"}</span>
+            </button>
+            <button type="button" onClick={() => navigate("/admin/telemetry")} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/10 px-4 text-sm text-white/75 transition hover:bg-white/[0.06] hover:text-white">
+              <Activity className="h-4 w-4" aria-hidden="true" /> Support activity
+            </button>
+            <button type="button" onClick={() => navigate("/profile")} className="inline-flex min-h-11 items-center rounded-full border border-white/10 px-4 text-sm text-white/65 transition hover:bg-white/[0.06] hover:text-white">Profile</button>
           </div>
         </header>
 
-        <AdminReviewQueues
-          practitionerCount={reviewQueueCounts.practitioner}
-          giverCount={reviewQueueCounts.communityGivers}
-          meetingSourceCount={reviewQueueCounts.meetingSources}
-        />
-        <section className="flex flex-col justify-between gap-3 rounded-2xl border border-sky-200/15 bg-sky-100/[0.025] p-4 sm:flex-row sm:items-center" aria-label="Workspace access management">
+        <nav role="tablist" aria-label="Command center sections" className="god-eye-tabs flex gap-2 overflow-x-auto border-b border-white/[0.07] pb-3">
+          {[
+            ["overview", "Overview", LayoutDashboard], ["queues", "Review queues", ClipboardList], ["agents", "Agents", Bot], ["events", "Event stream", Radio], ["risk", "Risk radar", Siren], ["controls", "Controls", Settings2],
+          ].map(([id, label, Icon]) => <button key={id} id={`god-eye-tab-${id}`} type="button" role="tab" aria-selected={activeConsoleTab === id} aria-controls={`god-eye-panel-${id}`} tabIndex={activeConsoleTab === id ? 0 : -1} onClick={() => setActiveConsoleTab(id)} onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const tabs = Array.from(event.currentTarget.parentElement.querySelectorAll('[role="tab"]'));
+            const currentIndex = tabs.indexOf(event.currentTarget);
+            const nextIndex = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (currentIndex + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length;
+            const nextTab = tabs[nextIndex];
+            nextTab?.focus();
+            const nextId = nextTab?.id.replace("god-eye-tab-", "");
+            if (nextId) setActiveConsoleTab(nextId);
+          }} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-100" aria-label={label}>
+            <Icon className="h-4 w-4" aria-hidden="true" />{label}
+          </button>)}
+        </nav>
+
+        {hasAdminServiceErrors && (
+          <section role="alert" className="flex flex-col gap-4 rounded-2xl border border-amber-200/20 bg-amber-100/[.045] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex min-w-0 items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-100" aria-hidden="true" />
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-amber-50">Admin services need attention</h2>
+                <p className="mt-1 text-sm leading-6 text-white/65">
+                  {adminSessionRejected
+                    ? "The server could not verify this admin session for operational data. Handler availability and saved settings cannot be confirmed."
+                    : "Some operational services could not be reached. Their data and controls are marked unavailable until the server responds."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={async () => { await refreshClaims(); await handleRefreshAll(); }}
+              disabled={refreshingAll}
+              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-amber-100/20 px-4 text-sm font-medium text-amber-50 transition hover:bg-amber-100/[.08] disabled:opacity-60"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshingAll ? "animate-spin" : ""}`} aria-hidden="true" />
+              {refreshingAll ? "Checking…" : "Refresh access and services"}
+            </button>
+          </section>
+        )}
+
+        <section id="god-eye-panel-overview" role="tabpanel" aria-labelledby="god-eye-tab-overview" hidden={activeConsoleTab !== "overview"} className="scroll-mt-6 space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100/65">System pulse</p>
+              <h2 className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">The system, at a glance</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">Live operational measures</p>
+          </div>
+          <div className="grid gap-4 xl:grid-cols-3">
+            <article className="god-eye-visual-panel rounded-3xl border border-emerald-100/10 bg-[linear-gradient(145deg,rgba(44,74,59,.25),rgba(10,18,24,.72))] p-5 sm:p-6">
+              <p className="text-xs font-medium uppercase tracking-[.16em] text-emerald-100/55">Community footprint</p>
+              <div className="mt-3"><MemberBaseVisual total={metrics.totalUsers} loading={metricsLoading} error={metricsError} /></div>
+            </article>
+
+            <article className="god-eye-visual-panel rounded-3xl border border-sky-100/10 bg-[linear-gradient(145deg,rgba(39,66,88,.25),rgba(10,18,24,.72))] p-5 sm:p-6">
+              <p className="text-xs font-medium uppercase tracking-[.16em] text-sky-100/55">Agent readiness</p>
+              <AgentReadinessMeter total={agents.length} implemented={agentControls.implementedAgentIds.length} enabled={enabledProductionAgentCount} loading={agentControls.loading} error={agentControls.error} />
+              <p className="mt-1 text-xs text-white/40">Availability only; handler status does not imply agent quality.</p>
+            </article>
+
+            <article className="god-eye-visual-panel rounded-3xl border border-amber-100/10 bg-[linear-gradient(145deg,rgba(80,61,33,.22),rgba(10,18,24,.72))] p-5 sm:p-6">
+              <p className="text-xs font-medium uppercase tracking-[.16em] text-amber-100/55">Observed run health</p>
+              <div className="mt-5"><RingMeter value={metricsLoading || metricsError ? null : observedExecutionSuccess} label="Sample success rate" detail={metricsLoading ? "Loading" : metricsError ? "Unavailable" : metrics.systemHealth === "not_measured" ? "No runs yet" : metrics.systemHealth} note={metricsError ? "Operational snapshot could not be verified" : metricsLoading ? "Waiting for snapshot" : metrics.systemHealth === "not_measured" ? "Waiting for recorded activity" : "From recorded runs"} color="#f3d37a" /></div>
+              <p className="mt-4 text-xs text-white/45">{metricsError ? "Run health unavailable" : "From recorded agent runs"}</p>
+            </article>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[1.65fr_1fr]">
+            <article className="god-eye-visual-panel god-eye-trend-panel rounded-3xl border border-white/[.08] bg-slate-950/25 p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div><p className="text-xs font-medium uppercase tracking-[.16em] text-white/45">Seven-day signal history</p><h3 className="mt-1 text-lg font-semibold text-white">Risk activity</h3></div>
+                <span className="rounded-full border border-amber-100/10 bg-amber-100/[.04] px-3 py-1 text-xs text-amber-100/70">7 days</span>
+              </div>
+              {riskRadarEnabled ? <RiskTrendChart days={dailyCounts} loading={riskRadarLoading} error={riskRadarError} /> : <div className="grid h-56 place-items-center text-sm text-white/50">Signal chart paused</div>}
+            </article>
+            <article className="god-eye-visual-panel rounded-3xl border border-white/[.08] bg-slate-950/25 p-5 sm:p-6">
+              <div><p className="text-xs font-medium uppercase tracking-[.16em] text-white/45">Severity mix</p><h3 className="mt-1 text-lg font-semibold text-white">Signals needing attention</h3></div>
+              {riskRadarEnabled ? riskRadarError ? <div className="mt-6 grid h-40 place-items-center text-sm text-amber-50/60">Signal totals unavailable</div> : <div className="mt-6"><RiskSeverityMeter warningCount={warningCount} criticalCount={criticalCount} totalEvents={totalEvents} /></div> : <div className="mt-6 grid h-40 place-items-center text-sm text-white/50">Signal summary paused</div>}
+              {riskRadarSampled && <p className="mt-5 text-[11px] text-white/40">Latest 500 signals sampled</p>}
+            </article>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+            {[
+              { label: "Session records", value: metrics.totalSessions, Icon: Database, tone: "text-sky-200", accent: "bg-sky-200" },
+              { label: "Check-ins · 7 days", value: metrics.checkinsLast7Days, Icon: CheckCircle2, tone: "text-teal-200", accent: "bg-teal-200" },
+              { label: "Agent executions", value: metrics.agentExecutions, Icon: Zap, tone: "text-amber-100", accent: "bg-amber-100" },
+              { label: "Avg. response", value: metrics.avgResponseTime == null ? null : `${metrics.avgResponseTime} ms`, Icon: Clock, tone: "text-violet-200", accent: "bg-violet-200" },
+              { label: "Reviews waiting", value: pendingReviewCount, Icon: Database, tone: "text-rose-200", accent: "bg-rose-200" },
+              { label: "Total accounts", value: metrics.totalUsers, Icon: Users, tone: "text-emerald-200", accent: "bg-emerald-200" },
+            ].map(({ label, value, Icon, tone, accent }) => (
+              <article key={label} className="god-eye-metric group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.035] p-3 transition duration-200 hover:border-white/[0.14] hover:bg-white/[0.05] sm:p-4">
+                <div className="flex items-center justify-between gap-2"><p className="truncate text-[11px] font-medium text-white/55">{label}</p><Icon className={`h-3.5 w-3.5 shrink-0 ${tone}`} aria-hidden="true" /></div>
+                <p className="mt-2 text-2xl font-semibold tracking-tight text-white tabular-nums sm:text-3xl">{metricsLoading || metricsError ? "—" : value == null ? "—" : value.toLocaleString?.() ?? value}</p>
+                <span className={`absolute inset-x-0 bottom-0 h-px ${accent} opacity-45`} />
+              </article>
+            ))}
+          </div>
+          <p className="sr-only">Values come from the live operational snapshot. Personal member reflections and health readings are excluded.</p>
+        </section>
+
+        <section id="god-eye-panel-queues" role="tabpanel" aria-labelledby="god-eye-tab-queues" hidden={activeConsoleTab !== "queues"} className="scroll-mt-6 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-100/65">Human review</p><h2 className="mt-1 text-xl font-semibold text-foreground">Work that needs an admin</h2></div>
+            <span className="text-xs text-muted-foreground">Review decisions remain human-led.</span>
+          </div>
+          <AdminReviewQueues
+            practitionerCount={reviewQueueCounts.practitioner}
+            giverCount={reviewQueueCounts.communityGivers}
+            meetingSourceCount={reviewQueueCounts.meetingSources}
+          />
+        </section>
+
+        <section hidden={activeConsoleTab !== "queues"} className="flex flex-col justify-between gap-3 rounded-2xl border border-sky-200/15 bg-sky-100/[0.025] p-4 sm:flex-row sm:items-center" aria-label="Workspace access management">
           <div className="flex items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-100/[0.08] text-sky-100"><UserRoundCog className="h-5 w-5" aria-hidden="true" /></span><div><h2 className="text-sm font-semibold">Workspace access</h2><p className="mt-0.5 text-xs text-muted-foreground">Find an account by email and grant the practitioner workspace for their service.</p></div></div>
           <button type="button" onClick={() => navigate("/admin/user-access")} className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-sky-100/20 px-3 text-xs font-medium text-sky-50 hover:bg-sky-100/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-100">Manage workspace access</button>
         </section>
 
-        {/* System Metrics */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              System Metrics
-            </h2>
-            <button
-              type="button"
-              onClick={refreshMetrics}
-              disabled={metricsLoading}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60 transition-colors"
-            >
-              <RefreshCw className={`h-3 w-3 ${metricsLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </button>
-          </div>
-
-          {metricsError && (
-            <div role="status" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              System metrics are unavailable: {metricsError}
-            </div>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <div className="lux-card p-4 text-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Total Users
-                </p>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-semibold">
-                {metricsLoading || metricsError || metrics.totalUsers == null ? "—" : metrics.totalUsers}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {metricsError ? "Activity unavailable" : `${metrics.activeUsers ?? "—"} active (24h)`}
-              </p>
-            </div>
-
-            <div className="lux-card p-4 text-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Sessions
-                </p>
-                <Database className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-semibold">
-                {metricsLoading || metricsError || metrics.totalSessions == null ? "—" : metrics.totalSessions}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Total records
-              </p>
-            </div>
-
-            <div className="lux-card p-4 text-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Check-ins
-                </p>
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-semibold">
-                {metricsLoading || metricsError || metrics.totalCheckins == null ? "—" : metrics.totalCheckins}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {metrics.checkinsLast7Days ?? "—"} saved in the last 7 days · counts only
-              </p>
-            </div>
-
-            <div className="lux-card p-4 text-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Agent Executions
-                </p>
-                <Zap className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-2xl font-semibold">
-                {metricsLoading || metricsError || metrics.agentExecutions == null ? "—" : metrics.agentExecutions}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {metrics.avgResponseTime == null ? "No measured runs yet" : `${metrics.avgResponseTime}ms average · recent sample`}
-              </p>
-            </div>
-
-            <div className={`lux-card p-4 text-sm space-y-2 ${
-              metrics.systemHealth === "degraded" ? "border-destructive/30" :
-              metrics.systemHealth === "watch" ? "border-amber-400/30" :
-              ""
-            }`}>
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Agent Run Health
-                </p>
-                {metrics.systemHealth === "healthy" ? (
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-amber-400" />
-                )}
-              </div>
-              <p className={`text-2xl font-semibold ${
-                metrics.systemHealth === "healthy" ? "text-emerald-400" :
-                metrics.systemHealth === "watch" ? "text-amber-400" :
-                metrics.systemHealth === "degraded" ? "text-destructive" :
-                "text-muted-foreground"
-              }`}>
-                {metricsLoading ? "—" : metrics.systemHealth === "not_measured" ? "Not measured" : metrics.systemHealth}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {metrics.errorRate == null ? "No agent runs in latest sample" : `${metrics.errorRate}% error rate (latest sample)`}
-              </p>
-            </div>
-          </div>
-        </section>
-
         {/* Agents Overview */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Agents Overview
-          </h2>
+        <section id="god-eye-panel-agents" role="tabpanel" aria-labelledby="god-eye-tab-agents" hidden={activeConsoleTab !== "agents"} className="scroll-mt-6 space-y-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100/65">Intelligence layer</p>
+            <h2 className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">Agents &amp; service handlers</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Registry visibility, server-backed availability, and safe controls for production handlers.</p>
+          </div>
 
           {/* NEW: Quick Agent Test Section */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -458,7 +569,7 @@ const AdminConsolePage = () => {
               <option value="">Select agent to test…</option>
               {agents.map((a) => (
                 <option key={a.id} value={a.id} disabled={!availableTestAgents.some((available) => available.id === a.id)}>
-                  {a.name}{availableTestAgents.some((available) => available.id === a.id) ? " · Live and enabled" : agentControls.implementedAgentIds.includes(a.id) ? " · Paused" : " · No production handler"}
+                  {a.name}{agentControls.loading ? " · Checking status" : agentControls.error ? " · Status unavailable" : availableTestAgents.some((available) => available.id === a.id) ? " · Live and enabled" : agentControls.implementedAgentIds.includes(a.id) ? " · Paused" : " · No production handler"}
                 </option>
               ))}
             </select>
@@ -544,8 +655,10 @@ const AdminConsolePage = () => {
           <div className="grid gap-4 md:grid-cols-4">
             {agents.map((agent) => {
               const Icon = agentIcons[agent.id] || Activity;
-              const productionEnabled = agentControls.implementedAgentIds.includes(agent.id)
+              const handlerKnown = !agentControls.loading && !agentControls.error;
+              const productionEnabled = handlerKnown && agentControls.implementedAgentIds.includes(agent.id)
                 && agentControls.enabled[agent.id] === true;
+              const runWidth = maxRecentRuns ? Math.max(agent.runCount > 0 ? 3 : 0, (Number(agent.runCount) || 0) / maxRecentRuns * 100) : 0;
               return (
                 <div
                   key={agent.id}
@@ -556,18 +669,20 @@ const AdminConsolePage = () => {
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-lg ${
+                    <button type="button" onClick={(event) => { agentDetailsOpenerRef.current = event.currentTarget; setSelectedAgentId(agent.id); }} aria-label={`Open ${agent.name} details`} className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center text-lg transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200 ${
                       agent.status === "active" ? "bg-amber-400/10" : "bg-muted"
                     }`}>
                       {agent.icon}
-                    </div>
+                    </button>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold truncate">{agent.name}</p>
                       <p className="text-[10px] text-muted-foreground truncate">
                         {agent.role}
                       </p>
                     </div>
-                    {productionEnabled ? (
+                    {!handlerKnown ? (
+                      <CircleDot className="h-3.5 w-3.5 shrink-0 text-amber-100/70" aria-label="Handler status unavailable" />
+                    ) : productionEnabled ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
                     ) : (
                       <X className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
@@ -589,14 +704,13 @@ const AdminConsolePage = () => {
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
                     <div className="col-span-2">
-                      <p className="text-[10px] text-muted-foreground">Production implementation</p>
-                      <p className={`text-xs font-semibold ${agentControls.implementedAgentIds.includes(agent.id) ? "text-emerald-400" : "text-amber-300"}`}>
-                        {agentControls.implementedAgentIds.includes(agent.id) ? "Production handler available" : "Registered · no production handler"}
+                      <p className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-medium ${!handlerKnown ? "border-amber-100/15 bg-amber-100/[.04] text-amber-50/65" : agentControls.implementedAgentIds.includes(agent.id) ? "border-emerald-200/20 bg-emerald-200/[.06] text-emerald-200" : "border-white/10 bg-white/[.03] text-white/50"}`}>
+                        {!handlerKnown ? "Status unavailable" : agentControls.implementedAgentIds.includes(agent.id) ? "Handler available" : "No production handler"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Runs</p>
-                      <p className="text-sm font-semibold">{agent.runCount || 0}</p>
+                      <div className="flex items-center justify-between gap-2"><p className="text-[10px] text-muted-foreground">Recent runs</p><p className="text-sm font-semibold tabular-nums">{agentMetricsError ? "—" : agent.runCount || 0}</p></div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[.07]" role="img" aria-label={`${agent.name}: ${agentMetricsError ? "run count unavailable" : `${agent.runCount || 0} recent runs`}`}><span className="block h-full rounded-full bg-sky-200/80 transition-[width] duration-500" style={{ width: `${agentMetricsError ? 0 : runWidth}%` }} /></div>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">Health</p>
@@ -605,7 +719,7 @@ const AdminConsolePage = () => {
                         agent.health === "degraded" ? "text-amber-400" :
                         agent.health === "unknown" ? "text-muted-foreground" : "text-destructive"
                       }`}>
-                        {agent.health}
+                        {agentMetricsError ? "unavailable" : agent.health}
                       </p>
                     </div>
                   </div>
@@ -756,45 +870,19 @@ const AdminConsolePage = () => {
             </div>
           )}
 
-          {/* Health Summary */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="lux-card p-3 text-xs">
-              <p className="text-muted-foreground">Total Agents</p>
-              <p className="text-lg font-semibold mt-1">{healthSummary.total}</p>
-            </div>
-            <div className="lux-card p-3 text-xs">
-              <p className="text-muted-foreground">Healthy</p>
-              <p className="text-lg font-semibold text-emerald-400 mt-1">
-                {healthSummary.healthy}
-              </p>
-            </div>
-            <div className="lux-card p-3 text-xs">
-              <p className="text-muted-foreground">Degraded</p>
-              <p className="text-lg font-semibold text-amber-400 mt-1">
-                {healthSummary.degraded}
-              </p>
-            </div>
-            <div className="lux-card p-3 text-xs">
-              <p className="text-muted-foreground">Down</p>
-              <p className="text-lg font-semibold text-destructive mt-1">
-                {healthSummary.down}
-              </p>
-            </div>
-            <div className="lux-card p-3 text-xs">
-              <p className="text-muted-foreground">Not yet measured</p>
-              <p className="text-lg font-semibold text-muted-foreground mt-1">{healthSummary.unknown}</p>
-            </div>
-          </div>
+          <AgentHealthBar summary={healthSummary} error={agentMetricsError} />
         </section>
 
         {/* Live Event Stream */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Live Event Stream
-            </h2>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
+        <section id="god-eye-panel-events" role="tabpanel" aria-labelledby="god-eye-tab-events" hidden={activeConsoleTab !== "events"} className="scroll-mt-6 space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100/65">Operations trail</p>
+              <h2 className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">Live event stream</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Sanitized service events only; private reflection content is excluded.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                 <select
                   value={eventFilters.agentId || ""}
@@ -829,9 +917,9 @@ const AdminConsolePage = () => {
                   <option value="risk_signal">Risk signal</option>
                 </select>
               </div>
-              <button type="button" onClick={refreshEvents} disabled={eventsLoading} className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60">
-                <RefreshCw className={`h-3 w-3 ${eventsLoading ? "animate-spin" : ""}`} />
-                Refresh
+              <button type="button" onClick={refreshEvents} disabled={eventsLoading} className="inline-flex min-h-9 items-center gap-2 rounded-full border border-border px-3 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60">
+                <RefreshCw className={`h-3.5 w-3.5 ${eventsLoading ? "animate-spin" : ""}`} />
+                Refresh events
               </button>
             </div>
           </div>
@@ -842,7 +930,7 @@ const AdminConsolePage = () => {
               Loading events...
             </p>
           ) : eventsError ? (
-            <p role="status" className="text-sm text-destructive text-center py-8">Event stream unavailable: {eventsError}</p>
+              <p role="status" className="text-sm text-destructive text-center py-8">Event stream unavailable: {presentAdminServiceError(eventsError, "Please refresh to try again.")}</p>
           ) : events.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <p className="text-xs text-muted-foreground">
@@ -863,7 +951,7 @@ const AdminConsolePage = () => {
         </section>
 
         {/* Risk Radar */}
-        <section className="lux-section space-y-4">
+        <section id="god-eye-panel-risk" role="tabpanel" aria-labelledby="god-eye-tab-risk" hidden={activeConsoleTab !== "risk"} className="lux-section scroll-mt-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -885,17 +973,17 @@ const AdminConsolePage = () => {
                 <p className="text-sm font-medium text-foreground">Risk Radar is paused</p>
                 <p className="text-sm text-muted-foreground">Risk-signal summaries are hidden. System metrics and the agent event feed remain available.</p>
               </div>
-              <button type="button" onClick={() => document.getElementById("system-feature-toggles")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="min-h-10 shrink-0 rounded-full border border-border px-4 text-sm text-foreground hover:bg-muted">
+              <button type="button" onClick={() => setActiveConsoleTab("controls")} className="min-h-10 shrink-0 rounded-full border border-border px-4 text-sm text-foreground hover:bg-muted">
                 Review feature setting
               </button>
             </div>
           ) : riskRadarError && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              Error loading risk data: {riskRadarError}
+              Risk data unavailable: {presentAdminServiceError(riskRadarError, "Please refresh to try again.")}
             </div>
           )}
 
-          {riskRadarEnabled && (riskRadarLoading ? (
+          {riskRadarEnabled && (riskRadarError ? null : riskRadarLoading ? (
             <div className="lux-card p-8 text-center">
               <p className="text-sm text-muted-foreground">Loading risk data...</p>
             </div>
@@ -1013,7 +1101,7 @@ const AdminConsolePage = () => {
         </section>
 
         {/* System Settings Module */}
-        <section className="lux-section space-y-6">
+        <section id="god-eye-panel-controls" role="tabpanel" aria-labelledby="god-eye-tab-controls" hidden={activeConsoleTab !== "controls"} className="lux-section scroll-mt-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -1033,7 +1121,7 @@ const AdminConsolePage = () => {
                     refreshRiskRadar();
                     setSystemSettingsStatus({ state: "saved", message: `Saved just now · ${new Date().toLocaleTimeString()}` });
                   } catch (error) {
-                    setSystemSettingsStatus({ state: "error", message: error?.message || "Settings were not saved. Your edits are still on this page; try again." });
+                    setSystemSettingsStatus({ state: "error", message: presentAdminServiceError(error, "Settings were not saved. Your edits are still on this page; try again.") });
                   }
                 }}
                 disabled={systemSettingsStatus.state === "saving" || systemSettingsStatus.state === "loading"}
@@ -1048,6 +1136,7 @@ const AdminConsolePage = () => {
                   resetSettings();
                   setSystemSettingsStatus({ state: "pending", message: "Defaults restored on this page. Save to apply them across admin sessions." });
                 }}
+                disabled={settingsUnavailable}
                 className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 Reset to defaults
@@ -1058,19 +1147,27 @@ const AdminConsolePage = () => {
             {systemSettingsStatus.message}
           </p>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            <div id="system-feature-toggles" className="lux-card p-4 space-y-4 scroll-mt-8">
+          <nav role="tablist" aria-label="System settings categories" className="god-eye-tabs flex gap-2 overflow-x-auto border-b border-white/[0.07] pb-3">
+            {[["features", "Features", Sliders], ["thresholds", "Risk thresholds", TrendingUp], ["notifications", "Notifications", Bell], ["copy", "Home page copy", Database]].map(([id, label, Icon]) => (
+              <button key={id} id={`god-eye-settings-tab-${id}`} type="button" role="tab" aria-selected={activeSettingsTab === id} aria-controls={`god-eye-settings-panel-${id}`} tabIndex={activeSettingsTab === id ? 0 : -1} onClick={() => setActiveSettingsTab(id)} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-white/[0.08] px-4 text-sm text-white/65 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-100">
+                <Icon className="h-4 w-4" aria-hidden="true" />{label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="grid items-start gap-6">
+            <div id="god-eye-settings-panel-features" role="tabpanel" aria-labelledby="god-eye-settings-tab-features" hidden={activeSettingsTab !== "features"} className="lux-card p-4 space-y-4 scroll-mt-8">
               <div className="flex items-center gap-2">
                 <Sliders className="h-4 w-4 text-muted-foreground" />
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Feature Toggles
                 </h3>
               </div>
-              <div className="space-y-3">
+              <div className="grid gap-3 xl:grid-cols-2">
                 {Object.entries(systemSettings.features).map(([feature, enabled]) => (
                   <div
                     key={feature}
-                    className="flex items-center justify-between gap-3 border-b border-border/60 pb-3 last:border-0 last:pb-0"
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-white/[0.02] p-3"
                   >
                     <div className="min-w-0 flex-1 space-y-1">
                       <p className="text-sm font-medium text-foreground">
@@ -1086,13 +1183,14 @@ const AdminConsolePage = () => {
                         role="switch"
                         aria-checked={enabled}
                         aria-label={getFeatureSwitchPresentation(feature).label}
+                        disabled={settingsUnavailable}
                         title={`Turn ${enabled ? "off" : "on"} ${getFeatureSwitchPresentation(feature).label.toLowerCase()}`}
                         onClick={() => {
                           throttle(() => updateFeature(feature, !enabled), 150)();
                         }}
                         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                           enabled ? "bg-emerald-500" : "bg-muted"
-                        }`}
+                        } disabled:cursor-not-allowed disabled:opacity-50`}
                       >
                         <span
                           className={`absolute top-0.5 h-5 w-5 rounded-full bg-background transition-transform ${
@@ -1110,7 +1208,7 @@ const AdminConsolePage = () => {
               </div>
             </div>
 
-            <div className="lux-card p-4 space-y-4">
+            <div id="god-eye-settings-panel-thresholds" role="tabpanel" aria-labelledby="god-eye-settings-tab-thresholds" hidden={activeSettingsTab !== "thresholds"} className="lux-card p-4 space-y-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1130,10 +1228,11 @@ const AdminConsolePage = () => {
                     min="0"
                     max="10"
                     value={systemSettings.thresholds.riskLevelLow}
+                    disabled={settingsUnavailable}
                     onChange={(e) =>
                       updateThreshold("riskLevelLow", parseInt(e.target.value, 10))
                     }
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -1148,10 +1247,11 @@ const AdminConsolePage = () => {
                     min="0"
                     max="10"
                     value={systemSettings.thresholds.riskLevelMedium}
+                    disabled={settingsUnavailable}
                     onChange={(e) =>
                       updateThreshold("riskLevelMedium", parseInt(e.target.value, 10))
                     }
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -1166,10 +1266,11 @@ const AdminConsolePage = () => {
                     min="0"
                     max="10"
                     value={systemSettings.thresholds.riskLevelHigh}
+                    disabled={settingsUnavailable}
                     onChange={(e) =>
                       throttledUpdateThreshold("riskLevelHigh", parseInt(e.target.value, 10))
                     }
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -1185,10 +1286,11 @@ const AdminConsolePage = () => {
                     max="1"
                     step="0.01"
                     value={systemSettings.thresholds.errorRateThreshold}
+                    disabled={settingsUnavailable}
                     onChange={(e) =>
                       updateThreshold("errorRateThreshold", parseFloat(e.target.value))
                     }
-                    className="w-full"
+                    className="w-full disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -1197,12 +1299,14 @@ const AdminConsolePage = () => {
             <AdminNotificationPolicy
               notifications={systemSettings.notifications}
               onChange={updateNotificationRule}
+              disabled={settingsUnavailable}
+              hidden={activeSettingsTab !== "notifications"}
             />
           </div>
         </section>
 
         {/* Content controls */}
-        <section className="lux-section space-y-6">
+        <section id="god-eye-settings-panel-copy" role="tabpanel" aria-labelledby="god-eye-settings-tab-copy" hidden={activeConsoleTab !== "controls" || activeSettingsTab !== "copy"} className="lux-section space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -1221,7 +1325,7 @@ const AdminConsolePage = () => {
             </button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 text-sm">
+          <div className="grid min-w-0 gap-4 text-sm xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -1263,7 +1367,7 @@ const AdminConsolePage = () => {
             </div>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Primary button label
@@ -1292,57 +1396,57 @@ const AdminConsolePage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Recovery tile subtitle
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={recoverySubtitle}
                     onChange={(e) =>
                       updateConfig({ recoverySubtitle: e.target.value })
                     }
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs leading-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Tools tile subtitle
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={toolsSubtitle}
                     onChange={(e) =>
                       updateConfig({ toolsSubtitle: e.target.value })
                     }
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs leading-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Providers tile subtitle
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={providersSubtitle}
                     onChange={(e) =>
                       updateConfig({ providersSubtitle: e.target.value })
                     }
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs leading-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Dashboard tile subtitle
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={dashboardSubtitle}
                     onChange={(e) =>
                       updateConfig({ dashboardSubtitle: e.target.value })
                     }
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-xs leading-5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
               </div>

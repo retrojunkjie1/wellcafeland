@@ -19,6 +19,12 @@ export async function grantPractitionerWorkspace(email, providerType) {
   return result.data || {};
 }
 
+export async function revokePractitionerWorkspace(email) {
+  assertAdminSession();
+  const result = await httpsCallable(functions, "revokePractitionerWorkspace")({ email });
+  return result.data || {};
+}
+
 export async function listAdminWorkspaceAccessEvents() {
   assertAdminSession();
   const result = await httpsCallable(functions, "listAdminWorkspaceAccessEvents")({});

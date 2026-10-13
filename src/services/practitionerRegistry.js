@@ -19,6 +19,7 @@ async function call(name, data = {}, { allowAnonymous = false, allowSignedOut = 
 export const submitPractitionerApplication = (profile) => call("submitPractitionerApplication", profile);
 export const getMyPractitionerApplication = () => call("getMyPractitionerApplication");
 export const listPractitionersForReview = () => call("listPractitionersForReview");
+export const listAdminPractitionerNetwork = () => call("listAdminPractitionerNetwork");
 export const reviewPractitionerApplication = (uid, decision, reviewNote = "", confirmPublicDirectoryClaim = false) =>
   call("reviewPractitionerApplication", { uid, decision, reviewNote, confirmPublicDirectoryClaim });
 export const listVerifiedPractitioners = ({ type = "", search = "", serviceFormat = "", accessibilityOption = "", deliveryOption = "", costOption = "", city = "", region = "", acceptingNewClients = false } = {}) =>
@@ -52,9 +53,20 @@ export const listMyPractitionerShares = () => call("listMyPractitionerShares");
 export const setPractitionerShare = (practitionerId, scopes) => call("setPractitionerShare", { practitionerId, scopes });
 export const endMyPractitionerConnection = (practitionerId) => call("endMyPractitionerConnection", { practitionerId });
 export const getProviderClientOverview = (clientId) => call("getProviderClientOverview", { clientId });
+export const saveMyVisitPreparation = (preparation) => call("saveMyVisitPreparation", { preparation });
+export const listMyVisitPreparations = () => call("listMyVisitPreparations");
+export const deleteMyVisitPreparation = (preparationId) => call("deleteMyVisitPreparation", { preparationId });
+export const listProviderVisitPreparations = (clientId) => call("listProviderVisitPreparations", { clientId });
+export const acknowledgeVisitPreparation = (preparationId) => call("acknowledgeVisitPreparation", { preparationId });
+export const createMyCareHandoff = (handoff) => call("createMyCareHandoff", { handoff });
+export const listMyCareHandoffs = () => call("listMyCareHandoffs");
+export const setMyCareHandoffStatus = (handoffId, action) => call("setMyCareHandoffStatus", { handoffId, action });
+export const listProviderCareHandoffs = (clientId) => call("listProviderCareHandoffs", { clientId });
+export const updateProviderCareHandoff = (handoffId, status, reply = "") => call("updateProviderCareHandoff", { handoffId, status, reply });
 export const sendPractitionerSupportTool = (clientId, toolId, message = "", followUpDays = 0) => call("sendPractitionerSupportTool", { clientId, toolId, message, followUpDays });
 export const listMyPractitionerSupport = () => call("listMyPractitionerSupport");
 export const listMyDailyPractice = () => call("listMyDailyPractice");
 export const markPractitionerSupportSeen = (supportId, action) => call("markPractitionerSupportSeen", { supportId, action });
 export const submitPractitionerPracticeProgress = (supportId, outcome, note = "") => call("submitPractitionerPracticeProgress", { supportId, outcome, note });
 export const exportMyWellnessData = () => call("exportMyWellnessData");
+export const deleteMyCheckIns = () => call("deleteMyCheckIns");

@@ -1,13 +1,14 @@
 // src/apps/tools/modules/JournalingTool.jsx
 // Journal with mode selection and Firestore/localStorage fallback
 
-import React, { useState, useCallback } from "react";
-import { X, Save } from "lucide-react";
+import React, { useState, useCallback, useRef } from "react";
+import { Pause, Play, Save, Square, Volume2, X } from "lucide-react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
+import { useNaturalVoice } from "@/hooks/useNaturalVoice";
 
 const JOURNAL_MODES = [
   {
@@ -45,8 +46,26 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   const [text, setText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [lastSpokenText, setLastSpokenText] = useState("");
+  const journalEntryRef = useRef(null);
   const [startTime] = useState(() => Date.now());
   const identity = useSessionIdentity();
+  const voice = useNaturalVoice("marin");
+  const isSpeaking = voice.status === "playing";
+  const isPreparing = voice.status === "preparing";
+  const isVoicePaused = voice.status === "paused";
+  const isVoiceUnavailable = voice.status === "unavailable";
+  const voiceProgress = Math.max(0, Math.min(1, voice.playbackProgress || 0));
+
+  const speakFixedPrompt = (textToSpeak) => {
+    setLastSpokenText(textToSpeak);
+    void voice.play(textToSpeak);
+  };
+
+  const speakModePrompts = () => {
+    if (!selectedMode) return;
+    speakFixedPrompt(`${selectedMode.name}. ${selectedMode.description} The prompts are optional. ${selectedMode.prompts.join(". ")}`);
+  };
 
   const getUserId = () => {
     if (identity.userId) return identity.userId;
@@ -92,6 +111,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   const handleSave = async () => {
     if (!text.trim() || !selectedMode || isSaving) return;
 
+    voice.stop();
     setIsSaving(true);
     setSaveError("");
     const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
@@ -156,8 +176,9 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   };
 
   const handleCancel = useCallback(() => {
+    voice.stop();
     safeCancel(onCancel);
-  }, [onCancel]);
+  }, [onCancel, voice.stop]);
 
   // Mode selection
   if (!selectedMode) {
@@ -209,7 +230,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
       </div>
       <button
         type="button"
-        onClick={() => { setSelectedMode(null); setSaveError(""); }}
+        onClick={() => { voice.stop(); setSelectedMode(null); setSaveError(""); }}
         className="min-h-11 rounded-lg px-3 text-sm text-white/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
       >
         Change prompt
@@ -219,13 +240,33 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
           <div>
             <h3 className="text-xl font-medium text-white">{selectedMode.name}</h3>
             <p className="text-sm text-white/50">{selectedMode.description}</p>
+      </div>
+      <section className="rounded-2xl border border-emerald-100/15 bg-emerald-100/[0.035] p-4" aria-label="Spoken journaling prompts">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white">Listen before you write</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/60">Hear the mode description and optional prompts. Your journal entry is never read aloud.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedMode(null);
-              setText("");
-            }}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => isSpeaking ? void voice.pause() : isVoicePaused ? void voice.resume() : speakModePrompts()} disabled={isPreparing} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-100/25 bg-emerald-100/[0.08] px-4 text-sm text-emerald-50 transition hover:bg-emerald-100/[0.14] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
+              {isPreparing ? <Volume2 aria-hidden="true" className="h-4 w-4 animate-pulse" /> : isSpeaking ? <Pause aria-hidden="true" className="h-4 w-4" /> : isVoicePaused ? <Play aria-hidden="true" className="h-4 w-4" /> : <Volume2 aria-hidden="true" className="h-4 w-4" />}
+              {isPreparing ? "Preparing voice…" : isSpeaking ? "Pause voice" : isVoicePaused ? "Resume voice" : voice.status === "finished" ? "Replay prompts" : "Hear prompts"}
+            </button>
+            {(isSpeaking || isVoicePaused || isPreparing) && <button type="button" onClick={voice.stop} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"><Square aria-hidden="true" className="h-3.5 w-3.5" /> Stop</button>}
+          </div>
+        </div>
+        {isSpeaking && <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Spoken prompt progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(voiceProgress * 100)}><span className="block h-full rounded-full bg-gradient-to-r from-emerald-200 to-amber-100 transition-[width] duration-100 ease-linear" style={{ width: `${voiceProgress * 100}%` }} /></div>}
+        <p role={isVoiceUnavailable ? "alert" : "status"} aria-live="polite" className={`mt-2 min-h-5 text-xs ${isVoiceUnavailable ? "text-amber-200" : "text-white/55"}`}>
+          {isVoiceUnavailable ? voice.error || "The spoken prompts could not play. You can still use the written prompts." : isPreparing ? "Preparing the natural voice…" : isSpeaking ? "Spoken prompts are playing." : isVoicePaused ? "Spoken prompts are paused." : voice.status === "finished" ? "Prompts complete. Your writing was not spoken." : lastSpokenText ? "You can replay the spoken prompts at any time." : "Audio starts only when you tap. Your entry is never included."}
+        </p>
+      </section>
+            <button
+              type="button"
+              onClick={() => {
+                voice.stop();
+                setSelectedMode(null);
+                setText("");
+              }}
             className="rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/5 transition"
           >
             <X className="h-4 w-4" />
@@ -247,6 +288,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
         <label htmlFor="journal-entry" className="sr-only">Journal entry</label>
         <textarea
           id="journal-entry"
+          ref={journalEntryRef}
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, 10000))}
           placeholder={selectedMode.placeholder}

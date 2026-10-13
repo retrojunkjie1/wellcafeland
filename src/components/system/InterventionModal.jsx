@@ -3,9 +3,10 @@
 // Minimal and consistent; no free-chat loop.
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
 import ReasoningDisclosure from "./ReasoningDisclosure";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 const PRESETS = {
   orb: "rounded-full w-16 h-16 mx-auto mb-4 bg-wcGold/20 border border-wcGold/40 animate-pulse",
@@ -15,6 +16,7 @@ const PRESETS = {
 
 export default function InterventionModal({ open, onClose, payload }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!open) return null;
   const p = payload || {};
@@ -39,12 +41,12 @@ export default function InterventionModal({ open, onClose, payload }) {
     }
     if (c.includes("breath") || c.includes("breathe")) {
       onClose?.();
-      navigate("/tools/breathing");
+      navigateToTool(navigate, "/tools/breathing", location);
       return;
     }
     if (c.includes("ground")) {
       onClose?.();
-      navigate("/tools/grounding");
+      navigateToTool(navigate, "/tools/grounding", location);
       return;
     }
     onClose?.();

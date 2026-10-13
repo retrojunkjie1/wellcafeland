@@ -3,16 +3,18 @@
 // Route /tools/voice-checkin renders modal; on close, navigates back
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { resolveToolReturnTarget, returnFromTool } from "@/navigation/toolReturn";
 import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 
 export default function VoiceCheckIn() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <VoiceCheckInModal
       open={true}
-      onClose={() => navigate(-1)}
+      onClose={() => returnFromTool(navigate, resolveToolReturnTarget(location.state))}
     />
   );
 }

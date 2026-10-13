@@ -117,6 +117,7 @@ const SessionPreviewPage = lazy(() => import("./apps/ai/SessionPreviewPage"));
 const LoginPage = lazy(() => import("./apps/auth/LoginPage"));
 const SignupPage = lazy(() => import("./apps/auth/SignupPage"));
 const VerifyEmailPage = lazy(() => import("./apps/auth/VerifyEmailPage"));
+const ForgotPasswordPage = lazy(() => import("./apps/auth/ForgotPasswordPage"));
 
 const OnboardingPage = lazy(() => import("./apps/onboarding/OnboardingPage"));
 const PlanStartPage = lazy(() => import("./apps/plan/PlanStartPage"));
@@ -195,6 +196,8 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ForgotPasswordPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/plan/start" element={<PlanStartPage />} />
 

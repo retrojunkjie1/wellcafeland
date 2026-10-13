@@ -24,9 +24,17 @@ export function useAdminEvents(options = {}) {
         if (active) setLoading(false);
       }
     };
-    load();
-    const interval = setInterval(load, 30_000);
-    return () => { active = false; clearInterval(interval); };
+    const loadWhenVisible = () => {
+      if (active && document.visibilityState === "visible") load();
+    };
+    loadWhenVisible();
+    const interval = setInterval(loadWhenVisible, 60_000);
+    document.addEventListener("visibilitychange", loadWhenVisible);
+    return () => {
+      active = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", loadWhenVisible);
+    };
   }, [revision]);
 
   const filteredEvents = useMemo(() => events

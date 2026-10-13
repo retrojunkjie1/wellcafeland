@@ -1,0 +1,171 @@
+.acu-guide-stage {
+  height: clamp(27rem, 58vw, 40rem);
+  isolation: isolate;
+}
+
+.acu-guide-portrait img,
+.acu-guide-portrait canvas {
+  object-fit: contain;
+  object-position: center center;
+}
+
+.acu-guide-portrait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acu-guide-photo {
+  position: relative;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 4 / 5;
+}
+
+.acu-focus-map {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.acu-focus-point {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(255, 239, 190, 0.9);
+  background: radial-gradient(ellipse, rgba(255, 226, 151, 0.13), rgba(255, 226, 151, 0.015) 68%);
+  box-shadow: 0 0 0 1px rgba(10, 14, 12, 0.25), 0 0 22px rgba(240, 207, 129, 0.2), inset 0 0 16px rgba(240, 207, 129, 0.08);
+  transform-origin: center;
+  transition: box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.acu-focus-point-left,
+.acu-focus-point-right {
+  top: 49.5%;
+  width: 12%;
+  height: 8%;
+  border-radius: 50%;
+}
+
+.acu-focus-point-left { left: 27%; }
+.acu-focus-point-right { left: 61%; }
+
+.acu-focus-map[data-region="arms"] .acu-focus-point-left,
+.acu-focus-map[data-region="arms"] .acu-focus-point-right {
+  top: 35%;
+  width: 8%;
+  height: 16%;
+  border-radius: 999px;
+}
+
+.acu-focus-map[data-region="arms"] .acu-focus-point-left { left: 29%; transform: rotate(8deg); }
+.acu-focus-map[data-region="arms"] .acu-focus-point-right { left: 63%; transform: rotate(-8deg); }
+
+.acu-focus-map[data-moving="true"] .acu-focus-point {
+  border-color: rgba(255, 244, 211, 0.98);
+  box-shadow: 0 0 0 4px rgba(240, 207, 129, 0.1), 0 0 28px rgba(240, 207, 129, 0.36), inset 0 0 18px rgba(240, 207, 129, 0.14);
+  animation: acu-focus-follow 1.25s ease-in-out infinite alternate;
+}
+
+.acu-focus-map[data-region="arms"][data-moving="true"] .acu-focus-point-left { animation-delay: 90ms; }
+.acu-focus-map[data-region="arms"][data-moving="true"] .acu-focus-point-right { animation-delay: 180ms; }
+
+.acu-focus-label {
+  position: absolute;
+  bottom: 3%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 239, 190, 0.24);
+  border-radius: 999px;
+  background: rgba(8, 13, 12, 0.68);
+  padding: 0.35rem 0.7rem;
+  color: rgba(255, 242, 207, 0.9);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+@keyframes acu-focus-follow {
+  from { box-shadow: 0 0 0 2px rgba(240, 207, 129, 0.07), 0 0 16px rgba(240, 207, 129, 0.2), inset 0 0 14px rgba(240, 207, 129, 0.06); }
+  to { box-shadow: 0 0 0 5px rgba(240, 207, 129, 0.13), 0 0 30px rgba(240, 207, 129, 0.4), inset 0 0 20px rgba(240, 207, 129, 0.17); }
+}
+
+.acu-guide-vignette {
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(7, 13, 10, 0.08), transparent 24%, transparent 72%, rgba(7, 13, 10, 0.35)),
+    linear-gradient(90deg, rgba(7, 13, 10, 0.14), transparent 22%, transparent 78%, rgba(7, 13, 10, 0.14));
+}
+
+.acu-guide-detail {
+  width: clamp(7.25rem, 23%, 13rem);
+  aspect-ratio: 4 / 5;
+}
+
+@media (max-width: 640px) {
+  .acu-guide-stage {
+    height: clamp(27rem, 126vw, 33rem);
+  }
+
+  .acu-guide-detail {
+    width: clamp(6.75rem, 32%, 9rem);
+  }
+}
+
+.acu-motion-rail {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+
+.acu-phase-step {
+  display: flex;
+  min-width: 0;
+  min-height: 2.45rem;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(223, 230, 218, 0.1);
+  border-radius: 0.85rem;
+  background: rgba(4, 10, 16, 0.38);
+  padding: 0.45rem 0.55rem;
+  color: rgba(239, 242, 235, 0.54);
+  font-size: clamp(0.58rem, 1.8vw, 0.72rem);
+  line-height: 1.2;
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.acu-phase-step[data-active="true"] {
+  border-color: rgba(229, 207, 152, 0.4);
+  background: rgba(229, 207, 152, 0.075);
+  color: #f8e8b4;
+  box-shadow: inset 0 0 0 1px rgba(229, 207, 152, 0.08);
+}
+
+.acu-phase-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(223, 230, 218, 0.35);
+  box-shadow: 0 0 0 0 rgba(229, 207, 152, 0);
+  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.acu-phase-step[data-active="true"] .acu-phase-dot {
+  background: #f1dda3;
+  box-shadow: 0 0 0 0.25rem rgba(229, 207, 152, 0.13);
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acu-motion-rail .acu-phase-step,
+  .acu-motion-rail .acu-phase-dot,
+  .acu-focus-map[data-moving="true"] .acu-focus-point {
+    transition: none;
+    animation: none;
+  }
+}

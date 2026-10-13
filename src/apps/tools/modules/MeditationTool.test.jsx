@@ -26,14 +26,14 @@ describe("MeditationTool visual pause", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Rain on a window/ }));
     fireEvent.click(screen.getByRole("button", { name: "Begin" }));
-    expect(screen.getByRole("heading", { name: "Set the scene" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Enter the rainy room" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Pause" }));
     expect(screen.getByText(/Paused · Rain on a window/)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Set the scene" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Enter the rainy room" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Resume" }));
     fireEvent.click(screen.getByRole("button", { name: /Next step/ }));
-    expect(screen.getByRole("heading", { name: "Choose one small detail" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Follow one raindrop" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Finish now" }));
     expect(screen.getByRole("heading", { name: "Your pause is complete" })).toBeInTheDocument();

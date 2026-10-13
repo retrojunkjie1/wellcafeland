@@ -7,9 +7,10 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { allTools } from '@/tools/toolResolver';
 import { getDailyPracticeToolsByCategory, getDailyPracticeCategories } from '@/tools/toolsBridge';
+import { navigateToTool } from '@/navigation/toolReturn';
 
 export interface DailyPracticeGridProps {
   /**
@@ -39,6 +40,7 @@ export const DailyPracticeGrid: React.FC<DailyPracticeGridProps> = ({
   showFilters = true,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
 
   // Get categories
@@ -54,7 +56,7 @@ export const DailyPracticeGrid: React.FC<DailyPracticeGridProps> = ({
       onSelectTool(toolId);
     } else {
       // Default: navigate to tool detail page
-      navigate(`/tools/${toolId}`);
+      navigateToTool(navigate, `/tools/${toolId}`, location);
     }
   };
 
@@ -150,4 +152,3 @@ export const DailyPracticeGrid: React.FC<DailyPracticeGridProps> = ({
     </div>
   );
 };
-

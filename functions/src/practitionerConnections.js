@@ -4,6 +4,7 @@ const { createHash } = require("node:crypto");
 const providerScheduling = require("./providerScheduling");
 const { recordTrustedSupportActivity } = require("./supportActivity");
 const { requireVerifiedAccount } = require("./accountAccess");
+const { stagePractitionerAudit } = require("./practitionerAudit");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
@@ -24,6 +25,7 @@ exports.requestPractitionerConnection = onCall({ region: REGION, enforceAppCheck
   if (!practitionerId || practitionerId === requesterUid) throw new HttpsError("invalid-argument", "Choose a practitioner to contact.");
   const requests = db.collection("practitioner_connection_requests");
   const profileRef = db.collection("realHelpProviders").doc(practitionerId);
+  const practitionerAccountRef = db.collection("users").doc(practitionerId);
   const userRef = db.collection("users").doc(requesterUid);
   const pendingQuery = requests
     .where("requesterUid", "==", requesterUid)
@@ -40,14 +42,16 @@ exports.requestPractitionerConnection = onCall({ region: REGION, enforceAppCheck
   const requestId = createHash("sha256").update(`${requesterUid}:${practitionerId}`).digest("hex");
   const requestRef = requests.doc(requestId);
   const outcome = await db.runTransaction(async (transaction) => {
-    const [profile, userDoc, pending, assignment, priorRequest] = await Promise.all([
+    const [profile, practitionerAccount, userDoc, pending, assignment, priorRequest] = await Promise.all([
       transaction.get(profileRef),
+      transaction.get(practitionerAccountRef),
       transaction.get(userRef),
       transaction.get(pendingQuery),
       transaction.get(assignmentQuery),
       transaction.get(requestRef),
     ]);
-    if (!profile.exists || profile.get("verification.status") !== "verified" || profile.get("acceptsReferrals") !== true) {
+    if (!profile.exists || profile.get("verification.status") !== "verified" || profile.get("acceptsReferrals") !== true
+      || (practitionerAccount.exists && practitionerAccount.get("practitionerWorkspaceActive") === false)) {
       throw new HttpsError("not-found", "This profile is not accepting connection requests right now.");
     }
     if (!assignment.empty) throw new HttpsError("already-exists", "You’re already connected with this practitioner.");
@@ -110,6 +114,15 @@ exports.endMyPractitionerConnection = onCall({ region: REGION, enforceAppCheck: 
       scopes: { recoveryProgress: false, wellnessPatterns: false, writtenReflections: false, assessments: false },
       updatedAt: timestamp,
     }, { merge: true });
+    stagePractitionerAudit(transaction, db, {
+      action: "practitioner_connection.ended",
+      actorUid: clientId,
+      clientUid,
+      practitionerUid,
+      scopeChanges: Object.entries(share.get("scopes") || {})
+        .filter(([, enabled]) => enabled === true)
+        .map(([scope]) => ({ scope, enabled: false })),
+    });
 
     const futureAppointments = appointments.docs.filter((appointment) =>
       appointment.get("providerId") === practitionerId
@@ -153,21 +166,23 @@ exports.listMyPractitionerConnectionRequests = onCall({ region: REGION, enforceA
 });
 
 exports.listPractitionerConnectionRequests = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const practitionerId = await providerScheduling.requireProvider(request);
-  const snapshot = await db.collection("practitioner_connection_requests")
-    .where("practitionerId", "==", practitionerId)
-    .where("status", "==", "pending")
-    .orderBy("createdAt", "desc")
-    .limit(50)
-    .get();
-  return { requests: snapshot.docs.map((doc) => {
-    const data = doc.data();
-    return { id: doc.id, requesterUid: data.requesterUid, requesterName: data.requesterName, introduction: data.introduction || "", createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null };
-  }) };
+  const practitionerId = await providerScheduling.requireProviderCapability(request, "provider.connections.read");
+  return db.runTransaction(async (transaction) => {
+    await providerScheduling.requireProviderCapabilityInTransaction(transaction, request, "provider.connections.read");
+    const snapshot = await transaction.get(db.collection("practitioner_connection_requests")
+      .where("practitionerId", "==", practitionerId)
+      .where("status", "==", "pending")
+      .orderBy("createdAt", "desc")
+      .limit(50));
+    return { requests: snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return { id: doc.id, requesterUid: data.requesterUid, requesterName: data.requesterName, introduction: data.introduction || "", createdAt: data.createdAt?.toDate?.()?.toISOString?.() || null };
+    }) };
+  });
 });
 
 exports.respondToPractitionerConnection = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const practitionerId = await providerScheduling.requireProvider(request);
+  const practitionerId = await providerScheduling.requireProviderCapability(request, "provider.connections.manage");
   const requestId = typeof request.data?.requestId === "string" ? request.data.requestId : "";
   const decision = request.data?.decision;
   if (!requestId || !["accept", "decline"].includes(decision)) throw new HttpsError("invalid-argument", "Choose a request and a response.");
@@ -175,6 +190,7 @@ exports.respondToPractitionerConnection = onCall({ region: REGION, enforceAppChe
   const assignmentCollection = db.collection("clientProviderAssignments");
   const newAssignmentRef = assignmentCollection.doc();
   const result = await db.runTransaction(async (transaction) => {
+    await providerScheduling.requireProviderCapabilityInTransaction(transaction, request, "provider.connections.manage");
     const requestDoc = await transaction.get(ref);
     if (!requestDoc.exists || requestDoc.get("practitionerId") !== practitionerId) {
       throw new HttpsError("not-found", "This request is no longer available.");

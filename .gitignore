@@ -72,6 +72,7 @@ emulator-data/
 *.tmp
 *.temp
 .cache
+.vitest/
 .npm-cache/
 tmp/
 temp/

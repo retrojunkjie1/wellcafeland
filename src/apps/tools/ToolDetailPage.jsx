@@ -3,8 +3,8 @@
 // Phase 44: Topic Memory Integration
 // Upgraded detail page to use session layout + views
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ContentViewer } from "@/components/content/ContentViewer";
 import { getContentRegistryEntry } from "@/content/contentRegistry";
 import { loadContentById } from "@/services/contentService";
@@ -25,8 +25,11 @@ import { getRecoveryBasicsContent, RECOVERY_BASICS_TOPICS } from "@/engines/educ
 import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView";
 import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
 import { logDebug } from "@/lib/debug";
+import { createToolReturnState, resolveToolReturnTarget, returnFromTool } from "@/navigation/toolReturn";
+import { recordPrivatePracticeCompletion } from "@/services/privatePracticeProgress";
 import NotReadyCard from "@/components/system/NotReadyCard";
 import GroundingTool from "./modules/GroundingTool";
+import ProgressiveMuscleRelaxationTool from "./modules/ProgressiveMuscleRelaxationTool";
 import JournalingTool from "./modules/JournalingTool";
 import BodyScanTool from "./modules/BodyScanTool";
 import SelfSurgeonTool from "./modules/SelfSurgeonTool";
@@ -37,9 +40,13 @@ import AcuwellnessTool from "./modules/AcuwellnessTool";
 import AffirmationsTool from "./modules/AffirmationsTool";
 import SpecializedPathwayTool from "./modules/SpecializedPathwayTool";
 import LowEnergyPlanTool from "./modules/LowEnergyPlanTool";
+import VisitPrepTool from "./modules/VisitPrepTool";
+import CareHandoffTool from "./modules/CareHandoffTool";
 
 const MODULE_TOOLS = {
   grounding: GroundingTool,
+  "grounding-54321": GroundingTool,
+  pmr: ProgressiveMuscleRelaxationTool,
   "body-scan": BodyScanTool,
   journaling: JournalingTool,
   "self-surgeon": SelfSurgeonTool,
@@ -51,6 +58,8 @@ const MODULE_TOOLS = {
   meditation: MeditationTool,
   "sleep-reset": SpecializedPathwayTool,
   "low-energy-plan": LowEnergyPlanTool,
+  "visit-prep": VisitPrepTool,
+  "care-coordination": CareHandoffTool,
   acuwellness: AcuwellnessTool,
   affirmations: AffirmationsTool,
   "panic-reset": PanicResetSessionView,
@@ -58,6 +67,7 @@ const MODULE_TOOLS = {
 
 const MODULE_TOOL_TYPES = {
   grounding: "grounding",
+  "grounding-54321": "grounding",
   "body-scan": "body-scan",
   journaling: "journaling",
   "self-surgeon": "self-surgeon",
@@ -66,9 +76,53 @@ const MODULE_TOOL_TYPES = {
   meditation: "meditation",
 };
 
+// These modules render their own useful end state (a takeaway, a saved plan,
+// or a practice-specific completion screen). Keep that state mounted instead
+// of replacing it with ToolModuleSession's generic completion panel.
+const MODULE_OWNED_COMPLETION = new Set([
+  "grounding",
+  "grounding-54321",
+  "pmr",
+  "meditation",
+  "low-energy-plan",
+  "emotion-regulator",
+  "shame-release",
+  "sleep-reset",
+]);
+
+const COMPLETION_COPY = {
+  "body-scan": {
+    title: "Steady Ground pause complete",
+    description: "You tried one small grounding option. There is no rating or body observation to report.",
+  },
+  "urge-surfing": {
+    title: "Urge Support pause complete",
+    description: "You made space for a possible next step. There is no rating or explanation needed.",
+  },
+  cravings: {
+    title: "Urge Support pause complete",
+    description: "You made space for a possible next step. There is no rating or explanation needed.",
+  },
+  journaling: {
+    title: "Your entry is saved",
+    description: "Your writing was saved in your journal. The text itself is not included in usage analytics.",
+  },
+  education: {
+    title: "Learning time complete",
+    description: "You finished a self-paced learning topic. Keep one useful idea, or leave it here.",
+  },
+  acuwellness: {
+    title: "You’ve finished reviewing",
+    description: "This was optional self-care information. No touch, pressure point, or particular result is required.",
+  },
+};
+
 const ToolDetailPage = () => {
   const { toolId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTarget = useMemo(() => resolveToolReturnTarget(location.state), [location.state]);
+  const closeTool = () => returnFromTool(navigate, returnTarget);
 
   const decodedId = useMemo(() => {
     try {
@@ -77,10 +131,13 @@ const ToolDetailPage = () => {
       return toolId ?? "";
     }
   }, [toolId]);
+  const isGroundingTool = decodedId === "grounding" || decodedId === "grounding-54321";
 
   const [toolMeta, setToolMeta] = useState(null);
   const [protocolTool, setProtocolTool] = useState(null);
   const [protocolToolLoaded, setProtocolToolLoaded] = useState(false);
+  const [breathingAudioContext, setBreathingAudioContext] = useState(null);
+  const breathingAudioContextRef = useRef(null);
   const [content, setContent] = useState(null);
   const [recoveryBasicsContent, setRecoveryBasicsContent] = useState(null);
   const [learningTopicId, setLearningTopicId] = useState(null); // Phase 45: Learning paths
@@ -90,7 +147,9 @@ const ToolDetailPage = () => {
   const darkMode = resolvedTheme !== "light";
   const soundEnabled = true;
   const [isSessionActive, setIsSessionActive] = useState(false);
-  const [moduleCompleted, setModuleCompleted] = useState(false);
+  const [completedToolId, setCompletedToolId] = useState(null);
+  const [practiceCompleted, setPracticeCompleted] = useState(false);
+  const moduleCompleted = completedToolId === decodedId;
   const [cycles, setCycles] = useState(0);
   const [breathingPattern, setBreathingPattern] = useState([4, 0, 6, 0]);
 
@@ -113,7 +172,8 @@ const ToolDetailPage = () => {
     const localTool = localSeedTool || localPracticeTool;
     setProtocolTool(localTool);
     setProtocolToolLoaded(true);
-    setModuleCompleted(false);
+    setCompletedToolId(null);
+    setPracticeCompleted(false);
     if (!localSeedTool) return;
 
     let cancelled = false;
@@ -269,12 +329,28 @@ const ToolDetailPage = () => {
   const isSessionTool = !!toolMeta?.sessionType;
 
   const handleStartSession = () => {
+    if (toolMeta?.sessionType === "breathing" || decodedId === "breathing" || decodedId?.includes("breathing")) {
+      const AudioContextType = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextType) {
+        let context = breathingAudioContextRef.current;
+        if (!context || context.state === "closed") {
+          context = new AudioContextType();
+          breathingAudioContextRef.current = context;
+        }
+        void context.resume().catch(() => {});
+        setBreathingAudioContext(context);
+      }
+    }
     setIsSessionActive(true);
     // Phase 37: hook SoundscapeEngine here later
   };
 
   const handleEndSession = () => {
     setIsSessionActive(false);
+    const context = breathingAudioContextRef.current;
+    breathingAudioContextRef.current = null;
+    setBreathingAudioContext(null);
+    if (context && context.state !== "closed") void context.close().catch(() => {});
     // Phase 37: stop soundscape if integrated
   };
 
@@ -299,7 +375,8 @@ const ToolDetailPage = () => {
           darkMode={darkMode}
           onCycleComplete={() => setCycles((prev) => prev + 1)}
           pattern={[4, 0, 6, 0]}
-          voiceEnabled={false}
+          voiceEnabled
+          audioContext={breathingAudioContext}
         />
       );
     }
@@ -307,30 +384,86 @@ const ToolDetailPage = () => {
 
     switch (sessionType) {
       case "breathing":
+        {
+          const rhythmOptions = [
+            {
+              label: "Gentle 4–6",
+              short: "In 4 · out 6 · no holds",
+              pattern: [4, 0, 6, 0],
+              explanation: "An easy 4-second inhale, then a 6-second exhale. The longer out-breath sets a slower pace and gives your attention a simple anchor. Keep it comfortable; there is no feeling you need to reach."
+            },
+            {
+              label: "Box breathing",
+              short: "In 4 · pause 4 · out 4 · pause 4",
+              pattern: [4, 4, 4, 4],
+              explanation: "Four equal steps: inhale, pause, exhale, pause. A predictable sequence can give your attention a simple track to follow. Both pauses are optional; skip either one and breathe comfortably."
+            },
+            {
+              label: "4–7–8 breathing",
+              short: "In 4 · pause 7 · out 8",
+              pattern: [4, 7, 8, 0],
+              explanation: "A 4-count inhale, an optional 7-count pause, then an 8-count exhale. The longer pattern may feel demanding, so treat it as an option—not a test. Skip the pause or return to natural breathing whenever you want."
+            },
+          ];
+          const selectedRhythm = rhythmOptions.find((option) => breathingPattern.join() === option.pattern.join()) || rhythmOptions[0];
+          const rhythmSteps = [
+            { label: "Breathe in", seconds: breathingPattern[0] || 4 },
+            ...(breathingPattern[1] > 0 ? [{ label: "Pause", seconds: breathingPattern[1] }] : []),
+            { label: "Breathe out", seconds: breathingPattern[2] || breathingPattern[0] || 4 },
+            ...(breathingPattern[3] > 0 ? [{ label: "Pause", seconds: breathingPattern[3] }] : []),
+          ];
         return (
           <div className="space-y-5">
+            {!isSessionActive && (
+              <section aria-labelledby="breathing-orientation-title" className={`rounded-2xl border p-5 sm:p-6 ${darkMode ? "border-emerald-100/15 bg-gradient-to-br from-emerald-950/35 via-slate-900/70 to-slate-950/70" : "border-emerald-900/15 bg-gradient-to-br from-emerald-50 via-white to-amber-50"}`}>
+                <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${darkMode ? "text-emerald-100/75" : "text-emerald-900/70"}`}>Before you begin</p>
+                <h2 id="breathing-orientation-title" className={`mt-2 text-xl font-semibold sm:text-2xl ${darkMode ? "text-white" : "text-slate-900"}`}>A guided breathing practice</h2>
+                <p className={`mt-2 max-w-3xl text-sm leading-relaxed sm:text-base ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                  Follow the moving guide and optional voice through one breath at a time. Pick a pace that feels manageable. You can return to natural breathing, skip a hold, or end the practice whenever you want.
+                </p>
+              </section>
+            )}
             <fieldset disabled={isSessionActive} className="space-y-3">
-              <legend className="text-sm text-white/70">Choose a comfortable pace</legend>
+              <legend className={`text-sm font-medium ${darkMode ? "text-white/75" : "text-slate-700"}`}>Choose a breathing rhythm</legend>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                {[
-                  { label: "Gentle 4–6", pattern: [4, 0, 6, 0] },
-                  { label: "Box · includes holds", pattern: [4, 4, 4, 4] },
-                  { label: "4–7–8 · includes a long hold", pattern: [4, 7, 8, 0] },
-                ].map((option) => (
-                  <button key={option.label} type="button" aria-pressed={breathingPattern.join() === option.pattern.join()} onClick={() => setBreathingPattern(option.pattern)} className="min-h-11 rounded-xl border border-white/15 px-3 py-2 text-left text-sm text-white/80 hover:bg-white/5 aria-pressed:border-amber-200/50 aria-pressed:text-amber-100 disabled:opacity-50">
-                    {option.label}
+                {rhythmOptions.map((option) => (
+                  <button key={option.label} type="button" aria-pressed={breathingPattern.join() === option.pattern.join()} onClick={() => setBreathingPattern(option.pattern)} className={`min-h-16 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors disabled:opacity-50 ${darkMode ? "border-white/15 text-white/80 hover:bg-white/5 aria-pressed:border-amber-200/60 aria-pressed:bg-amber-100/[0.06] aria-pressed:text-amber-100" : "border-slate-300 text-slate-700 hover:bg-slate-100 aria-pressed:border-amber-700/60 aria-pressed:bg-amber-50 aria-pressed:text-amber-950"}`}>
+                    <span className="block font-medium">{option.label}</span>
+                    <span className={`mt-1 block text-xs ${darkMode ? "text-white/55" : "text-slate-500"}`}>{option.short}</span>
                   </button>
                 ))}
               </div>
             </fieldset>
-            <p className="text-xs leading-relaxed text-white/50">Follow your natural breath if counting or holding does not feel comfortable. Stop if you feel unwell.</p>
+            {!isSessionActive && (
+              <section aria-live="polite" aria-atomic="true" className={`overflow-hidden rounded-2xl border ${darkMode ? "border-white/10 bg-slate-950/55" : "border-slate-200 bg-white/75"}`}>
+                <div className="px-4 pt-4 sm:px-5">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <h3 className={`text-base font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>What this rhythm means</h3>
+                    <span className={`text-xs tabular-nums ${darkMode ? "text-amber-100/75" : "text-amber-900/70"}`}>{breathingPattern.reduce((sum, seconds) => sum + seconds, 0)} seconds per cycle</span>
+                  </div>
+                  <p className={`mt-2 text-sm leading-relaxed ${darkMode ? "text-slate-300" : "text-slate-700"}`}>{selectedRhythm.explanation}</p>
+                </div>
+                <div className="flex gap-2 overflow-x-auto px-4 py-4 sm:px-5" aria-label={`${selectedRhythm.label} rhythm sequence`}>
+                  {rhythmSteps.map((step, index) => (
+                    <div key={`${step.label}-${index}`} className={`min-w-[5.5rem] flex-1 rounded-xl border px-3 py-3 ${darkMode ? "border-white/10 bg-white/[0.035]" : "border-slate-200 bg-slate-50"}`}>
+                      <span className={`block text-[0.65rem] font-semibold uppercase tracking-[0.14em] ${darkMode ? "text-emerald-100/65" : "text-emerald-900/60"}`}>{step.label}</span>
+                      <span className={`mt-1 block text-lg font-semibold tabular-nums ${darkMode ? "text-amber-100" : "text-slate-900"}`}>{step.seconds}<span className="ml-1 text-xs font-normal opacity-65">sec</span></span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+            <p className={`text-xs leading-relaxed ${darkMode ? "text-white/55" : "text-slate-600"}`}>Pauses are optional. If counting or breath focus feels uncomfortable, choose natural breathing or stop the practice.</p>
           <BreathingSessionView
             isActive={isSessionActive}
             darkMode={darkMode}
             pattern={breathingPattern}
+            voiceEnabled
+            audioContext={breathingAudioContext}
           />
           </div>
         );
+        }
       case "grounding":
         return <GroundingSessionView activeIndex={0} />;
       case "panic":
@@ -350,30 +483,40 @@ const ToolDetailPage = () => {
   }
 
   // Protocol tools (seed/Firestore): step-by-step Daily Practice
-  if (protocolTool && Array.isArray(protocolTool.steps) && protocolTool.steps.length > 0) {
+  if (!isGroundingTool && protocolTool && Array.isArray(protocolTool.steps) && protocolTool.steps.length > 0) {
     return (
       <div className="wc-tool-detail min-h-screen bg-slate-950 text-white">
-        <ToolProtocolView tool={protocolTool} onClose={() => navigate("/tools")} />
+        <ToolProtocolView tool={protocolTool} onClose={closeTool} />
       </div>
     );
   }
 
   const DirectToolModule = MODULE_TOOLS[decodedId];
   if (DirectToolModule && toolMeta) {
-    const onCloseModule = () => navigate("/tools");
+    const onCloseModule = closeTool;
     return (
       <ToolModuleSession
         title={toolMeta.name || toolMeta.title}
-        description={toolMeta.description || toolMeta.summary}
+        description={isGroundingTool ? null : (toolMeta.description || toolMeta.summary)}
         onClose={onCloseModule}
-        onFindSupport={() => navigate("/assistance", { state: { returnTo: `/tools/${encodeURIComponent(decodedId)}` } })}
-        onCheckIn={() => navigate("/check-in", { state: { returnTo: `/tools/${encodeURIComponent(decodedId)}` } })}
+        onFindSupport={() => navigate("/assistance", { state: { from: "practice", ...createToolReturnState(location) } })}
+        onCheckIn={() => navigate("/check-in", { state: { from: "practice", ...createToolReturnState(location) } })}
+        onViewProgress={() => navigate("/milestones", { state: { from: "practice", ...createToolReturnState(location) } })}
+        showProgressAction={practiceCompleted}
         completed={moduleCompleted}
+        completedTitle={COMPLETION_COPY[decodedId]?.title}
+        completedDescription={COMPLETION_COPY[decodedId]?.description}
       >
         <DirectToolModule
           tool={toolMeta}
           topic={decodedId === "education" ? null : undefined}
-          onComplete={() => setModuleCompleted(true)}
+          onComplete={() => {
+            setPracticeCompleted(true);
+            // Panic Reset uses a legacy view that does not return a tool_result.
+            // All standardized modules are counted by safeComplete instead.
+            if (decodedId === "panic-reset") void recordPrivatePracticeCompletion().catch(() => {});
+            if (!MODULE_OWNED_COMPLETION.has(decodedId)) setCompletedToolId(decodedId);
+          }}
           onCancel={onCloseModule}
           isEmbedded
         />
@@ -450,7 +593,7 @@ const ToolDetailPage = () => {
             isActive={isSessionActive}
             onStart={handleStartSession}
             onEnd={handleEndSession}
-            onClose={() => navigate("/tools")}
+            onClose={closeTool}
           >
             <BreathingSessionView
               isActive={isSessionActive}
@@ -458,6 +601,7 @@ const ToolDetailPage = () => {
               onCycleComplete={() => setCycles((prev) => prev + 1)}
               pattern={[4, 0, 6, 0]} // 4-6 breathing: inhale 4, exhale 6, no holds
               voiceEnabled={soundEnabled} // Use soundEnabled state for voice guide
+              audioContext={breathingAudioContext}
             />
           </ToolSessionLayout>
         </div>
@@ -485,7 +629,7 @@ const ToolDetailPage = () => {
           )}
           <button
             type="button"
-            onClick={() => navigate("/tools")}
+            onClick={closeTool}
             className="text-amber-300 underline-offset-2 hover:underline"
           >
             Return to Tools
@@ -522,7 +666,7 @@ const ToolDetailPage = () => {
             isActive={isSessionActive}
             onStart={handleStartSession}
             onEnd={handleEndSession}
-            onClose={() => navigate("/tools")}
+            onClose={closeTool}
           >
             {renderSessionView()}
           </ToolSessionLayout>

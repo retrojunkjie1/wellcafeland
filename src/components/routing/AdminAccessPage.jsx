@@ -6,8 +6,9 @@ import { useAdminClaim } from "@/hooks/useAdminClaim";
 
 export default function AdminAccessPage() {
   const { user, loading: authLoading } = useAuth();
-  const { adminReady, isAdmin, claims, refreshClaims } = useAdminClaim();
+  const { adminReady, isAdmin, claims, accessError, refreshClaims } = useAdminClaim();
   const [refreshing, setRefreshing] = useState(false);
+  const localAppCheckUnavailable = accessError === "local-app-check-unavailable";
 
   const refresh = async () => {
     setRefreshing(true);
@@ -42,13 +43,28 @@ export default function AdminAccessPage() {
               <div className="flex items-start gap-3">
                 {isAdmin ? <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-300" /> : <ShieldX className="mt-0.5 h-5 w-5 text-amber-200" />}
                 <div>
-                  <h2 className="font-medium">{isAdmin ? "Administrator access confirmed" : user ? "No active admin assignment" : "You are not signed in"}</h2>
+                  <h2 className="font-medium">
+                    {localAppCheckUnavailable
+                      ? claims?.godAdmin === true
+                        ? "Alpha Owner recognized locally"
+                        : "Local admin check unavailable"
+                      : isAdmin
+                        ? "Administrator access confirmed"
+                        : user
+                          ? "No active admin assignment"
+                          : "You are not signed in"}
+                  </h2>
                   <p className="mt-1 text-sm text-white/60">Account: {user?.email || "No signed-in account"}</p>
-                  {user && <p className="mt-1 text-sm text-white/60">Access level: {role}</p>}
+                  {user && <p className="mt-1 text-sm text-white/60">Access level: {localAppCheckUnavailable ? "Alpha Owner claim present; local server check unavailable" : role}</p>}
                   {isAdmin && claims?.adminScopes?.length > 0 && <p className="mt-2 text-sm leading-6 text-white/60">Your assigned responsibilities are loaded from the server; each action checks them again before it runs.</p>}
                 </div>
               </div>
-              {!isAdmin && user && (
+              {localAppCheckUnavailable && (
+                <p className="mt-4 border-t border-white/10 pt-4 text-sm leading-6 text-white/65">
+                  This local preview skips Firebase App Check, while admin services require it. The refresh button cannot fix that local setup. Use the production God-Eye console for live administration, or configure a registered App Check debug token for localhost.
+                </p>
+              )}
+              {!isAdmin && user && !localAppCheckUnavailable && (
                 <p className="mt-4 border-t border-white/10 pt-4 text-sm leading-6 text-white/65">
                   If this account is meant to be the Alpha Owner, a Firebase project owner must complete the one-time trusted server-side setup. After that, the Alpha Owner can assign verified accounts only the admin work they need. Do not grant admin access by editing a profile or adding a generic role label.
                 </p>
@@ -58,7 +74,11 @@ export default function AdminAccessPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {isAdmin ? (
+          {localAppCheckUnavailable ? (
+            <a href="https://wellnesscafelanding.web.app/admin/console" className="inline-flex items-center gap-2 rounded-xl bg-amber-200 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-100">
+              <Eye className="h-4 w-4" aria-hidden="true" /> Open production God-Eye console
+            </a>
+          ) : isAdmin ? (
             <Link to="/admin/console" className="inline-flex items-center gap-2 rounded-xl bg-amber-200 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-100">
               <Eye className="h-4 w-4" aria-hidden="true" /> Open God-Eye console
             </Link>

@@ -5,12 +5,13 @@ import { useOSStore } from "@/stores/useOSStore";
 import CheckIn, { GUEST_CHECKINS_STORAGE_KEY } from "@/components/CheckIn";
 import PageHeader from "@/components/navigation/PageHeader";
 import { getCheckInNextStep } from "./checkInNextStep";
-import { getPracticeReturnPath } from "../assistance/assistanceReturnPath";
+import { getPracticeReturnTarget } from "../assistance/assistanceReturnPath";
+import { returnFromTool } from "@/navigation/toolReturn";
 
 export default function DailyCheckInPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const returnToPractice = getPracticeReturnPath(location.state);
+  const returnToPractice = getPracticeReturnTarget(location.state);
   const storySuggestionsEnabled = useOSStore((state) => state.settings?.recoveryStorySuggestionsEnabled === true);
   const [completed, setCompleted] = useState(false);
   const [savedTo, setSavedTo] = useState(null);
@@ -56,7 +57,8 @@ export default function DailyCheckInPage() {
         title="A moment for you"
         subtitle="Check in with yourself at your own pace. You can leave any reflection blank."
         showBack
-        backTo={returnToPractice || "/home"}
+        backTo="/home"
+        onBack={returnToPractice ? () => returnFromTool(navigate, returnToPractice) : undefined}
       />
       {completed ? (
         <section className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900 to-[#14202a] p-5 text-center text-white shadow-[0_20px_70px_rgba(0,0,0,0.32)] sm:p-8" aria-live="polite">
@@ -132,14 +134,14 @@ export default function DailyCheckInPage() {
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
               <button
                 type="button"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/dashboard", { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
                 className="min-h-11 rounded-full border border-white/15 px-5 text-sm font-medium text-white/80 transition hover:bg-white/10"
               >
                 Check-in history
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/milestones")}
+                onClick={() => navigate("/milestones", { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
                 className="min-h-11 rounded-full border border-amber-100/25 px-5 text-sm font-medium text-amber-100/90 transition hover:bg-amber-100/[0.06]"
               >
                 See my milestones
@@ -167,10 +169,12 @@ export default function DailyCheckInPage() {
           )}
           <button
             type="button"
-            onClick={() => navigate("/home")}
+            onClick={() => returnToPractice
+              ? returnFromTool(navigate, returnToPractice)
+              : navigate("/home")}
             className="mt-5 min-h-11 rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold"
           >
-            I’m done for now
+            {returnToPractice ? "Back to your practice" : "I’m done for now"}
           </button>
         </section>
       ) : (

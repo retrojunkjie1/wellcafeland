@@ -42,14 +42,17 @@ function practitionerSchedulingRequest(data = {}) {
 
 async function seedAppointment({ connected = true, status = "confirmed" } = {}) {
   const now = Date.now();
-  await db.collection("appointments").doc(appointmentId).set({
-    clientId,
-    providerId,
-    status,
-    sessionFormat: "wellnesscafe-video",
-    startAt: admin.firestore.Timestamp.fromMillis(now - 60_000),
-    endAt: admin.firestore.Timestamp.fromMillis(now + 30 * 60_000),
-  });
+  await Promise.all([
+    db.collection("users").doc(providerId).set({ uid: providerId, role: "provider", roles: ["provider"], practitionerWorkspaceActive: true }),
+    db.collection("appointments").doc(appointmentId).set({
+      clientId,
+      providerId,
+      status,
+      sessionFormat: "wellnesscafe-video",
+      startAt: admin.firestore.Timestamp.fromMillis(now - 60_000),
+      endAt: admin.firestore.Timestamp.fromMillis(now + 30 * 60_000),
+    }),
+  ]);
   if (connected) {
     await db.collection("clientProviderAssignments").doc(assignmentId).set({
       clientId,
@@ -65,6 +68,7 @@ async function cleanup() {
     db.collection("clientProviderAssignments").doc(assignmentId).delete(),
     db.collection("provider_availability").doc(providerId).delete(),
     db.collection("realHelpProviders").doc(providerId).delete(),
+    db.collection("users").doc(providerId).delete(),
     ...[...scheduledAppointmentIds].map((id) => db.collection("appointments").doc(id).delete()),
     ...[...requestIds].map((id) => db.collection("appointment_requests").doc(id).delete()),
   ];
@@ -115,6 +119,7 @@ test("client request, practitioner acceptance, client confirmation, and room-tok
     db.collection("clientProviderAssignments").doc(assignmentId).set({ clientId, providerId, status: "active" }),
     db.collection("provider_availability").doc(providerId).set({ providerId, timezone, weeklyHours }),
     db.collection("realHelpProviders").doc(providerId).set({ name: "Test practitioner" }),
+    db.collection("users").doc(providerId).set({ uid: providerId, role: "provider", roles: ["provider"], practitionerWorkspaceActive: true }),
   ]);
 
   const requested = await requestProviderAppointment(clientSchedulingRequest({ providerId, requestedStartAt: startAt, requestedEndAt: endAt }));

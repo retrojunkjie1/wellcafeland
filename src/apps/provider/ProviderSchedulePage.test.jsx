@@ -24,7 +24,7 @@ vi.mock("@/components/navigation/PageHeader", () => ({ default: ({ title, subtit
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="current-route">{location.pathname}</output>;
+  return <output data-testid="current-route">{location.pathname}{location.hash}</output>;
 }
 
 beforeEach(() => {
@@ -55,7 +55,7 @@ describe("ProviderSchedulePage client requests", () => {
     expect(connectAction.disabled).toBe(false);
     fireEvent.click(connectAction);
 
-    expect(screen.getByTestId("current-route")).toHaveTextContent("/provider/dashboard");
+    expect(screen.getByTestId("current-route")).toHaveTextContent("/provider/dashboard#connection-requests-panel");
   });
 
   it("routes the no-client empty-state action to connection requests", async () => {
@@ -67,7 +67,7 @@ describe("ProviderSchedulePage client requests", () => {
     render(<MemoryRouter><ProviderSchedulePage /><LocationProbe /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("button", { name: "Open connection requests" }));
 
-    expect(screen.getByTestId("current-route")).toHaveTextContent("/provider/dashboard");
+    expect(screen.getByTestId("current-route")).toHaveTextContent("/provider/dashboard#connection-requests-panel");
   });
 
   it("shows provider availability and saves published hours", async () => {
@@ -86,6 +86,7 @@ describe("ProviderSchedulePage client requests", () => {
     fireEvent.click(screen.getByLabelText("Monday"));
     fireEvent.click(screen.getByRole("button", { name: "Save appointment hours" }));
     await waitFor(() => expect(mocks.saveMyProviderAvailability).toHaveBeenCalledWith(expect.objectContaining({ timezone: "America/Denver", weeklyHours: expect.arrayContaining([expect.objectContaining({ dayOfWeek: 1, enabled: true })]) })));
+    expect(await screen.findByText(/Appointment hours saved\./)).toHaveAttribute("role", "status");
   }, 10000);
 
   it("refreshes the incoming request queue without reloading the full schedule", async () => {

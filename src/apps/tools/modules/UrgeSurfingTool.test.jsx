@@ -8,15 +8,15 @@ vi.mock("@/services/toolTelemetry", () => ({ logToolUsage: vi.fn().mockResolvedV
 afterEach(() => vi.useRealTimers());
 
 describe("UrgeSurfingTool", () => {
-  it("offers practical choices instead of intensity ratings or a written assessment", () => {
+  it("offers practical choices and a private optional reflection instead of intensity ratings", () => {
     render(<UrgeSurfingTool />);
 
-    expect(screen.getByText(/choose one useful next move/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Put a little space between me and it/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Bring another person in/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Give my hands something else to do/ })).toBeInTheDocument();
+    expect(screen.getByText(/Choose one small, safe next step/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Create a little distance/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Reach someone safe/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Start a familiar task/ })).toBeInTheDocument();
     expect(screen.queryByRole("slider")).not.toBeInTheDocument();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /What behavior are you weighing\? \(optional\)/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Find real-world support/ })).toHaveAttribute("href", "/assistance");
   });
 
@@ -24,11 +24,11 @@ describe("UrgeSurfingTool", () => {
     const onComplete = vi.fn();
     render(<UrgeSurfingTool onComplete={onComplete} />);
 
-    const reachOutButton = screen.getByRole("button", { name: /Bring another person in/ });
+    const reachOutButton = screen.getByRole("button", { name: /Reach someone safe/ });
     const selectedCard = reachOutButton.parentElement;
     fireEvent.click(reachOutButton);
 
-    expect(within(selectedCard).getByRole("region", { name: "Bring another person in" })).toHaveTextContent(/Could you stay with me or talk for a few minutes/i);
+    expect(within(selectedCard).getByRole("region", { name: "Reach someone safe" })).toHaveTextContent(/Could you stay with me or talk for a few minutes/i);
     fireEvent.click(within(selectedCard).getByRole("button", { name: "Done for now" }));
 
     expect(onComplete).toHaveBeenCalledOnce();
@@ -40,13 +40,13 @@ describe("UrgeSurfingTool", () => {
     vi.useFakeTimers();
     render(<UrgeSurfingTool />);
 
-    const moveButton = screen.getByRole("button", { name: /Give my hands something else to do/ });
+    const moveButton = screen.getByRole("button", { name: /Start a familiar task/ });
     const selectedCard = moveButton.parentElement;
     fireEvent.click(moveButton);
     fireEvent.click(within(selectedCard).getByRole("button", { name: /Take a 3-minute pause/ }));
 
     expect(within(selectedCard).getByRole("timer")).toHaveTextContent("3:00");
-    expect(within(selectedCard).getByText(/does not predict how the urge will change/i)).toBeInTheDocument();
+    expect(within(selectedCard).getByText(/This timer marks time for a pause/i)).toBeInTheDocument();
 
     fireEvent.click(within(selectedCard).getByRole("button", { name: "Pause" }));
     act(() => vi.advanceTimersByTime(2000));

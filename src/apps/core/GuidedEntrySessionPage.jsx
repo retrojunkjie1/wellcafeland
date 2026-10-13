@@ -3,7 +3,8 @@
 // "I'm overwhelmed" runs live intervention (no template navigation).
 
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { navigateToTool } from "@/navigation/toolReturn";
 import { Activity, MessageCircle, HandHeart, Waves, ArrowRight, Compass, BookOpen, PenLine, HeartHandshake, Sparkles } from "lucide-react";
 
 const ALLOWED_MODES = ["stabilize", "process", "real-help", "cravings"];
@@ -61,6 +62,7 @@ const cardThemes = {
 const GuidedEntrySessionPage = () => {
   const { mode } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   if (!mode || !ALLOWED_MODES.includes(mode)) {
     navigate("/", { replace: true });
     return null;
@@ -93,7 +95,7 @@ const GuidedEntrySessionPage = () => {
                 <button
                   key={`${mode}-${card.label}`}
                   type="button"
-                  onClick={() => navigate(card.path)}
+                  onClick={() => card.path.startsWith("/tools/") ? navigateToTool(navigate, card.path, location) : navigate(card.path)}
                   className={`group flex min-h-36 w-full items-start gap-3 rounded-2xl border bg-gradient-to-br p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 sm:p-5 ${cardThemes[card.theme]}`}
                 >
                   <span className="rounded-xl bg-white/10 p-2.5"><CardIcon className="h-5 w-5" aria-hidden="true" /></span>
