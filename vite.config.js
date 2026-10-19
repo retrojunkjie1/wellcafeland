@@ -17,9 +17,10 @@ export default defineConfig(({ mode }) => {
       environment: "jsdom",
       setupFiles: "./src/test/setup.js",
       include: ["src/**/*.test.{js,jsx}"],
-      // Keep the JSDOM-heavy UI suite below the host's CPU limit so the
-      // default 5s interaction tests do not time out under worker contention.
+      // Keep the JSDOM-heavy UI suite below the host's CPU limit. Give async
+      // interactions enough headroom when two browser-like environments run.
       maxWorkers: 2,
+      testTimeout: 15_000,
     },
     resolve: {
       alias: {

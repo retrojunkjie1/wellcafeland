@@ -3,7 +3,8 @@
 
 import React, { useState, useEffect, useRef } from "react"
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
-import { ExternalLink, Heart, MapPin, PhoneCall, X, UsersRound, Flag, Send } from "lucide-react";
+import { ExternalLink, Heart, MapPin, PhoneCall, X, UsersRound, Flag, Send, Sparkles } from "lucide-react";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 import { rememberWorkspace } from "@/engines/memory/workspaceMemoryEngine";
 import { searchResources } from "@/services/resourceSearch";
 import { searchDirectory } from "@/services/directorySearch";
@@ -108,6 +109,9 @@ const RealHelpWorkspace = () => {
   const [searchResponse, setSearchResponse] = useState(null)
   const [webViewUrl, setWebViewUrl] = useState(null)
   const [selectedDetail, setSelectedDetail] = useState(null)
+  const [bridgePreparation, setBridgePreparation] = useState(null)
+  const [bridgeLoading, setBridgeLoading] = useState(false)
+  const [bridgeError, setBridgeError] = useState("")
   const [savedIds, setSavedIds] = useState(() => new Set())
   const [savingIds, setSavingIds] = useState(() => new Set())
   const [actionNotice, setActionNotice] = useState(null)
@@ -337,6 +341,8 @@ const RealHelpWorkspace = () => {
   };
 
   const handleOpenDetail = (item) => {
+    setBridgePreparation(null);
+    setBridgeError("");
     setSelectedDetail(item);
   };
 
@@ -492,6 +498,31 @@ const RealHelpWorkspace = () => {
     if (region.trim()) params.set("region", region.trim());
     else params.delete("region");
     navigate(`${location.pathname}?${params.toString()}`, { state: location.state });
+  };
+
+  const prepareBridgeContact = async () => {
+    if (!selectedDetail || activeTab === "emergency" || bridgeLoading) return;
+    const contactMethod = selectedDetail.phone ? "phone" : (selectedDetail.website || selectedDetail.url) ? "website" : null;
+    if (!contactMethod || !["housing", "food", "funding", "programs", "circles"].includes(activeTab)) return;
+    setBridgeLoading(true);
+    setBridgeError("");
+    setBridgePreparation(null);
+    try {
+      const { result } = await runWellnessExperience("resources.contact-preparation", { category: activeTab, contactMethod });
+      if (typeof result.openingLine !== "string" || typeof result.nextStep !== "string") {
+        throw new Error("A contact guide could not be prepared. You can still use the listing details above.");
+      }
+      setBridgePreparation({
+        summary: typeof result.summary === "string" ? result.summary.slice(0, 180) : "An optional way to begin.",
+        openingLine: result.openingLine.slice(0, 240),
+        questions: Array.isArray(result.questions) ? result.questions.filter((item) => typeof item === "string").slice(0, 3).map((item) => item.slice(0, 180)) : [],
+        nextStep: result.nextStep.slice(0, 240),
+      });
+    } catch (error) {
+      setBridgeError(error?.message || "Bridge could not prepare a contact guide right now.");
+    } finally {
+      setBridgeLoading(false);
+    }
   };
 
   const allResults = dedupeResourceListings([...curatedResults, ...results]);
@@ -899,6 +930,27 @@ const RealHelpWorkspace = () => {
               {selectedDetail.phone && <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"><dt className="text-[11px] uppercase tracking-wide text-white/45">Phone</dt><dd className="mt-1 text-sm text-white/85"><a className="underline decoration-white/30 underline-offset-2" href={`tel:${String(selectedDetail.phone).replace(/[^+\d]/g, "")}`}>{selectedDetail.phone}</a></dd></div>}
             </dl>
             <p className="mt-4 text-xs leading-relaxed text-white/50">{selectedDetail.isFoodDirectoryResult ? "Call ahead to confirm public access, today’s hours, and availability." : "Please contact the organization to confirm current services, eligibility, cost, and availability. If you need immediate emergency help in the U.S., call or text 988; call 911 for immediate danger."}</p>
+            {activeTab !== "emergency" && (selectedDetail.phone || selectedDetail.website || selectedDetail.url) && (
+              <section className="mt-5 rounded-2xl border border-sky-100/15 bg-sky-100/[0.035] p-4" aria-label="Prepare to contact this resource">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-sky-50">Want help with what to ask?</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-white/55">Bridge prepares an optional opener and questions. It does not contact the service.</p>
+                  </div>
+                  <button type="button" onClick={prepareBridgeContact} disabled={bridgeLoading} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-sky-100/20 px-3 text-xs font-medium text-sky-50 transition hover:bg-sky-100/[0.08] disabled:cursor-wait disabled:opacity-55">
+                    <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />{bridgeLoading ? "Preparing…" : bridgePreparation ? "Prepare another" : "Prepare to contact"}
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] leading-relaxed text-white/40">Only this support category and phone or website method are sent. The listing name, your area, and personal details are not.</p>
+                {bridgeError && <p role="alert" className="mt-3 text-sm text-amber-100">{bridgeError}</p>}
+                {bridgePreparation && <div role="status" aria-live="polite" className="mt-3 space-y-3 rounded-xl border border-white/10 bg-slate-950/40 p-3">
+                  <p className="text-xs text-white/55">{bridgePreparation.summary}</p>
+                  <div><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-100/70">A possible opener</p><p className="mt-1 text-sm leading-relaxed text-white/85">{bridgePreparation.openingLine}</p></div>
+                  {bridgePreparation.questions.length > 0 && <div><p className="text-[11px] font-semibold uppercase tracking-wide text-sky-100/70">Questions you could ask</p><ul className="mt-1 list-inside list-disc space-y-1 text-sm leading-relaxed text-white/75">{bridgePreparation.questions.map((question, index) => <li key={`${index}-${question}`}>{question}</li>)}</ul></div>}
+                  <p className="border-t border-white/10 pt-2 text-xs leading-relaxed text-white/60">{bridgePreparation.nextStep}</p>
+                </div>}
+              </section>
+            )}
             {(selectedDetail.website || selectedDetail.url) && (
               <button
                 type="button"

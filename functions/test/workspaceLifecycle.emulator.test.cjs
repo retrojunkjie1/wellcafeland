@@ -214,8 +214,12 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
   assert.equal(overview.checkins[0].daysSinceLastUse, 12);
   assert.equal("gratitude" in overview.checkins[0], false, "unshared written reflection must remain private");
 
-  const startAt = new Date(Date.now() + 8 * 60_000);
-  startAt.setSeconds(0, 0);
+  // Keep the integration fixture inside published hours regardless of the
+  // wall-clock time when the test runs (the former +8 minute slot could cross
+  // UTC midnight and correctly fail the same-day availability rule).
+  const startAt = new Date();
+  startAt.setUTCDate(startAt.getUTCDate() + 1);
+  startAt.setUTCHours(10, 0, 0, 0);
   const endAt = new Date(startAt.getTime() + 45 * 60_000);
   await assert.rejects(
     scheduling.requestProviderAppointment.run(signedIn(clientUid, {
@@ -251,10 +255,21 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
   assert.equal(response.status, "accepted");
   assert.equal((await scheduling.respondToMyAppointment.run(clientRequest({ appointmentId: response.appointmentId }))).status, "confirmed");
 
-  const [clientToken, practitionerToken] = await Promise.all([
-    issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
-    issueVideoToken(signedIn(applicantUid, { appointmentId: response.appointmentId }, providerClaims)),
-  ]);
+  // The scheduled slot is intentionally tomorrow to keep availability checks
+  // deterministic. Move only the policy clock into its valid join window while
+  // minting credentials; restore it immediately after both calls.
+  const realNow = Date.now;
+  Date.now = () => startAt.getTime() - 5 * 60_000;
+  let clientToken;
+  let practitionerToken;
+  try {
+    [clientToken, practitionerToken] = await Promise.all([
+      issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
+      issueVideoToken(signedIn(applicantUid, { appointmentId: response.appointmentId }, providerClaims)),
+    ]);
+  } finally {
+    Date.now = realNow;
+  }
   const tokenClaims = (token) => JSON.parse(Buffer.from(token.participantToken.split(".")[1], "base64url").toString("utf8"));
   assert.equal(clientToken.role, "client");
   assert.equal(practitionerToken.role, "practitioner");
@@ -269,8 +284,14 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
     .where("clientId", "==", clientUid).where("providerId", "==", applicantUid).limit(1).get();
   assert.equal(connectionRecord.size, 1);
   await connectionRecord.docs[0].ref.update({ status: "ended" });
-  await assert.rejects(
-    issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
-    (error) => error.code === "permission-denied" && /connection.*no longer active/i.test(error.message),
-  );
+  const realNowAfterEnd = Date.now;
+  Date.now = () => startAt.getTime() - 5 * 60_000;
+  try {
+    await assert.rejects(
+      issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
+      (error) => error.code === "permission-denied" && /connection.*no longer active/i.test(error.message),
+    );
+  } finally {
+    Date.now = realNowAfterEnd;
+  }
 });

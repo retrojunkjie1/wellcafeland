@@ -4,6 +4,7 @@ import { reload, sendEmailVerification, signInWithEmailAndPassword, signInAnonym
 import { auth } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
+import PasswordInput from "../../components/auth/PasswordInput";
 
 function safeInternalPath(value, origin) {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/";
@@ -41,7 +42,7 @@ const LoginPage = () => {
     setLoading(true);
 
     if (!auth) {
-      setError("Authentication is not available. Please check your Firebase configuration.");
+      setError("Sign-in is temporarily unavailable. Please try again later or contact WellnessCafe support.");
       setLoading(false);
       return;
     }
@@ -80,8 +81,10 @@ const LoginPage = () => {
         errorMessage = "Incorrect password.";
       } else if (err.code === "auth/too-many-requests") {
         errorMessage = "Too many failed attempts. Please try again later.";
-      } else if (err.message) {
-        errorMessage = err.message;
+      } else if (err.code === "auth/network-request-failed") {
+        errorMessage = "We couldn’t connect just now. Check your internet connection and try again.";
+      } else if (err.code === "auth/invalid-credential") {
+        errorMessage = "The email or password doesn’t match. Check both and try again.";
       }
 
       setError(errorMessage);
@@ -95,7 +98,7 @@ const LoginPage = () => {
     setLoading(true);
 
     if (!auth) {
-      setError("Authentication is not available. Please check your Firebase configuration.");
+      setError("Guest access is temporarily unavailable. Please try again later.");
       setLoading(false);
       return;
     }
@@ -165,10 +168,9 @@ const LoginPage = () => {
                 <label htmlFor="password" className="block text-xs font-medium text-muted-foreground">Password</label>
                 <Link to="/forgot-password" state={location.state} className="text-xs text-amber-400 underline underline-offset-2 hover:text-amber-300">Forgot password?</Link>
               </div>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

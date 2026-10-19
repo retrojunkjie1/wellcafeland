@@ -46,6 +46,7 @@ const adminUserAccess = require("./adminUserAccess");
 const adminAuthorization = require("./adminAuthorization");
 const supportActivity = require("./supportActivity");
 const securitySignals = require("./securitySignals");
+const communityFeed = require("./communityFeed");
 const friendCircles = require("./friendCircles");
 // Link Preview (v2)
 const { linkPreview } = require("./linkPreview");
@@ -72,6 +73,8 @@ exports.multimodalChat = onRequest(
       "http://localhost:5182",
       "https://wellnesscafe.net",
       "https://www.wellnesscafe.net",
+      "https://wellnesscafe.app",
+      "https://www.wellnesscafe.app",
       "https://wellnesscafelanding.web.app",
     ],
     secrets: ["OPENAI_API_KEY"],
@@ -208,6 +211,9 @@ exports.recordSupportActivity = supportActivity.recordSupportActivity;
 exports.listSupportActivityForAdmin = supportActivity.listSupportActivityForAdmin;
 exports.listOpenAccountSecuritySignals = securitySignals.listOpenAccountSecuritySignals;
 exports.reviewAccountSecuritySignal = securitySignals.reviewAccountSecuritySignal;
+exports.createSocialFeedPost = communityFeed.createSocialFeedPost;
+exports.listSocialFeedPosts = communityFeed.listSocialFeedPosts;
+exports.reactToSocialFeedPost = communityFeed.reactToSocialFeedPost;
 exports.createPrivateFriendCircle = friendCircles.createPrivateFriendCircle;
 exports.listMyPrivateFriendCircles = friendCircles.listMyPrivateFriendCircles;
 exports.createPrivateFriendCircleInvite = friendCircles.createPrivateFriendCircleInvite;

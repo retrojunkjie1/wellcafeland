@@ -160,6 +160,12 @@ service cloud.firestore {
     match /community_supporters/{id} { allow read, write: if false; }
     match /community_support_audit/{id} { allow read, write: if false; }
 
+    // Peer community posts and reactions are callable-only. The callable
+    // verifies account status, runs Cherubim, rate-limits, and returns a
+    // public-safe projection; clients cannot bypass that path with Firestore.
+    match /social_feed/{postId} { allow read, write: if false; }
+    match /social_reactions/{reactionId} { allow read, write: if false; }
+
     // Private friend groups, memberships, invite tokens, and audit records are
     // callable-only. Invite URLs are single-use bearer links; clients never
     // read or write group records directly from Firestore.

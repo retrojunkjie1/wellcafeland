@@ -10,15 +10,10 @@ import type { RiskLevel, RiskAssessment } from '../telemetry/emotionalTypes';
 import type { EmotionalSnapshot } from '../telemetry/emotionalTypes';
 import type { RitualIntensity } from '../engines/ritual/ritualEngineConfig';
 
-export type AgentRole = 'overseer' | 'seer' | 'healer' | 'sentinel' | 'towncrier';
-
-export type AgentCapability =
-  | 'risk_assessment'
-  | 'pattern_insight'
-  | 'ritual_selection'
-  | 'grounding_guidance'
-  | 'escalation_guard'
-  | 'reflection_prompt';
+// The shared JSON catalog is the runtime source of IDs and capabilities.
+// These aliases stay open so new catalog entries do not require a second roster.
+export type AgentRole = string;
+export type AgentCapability = string;
 
 export interface AgentProfile {
   id: AgentRole;
@@ -55,4 +50,3 @@ export interface FusionContextInput {
   snapshot: EmotionalSnapshot;
   risk: RiskAssessment;
 }
-

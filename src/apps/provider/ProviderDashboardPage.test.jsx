@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getProviderClientOverview: vi.fn(),
   listProviderCareHandoffs: vi.fn(),
   listProviderVisitPreparations: vi.fn(),
+  callAgent: vi.fn(),
 }));
 
 vi.mock("react-router-dom", async (importOriginal) => ({ ...(await importOriginal()), useNavigate: () => mocks.navigate, useLocation: () => ({ hash: "" }) }));
@@ -19,12 +20,30 @@ vi.mock("@/hooks/useSessionIdentity", () => ({ useSessionIdentity: mocks.useSess
 vi.mock("@/services/assignmentService", () => ({ listAssignmentsForProvider: mocks.listAssignmentsForProvider }));
 vi.mock("@/services/appointmentService", () => ({ listAppointmentsForProvider: mocks.listAppointmentsForProvider, getMyProviderAvailability: mocks.getMyProviderAvailability }));
 vi.mock("@/services/practitionerRegistry", () => ({ getProviderClientOverview: mocks.getProviderClientOverview, listProviderCareHandoffs: mocks.listProviderCareHandoffs, listProviderVisitPreparations: mocks.listProviderVisitPreparations }));
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent }));
 vi.mock("@/components/navigation/PageHeader", () => ({ default: ({ title }) => <header>{title}</header> }));
 vi.mock("./components/ConnectionRequestsPanel", () => ({ default: () => <section>Connection requests</section> }));
 
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("ProviderDashboardPage", () => {
+  it("prepares a generic consent-first pathway aid without sending client details", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", providerType: "therapist" });
+    mocks.listAssignmentsForProvider.mockResolvedValue([]);
+    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.callAgent.mockResolvedValue({ result: { openingQuestion: "Would you like to talk about care options?", nextStep: "Offer a few options and coordinate only with consent.", preferenceCheck: "Would you prefer to explore this now or later?" } });
+
+    render(<ProviderDashboardPage />);
+    const prepareButton = await screen.findByRole("button", { name: "Prepare conversation" });
+    expect(prepareButton).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Peer recovery" }));
+    fireEvent.click(prepareButton);
+
+    await waitFor(() => expect(mocks.callAgent).toHaveBeenCalledWith("gatekeeper", { pathway: "peer-recovery-support" }));
+    expect(await screen.findByText("Would you like to talk about care options?")).toBeTruthy();
+  });
+
   it("waits for account identity before deciding whether an admin can open the practitioner workspace", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isLoading: true, isProvider: false, isAdmin: false, providerId: null, userId: "admin-1" });
     const view = render(<ProviderDashboardPage />);

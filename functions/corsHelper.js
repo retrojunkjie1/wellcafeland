@@ -1,9 +1,16 @@
 // functions/corsHelper.js
 // CORS helper for onRequest functions
 //
-// Env: ALLOWED_ORIGINS — comma-separated origins (e.g. https://wellnesscafe.net,https://wellnesscafelanding.web.app)
-// In dev/emulator, localhost origins used by Vite are always allowed.
-// If unset in production, no origins are allowed (CORS will block).
+// ALLOWED_ORIGINS can extend this explicit production allowlist.
+// In dev/emulator, the localhost origins used by Vite are also allowed.
+
+const BUILT_IN_ALLOWED_ORIGINS = [
+  "https://wellnesscafe.app",
+  "https://www.wellnesscafe.app",
+  "https://wellnesscafe.net",
+  "https://www.wellnesscafe.net",
+  "https://wellnesscafelanding.web.app",
+];
 
 const VITE_LOCALHOST_ORIGINS = [
   "http://localhost:5173",
@@ -24,7 +31,9 @@ function getAllowedOrigins() {
     .map((o) => o.trim())
     .filter(Boolean);
   const isEmulator = process.env.FUNCTIONS_EMULATOR === "true" || !process.env.GCLOUD_PROJECT;
-  return isEmulator ? [...new Set([...VITE_LOCALHOST_ORIGINS, ...fromEnv])] : fromEnv;
+  return isEmulator
+    ? [...new Set([...BUILT_IN_ALLOWED_ORIGINS, ...VITE_LOCALHOST_ORIGINS, ...fromEnv])]
+    : [...new Set([...BUILT_IN_ALLOWED_ORIGINS, ...fromEnv])];
 }
 
 function getCorsOrigin(req) {

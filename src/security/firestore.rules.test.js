@@ -176,6 +176,50 @@ describe("clinical care-plan Firestore rules", () => {
     await assertFails(setDoc(doc(adminDb, "account_security_signal_reviews", "review-1"), review));
   });
 
+  it("requires community feed access to use the safety-checked callable path", async () => {
+    const clientDb = testEnv.authenticatedContext("client-a").firestore();
+    await assertFails(getDoc(doc(clientDb, "social_feed", "post-1")));
+    await assertFails(getDocs(collection(clientDb, "social_feed")));
+    await assertFails(setDoc(doc(clientDb, "social_feed", "forged-post"), {
+      userId: "client-a",
+      text: "Bypass moderation",
+      visibility: "community",
+    }));
+    await assertFails(setDoc(doc(clientDb, "social_reactions", "forged-reaction"), {
+      postId: "post-1",
+      userId: "client-a",
+      emoji: "💙",
+    }));
+  });
+
+  it("keeps private friend groups, membership, messages, invites, and audit callable-only", async () => {
+    const clientDb = testEnv.authenticatedContext("client-a").firestore();
+    const signedOutDb = testEnv.unauthenticatedContext().firestore();
+    const circlePath = "private_friend_circles/friend-group-1";
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, circlePath), { name: "Private group", ownerUid: "client-a", memberCount: 1 });
+      await setDoc(doc(adminDb, circlePath, "private_members", "client-a"), { uid: "client-a", role: "owner" });
+      await setDoc(doc(adminDb, circlePath, "messages", "message-1"), { authorUid: "client-a", text: "Private message" });
+      await setDoc(doc(adminDb, circlePath, "private_blocks", "client-a_client-b"), { blockerUid: "client-a", blockedUid: "client-b" });
+      await setDoc(doc(adminDb, "private_friend_circle_invites", "invite-1"), { circleId: "friend-group-1" });
+      await setDoc(doc(adminDb, "private_friend_circle_audit", "audit-1"), { circleId: "friend-group-1" });
+      await setDoc(doc(adminDb, "private_friend_circle_reports", "report-1"), { circleId: "friend-group-1", status: "open" });
+    });
+
+    for (const database of [clientDb, signedOutDb]) {
+      await assertFails(getDoc(doc(database, circlePath)));
+      await assertFails(getDoc(doc(database, circlePath, "private_members", "client-a")));
+      await assertFails(getDocs(collection(database, circlePath, "messages")));
+      await assertFails(getDoc(doc(database, circlePath, "private_blocks", "client-a_client-b")));
+      await assertFails(getDoc(doc(database, "private_friend_circle_invites", "invite-1")));
+      await assertFails(getDoc(doc(database, "private_friend_circle_audit", "audit-1")));
+      await assertFails(getDoc(doc(database, "private_friend_circle_reports", "report-1")));
+      await assertFails(setDoc(doc(database, circlePath, "messages", "forged"), { text: "Bypass callable" }));
+    }
+  });
+
   it("does not let a legacy admin claim read member profiles or bypass callable scopes", async () => {
     const legacyAdminDb = testEnv.authenticatedContext("legacy-admin", { admin: true }).firestore();
     const godAdminDb = testEnv.authenticatedContext("god-admin", { godAdmin: true }).firestore();

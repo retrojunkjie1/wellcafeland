@@ -22,7 +22,7 @@ function getSafeReturnPath(from, origin) {
 function resetErrorMessage(error) {
   if (error?.code === "auth/invalid-email") return "Enter a valid email address and try again.";
   if (error?.code === "auth/too-many-requests") return "Too many requests were made. Wait a few minutes, then try again.";
-  if (error?.code === "auth/network-request-failed") return "We couldn’t connect to the account service. Check your connection and try again.";
+  if (error?.code === "auth/network-request-failed") return "We couldn’t connect just now. Check your internet connection and try again.";
   return "We couldn’t request a reset link right now. Try again in a few minutes.";
 }
 
@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
     setError("");
     setSent(false);
     if (!auth) {
-      setError("Account recovery is unavailable because authentication is not configured.");
+      setError("Password reset is temporarily unavailable. Please try again later or contact WellnessCafe support.");
       return;
     }
 

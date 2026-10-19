@@ -34,7 +34,9 @@ const checks = [
   () => {
     if (!exists("src/components/tools/BreathingSessionView.jsx")) return {name: "breathing_uses_program", pass: false};
     const s = read("src/components/tools/BreathingSessionView.jsx");
-    return {name: "breathing_uses_program", pass: /breathingProgram|createBreathingScheduler|runBreathingScheduler/.test(s)};
+    // The active session uses a component-owned phase cycle; the old shared
+    // breathingProgram scheduler was removed. Verify the behavior in use.
+    return {name: "breathing_uses_program", pass: /const phases = \["inhale"\]/.test(s) && /const runCycle =/.test(s) && /pattern\[patternIndex\]/.test(s)};
   },
   () => {
     if (!exists("src/components/tools/BreathingSessionView.jsx")) return {name: "breathing_start_stop", pass: false};
@@ -68,7 +70,9 @@ const checks = [
   () => {
     if (!exists("src/components/tools/BreathingSessionView.jsx")) return {name: "breathing_spoken_intro", pass: false};
     const s = read("src/components/tools/BreathingSessionView.jsx");
-    return {name: "breathing_spoken_intro", pass: /playGuidance\s*\(\s*["']breathing_intro["']\)|useSpokenGuidance/.test(s)};
+    // Opening narration is prepared with the phase cues and played from the
+    // shared audio lifecycle, rather than looked up by a legacy guidance ID.
+    return {name: "breathing_spoken_intro", pass: /narration\.opening/.test(s) && /getCueBuffer/.test(s) && /source\.start\(/.test(s) && /setVoiceStatus\("playing"\)/.test(s)};
   },
   () => {
     if (!exists("src/components/interaction/UnifiedInteractionDock.jsx")) return {name: "dock_voice_state", pass: false};

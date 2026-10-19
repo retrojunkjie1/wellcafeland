@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Check, HandHeart, Moon, Utensils, ClipboardList, UsersRound } from "lucide-react";
 import { createToolResult, safeComplete } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 
 const NEEDS = [
   { id: "daily-needs", label: "Food, water, or something basic", icon: Utensils },
@@ -39,10 +40,35 @@ export default function LowEnergyPlanTool({ onComplete }) {
   const [capacity, setCapacity] = useState("");
   const [action, setAction] = useState("");
   const [finished, setFinished] = useState(false);
+  const [rhythmSuggestion, setRhythmSuggestion] = useState("");
+  const [rhythmLoading, setRhythmLoading] = useState(false);
+  const [rhythmError, setRhythmError] = useState("");
 
   const actions = capacity === "none"
     ? ["Pause without deciding right now", "Tell someone: ‘I could use help with one small thing’"]
     : ACTIONS[need]?.[capacity] || [];
+
+  const askRhythm = async () => {
+    if (!need || !["brief", "fuller"].includes(capacity) || rhythmLoading) return;
+    setRhythmLoading(true);
+    setRhythmError("");
+    setRhythmSuggestion("");
+    setAction("");
+    const area = NEEDS.find((item) => item.id === need)?.label || "a small next step";
+    const time = capacity === "brief" ? "about 2 minutes" : "about 10 minutes";
+    try {
+      const { result } = await runWellnessExperience("practice.low-energy-option", {
+        question: `The person chose this support area: "${area}". They selected capacity for ${time}. Offer one practical, optional next step that fits the selected area and time. Do not assume personal circumstances.`,
+      });
+      const invitation = typeof result.invitation === "string" ? result.invitation.trim() : "";
+      if (!invitation || invitation.length > 220) throw new Error("Rhythm did not return one short, usable option.");
+      setRhythmSuggestion(invitation);
+    } catch (error) {
+      setRhythmError(error?.message || "A fresh option could not be prepared. Your existing choices are still available.");
+    } finally {
+      setRhythmLoading(false);
+    }
+  };
 
   const complete = () => {
     const now = Date.now();
@@ -91,7 +117,7 @@ export default function LowEnergyPlanTool({ onComplete }) {
         <p className="mt-1 text-sm leading-relaxed text-white/65">Choose one area. You do not have to catch up on everything.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           {NEEDS.map(({ id, label, icon: Icon }) => (
-            <button key={id} type="button" aria-pressed={need === id} onClick={() => { setNeed(id); setCapacity(""); setAction(""); }} className="group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 transition hover:-translate-y-0.5 hover:border-sky-200/40 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
+            <button key={id} type="button" aria-pressed={need === id} onClick={() => { setNeed(id); setCapacity(""); setAction(""); setRhythmSuggestion(""); setRhythmError(""); }} className="group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 transition hover:-translate-y-0.5 hover:border-sky-200/40 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[0.055] text-sky-200 transition group-hover:scale-105 group-aria-pressed:bg-sky-100/10">{React.createElement(Icon, { "aria-hidden": true, className: "h-5 w-5" })}</span>
               <span>{label}</span>
             </button>
@@ -109,7 +135,7 @@ export default function LowEnergyPlanTool({ onComplete }) {
               { id: "fuller", label: "About 10 minutes" },
               { id: "none", label: "Not able right now" },
             ].map((option) => (
-              <button key={option.id} type="button" aria-pressed={capacity === option.id} onClick={() => { setCapacity(option.id); setAction(""); }} className="min-h-[4.25rem] rounded-xl border border-white/15 px-2 py-2 text-xs text-white/75 transition hover:bg-white/5 aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50 sm:text-sm">
+              <button key={option.id} type="button" aria-label={option.id === "none" ? "Not able right now" : option.label} aria-pressed={capacity === option.id} onClick={() => { setCapacity(option.id); setAction(""); setRhythmSuggestion(""); setRhythmError(""); }} className="min-h-[4.25rem] rounded-xl border border-white/15 px-2 py-2 text-xs text-white/75 transition hover:bg-white/5 aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50 sm:text-sm">
                 <span className="block text-lg font-medium text-sky-100/80">{option.id === "none" ? "—" : option.id === "brief" ? "02" : "10"}</span><span className="mt-1 block">{option.id === "none" ? "Not now" : "minutes"}</span>
               </button>
             ))}
@@ -121,7 +147,25 @@ export default function LowEnergyPlanTool({ onComplete }) {
         <section className="rounded-2xl border border-sky-200/20 bg-sky-100/[0.04] p-4 sm:p-5" aria-live="polite">
           <h2 className="text-base font-semibold">Pick one option—or stop here</h2>
           <div className="mt-3 grid gap-2">
-            {actions.map((option) => (
+          {capacity !== "none" && <div className="rounded-xl border border-sky-100/15 bg-sky-100/[0.025] p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-medium text-sky-50">Want one more option?</h3>
+                <p className="mt-1 text-xs leading-relaxed text-white/55">Rhythm uses only your selected area and time capacity.</p>
+              </div>
+              <button type="button" onClick={askRhythm} disabled={rhythmLoading} className="min-h-10 rounded-full border border-sky-100/20 px-4 text-xs font-medium text-sky-50 transition hover:bg-sky-100/[0.08] disabled:cursor-wait disabled:opacity-60">
+                {rhythmLoading ? "Preparing an option…" : rhythmSuggestion ? "Try another option" : "Ask Rhythm"}
+              </button>
+            </div>
+            {rhythmSuggestion && (
+              <button type="button" aria-pressed={action === rhythmSuggestion} onClick={() => setAction(rhythmSuggestion)} className="mt-3 flex min-h-14 w-full items-start gap-3 rounded-xl border border-emerald-100/25 bg-emerald-100/[0.05] px-3 py-3 text-left text-sm text-white/85 transition hover:bg-emerald-100/[0.09] aria-pressed:border-emerald-100/50 aria-pressed:bg-emerald-100/[0.12]">
+                <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-emerald-100/25 text-[10px] text-emerald-100/80">✦</span><span>{rhythmSuggestion}</span>
+              </button>
+            )}
+            {rhythmError && <p role="status" className="mt-3 text-sm text-amber-100">{rhythmError}</p>}
+          </div>}
+          {capacity !== "none" && <p className="mt-3 text-[11px] leading-relaxed text-white/45">Only your selected support area and capacity are sent to Rhythm. No written reflection or personal history is shared.</p>}
+          {actions.map((option) => (
             <button key={option} type="button" aria-pressed={action === option} onClick={() => setAction(option)} className="flex min-h-14 items-start gap-3 rounded-xl border border-white/10 bg-white/[0.025] px-3 py-3 text-left text-sm text-white/80 transition hover:border-sky-200/30 hover:bg-white/[0.06] aria-pressed:border-sky-200/50 aria-pressed:bg-sky-100/[0.08] aria-pressed:text-sky-50">
               <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border border-sky-100/25 text-[10px] text-sky-100/80">{actions.indexOf(option) + 1}</span><span>{option}</span>
               </button>

@@ -21,6 +21,8 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5182",
   "https://wellnesscafe.net",
   "https://www.wellnesscafe.net",
+  "https://wellnesscafe.app",
+  "https://www.wellnesscafe.app",
   "https://wellnesscafelanding.web.app",
 ];
 

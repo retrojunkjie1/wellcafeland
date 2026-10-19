@@ -18,9 +18,12 @@ const mocks = vi.hoisted(() => ({
   listCircles: vi.fn(),
   saveFavoriteResource: vi.fn(),
   reportHelpListingIssue: vi.fn(),
+  callAgent: vi.fn(),
+  searchPublicHelpListings: vi.fn(),
   getCuratedFallback: vi.fn(),
 }));
 
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent }));
 vi.mock("@/engines/memory/workspaceMemoryEngine", () => ({ rememberWorkspace: vi.fn() }));
 vi.mock("@/services/resourceSearch", () => ({ searchResources: mocks.searchResources }));
 vi.mock("@/services/directorySearch", () => ({ searchDirectory: mocks.searchDirectory }));
@@ -35,7 +38,7 @@ vi.mock("@/services/grantsService", () => ({ listGrants: mocks.listGrants }));
 vi.mock("@/services/supportProgramsService", () => ({ listSupportPrograms: mocks.listSupportPrograms }));
 vi.mock("@/services/circlesService", () => ({ listCircles: mocks.listCircles }));
 vi.mock("@/services/directoryService", () => ({ saveFavoriteResource: mocks.saveFavoriteResource }));
-vi.mock("@/services/helpDirectory", () => ({ reportHelpListingIssue: mocks.reportHelpListingIssue }));
+vi.mock("@/services/helpDirectory", () => ({ reportHelpListingIssue: mocks.reportHelpListingIssue, searchPublicHelpListings: mocks.searchPublicHelpListings }));
 vi.mock("@/lib/directoryCuratedFallback", () => ({ getCuratedFallback: mocks.getCuratedFallback }));
 vi.mock("@/utils/normalizeUrl", () => ({ normalizeExternalUrl: (value) => value || null }));
 vi.mock("@/components/InAppWebView", () => ({ default: ({ url, title, onOpenExternally }) => <div data-testid="in-app-resource-view"><iframe title={title} src={url} /><a href={url} target={onOpenExternally ? "_blank" : undefined}>Open {title} in a new tab</a></div> }));
@@ -68,9 +71,46 @@ beforeEach(() => {
   mocks.suggestFoodLocations.mockResolvedValue({ ok: true, items: [], error: null });
   mocks.getCuratedFallback.mockReturnValue([]);
   mocks.reportHelpListingIssue.mockResolvedValue({ ok: true, reportId: "report-1" });
+  mocks.searchPublicHelpListings.mockRejectedValue(new Error("The reviewed local directory is unavailable."));
+  mocks.callAgent.mockResolvedValue({ result: {
+    summary: "A short optional way to begin.",
+    openingLine: "Hi, I’m reaching out to ask how to get started.",
+    questions: ["What is the first step?", "What should I know before applying?"],
+    nextStep: "Write down any steps they share.",
+  } });
 });
 
 describe("real-world assistance search states", () => {
+  it("calls Bridge only on request and sends just the selected support category and contact method", async () => {
+    mocks.searchDirectory.mockResolvedValue({ ok: true, items: [{
+      id: "local-program", title: "Local Recovery Program", description: "Public program listing.", phone: "303-555-0100", url: "https://example.org/program",
+    }], meta: {} });
+    renderSearch("/assistance?priority=programs&query=food%20support&region=Denver%2C%20CO");
+
+    expect(await screen.findByRole("heading", { name: "Local Recovery Program" })).toBeInTheDocument();
+    expect(mocks.callAgent).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    fireEvent.click(screen.getByRole("button", { name: "Prepare to contact" }));
+
+    expect(await screen.findByText("Hi, I’m reaching out to ask how to get started.")).toBeInTheDocument();
+    expect(mocks.callAgent).toHaveBeenCalledTimes(1);
+    expect(mocks.callAgent).toHaveBeenCalledWith("bridge", { category: "programs", contactMethod: "website" });
+    expect(screen.getByText("What is the first step?")).toBeInTheDocument();
+    expect(screen.getByText(/The listing name, your area, and personal details are not/)).toBeInTheDocument();
+  });
+
+  it("does not offer Bridge preparation for an urgent-support listing", async () => {
+    mocks.searchResources.mockResolvedValue({ ok: true, results: [{
+      id: "urgent-line", title: "Urgent support line", phone: "988", url: "https://988lifeline.org",
+    }] });
+    renderSearch("/assistance?priority=emergency&query=crisis%20support");
+
+    expect(await screen.findByRole("heading", { name: "Urgent support line" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    expect(screen.queryByRole("button", { name: "Prepare to contact" })).toBeNull();
+    expect(mocks.callAgent).not.toHaveBeenCalled();
+  });
+
   it("groups support choices, separates connection paths, and records category changes in browser history", async () => {
     render(<MemoryRouter initialEntries={["/assistance?priority=food&query=food%20banks&region=Dallas%2C%20TX"]}><SearchRouteControls /><RealHelpWorkspace /></MemoryRouter>);
 

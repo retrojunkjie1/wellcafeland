@@ -33,6 +33,7 @@ describe("AppTopBar role-separated navigation", () => {
     expect(screen.queryByText("Practitioner workspace")).toBeNull();
     expect(screen.getByText("Apply to offer support")).toBeTruthy();
     expect(screen.getByText("Daily Practice")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "How to use WellnessCafe" }).getAttribute("href")).toBe("/getting-started");
     fireEvent.click(screen.getByText("More in client space"));
     expect(screen.getByRole("link", { name: "My sessions" }).getAttribute("href")).toBe("/my-sessions");
   });

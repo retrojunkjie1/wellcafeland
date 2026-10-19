@@ -6,8 +6,9 @@ import { Volume2, VolumeX } from "lucide-react";
 import { speakText as generateNarration } from "@/services/multimodalClient";
 import { CANONICAL_TOOL_GUIDE_FACE } from "./toolCharacterIdentity";
 
-function getBreathingNarration(pattern) {
+function getBreathingNarration(pattern, openingCue = "") {
   const closingNote = "I’ll guide the first three cycles, then leave space for your own pace while the visual continues.";
+  const optionalCue = openingCue.trim() ? ` ${openingCue.trim().slice(0, 240)}` : "";
   const inhale = [
     "Let the breath arrive easily; nothing to force.",
     "Notice the air coming in, just as it is.",
@@ -39,7 +40,7 @@ function getBreathingNarration(pattern) {
   }
 
   return {
-    opening: `This is a gentle four-in, six-out rhythm: an easy inhale, then a little longer to breathe out. The steady count gives your attention one simple place to rest; there is no result you have to reach. Feel where the chair or floor supports you. If your mind wanders, that is normal. Notice it without judgment and return to the next breath. Keep the breath comfortable, or breathe naturally at any time. ${closingNote}`,
+    opening: `This is a gentle four-in, six-out rhythm: an easy inhale, then a little longer to breathe out. The steady count gives your attention one simple place to rest; there is no result you have to reach. Feel where the chair or floor supports you. If your mind wanders, that is normal. Notice it without judgment and return to the next breath. Keep the breath comfortable, or breathe naturally at any time.${optionalCue} ${closingNote}`,
     inhale,
     exhale,
   };
@@ -52,7 +53,7 @@ function getPhaseCue(narration, phaseName, cycle) {
 
 const getNarrationErrorMessage = (error) => {
   if (error?.code === "APP_CHECK_REQUIRED" || error?.code === "APP_CHECK_INVALID" || /app verification/i.test(error?.message || "")) {
-    return "Local voice needs a registered Firebase App Check debug token. After it is registered, sign in here to use the natural voice guide.";
+    return "Voice guidance is available on wellnesscafe.app. This preview can still show the breathing pace.";
   }
   if (error?.code === "AUTH_REQUIRED" || error?.code === "AUTH_INVALID" || /verify this session|sign in/i.test(error?.message || "")) {
     return "Sign in to use the natural voice guide. The visual breathing pace is still available.";
@@ -117,6 +118,7 @@ export const BreathingSessionView = ({
   voiceEnabled = true,
   audioContext = null,
   darkMode = true,
+  openingCue = "",
 }) => {
   const isLocalHost = typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname);
   // Local narration is allowed only when the developer has opted into Firebase's
@@ -134,7 +136,7 @@ export const BreathingSessionView = ({
   const [voiceGuideEnabled, setVoiceGuideEnabled] = useState(voiceEnabled && !localVoiceBlocked);
   const [voiceStatus, setVoiceStatus] = useState("idle");
   const [voiceError, setVoiceError] = useState("");
-  const narration = useMemo(() => getBreathingNarration(pattern), [pattern]);
+  const narration = useMemo(() => getBreathingNarration(pattern, openingCue), [pattern, openingCue]);
   const cueCacheRef = useRef(new Map());
   const currentSourceRef = useRef(null);
   const breathFieldRef = useRef(null);
@@ -514,7 +516,7 @@ export const BreathingSessionView = ({
             {localVoiceBlocked ? (
               <>
                 <VolumeX className={`h-4 w-4 ${darkMode ? "text-white/50" : "text-slate-500"}`} />
-                <span>Voice unavailable in local preview</span>
+                <span>Voice guide unavailable here</span>
               </>
             ) : !voiceAvailable ? (
               <>
@@ -533,7 +535,7 @@ export const BreathingSessionView = ({
               </>
             )}
           </button>
-          {localVoiceBlocked && <p className={`max-w-sm text-center text-xs ${darkMode ? "text-white/65" : "text-slate-600"}`}>Natural voice is protected by Firebase App Check. To use it locally, configure a registered App Check debug token; otherwise use the signed-in deployed app.</p>}
+          {localVoiceBlocked && <p className={`max-w-sm text-center text-xs ${darkMode ? "text-white/65" : "text-slate-600"}`}>Voice guidance is available on wellnesscafe.app. You can still follow the visual pace here.</p>}
           {voiceStatus === "preparing" && <p className={`text-sm ${darkMode ? "text-amber-100/80" : "text-amber-800"}`}>Preparing the natural voice guide…</p>}
           {voiceStatus === "playing" && <p className={`text-sm ${darkMode ? "text-emerald-100/80" : "text-emerald-800"}`}>{phase === "orientation" ? "Explaining the selected rhythm" : "Speaking with this breath phase"}</p>}
           {voiceStatus === "ready" && voiceGuideEnabled && <p className={`text-xs ${darkMode ? "text-emerald-100/75" : "text-emerald-800"}`}>Voice guide ready</p>}

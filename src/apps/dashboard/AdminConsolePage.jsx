@@ -31,6 +31,11 @@ import {
   ToggleLeft,
   ToggleRight,
   Bell,
+  MapPin,
+  Wind,
+  ScanHeart,
+  UsersRound,
+  Sprout,
   Sliders,
   Save,
   AlertTriangle,
@@ -55,7 +60,8 @@ import { getFeatureSwitchPresentation } from "./featureSwitchCatalog";
 import AdminNotificationPolicy from "./AdminNotificationPolicy";
 import AdminReviewQueues from "./AdminReviewQueues";
 import PrivateFriendGroupReportsQueue from "./PrivateFriendGroupReportsQueue";
-import { INTELLIGENCE_AGENTS } from "../../ai/agents/agentRegistry";
+import { INTELLIGENCE_AGENTS, getAgentControlId } from "../../ai/agents/agentRegistry";
+import { buildAgentSmokeTestPlan, canRunAdminAgentSmokeTest } from "./agentSmokeTest";
 import { AgentHealthBar, AgentReadinessMeter, MemberBaseVisual, RiskSeverityMeter, RiskTrendChart, RingMeter } from "./components/ConsoleVisuals";
 import "./components/GodEyeVisuals.css";
 
@@ -85,6 +91,16 @@ const AdminConsolePage = () => {
   const [testAgentId, setTestAgentId] = useState("");
   const [testResult, setTestResult] = useState(null);
   const [testLoading, setTestLoading] = useState(false);
+  const [pulseAssessment, setPulseAssessment] = useState(null);
+  const [pulseAssessmentError, setPulseAssessmentError] = useState("");
+  const [pulseAssessmentLoading, setPulseAssessmentLoading] = useState(false);
+  const [seerAssessment, setSeerAssessment] = useState(null);
+  const [seerAssessmentError, setSeerAssessmentError] = useState("");
+  const [seerAssessmentLoading, setSeerAssessmentLoading] = useState(false);
+  const [overseerGoal, setOverseerGoal] = useState("agent-health");
+  const [overseerPlan, setOverseerPlan] = useState(null);
+  const [overseerPlanError, setOverseerPlanError] = useState("");
+  const [overseerPlanLoading, setOverseerPlanLoading] = useState(false);
   const [activeConsoleTab, setActiveConsoleTab] = useState("overview");
   const [activeSettingsTab, setActiveSettingsTab] = useState("features");
   const [selectedAgentId, setSelectedAgentId] = useState(null);
@@ -109,10 +125,13 @@ const AdminConsolePage = () => {
     error: agentMetricsError,
   } = useAgentsRegistry();
 
-  const availableTestAgents = React.useMemo(() => agents.filter((agent) => (
-    agentControls.implementedAgentIds.includes(agent.id)
-    && agentControls.enabled[agent.id] === true
-  )), [agents, agentControls.enabled, agentControls.implementedAgentIds]);
+  const availableTestAgents = React.useMemo(() => agents.filter((agent) => {
+    const controlId = getAgentControlId(agent);
+    return canRunAdminAgentSmokeTest(agent.id)
+      && controlId
+      && agentControls.implementedAgentIds.includes(controlId)
+      && agentControls.enabled[controlId] === true;
+  }), [agents, agentControls.enabled, agentControls.implementedAgentIds]);
 
   React.useEffect(() => {
     if (!availableTestAgents.some((agent) => agent.id === testAgentId)) {
@@ -153,7 +172,7 @@ const AdminConsolePage = () => {
         ...current,
         enabled: { ...current.enabled, [agentId]: result.enabled },
         savingAgentId: null,
-        notice: `${agents.find((agent) => agent.id === agentId)?.name || agentId} ${result.enabled ? "enabled" : "paused"}. New calls use this setting.`,
+        notice: `${agents.find((agent) => getAgentControlId(agent) === agentId)?.name || agentId} ${result.enabled ? "enabled" : "paused"}. New calls use this setting.`,
       }));
     } catch (error) {
       setAgentControls((current) => ({
@@ -267,8 +286,13 @@ const AdminConsolePage = () => {
   const pendingReviewCount = knownQueueCounts.every(Number.isInteger)
     ? knownQueueCounts.reduce((total, count) => total + count, 0)
     : null;
-  const enabledProductionAgentCount = agentControls.implementedAgentIds
-    .filter((agentId) => agentControls.enabled[agentId] === true).length;
+  const enabledProductionAgentCount = INTELLIGENCE_AGENTS
+    .filter((agent) => agent.readiness === "implemented" && agent.handlerId
+      && agentControls.implementedAgentIds.includes(agent.handlerId)
+      && agentControls.enabled[agent.handlerId] === true).length;
+  const implementedCatalogHandlerCount = INTELLIGENCE_AGENTS
+    .filter((agent) => agent.readiness === "implemented" && agent.handlerId
+      && agentControls.implementedAgentIds.includes(agent.handlerId)).length;
   const observedExecutionSuccess = metrics.systemHealth !== "not_measured" && Number.isFinite(metrics.errorRate)
     ? Math.max(0, 100 - metrics.errorRate)
     : null;
@@ -320,8 +344,10 @@ const AdminConsolePage = () => {
       },
       agents: {
         registered: agents.length,
-        productionHandlers: agentControls.error ? null : agentControls.implementedAgentIds.length,
+        productionHandlers: agentControls.error ? null : implementedCatalogHandlerCount,
         enabledProductionHandlers: agentControls.error ? null : enabledProductionAgentCount,
+        partialHandlers: agentControls.error ? null : INTELLIGENCE_AGENTS.filter((agent) => agent.readiness === "partial"
+          && agent.handlerId && agentControls.implementedAgentIds.includes(agent.handlerId)).length,
       },
       riskSignals: riskRadarError
         ? { state: "unavailable" }
@@ -346,6 +372,7 @@ const AdminConsolePage = () => {
   const selectedAgentDefinition = selectedAgentId
     ? INTELLIGENCE_AGENTS.find((agent) => agent.id === selectedAgentId)
     : null;
+  const selectedAgentControlId = getAgentControlId(selectedAgentDefinition);
 
   React.useEffect(() => {
     if (!selectedAgentId) return undefined;
@@ -368,6 +395,12 @@ const AdminConsolePage = () => {
     oracle: Flame,
     overseer: Compass,
     sentinel: Shield,
+    anchor: MapPin,
+    breathkeeper: Wind,
+    mirror: ScanHeart,
+    shepherd: UsersRound,
+    compass: Compass,
+    gardener: Sprout,
     cherubim: Shield,
     healer_breathwork: Activity,
     healer_grounding: Activity,
@@ -383,12 +416,152 @@ const AdminConsolePage = () => {
     setTestLoading(true);
     setTestResult(null);
     try {
-      const result = await callAgent(testAgentId, { test: true, timestamp: new Date().toISOString() });
+      const smokePlan = buildAgentSmokeTestPlan(testAgentId, {
+        snapshotAgeSeconds,
+        agentExecutions: metrics.agentExecutions,
+        errorRatePercent: metrics.errorRate,
+        avgResponseTimeMs: metrics.avgResponseTime,
+        systemHealth: metrics.systemHealth,
+        enabledHandlers: enabledProductionAgentCount,
+        implementedHandlers: implementedCatalogHandlerCount,
+        riskSignals: {
+          state: riskRadarError ? "unavailable" : riskRadarEnabled ? "available" : "paused",
+          warningCount: riskRadarError || !riskRadarEnabled ? null : warningCount,
+          criticalCount: riskRadarError || !riskRadarEnabled ? null : criticalCount,
+          totalEvents: riskRadarError || !riskRadarEnabled ? null : totalEvents,
+        },
+        reviewQueues: {
+          practitioner: reviewQueueCounts.practitioner,
+          communityGivers: reviewQueueCounts.communityGivers,
+          meetingSources: reviewQueueCounts.meetingSources,
+        },
+      });
+      if (!smokePlan) throw new Error("This agent can only be tested from its authorized client workflow.");
+      const result = await callAgent(smokePlan.agentId, smokePlan.payload);
       setTestResult(result);
     } catch (err) {
       setTestResult({ error: err.message });
     } finally {
       setTestLoading(false);
+    }
+  };
+
+  const handlePulseAssessment = async () => {
+    if (pulseAssessmentLoading || metricsLoading || metricsError || agentControls.loading || agentControls.error
+      || !agentControls.implementedAgentIds.includes("pulse") || agentControls.enabled.pulse !== true) return;
+    setPulseAssessmentLoading(true);
+    setPulseAssessment(null);
+    setPulseAssessmentError("");
+    try {
+      const response = await callAgent("pulse", {
+        metrics: {
+          systemHealth: metrics.systemHealth,
+          agentExecutions: metrics.agentExecutions,
+          errorRate: metrics.errorRate,
+          avgResponseTime: metrics.avgResponseTime,
+        },
+        snapshotAgeSeconds,
+      });
+      const result = response.result || response;
+      if (typeof result.summary !== "string" || typeof result.healthStatus !== "string" || typeof result.nextCheck !== "string") {
+        throw new Error("Pulse returned an incomplete operations summary. Refresh the snapshot and try again.");
+      }
+      setPulseAssessment({
+        summary: result.summary,
+        healthStatus: result.healthStatus,
+        observations: Array.isArray(result.observations) ? result.observations.filter((item) => typeof item === "string").slice(0, 3) : [],
+        nextCheck: result.nextCheck,
+      });
+    } catch (error) {
+      setPulseAssessmentError(presentAdminServiceError(error, "Pulse could not assess this operations snapshot."));
+    } finally {
+      setPulseAssessmentLoading(false);
+    }
+  };
+
+  const handleSeerAssessment = async () => {
+    if (seerAssessmentLoading || metricsLoading || metricsError || agentControls.loading || agentControls.error
+      || !agentControls.implementedAgentIds.includes("seer") || agentControls.enabled.seer !== true) return;
+    setSeerAssessmentLoading(true);
+    setSeerAssessment(null);
+    setSeerAssessmentError("");
+    try {
+      const response = await callAgent("seer", {
+        telemetry: {
+          snapshotAgeSeconds,
+          agentExecutions: metrics.agentExecutions,
+          errorRatePercent: metrics.errorRate,
+          avgResponseTimeMs: metrics.avgResponseTime,
+          activeUsers24h: metrics.activeUsers,
+          checkinsLast7Days: metrics.checkinsLast7Days,
+          riskSignals: {
+            state: riskRadarError ? "unavailable" : riskRadarEnabled ? "available" : "paused",
+            warningCount: riskRadarError || !riskRadarEnabled ? null : warningCount,
+            criticalCount: riskRadarError || !riskRadarEnabled ? null : criticalCount,
+            totalEvents: riskRadarError || !riskRadarEnabled ? null : totalEvents,
+            dailyCounts: riskRadarError || !riskRadarEnabled ? [] : dailyCounts,
+          },
+        },
+        question: "Describe the evidence-backed operational patterns, data limitations, and one useful admin follow-up.",
+      });
+      const result = response.result || response;
+      if (typeof result.summary !== "string" || !Array.isArray(result.insights)) {
+        throw new Error("Seer returned an incomplete trend review. Refresh the snapshot and try again.");
+      }
+      setSeerAssessment({
+        summary: result.summary,
+        insights: result.insights.filter((item) => typeof item === "string").slice(0, 3),
+        nextCheck: typeof result.nextCheck === "string" ? result.nextCheck : "No additional check was returned.",
+      });
+    } catch (error) {
+      setSeerAssessmentError(presentAdminServiceError(error, "Seer could not review this aggregate snapshot."));
+    } finally {
+      setSeerAssessmentLoading(false);
+    }
+  };
+
+  const handleOverseerPlan = async () => {
+    if (overseerPlanLoading || metricsLoading || metricsError || agentControls.loading || agentControls.error
+      || !agentControls.implementedAgentIds.includes("overseer") || agentControls.enabled.overseer !== true) return;
+    setOverseerPlanLoading(true);
+    setOverseerPlan(null);
+    setOverseerPlanError("");
+    try {
+      const response = await callAgent("overseer", {
+        goal: overseerGoal,
+        state: {
+          snapshotAgeSeconds,
+          agentExecutions: metrics.agentExecutions,
+          errorRatePercent: metrics.errorRate,
+          avgResponseTimeMs: metrics.avgResponseTime,
+          enabledHandlers: enabledProductionAgentCount,
+          implementedHandlers: implementedCatalogHandlerCount,
+          riskSignals: {
+            state: riskRadarError ? "unavailable" : riskRadarEnabled ? "available" : "paused",
+            warningCount: riskRadarError || !riskRadarEnabled ? null : warningCount,
+            criticalCount: riskRadarError || !riskRadarEnabled ? null : criticalCount,
+            totalEvents: riskRadarError || !riskRadarEnabled ? null : totalEvents,
+          },
+          reviewQueues: {
+            practitioner: reviewQueueCounts.practitioner,
+            communityGivers: reviewQueueCounts.communityGivers,
+            meetingSources: reviewQueueCounts.meetingSources,
+          },
+        },
+      });
+      const result = response.result || response;
+      if (typeof result.summary !== "string" || !Array.isArray(result.steps) || typeof result.evidenceLimit !== "string") {
+        throw new Error("Overseer returned an incomplete operations plan. Refresh the snapshot and try again.");
+      }
+      setOverseerPlan({
+        summary: result.summary,
+        steps: result.steps.filter((step) => typeof step === "string").slice(0, 3),
+        evidenceLimit: result.evidenceLimit,
+      });
+    } catch (error) {
+      setOverseerPlanError(presentAdminServiceError(error, "Overseer could not prepare a plan from this operations snapshot."));
+    } finally {
+      setOverseerPlanLoading(false);
     }
   };
 
@@ -490,16 +663,79 @@ const AdminConsolePage = () => {
 
             <article className="god-eye-visual-panel rounded-3xl border border-sky-100/10 bg-[linear-gradient(145deg,rgba(39,66,88,.25),rgba(10,18,24,.72))] p-5 sm:p-6">
               <p className="text-xs font-medium uppercase tracking-[.16em] text-sky-100/55">Agent readiness</p>
-              <AgentReadinessMeter total={agents.length} implemented={agentControls.implementedAgentIds.length} enabled={enabledProductionAgentCount} loading={agentControls.loading} error={agentControls.error} />
-              <p className="mt-1 text-xs text-white/40">Availability only; handler status does not imply agent quality.</p>
+              <AgentReadinessMeter total={INTELLIGENCE_AGENTS.length} implemented={implementedCatalogHandlerCount} enabled={enabledProductionAgentCount} loading={agentControls.loading} error={agentControls.error} />
+              <p className="mt-1 text-xs text-white/40">The count requires a catalog-to-server match. The legacy Healer mapping is marked partial in its card.</p>
             </article>
 
             <article className="god-eye-visual-panel rounded-3xl border border-amber-100/10 bg-[linear-gradient(145deg,rgba(80,61,33,.22),rgba(10,18,24,.72))] p-5 sm:p-6">
               <p className="text-xs font-medium uppercase tracking-[.16em] text-amber-100/55">Observed run health</p>
               <div className="mt-5"><RingMeter value={metricsLoading || metricsError ? null : observedExecutionSuccess} label="Sample success rate" detail={metricsLoading ? "Loading" : metricsError ? "Unavailable" : metrics.systemHealth === "not_measured" ? "No runs yet" : metrics.systemHealth} note={metricsError ? "Operational snapshot could not be verified" : metricsLoading ? "Waiting for snapshot" : metrics.systemHealth === "not_measured" ? "Waiting for recorded activity" : "From recorded runs"} color="#f3d37a" /></div>
               <p className="mt-4 text-xs text-white/45">{metricsError ? "Run health unavailable" : "From recorded agent runs"}</p>
+              <button type="button" onClick={handlePulseAssessment} disabled={pulseAssessmentLoading || metricsLoading || Boolean(metricsError) || agentControls.loading || Boolean(agentControls.error) || !agentControls.implementedAgentIds.includes("pulse") || agentControls.enabled.pulse !== true} className="mt-4 min-h-10 rounded-full border border-amber-100/20 px-4 text-sm font-medium text-amber-50 transition hover:bg-amber-100/[.08] disabled:cursor-not-allowed disabled:opacity-50">
+                {pulseAssessmentLoading ? "Reading snapshot…" : pulseAssessment ? "Refresh Pulse assessment" : "Ask Pulse to interpret"}
+              </button>
+              {agentControls.enabled.pulse === false && <p className="mt-2 text-xs text-white/50">Pulse is paused in agent controls.</p>}
+              {pulseAssessmentError && <p role="alert" className="mt-3 text-sm text-amber-100">{pulseAssessmentError}</p>}
+              {pulseAssessment && <div role="status" aria-live="polite" className="mt-4 space-y-2 rounded-xl border border-amber-100/15 bg-slate-950/35 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold text-white">Pulse: {pulseAssessment.healthStatus.replaceAll("_", " ")}</p><span className="text-[11px] text-white/45">Operational snapshot · aggregate only</span></div>
+                <p className="text-sm leading-relaxed text-white/75">{pulseAssessment.summary}</p>
+                {pulseAssessment.observations.map((observation, index) => <p key={`${index}-${observation}`} className="text-xs leading-relaxed text-white/65">• {observation}</p>)}
+                <p className="border-t border-white/10 pt-2 text-xs leading-relaxed text-amber-50/75"><span className="font-medium">Next check:</span> {pulseAssessment.nextCheck}</p>
+              </div>}
             </article>
           </div>
+
+          <article className="god-eye-visual-panel rounded-3xl border border-cyan-100/10 bg-[linear-gradient(145deg,rgba(39,66,88,.2),rgba(10,18,24,.72))] p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[.16em] text-cyan-100/55">Aggregate pattern review</p>
+                <h3 className="mt-1 text-lg font-semibold text-white">Seer · operational trends</h3>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-white/55">Reviews only the verified system snapshot, including aggregate usage, agent health, and available seven-day signal counts. No member records or reflections are sent.</p>
+              </div>
+              <button type="button" onClick={handleSeerAssessment} disabled={seerAssessmentLoading || metricsLoading || Boolean(metricsError) || agentControls.loading || Boolean(agentControls.error) || !agentControls.implementedAgentIds.includes("seer") || agentControls.enabled.seer !== true} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-cyan-100/20 px-4 text-sm font-medium text-cyan-50 transition hover:bg-cyan-100/[.08] disabled:cursor-not-allowed disabled:opacity-50">
+                <Eye className="h-4 w-4" aria-hidden="true" />
+                {seerAssessmentLoading ? "Reviewing snapshot…" : seerAssessment ? "Refresh Seer review" : "Ask Seer to review trends"}
+              </button>
+            </div>
+            {agentControls.enabled.seer === false && <p className="mt-3 text-xs text-white/50">Seer is paused in agent controls.</p>}
+            {seerAssessmentError && <p role="alert" className="mt-3 text-sm text-amber-100">{seerAssessmentError}</p>}
+            {seerAssessment && <div role="status" aria-live="polite" className="mt-4 grid gap-4 rounded-2xl border border-cyan-100/10 bg-slate-950/35 p-4 lg:grid-cols-[1.3fr_1fr]">
+              <div><p className="text-sm leading-relaxed text-white/80">{seerAssessment.summary}</p><p className="mt-3 text-[11px] text-white/40">Snapshot from {snapshotTime?.toLocaleString?.() || "the latest verified operational sample"} · aggregate only</p></div>
+              <div className="space-y-2">
+                {seerAssessment.insights.map((insight, index) => <p key={`${index}-${insight}`} className="text-xs leading-relaxed text-cyan-50/75">• {insight}</p>)}
+                <p className="border-t border-white/10 pt-2 text-xs leading-relaxed text-amber-50/75"><span className="font-medium">Possible next check:</span> {seerAssessment.nextCheck}</p>
+              </div>
+            </div>}
+          </article>
+
+          <article className="god-eye-visual-panel rounded-3xl border border-amber-100/10 bg-[linear-gradient(145deg,rgba(80,61,33,.16),rgba(10,18,24,.72))] p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[.16em] text-amber-100/55">Admin planning · aggregate only</p>
+                <h3 className="mt-1 text-lg font-semibold text-white">Overseer · prepare a review plan</h3>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-white/55">Choose an operational question. Overseer can suggest checks from the current snapshot; it cannot change settings or claim a service was checked beyond the data shown.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="sr-only" htmlFor="overseer-review-goal">Operational review focus</label>
+                <select id="overseer-review-goal" value={overseerGoal} onChange={(event) => { setOverseerGoal(event.target.value); setOverseerPlan(null); setOverseerPlanError(""); }} disabled={overseerPlanLoading} className="min-h-10 rounded-full border border-amber-100/15 bg-slate-950/55 px-4 text-sm text-white">
+                  <option value="agent-health">Handler readiness</option>
+                  <option value="signal-review">Seven-day signals</option>
+                  <option value="service-baseline">Response and errors</option>
+                </select>
+                <button type="button" onClick={handleOverseerPlan} disabled={overseerPlanLoading || metricsLoading || Boolean(metricsError) || agentControls.loading || Boolean(agentControls.error) || !agentControls.implementedAgentIds.includes("overseer") || agentControls.enabled.overseer !== true} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-amber-100/20 px-4 text-sm font-medium text-amber-50 transition hover:bg-amber-100/[.08] disabled:cursor-not-allowed disabled:opacity-50">
+                  <Compass className="h-4 w-4" aria-hidden="true" />
+                  {overseerPlanLoading ? "Preparing plan…" : overseerPlan ? "Refresh plan" : "Prepare plan"}
+                </button>
+              </div>
+            </div>
+            {agentControls.enabled.overseer === false && <p className="mt-3 text-xs text-white/50">Overseer is paused in agent controls.</p>}
+            {overseerPlanError && <p role="alert" className="mt-3 text-sm text-amber-100">{overseerPlanError}</p>}
+            {overseerPlan && <div role="status" aria-live="polite" className="mt-4 grid gap-4 rounded-2xl border border-amber-100/10 bg-slate-950/35 p-4 lg:grid-cols-[1fr_1.2fr]">
+              <div><p className="text-sm leading-relaxed text-white/80">{overseerPlan.summary}</p><p className="mt-3 text-xs leading-relaxed text-white/55"><span className="font-medium text-amber-50/80">Evidence limit:</span> {overseerPlan.evidenceLimit}</p></div>
+              <ol className="space-y-2">{overseerPlan.steps.map((step, index) => <li key={`${index}-${step}`} className="flex gap-3 text-xs leading-relaxed text-amber-50/75"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-amber-100/15 text-[10px] tabular-nums">{index + 1}</span><span>{step}</span></li>)}</ol>
+              <p className="text-[11px] text-white/40 lg:col-span-2">Operational snapshot · {snapshotTime?.toLocaleString?.() || "timestamp unavailable"} · suggested checks only</p>
+            </div>}
+          </article>
 
           <div className="grid gap-4 xl:grid-cols-[1.65fr_1fr]">
             <article className="god-eye-visual-panel god-eye-trend-panel rounded-3xl border border-white/[.08] bg-slate-950/25 p-5 sm:p-6">
@@ -571,7 +807,7 @@ const AdminConsolePage = () => {
               <option value="">Select agent to test…</option>
               {agents.map((a) => (
                 <option key={a.id} value={a.id} disabled={!availableTestAgents.some((available) => available.id === a.id)}>
-                  {a.name}{agentControls.loading ? " · Checking status" : agentControls.error ? " · Status unavailable" : availableTestAgents.some((available) => available.id === a.id) ? " · Live and enabled" : agentControls.implementedAgentIds.includes(a.id) ? " · Paused" : " · No production handler"}
+                  {a.name}{!canRunAdminAgentSmokeTest(a.id) ? " · Test in authorized client timeline" : agentControls.loading ? " · Checking status" : agentControls.error ? " · Status unavailable" : availableTestAgents.some((available) => available.id === a.id) ? " · Live and enabled" : getAgentControlId(a) && agentControls.implementedAgentIds.includes(getAgentControlId(a)) ? " · Paused" : a.readiness === "partial" ? " · Partial handler" : " · No production handler"}
                 </option>
               ))}
             </select>
@@ -600,6 +836,9 @@ const AdminConsolePage = () => {
             {agentControls.error && <span role="alert" className="text-xs text-destructive">{agentControls.error} Testing is paused until status can be verified.</span>}
             {!agentControls.loading && !agentControls.error && !availableTestAgents.length && (
               <span className="text-xs text-amber-200/75">No enabled production agent is available. Enable a supported agent below.</span>
+            )}
+            {testAgentId === "witness" && (
+              <span className="text-xs text-white/55">Witness must be tested in a verified provider workspace with the client’s active sharing permission.</span>
             )}
             {agentControls.notice && <span role="status" className="text-xs text-emerald-300">{agentControls.notice}</span>}
           </div>
@@ -657,9 +896,10 @@ const AdminConsolePage = () => {
           <div className="grid gap-4 md:grid-cols-4">
             {agents.map((agent) => {
               const Icon = agentIcons[agent.id] || Activity;
+              const controlId = getAgentControlId(agent);
+              const handlerAvailable = Boolean(controlId && agentControls.implementedAgentIds.includes(controlId));
               const handlerKnown = !agentControls.loading && !agentControls.error;
-              const productionEnabled = handlerKnown && agentControls.implementedAgentIds.includes(agent.id)
-                && agentControls.enabled[agent.id] === true;
+              const productionEnabled = handlerKnown && handlerAvailable && agentControls.enabled[controlId] === true;
               const runWidth = maxRecentRuns ? Math.max(agent.runCount > 0 ? 3 : 0, (Number(agent.runCount) || 0) / maxRecentRuns * 100) : 0;
               return (
                 <div
@@ -706,8 +946,8 @@ const AdminConsolePage = () => {
 
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50">
                     <div className="col-span-2">
-                      <p className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-medium ${!handlerKnown ? "border-amber-100/15 bg-amber-100/[.04] text-amber-50/65" : agentControls.implementedAgentIds.includes(agent.id) ? "border-emerald-200/20 bg-emerald-200/[.06] text-emerald-200" : "border-white/10 bg-white/[.03] text-white/50"}`}>
-                        {!handlerKnown ? "Status unavailable" : agentControls.implementedAgentIds.includes(agent.id) ? "Handler available" : "No production handler"}
+                      <p className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-medium ${!handlerKnown ? "border-amber-100/15 bg-amber-100/[.04] text-amber-50/65" : handlerAvailable && agent.readiness === "partial" ? "border-amber-200/20 bg-amber-200/[.06] text-amber-100" : handlerAvailable ? "border-emerald-200/20 bg-emerald-200/[.06] text-emerald-200" : "border-white/10 bg-white/[.03] text-white/50"}`}>
+                        {!handlerKnown ? "Status unavailable" : handlerAvailable && agent.readiness === "partial" ? "Partial handler" : handlerAvailable ? "Production handler" : "No production handler"}
                       </p>
                     </div>
                     <div>
@@ -726,24 +966,24 @@ const AdminConsolePage = () => {
                     </div>
                   </div>
 
-                  {agentControls.implementedAgentIds.includes(agent.id) && (
+                  {handlerAvailable && (
                     <div className="flex items-center justify-between gap-3 border-t border-border/50 pt-3">
                       <div>
                         <p className="text-xs font-medium">Live system control</p>
                         <p className="text-[11px] text-muted-foreground">
-                          {agentControls.loading ? "Checking server…" : agentControls.error ? "Unavailable · fail-closed" : agentControls.enabled[agent.id] ? "Enabled for new requests" : "Paused for new requests"}
+                          {agentControls.loading ? "Checking server…" : agentControls.error ? "Unavailable · fail-closed" : agentControls.enabled[controlId] ? "Enabled for new requests" : "Paused for new requests"}
                         </p>
                       </div>
                       <button
                         type="button"
                         role="switch"
-                        aria-checked={agentControls.enabled[agent.id] === true}
-                        aria-label={`${agentControls.enabled[agent.id] ? "Pause" : "Enable"} ${agent.name}`}
+                        aria-checked={agentControls.enabled[controlId] === true}
+                        aria-label={`${agentControls.enabled[controlId] ? "Pause" : "Enable"} ${agent.name}`}
                         disabled={agentControls.loading || Boolean(agentControls.error) || agentControls.savingAgentId !== null}
-                        onClick={() => handleAgentControlChange(agent.id, agentControls.enabled[agent.id] !== true)}
-                        className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${agentControls.enabled[agent.id] ? "border-emerald-300/40 bg-emerald-400/25" : "border-border bg-muted"}`}
+                        onClick={() => handleAgentControlChange(controlId, agentControls.enabled[controlId] !== true)}
+                        className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${agentControls.enabled[controlId] ? "border-emerald-300/40 bg-emerald-400/25" : "border-border bg-muted"}`}
                       >
-                        <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${agentControls.enabled[agent.id] ? "translate-x-6" : "translate-x-1"}`} />
+                        <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${agentControls.enabled[controlId] ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                   )}
@@ -811,12 +1051,12 @@ const AdminConsolePage = () => {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
                     <p className="text-xs uppercase tracking-wide text-white/45">Production readiness</p>
-                    <p className={`mt-1 text-sm font-semibold ${agentControls.implementedAgentIds.includes(selectedAgent.id) ? "text-emerald-200" : "text-amber-100"}`}>
-                      {agentControls.implementedAgentIds.includes(selectedAgent.id) ? "Production handler available" : "Registered · handler not connected"}
+                    <p className={`mt-1 text-sm font-semibold ${selectedAgentControlId && agentControls.implementedAgentIds.includes(selectedAgentControlId) ? selectedAgent.readiness === "partial" ? "text-amber-100" : "text-emerald-200" : "text-amber-100"}`}>
+                      {selectedAgentControlId && agentControls.implementedAgentIds.includes(selectedAgentControlId) ? selectedAgent.readiness === "partial" ? "Partial handler · identity mapping needed" : "Production handler available" : "Registered · handler not connected"}
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-white/50">
-                      {agentControls.implementedAgentIds.includes(selectedAgent.id)
-                        ? agentControls.error ? "Server control status could not be verified." : agentControls.enabled[selectedAgent.id] ? "Enabled for new requests." : "Paused for new requests."
+                      {selectedAgentControlId && agentControls.implementedAgentIds.includes(selectedAgentControlId)
+                        ? agentControls.error ? "Server control status could not be verified." : agentControls.enabled[selectedAgentControlId] ? "Enabled for new requests." : "Paused for new requests."
                         : "This agent is visible in the registry but cannot run in production yet."}
                     </p>
                   </div>

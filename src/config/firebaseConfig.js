@@ -3,8 +3,9 @@
 // This is the SINGLE SOURCE OF TRUTH for Firebase configuration
 // All Firebase initialization must import from this file ONLY
 
-// Production project ID is HARDCODED to prevent wrong-project deployments
-const PROJECT_ID = "wellnesscafelanding";
+// Production project ID is pinned to prevent wrong-project deployments. Tests
+// use an isolated demo ID so accidental SDK requests can never target prod.
+const PROJECT_ID = import.meta.env.MODE === "test" ? "demo-wellnesscafe-test" : "wellnesscafelanding";
 
 // Firebase configuration object
 // projectId is hardcoded, other values come from environment variables
@@ -36,4 +37,3 @@ if (import.meta.env.DEV) {
     );
   }
 }
-

@@ -7,6 +7,7 @@ import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract
 import { logToolUsage } from "@/services/toolTelemetry";
 import ToolCharacterGuide from "@/components/tools/ToolCharacterGuide";
 import { useNaturalVoice } from "@/hooks/useNaturalVoice";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 import UrgeActionVisual from "./UrgeActionVisual";
 
 const PAUSE_LENGTH_SECONDS = 180;
@@ -85,6 +86,8 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [hasStartedPause, setHasStartedPause] = useState(false);
   const [reflection, setReflection] = useState({ open: false, step: 0, behavior: "", selections: {}, values: [], nextMove: "" });
+  const [compassState, setCompassState] = useState({ loading: false, error: "", result: null });
+  const [guideMessage, setGuideMessage] = useState("");
   const { status: voiceStatus, error: voiceError, playbackProgress, play, pause, resume, stop } = useNaturalVoice("marin");
   const [startTime] = useState(() => Date.now());
   const secondsLeftRef = useRef(PAUSE_LENGTH_SECONDS);
@@ -105,11 +108,41 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
     return () => window.clearInterval(timer);
   }, [isTimerRunning]);
 
+  const playGuideText = useCallback(async (message) => {
+    setGuideMessage(message);
+    return play(message);
+  }, [play]);
+
   const playGuidance = useCallback(async (move = currentMove) => {
     if (!move) return;
     // Lead with one concrete, usable invitation; add its context after it.
-    await play(`${move.cue} ${move.purpose}`);
-  }, [currentMove, play]);
+    await playGuideText(`${move.cue} ${move.purpose}`);
+  }, [currentMove, playGuideText]);
+
+  const askCompass = useCallback(async () => {
+    if (!reflection.values.length || !reflection.nextMove || compassState.loading) return;
+    setCompassState({ loading: true, error: "", result: null });
+    try {
+      const { result: response } = await runWellnessExperience("recovery.values-choice", {
+        values: reflection.values.slice(0, 3),
+        selectedMove: reflection.nextMove,
+      });
+      setCompassState({ loading: false, error: "", result: {
+        summary: response.summary,
+        value: response.value,
+        choice: response.choice,
+        nextStep: response.nextStep,
+      } });
+    } catch (error) {
+      setCompassState({
+        loading: false,
+        result: null,
+        error: error?.code === "AGENT_PAUSED"
+          ? "Compass is paused right now. Your selected move is still here whenever you want it."
+          : "Compass couldn’t prepare a suggestion right now. Your selections stay on this screen; you can still use the move you chose.",
+      });
+    }
+  }, [compassState.loading, reflection.nextMove, reflection.values]);
 
   const finishPractice = useCallback(() => {
     const completedAt = Date.now();
@@ -337,7 +370,10 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
       <details
         className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/75 via-[#111923] to-emerald-950/20"
         open={reflection.open}
-        onToggle={(event) => setReflection((current) => current.open === event.currentTarget.open ? current : { ...current, open: event.currentTarget.open })}
+        onToggle={(event) => {
+          const open = event.currentTarget.open;
+          setReflection((current) => current.open === open ? current : { ...current, open });
+        }}
       >
         <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 sm:px-5 [&::-webkit-details-marker]:hidden">
           <span>
@@ -356,7 +392,7 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
             </div>
             <button
               type="button"
-              onClick={() => void play(REFLECTION_STEPS[reflection.step].voice)}
+              onClick={() => void playGuideText(REFLECTION_STEPS[reflection.step].voice)}
               disabled={voiceStatus === "preparing" || voiceStatus === "playing"}
               className="inline-flex min-h-10 items-center gap-2 rounded-full border border-emerald-100/20 px-3.5 text-xs text-emerald-50/90 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
             >
@@ -439,7 +475,10 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
               <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {PERSONAL_VALUES.map(({ label, icon, detail }) => {
                   const selected = reflection.values.includes(label);
-                  return <button key={label} type="button" aria-pressed={selected} onClick={() => setReflection((current) => ({ ...current, values: selected ? current.values.filter((item) => item !== label) : [...current.values, label] }))} className={`min-h-[4.5rem] rounded-xl border p-2.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 ${selected ? "border-amber-100/55 bg-amber-100/[.1]" : "border-white/10 bg-white/[.025] hover:border-white/25"}`}>
+                  return <button key={label} type="button" aria-pressed={selected} disabled={!selected && reflection.values.length >= 3} onClick={() => {
+                    setCompassState({ loading: false, error: "", result: null });
+                    setReflection((current) => ({ ...current, values: selected ? current.values.filter((item) => item !== label) : current.values.length < 3 ? [...current.values, label] : current.values }));
+                  }} className={`min-h-[4.5rem] rounded-xl border p-2.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 disabled:cursor-not-allowed disabled:opacity-45 ${selected ? "border-amber-100/55 bg-amber-100/[.1]" : "border-white/10 bg-white/[.025] hover:border-white/25"}`}>
                     <span className={`grid h-6 w-6 place-items-center rounded-lg text-sm ${selected ? "bg-amber-100/15 text-amber-100" : "bg-white/[.06] text-white/60"}`} aria-hidden="true">{icon}</span>
                     <span className="mt-2 block text-[11px] font-medium text-white/90">{label}</span>
                     <span className="mt-0.5 block text-[9px] text-white/45">{detail}</span>
@@ -458,7 +497,10 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {SUPPORT_MOVES.map(({ id, title, context, Icon }) => {
                   const selected = reflection.nextMove === id;
-                  return <button key={id} type="button" aria-pressed={selected} onClick={() => setReflection((current) => ({ ...current, nextMove: selected ? "" : id }))} className={`flex min-h-[4.5rem] items-center gap-3 rounded-xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 ${selected ? "border-amber-100/50 bg-amber-100/[.08]" : "border-white/10 bg-white/[.025] hover:border-white/25"}`}>
+                  return <button key={id} type="button" aria-pressed={selected} onClick={() => {
+                    setCompassState({ loading: false, error: "", result: null });
+                    setReflection((current) => ({ ...current, nextMove: selected ? "" : id }));
+                  }} className={`flex min-h-[4.5rem] items-center gap-3 rounded-xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 ${selected ? "border-amber-100/50 bg-amber-100/[.08]" : "border-white/10 bg-white/[.025] hover:border-white/25"}`}>
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.06] text-amber-100"><Icon aria-hidden="true" className="h-4 w-4" /></span>
                     <span><span className="block text-xs font-medium text-white/90">{title}</span><span className="mt-1 block text-[10px] text-white/50">{context}</span></span>
                     {selected && <span className="ml-auto text-emerald-100" aria-hidden="true">✓</span>}
@@ -466,6 +508,22 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
                 })}
               </div>
               <p className="mt-3 text-[10px] leading-relaxed text-white/40">Nothing here is saved. You can change your mind, choose another move, or leave.</p>
+              {reflection.nextMove && reflection.values.length > 0 && (
+                <div className="mt-4 rounded-xl border border-amber-100/15 bg-black/15 p-3.5" aria-live="polite">
+                  <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-amber-100/65">Optional · Compass</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-white/55">Get one suggestion connecting the value and move you selected. Only those selections are sent; your written reflection stays here.</p>
+                  <button type="button" onClick={() => void askCompass()} disabled={compassState.loading} className="mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-amber-100/30 bg-amber-100/[.08] px-4 text-xs font-medium text-amber-50 transition hover:bg-amber-100/[.13] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
+                    {compassState.loading ? "Preparing your suggestion…" : compassState.result ? "Refresh suggestion" : "Ask Compass for a suggestion"}
+                  </button>
+                  {compassState.error && <p role="status" className="mt-3 text-xs leading-relaxed text-rose-100/80">{compassState.error}</p>}
+                  {compassState.result && <div className="mt-3 rounded-lg border border-emerald-100/15 bg-emerald-100/[.045] p-3">
+                    <p className="text-xs leading-relaxed text-white/75">{compassState.result.summary}</p>
+                    <p className="mt-2 text-xs font-medium text-emerald-50">{compassState.result.choice}</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-white/60">{compassState.result.nextStep}</p>
+                    <p className="mt-2 text-[10px] text-white/40">A suggestion, not a rule. Keep it, change it, or leave it.</p>
+                  </div>}
+                </div>
+              )}
               {reflection.nextMove && <button type="button" onClick={() => {
                 const move = SUPPORT_MOVES.find((item) => item.id === reflection.nextMove);
                 if (!move) return;

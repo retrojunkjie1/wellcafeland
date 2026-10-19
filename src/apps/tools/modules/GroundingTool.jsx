@@ -6,6 +6,7 @@ import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract
 import { logToolUsage } from "@/services/toolTelemetry";
 import ToolCharacterGuide from "@/components/tools/ToolCharacterGuide";
 import { useNaturalVoice } from "@/hooks/useNaturalVoice";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 import GroundingPanorama from "./GroundingPanorama";
 import "./GroundingTool.css";
 
@@ -47,6 +48,10 @@ const ORIENTATION_CHOICES = [
 const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [phase, setPhase] = useState("choose");
+  const [anchorLoading, setAnchorLoading] = useState(false);
+  const [anchorSuggestion, setAnchorSuggestion] = useState(null);
+  const [includeAnchorSuggestion, setIncludeAnchorSuggestion] = useState(false);
+  const [anchorError, setAnchorError] = useState("");
   const startedAtRef = useRef(null);
   const completedRef = useRef(false);
   const voice = useNaturalVoice("marin");
@@ -89,7 +94,31 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
     completedRef.current = false;
     startedAtRef.current = Date.now();
     setPhase("active");
-    void voice.play(`${activeChoice.cue} ${activeChoice.guidance}`);
+    void voice.play(`${includeAnchorSuggestion && anchorSuggestion ? `${anchorSuggestion.invitation} ` : ""}${activeChoice.cue} ${activeChoice.guidance}`);
+  };
+
+  const requestAnchorVariation = async () => {
+    if (!activeChoice || anchorLoading) return;
+    setAnchorLoading(true);
+    setAnchorError("");
+    setAnchorSuggestion(null);
+    setIncludeAnchorSuggestion(false);
+    try {
+      const { result } = await runWellnessExperience("practice.grounding-variation", {
+        question: `The person selected this grounding anchor: "${activeChoice.title}". Existing cue: "${activeChoice.cue}". Offer one brief alternative sensory invitation that stays within this anchor. Do not assume distress, trauma, danger, or personal circumstances.`,
+      });
+      if (typeof result.invitation !== "string" || !result.invitation.trim()) {
+        throw new Error("Anchor did not return a usable variation.");
+      }
+      setAnchorSuggestion({
+        invitation: result.invitation.trim().slice(0, 300),
+        nextStep: typeof result.nextStep === "string" ? result.nextStep.trim().slice(0, 240) : "",
+      });
+    } catch (error) {
+      setAnchorError(error?.message || "A cue variation could not be created. Your selected practice is still ready.");
+    } finally {
+      setAnchorLoading(false);
+    }
   };
 
   const tryAnotherAnchor = () => {
@@ -158,7 +187,7 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
                       key={id}
                       type="button"
                       aria-pressed={isSelected}
-                      onClick={() => { voice.stop(); setSelectedChoice(id); }}
+                      onClick={() => { voice.stop(); setSelectedChoice(id); setAnchorSuggestion(null); setIncludeAnchorSuggestion(false); setAnchorError(""); }}
                       className={`grounding-practice__choice ${isSelected ? "is-selected" : ""}`}
                     >
                       <span className="grounding-practice__choice-icon"><ChoiceIcon aria-hidden="true" /></span>
@@ -175,6 +204,27 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
                 <div className="grounding-practice__selected-cue">
                   <span className="grounding-practice__step">YOUR CUE</span>
                   <p>{activeChoice.cue}</p>
+                  <div className="grounding-practice__anchor-assist">
+                    <div className="grounding-practice__anchor-assist-head">
+                      <div>
+                        <span className="grounding-practice__anchor-title">A different wording, if useful</span>
+                        <p className="grounding-practice__anchor-privacy">Anchor receives only the cue you chose. Nothing about your personal situation is sent.</p>
+                      </div>
+                      <button type="button" onClick={requestAnchorVariation} disabled={anchorLoading} className="grounding-practice__anchor-button">
+                        {anchorLoading ? "Creating…" : anchorSuggestion ? "Try another wording" : "Suggest a wording"}
+                      </button>
+                    </div>
+                    {anchorSuggestion && (
+                      <div className="grounding-practice__anchor-result" aria-live="polite">
+                        <p>{anchorSuggestion.invitation}</p>
+                        {anchorSuggestion.nextStep && <p className="grounding-practice__anchor-next">{anchorSuggestion.nextStep}</p>}
+                        <button type="button" aria-pressed={includeAnchorSuggestion} onClick={() => setIncludeAnchorSuggestion((included) => !included)} className="grounding-practice__anchor-use">
+                          {includeAnchorSuggestion ? "Added to spoken guidance · remove" : "Include this in spoken guidance"}
+                        </button>
+                      </div>
+                    )}
+                    {anchorError && <p role="alert" className="grounding-practice__anchor-error">{anchorError}</p>}
+                  </div>
                   <button type="button" onClick={beginPause} className="grounding-practice__primary">
                     Begin this pause <span aria-hidden="true">→</span>
                   </button>

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LogIn, LogOut, UserRound, UserRoundCog, Eye, Menu, X, Sun, Moon, Home, MessageCircle, Compass, LifeBuoy, HeartHandshake, Activity, Settings, CalendarDays, HandHeart, Users, ArrowLeftRight } from "lucide-react";
+import { LogIn, LogOut, UserRound, UserRoundCog, Eye, Menu, X, Sun, Moon, Home, MessageCircle, Compass, LifeBuoy, HeartHandshake, Activity, Settings, CalendarDays, HandHeart, Users, ArrowLeftRight, BookOpen } from "lucide-react";
 import { useAdminClaim } from "@/hooks/useAdminClaim";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { useOSStore } from "@/stores/useOSStore";
@@ -110,7 +110,7 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
   const toggleTheme = () => setThemeMode(lightMode ? "deep-night" : "dawn");
   const switchWorkspace = (workspace) => {
     if (workspace === "admin" && localAdminCheckUnavailable) {
-      window.location.assign("https://wellnesscafelanding.web.app/admin/console");
+      window.location.assign("/admin/console");
       return;
     }
     if (!selectWorkspace(workspace)) return;
@@ -180,7 +180,7 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
               <span className="wc-topbar-control-label">Menu</span>
             </button>
             {menuOpen && (
-              <nav id="wc-primary-navigation" className="wc-primary-navigation" aria-label="Main navigation">
+              <nav id="wc-primary-navigation" className="wc-primary-navigation" aria-label="Main navigation" data-tour="navigation-menu">
                 {canSwitchWorkspace && <>
                   <p className="wc-navigation-eyebrow">Switch workspace</p>
                   {availableWorkspaces.map((workspace) => (
@@ -225,7 +225,7 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
                 </>}
                 {adminReady && isAdmin && (
                   localAdminCheckUnavailable ? (
-                    <a href="https://wellnesscafelanding.web.app/admin/console" className="wc-navigation-link wc-navigation-link--admin">
+                    <a href="/admin/console" className="wc-navigation-link wc-navigation-link--admin">
                       <Eye className="h-4 w-4" aria-hidden="true" />
                       <span>Open God-Eye admin on production</span>
                     </a>
@@ -237,6 +237,12 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
                   )
                 )}
                 {activeWorkspace === "admin" && (identityIsAdmin || (adminReady && isAdmin)) && !isProvider && <Link to="/provider" className="wc-navigation-link"><HandHeart className="h-4 w-4" aria-hidden="true" /><span>Apply to offer support</span></Link>}
+                <div className="mt-2 border-t border-white/10 pt-2">
+                  <Link to="/getting-started" className="wc-navigation-link" aria-current={location.pathname === "/getting-started" ? "page" : undefined}>
+                    <BookOpen className="h-4 w-4" aria-hidden="true" />
+                    <span>How to use WellnessCafe</span>
+                  </Link>
+                </div>
               </nav>
             )}
           </div>
@@ -269,7 +275,7 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
                 <span className="wc-account-panel__role">{roleLabel}</span>
                 {localAdminCheckUnavailable && (
                   <p className="wc-account-panel__hint" role="status">
-                    Alpha Owner recognized. Local App Check is unavailable, so live God-Eye controls open on the production site.
+                    Administrator tools are available on the live WellnessCafe site.
                   </p>
                 )}
                 {availableWorkspaces.length > 1 && (
@@ -303,8 +309,8 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
                   <>
                     {identityIsAdmin || (adminReady && isAdmin) ? (
                       localAdminCheckUnavailable ? (
-                        <a href="https://wellnesscafelanding.web.app/admin/console" className="wc-account-action" onClick={() => setAccountOpen(false)}>
-                          <Eye className="h-4 w-4" aria-hidden="true" /><span>Open God-Eye admin on production</span>
+                        <a href="/admin/console" className="wc-account-action" onClick={() => setAccountOpen(false)}>
+                          <Eye className="h-4 w-4" aria-hidden="true" /><span>Open God-Eye admin</span>
                         </a>
                       ) : (
                         <Link to="/admin/console" className="wc-account-action" onClick={() => setAccountOpen(false)}>

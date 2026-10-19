@@ -4,9 +4,54 @@ import { describe, expect, it, vi } from "vitest";
 import GroundingTool from "./GroundingTool";
 import { logToolUsage } from "@/services/toolTelemetry";
 
+const { callAgent, voicePlay } = vi.hoisted(() => ({ callAgent: vi.fn(), voicePlay: vi.fn() }));
+
 vi.mock("@/services/toolTelemetry", () => ({ logToolUsage: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent }));
+vi.mock("@/hooks/useNaturalVoice", () => ({
+  useNaturalVoice: () => ({
+    status: "idle",
+    playbackProgress: 0,
+    play: voicePlay,
+    pause: vi.fn(),
+    resume: vi.fn(),
+    stop: vi.fn(),
+  }),
+}));
+vi.mock("@/utils/toolContract", () => ({
+  createToolResult: vi.fn((toolId, title, summary, data) => ({ toolId, title, summary, data })),
+  safeComplete: vi.fn((callback, result) => callback?.(result)),
+  safeCancel: vi.fn((callback) => callback?.()),
+}));
 
 describe("GroundingTool", () => {
+  it("offers an optional Anchor wording based only on the chosen cue and includes it in voice only by choice", async () => {
+    callAgent.mockResolvedValue({
+      result: {
+        summary: "A tactile grounding option.",
+        invitation: "Notice one small detail in the object's surface.",
+        nextStep: "Set it down whenever you are ready.",
+      },
+    });
+    render(<GroundingTool />);
+
+    fireEvent.click(screen.getByText("Hold a familiar object").closest("button"));
+    fireEvent.click(screen.getByRole("button", { name: "Suggest a wording" }));
+
+    expect(await screen.findByText("Notice one small detail in the object's surface.")).toBeInTheDocument();
+    expect(callAgent).toHaveBeenCalledOnce();
+    expect(callAgent).toHaveBeenCalledWith("anchor", {
+      question: expect.stringContaining('selected this grounding anchor: "Touch"'),
+    });
+    expect(JSON.stringify(callAgent.mock.calls)).not.toContain("private");
+
+    fireEvent.click(screen.getByRole("button", { name: "Include this in spoken guidance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Begin this pause" }));
+    expect(voicePlay).toHaveBeenCalledOnce();
+    expect(voicePlay.mock.calls[0][0]).toContain("Notice one small detail in the object's surface.");
+    expect(voicePlay.mock.calls[0][0]).toContain("hold a familiar object and notice its weight or texture");
+  });
+
   it("offers a visual room reference and a small set of optional grounding cues", () => {
     render(<GroundingTool />);
 

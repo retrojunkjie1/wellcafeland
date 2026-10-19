@@ -23,6 +23,7 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
   const [processing, setProcessing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [serviceConsent, setServiceConsent] = useState(false);
+  const [summaryConsent, setSummaryConsent] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
@@ -117,24 +118,38 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
       }
 
       setTranscript(transcriptionResult.text);
-
-      const summaryResult = await callAgent("oracle", {
-        mode: "voice_journal_summary",
-        transcript: transcriptionResult.text,
-        instruction: "Summarize without diagnosis, emotional labeling, or added assumptions. Keep the user's meaning intact.",
-      });
-      
-      if (summaryResult?.reply) {
-        setSummary(summaryResult.reply);
-      } else {
-        setSummary("");
-      }
+      setSummary("");
     } catch (err) {
       console.error("Journal processing error:", err);
       setErrorMessage(err?.message || "We couldn’t process this recording. Please try again or use text instead.");
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleGenerateSummary = async () => {
+    if (!transcript || !summaryConsent || processing) return;
+    setProcessing(true);
+    setErrorMessage("");
+    try {
+      const summaryResult = await callAgent("oracle", {
+        mode: "voice_journal_summary",
+        transcript,
+        instruction: "Summarize without diagnosis, emotional labeling, or added assumptions. Keep the user's meaning intact.",
+      });
+      setSummary(summaryResult?.reply || "The guide could not prepare a summary. Your transcript is still available to review and save.");
+    } catch (err) {
+      console.error("Journal summary error:", err);
+      setErrorMessage("The summary could not be prepared. Your transcript is still here and can be saved without a summary.");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const handleTranscriptChange = (event) => {
+    setTranscript(event.target.value.slice(0, 12000));
+    setSummary("");
+    setSummaryConsent(false);
   };
 
   const handleSave = async () => {
@@ -192,12 +207,12 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
         {!saved && (
           <div className="mx-auto max-w-lg space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs leading-relaxed text-white/65">
-              Audio is sent to a transcription service. The transcript is then sent to an AI service for an optional summary. If saved, {user && db ? "it is stored in your account." : "it stays in this browser."} Review our{" "}
+              Your audio is sent to a transcription service. The transcript stays here unless you separately choose an AI summary. If saved, {user && db ? "your entry is stored in your account." : "your entry stays in this browser."} Review our{" "}
               <a href="/privacy" className="text-amber-200 underline underline-offset-4">Privacy Notice</a>.
             </p>
             <label className="flex min-h-11 items-start gap-3 text-xs leading-relaxed text-white/75">
               <input type="checkbox" checked={serviceConsent} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300" />
-              I choose to send this recording and transcript to those services for this entry.
+              I choose to send this recording for transcription.
             </label>
           </div>
         )}
@@ -248,8 +263,21 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
             <div className="w-full space-y-4">
               <div className="lux-card p-4 border border-white/10 bg-white/5">
                 <label htmlFor="voice-journal-transcript" className="mb-2 block text-sm font-medium text-white/70">Review and edit your transcript</label>
-                <textarea id="voice-journal-transcript" value={transcript} onChange={(event) => setTranscript(event.target.value.slice(0, 12000))} maxLength={12000} rows={8} className="w-full resize-y rounded-lg border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-white focus:border-amber-200/40 focus:outline-none" />
+                <textarea id="voice-journal-transcript" value={transcript} onChange={handleTranscriptChange} maxLength={12000} rows={8} className="w-full resize-y rounded-lg border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-white focus:border-amber-200/40 focus:outline-none" />
               </div>
+
+              {!summary && (
+                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <p className="text-xs leading-relaxed text-white/65">Optional: send the transcript you reviewed above to Oracle AI for a brief summary. You can save your entry without doing this.</p>
+                  <label className="flex min-h-11 items-start gap-3 text-xs leading-relaxed text-white/75">
+                    <input type="checkbox" checked={summaryConsent} disabled={processing} onChange={(event) => setSummaryConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300 disabled:opacity-50" />
+                    I choose to send this transcript to Oracle AI for a summary.
+                  </label>
+                  <button type="button" onClick={handleGenerateSummary} disabled={!summaryConsent || processing} className="min-h-11 rounded-lg border border-amber-200/30 bg-amber-200/10 px-4 text-sm font-medium text-amber-100 disabled:cursor-not-allowed disabled:opacity-40">
+                    {processing ? "Preparing summary…" : "Generate optional summary"}
+                  </button>
+                </div>
+              )}
 
               {summary && (
                 <div className="lux-card p-4 border border-white/10 bg-white/5">
@@ -258,7 +286,7 @@ const VoiceJournal = ({ onComplete, onCancel }) => {
                 </div>
               )}
 
-              <button type="button" onClick={() => { setTranscript(""); setSummary(""); setSaved(false); setErrorMessage(""); }} className="min-h-11 rounded-lg px-3 text-sm text-white/60 underline underline-offset-4 hover:text-white">Discard and record again</button>
+              <button type="button" onClick={() => { setTranscript(""); setSummary(""); setServiceConsent(false); setSummaryConsent(false); setSaved(false); setErrorMessage(""); }} className="min-h-11 rounded-lg px-3 text-sm text-white/60 underline underline-offset-4 hover:text-white">Discard and record again</button>
             </div>
           )}
         </div>

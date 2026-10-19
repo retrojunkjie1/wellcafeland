@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Bell } from "lucide-react";
+import callAgent from "../../ai/agents/agentClient";
 
 function PolicySwitch({ label, checked, onChange, disabled = false }) {
   return (
@@ -22,6 +23,32 @@ function PolicySwitch({ label, checked, onChange, disabled = false }) {
 
 export default function AdminNotificationPolicy({ notifications, onChange, disabled = false, hidden = false }) {
   const updateQuietHours = (patch) => onChange("quietHours", { ...notifications.quietHours, ...patch });
+  const [updateType, setUpdateType] = useState("feature");
+  const [audience, setAudience] = useState("everyone");
+  const [draft, setDraft] = useState(null);
+  const [draftState, setDraftState] = useState({ loading: false, error: "", copied: false });
+
+  const createDraft = async () => {
+    setDraftState({ loading: true, error: "", copied: false });
+    setDraft(null);
+    try {
+      const response = await callAgent("towncrier", { updateType, audience });
+      setDraft(response.result || response);
+      setDraftState({ loading: false, error: "", copied: false });
+    } catch (error) {
+      setDraftState({ loading: false, error: error?.message || "Towncrier could not prepare a draft. Try again later.", copied: false });
+    }
+  };
+
+  const copyDraft = async () => {
+    if (!draft) return;
+    try {
+      await navigator.clipboard.writeText(`${draft.title}\n\n${draft.message}`);
+      setDraftState((current) => ({ ...current, copied: true }));
+    } catch {
+      setDraftState((current) => ({ ...current, error: "Copy is unavailable here. Select the draft text and copy it manually." }));
+    }
+  };
 
   return (
     <section id="god-eye-settings-panel-notifications" role="tabpanel" aria-labelledby="god-eye-settings-tab-notifications" hidden={hidden} className="lux-card space-y-4 p-4">
@@ -34,6 +61,47 @@ export default function AdminNotificationPolicy({ notifications, onChange, disab
       <p className="rounded-xl border border-amber-200/15 bg-amber-100/[0.035] p-3 text-sm leading-relaxed text-foreground/75">
         These preferences can be saved for policy planning. They do not send push, email, or in-app alerts yet.
       </p>
+
+      <section aria-labelledby="towncrier-draft-title" className="rounded-2xl border border-border/70 bg-background/40 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 id="towncrier-draft-title" className="text-sm font-semibold text-foreground">Draft a service update</h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">Towncrier prepares editable wording from the selected category. Review every detail before publication.</p>
+          </div>
+          <span className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">Draft only · not sent</span>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="text-sm text-foreground/80">
+            Update type
+            <select aria-label="Update type" disabled={disabled || draftState.loading} value={updateType} onChange={(event) => setUpdateType(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground">
+              <option value="feature">New feature or practice</option>
+              <option value="maintenance">Planned maintenance</option>
+              <option value="privacy">Privacy or account settings</option>
+              <option value="resource">General support resource</option>
+            </select>
+          </label>
+          <label className="text-sm text-foreground/80">
+            Audience
+            <select aria-label="Audience" disabled={disabled || draftState.loading} value={audience} onChange={(event) => setAudience(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground">
+              <option value="everyone">Clients and practitioners</option>
+              <option value="clients">Clients</option>
+              <option value="practitioners">Practitioners</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" disabled={disabled || draftState.loading} onClick={createDraft} className="mt-3 min-h-11 rounded-xl border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50">
+          {draftState.loading ? "Preparing draft…" : "Prepare announcement draft"}
+        </button>
+        {draftState.error && <p role="alert" className="mt-3 text-sm text-rose-300">{draftState.error}</p>}
+        {draft && (
+          <div aria-live="polite" className="mt-4 space-y-3 rounded-xl border border-border bg-card p-4">
+            <div><h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Draft title</h4><p className="mt-1 text-base font-semibold text-foreground">{draft.title}</p></div>
+            <div><h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Message</h4><p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-foreground">{draft.message}</p></div>
+            <p className="text-xs leading-relaxed text-muted-foreground">Review before use: {draft.reviewNote}</p>
+            <button type="button" onClick={copyDraft} className="min-h-10 rounded-lg border border-border px-3 text-sm font-medium text-foreground">{draftState.copied ? "Copied draft" : "Copy title and message"}</button>
+          </div>
+        )}
+      </section>
 
       <div className="space-y-4">
         <PolicySwitch label="Enable notification policy" checked={notifications.enabled} onChange={(value) => onChange("enabled", value)} disabled={disabled} />

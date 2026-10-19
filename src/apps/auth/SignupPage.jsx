@@ -6,6 +6,7 @@ import { auth, db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
 import { HeartHandshake, UserRound } from "lucide-react";
+import PasswordInput from "../../components/auth/PasswordInput";
 
 const SignupPage = () => {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ const SignupPage = () => {
     setLoading(true);
 
     if (!auth || !db) {
-      setError("Authentication is not available. Please check your Firebase configuration.");
+      setError("Account creation is temporarily unavailable. Please try again later or contact WellnessCafe support.");
       setLoading(false);
       return;
     }
@@ -104,8 +105,10 @@ const SignupPage = () => {
         errorMessage = "Invalid email address.";
       } else if (err.code === "auth/weak-password") {
         errorMessage = "Password is too weak.";
-      } else if (err.message) {
-        errorMessage = err.message;
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage = "Too many attempts were made. Wait a few minutes, then try again.";
+      } else if (err.code === "auth/network-request-failed") {
+        errorMessage = "We couldn’t connect just now. Check your internet connection and try again.";
       }
 
       setError(errorMessage);
@@ -158,7 +161,7 @@ const SignupPage = () => {
           </fieldset>
 
           {error && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div role="alert" aria-live="assertive" className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -201,10 +204,9 @@ const SignupPage = () => {
               <label htmlFor="password" className="block text-xs font-medium text-muted-foreground">
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

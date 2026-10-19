@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Pause, Play, Square, Volume2 } from "lucide-react";
-import { callAgent } from "../../../agents/aiAgents";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 import { logToolUsage } from "../../../services/toolTelemetry";
 import { trackAction } from "../../../services/telemetry";
 import ToolCharacterGuide from "@/components/tools/ToolCharacterGuide";
@@ -90,33 +90,14 @@ const AffirmationsTool = ({ tool }) => {
       });
 
     try {
-      const response = await callAgent("healer_spiritual", {
-        question: `Write 4 to 6 short, optional supportive phrases for someone who selected ${CONCERN_TYPES.find((concern) => concern.id === selectedConcern)?.label || selectedConcern}. Make them compassionate, grounded, and specific to that topic. Do not make promises, diagnose, assume beliefs, or pressure the person. Each phrase should stand alone and be easy to adapt or ignore. Return a JSON object with a short summary and a phrases array.`,
-      });
+      const { result: responseResult } = await runWellnessExperience("recovery.affirmation", { concern: selectedConcern });
+      const phrases = Array.isArray(responseResult?.phrases)
+        ? responseResult.phrases.filter((phrase) => typeof phrase === "string" && phrase.trim().length > 0).slice(0, 6)
+        : [];
 
-      if (response && response.reply) {
-        // Parse response - could be a list or text
-        const text = response.reply;
-        // Try to extract list items (numbered, bulleted, or line-separated)
-        const lines = text
-          .split(/\n+/)
-          .map((line) => line.replace(/^[\d\-\u2022*]\s*/, "").trim())
-          .filter((line) => line.length > 10); // Filter out very short lines
-
-        if (lines.length > 0) {
-          setAffirmations(lines.slice(0, 10)); // Max 10 affirmations
-          setActiveIndex(0);
-        } else {
-          // Fallback: split by sentences
-          const sentences = text
-            .split(/[.!?]+/)
-            .map((s) => s.trim())
-            .filter((s) => s.length > 10);
-          setAffirmations(sentences.slice(0, 10));
-          setActiveIndex(0);
-        }
-
-        const generatedCount = lines.length > 0 ? Math.min(lines.length, 10) : text.split(/[.!?]+/).filter((line) => line.trim().length > 10).length;
+      if (phrases.length >= 4) {
+        setAffirmations(phrases);
+        setActiveIndex(0);
 
         // Log usage without including the selected health concern.
         const now = new Date().getTime();
@@ -125,13 +106,13 @@ const AffirmationsTool = ({ tool }) => {
           completedAt: now,
           durationMs: 0,
           context: {
-            count: generatedCount,
+            count: phrases.length,
           },
         }).catch((err) => console.warn("Affirmations telemetry failed:", err));
       } else {
         setAffirmations(STARTER_PHRASES[selectedConcern] || STARTER_PHRASES.anxiety);
         setActiveIndex(0);
-        setNotice("Personalized phrases are unavailable right now. These optional starter phrases are ready to use; you can retry at any time.");
+        setNotice("We couldn’t prepare a complete set of personalized phrases. These optional starter phrases are ready to use; you can retry at any time.");
       }
     } catch (err) {
       // Log the failure code only. Do not log the user's selected concern or generated content.

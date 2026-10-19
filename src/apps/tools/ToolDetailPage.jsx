@@ -26,6 +26,7 @@ import InteractiveJourneyView from "@/components/learning/InteractiveJourneyView
 import { getTopic } from "@/engines/learningPaths/learningPathsEngine";
 import { logDebug } from "@/lib/debug";
 import { createToolReturnState, resolveToolReturnTarget, returnFromTool } from "@/navigation/toolReturn";
+import { callAgent } from "@/ai/agents/agentClient";
 import { recordPrivatePracticeCompletion } from "@/services/privatePracticeProgress";
 import NotReadyCard from "@/components/system/NotReadyCard";
 import GroundingTool from "./modules/GroundingTool";
@@ -42,6 +43,7 @@ import SpecializedPathwayTool from "./modules/SpecializedPathwayTool";
 import LowEnergyPlanTool from "./modules/LowEnergyPlanTool";
 import VisitPrepTool from "./modules/VisitPrepTool";
 import CareHandoffTool from "./modules/CareHandoffTool";
+import { requestBreathkeeperCue as getBreathkeeperCue } from "./modules/breathkeeperGuidance";
 
 const MODULE_TOOLS = {
   grounding: GroundingTool,
@@ -152,6 +154,26 @@ const ToolDetailPage = () => {
   const moduleCompleted = completedToolId === decodedId;
   const [cycles, setCycles] = useState(0);
   const [breathingPattern, setBreathingPattern] = useState([4, 0, 6, 0]);
+  const [breathkeeperCue, setBreathkeeperCue] = useState("");
+  const [breathkeeperLoading, setBreathkeeperLoading] = useState(false);
+  const [breathkeeperError, setBreathkeeperError] = useState("");
+  const [includeBreathkeeperCue, setIncludeBreathkeeperCue] = useState(false);
+  const canUseBreathkeeper = breathingPattern.join() === "4,0,6,0";
+
+  const requestBreathkeeperCue = async () => {
+    if (!canUseBreathkeeper || breathkeeperLoading) return;
+    setBreathkeeperLoading(true);
+    setBreathkeeperError("");
+    setBreathkeeperCue("");
+    setIncludeBreathkeeperCue(false);
+    try {
+      setBreathkeeperCue(await getBreathkeeperCue(callAgent));
+    } catch (error) {
+      setBreathkeeperError(error?.message || "A fresh cue could not be prepared. The breathing guide is still ready.");
+    } finally {
+      setBreathkeeperLoading(false);
+    }
+  };
 
   useEffect(() => {
     const syncTheme = (event) => {
@@ -427,7 +449,7 @@ const ToolDetailPage = () => {
               <legend className={`text-sm font-medium ${darkMode ? "text-white/75" : "text-slate-700"}`}>Choose a breathing rhythm</legend>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {rhythmOptions.map((option) => (
-                  <button key={option.label} type="button" aria-pressed={breathingPattern.join() === option.pattern.join()} onClick={() => setBreathingPattern(option.pattern)} className={`min-h-16 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors disabled:opacity-50 ${darkMode ? "border-white/15 text-white/80 hover:bg-white/5 aria-pressed:border-amber-200/60 aria-pressed:bg-amber-100/[0.06] aria-pressed:text-amber-100" : "border-slate-300 text-slate-700 hover:bg-slate-100 aria-pressed:border-amber-700/60 aria-pressed:bg-amber-50 aria-pressed:text-amber-950"}`}>
+                  <button key={option.label} type="button" aria-pressed={breathingPattern.join() === option.pattern.join()} onClick={() => { setBreathingPattern(option.pattern); setBreathkeeperCue(""); setIncludeBreathkeeperCue(false); setBreathkeeperError(""); }} className={`min-h-16 rounded-xl border px-3 py-2.5 text-left text-sm transition-colors disabled:opacity-50 ${darkMode ? "border-white/15 text-white/80 hover:bg-white/5 aria-pressed:border-amber-200/60 aria-pressed:bg-amber-100/[0.06] aria-pressed:text-amber-100" : "border-slate-300 text-slate-700 hover:bg-slate-100 aria-pressed:border-amber-700/60 aria-pressed:bg-amber-50 aria-pressed:text-amber-950"}`}>
                     <span className="block font-medium">{option.label}</span>
                     <span className={`mt-1 block text-xs ${darkMode ? "text-white/55" : "text-slate-500"}`}>{option.short}</span>
                   </button>
@@ -454,10 +476,35 @@ const ToolDetailPage = () => {
               </section>
             )}
             <p className={`text-xs leading-relaxed ${darkMode ? "text-white/55" : "text-slate-600"}`}>Pauses are optional. If counting or breath focus feels uncomfortable, choose natural breathing or stop the practice.</p>
+            {!isSessionActive && canUseBreathkeeper && (
+              <section aria-labelledby="breathkeeper-cue-title" className={`rounded-2xl border p-4 sm:p-5 ${darkMode ? "border-emerald-100/15 bg-emerald-950/20" : "border-emerald-900/15 bg-emerald-50/70"}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 id="breathkeeper-cue-title" className={`text-sm font-semibold ${darkMode ? "text-emerald-100" : "text-emerald-950"}`}>Optional fresh guidance</h3>
+                    <p className={`mt-1 text-xs leading-relaxed ${darkMode ? "text-white/65" : "text-slate-600"}`}>Breathkeeper can offer one short cue for the 4–6 practice. It cannot change the timer.</p>
+                  </div>
+                  <button type="button" onClick={requestBreathkeeperCue} disabled={breathkeeperLoading} className={`min-h-10 rounded-full border px-4 text-sm font-medium disabled:opacity-60 ${darkMode ? "border-emerald-100/20 bg-white/[0.04] text-emerald-50 hover:bg-white/[0.08]" : "border-emerald-800/25 bg-white text-emerald-950 hover:bg-emerald-100"}`}>
+                    {breathkeeperLoading ? "Preparing cue…" : breathkeeperCue ? "Try another cue" : "Ask Breathkeeper"}
+                  </button>
+                </div>
+                {breathkeeperCue && (
+                  <div className={`mt-3 rounded-xl border p-3 ${darkMode ? "border-white/10 bg-slate-950/40" : "border-emerald-900/10 bg-white"}`}>
+                    <p className={`text-sm leading-relaxed ${darkMode ? "text-white/85" : "text-slate-800"}`}>{breathkeeperCue}</p>
+                    <label className={`mt-3 flex min-h-10 items-center gap-2 text-xs ${darkMode ? "text-white/70" : "text-slate-700"}`}>
+                      <input type="checkbox" checked={includeBreathkeeperCue} onChange={(event) => setIncludeBreathkeeperCue(event.target.checked)} className="h-4 w-4 accent-emerald-600" />
+                      Include this cue in the spoken introduction
+                    </label>
+                    <p className={`mt-1 text-[11px] leading-relaxed ${darkMode ? "text-white/50" : "text-slate-500"}`}>Only the selected 4–6 rhythm is sent. No journal entry or personal reflection is included.</p>
+                  </div>
+                )}
+                {breathkeeperError && <p role="status" className={`mt-3 text-sm ${darkMode ? "text-amber-100" : "text-amber-900"}`}>{breathkeeperError}</p>}
+              </section>
+            )}
           <BreathingSessionView
             isActive={isSessionActive}
             darkMode={darkMode}
             pattern={breathingPattern}
+            openingCue={includeBreathkeeperCue && canUseBreathkeeper ? breathkeeperCue : ""}
             voiceEnabled
             audioContext={breathingAudioContext}
           />

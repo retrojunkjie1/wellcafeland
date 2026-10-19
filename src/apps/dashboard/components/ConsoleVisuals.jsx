@@ -136,14 +136,14 @@ export function AgentReadinessMeter({ total, implemented, enabled, loading, erro
   const paused = available - live;
   const unconnected = registered - available;
   const segments = [
-    { label: "Live and enabled", count: live, color: PALETTE.mint },
+    { label: "Enabled for new requests", count: live, color: PALETTE.mint },
     { label: "Paused", count: paused, color: PALETTE.gold },
     { label: "No production handler", count: unconnected, color: "rgba(255,255,255,.18)" },
   ];
   return (
     <div className="flex h-56 flex-col justify-center">
       <div className="mb-5 flex items-end justify-between gap-4">
-        <div><p className="text-4xl font-semibold tabular-nums text-white">{live}<span className="text-xl text-white/40"> / {registered}</span></p><p className="mt-1 text-sm text-white/55">registered agents running</p></div>
+        <div><p className="text-4xl font-semibold tabular-nums text-white">{live}<span className="text-xl text-white/40"> / {registered}</span></p><p className="mt-1 text-sm text-white/55">catalog agents enabled</p></div>
         <div className="text-right"><p className="text-xs uppercase tracking-[.14em] text-white/40">Handler coverage</p><p className="mt-1 text-lg font-medium tabular-nums text-white/75">{registered ? Math.round(available / registered * 100) : "—"}%</p></div>
       </div>
       <div className="god-eye-readiness-track flex h-4 overflow-hidden rounded-full bg-white/[.07] shadow-[0_0_28px_rgba(157,231,199,.08)]" role="img" aria-label={segments.map(({ label, count }) => `${label}: ${count}`).join(", ")}>

@@ -151,11 +151,11 @@ export async function blockUser(userId = null, targetId) {
     const connectionsDoc = await getDoc(connectionsRef);
     const currentData = connectionsDoc.exists() ? connectionsDoc.data() : {};
     
-    await updateDoc(connectionsRef, {
+    await setDoc(connectionsRef, {
       friends: arrayRemove(targetId),
       trusted: arrayRemove(targetId),
       blocked: arrayUnion(targetId),
-    });
+    }, { merge: true });
 
     logInfo("connectionsService", "User blocked", { userId: currentUserId, targetId });
     return { ok: true };
@@ -264,4 +264,3 @@ export default {
   joinCircle,
   leaveCircle,
 };
-

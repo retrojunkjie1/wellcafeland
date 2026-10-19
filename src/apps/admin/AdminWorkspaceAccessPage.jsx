@@ -12,7 +12,7 @@ const PROVIDER_TYPES = [
   ["primary-care", "Primary care clinician (PCP)"],
 ];
 
-const WORKSPACE_URL = "https://wellnesscafelanding.web.app/provider/apply?onboarding=1";
+const WORKSPACE_URL = "/provider/apply?onboarding=1";
 const APPLICATION_STATUS = {
   "not-started": "Not started",
   pending: "Submitted · awaiting review",
@@ -67,7 +67,7 @@ export default function AdminWorkspaceAccessPage() {
       setEvents(Array.isArray(result.events) ? result.events : []);
       setEventsLoaded(true);
     } catch (err) {
-      setEventsError(err?.message || "Recent grants could not be loaded.");
+      setEventsError("Recent access changes could not be loaded. Please try again.");
     } finally {
       setEventsLoading(false);
     }
@@ -89,7 +89,7 @@ export default function AdminWorkspaceAccessPage() {
         setProviderType(result.account.providerType || "");
       }
     } catch (err) {
-      setError(err?.message || "The account could not be searched.");
+      setError("We couldn’t find that account right now. Check the email and try again.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ export default function AdminWorkspaceAccessPage() {
       setAssignedAccount(result.account || account);
       setNotice(`${typeLabel} workspace access is active. The person must sign in again or refresh their sign-in before the new access appears.`);
     } catch (err) {
-      setError(err?.message || "Workspace access could not be assigned.");
+      setError("Practitioner access could not be added. Please try again or contact support.");
     } finally {
       setAssigning(false);
     }
@@ -125,7 +125,7 @@ export default function AdminWorkspaceAccessPage() {
       setNotice("Practitioner workspace access is revoked. Admin and client workspaces, profile review, directory status, and client connection records are unchanged. The account holder must refresh their sign-in.");
       if (eventsLoaded) loadEvents();
     } catch (err) {
-      setError(err?.message || "Workspace access could not be revoked.");
+      setError("Practitioner access could not be removed. Please try again or contact support.");
     } finally {
       setRevoking(false);
     }
@@ -142,7 +142,7 @@ export default function AdminWorkspaceAccessPage() {
       <form onSubmit={search} className="mt-7 rounded-2xl border border-white/10 bg-white/[0.035] p-4 sm:p-5">
         <label htmlFor="workspace-account-email" className="text-sm font-medium text-white/80">Account email</label>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row"><input id="workspace-account-email" type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="person@example.com" className="min-h-12 min-w-0 flex-1 rounded-xl border border-white/12 bg-slate-950 px-4 text-base text-white outline-none placeholder:text-white/35 focus:border-amber-100/40" /><button type="submit" disabled={loading} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-200 px-5 text-sm font-semibold text-slate-950 disabled:opacity-55"><Search className="h-4 w-4" />{loading ? "Searching…" : "Find account"}</button></div>
-        <p className="mt-2 text-xs leading-relaxed text-white/45">Search checks Firebase Authentication for this exact email; it does not browse or export the user list.</p>
+        <p className="mt-2 text-xs leading-relaxed text-white/45">Search for one exact email address. This tool does not browse or export the full account list.</p>
       </form>
 
       {error && <p role="alert" className="mt-4 rounded-xl border border-rose-200/20 bg-rose-200/[0.06] p-4 text-sm text-rose-100">{error}</p>}
@@ -173,7 +173,7 @@ export default function AdminWorkspaceAccessPage() {
           <p className="mt-2 text-[11px] leading-relaxed text-white/35">Application state is shown without profile details. Preparing an email opens your mail app; WellnessCafe does not send it automatically.</p>
         </div>}
       </section>
-      {!loading && searchedEmail && !account && !error && <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.025] p-5"><h2 className="font-medium">No account found</h2><p className="mt-1 text-sm text-white/55">There is no Firebase Authentication account for {searchedEmail}. Ask them to create an account first, then search again.</p></section>}
+      {!loading && searchedEmail && !account && !error && <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.025] p-5"><h2 className="font-medium">No account found</h2><p className="mt-1 text-sm text-white/55">No WellnessCafe account was found for {searchedEmail}. Ask them to create an account, then search again.</p></section>}
 
       {account && <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs uppercase tracking-wide text-white/45">Account found</p><h2 className="mt-1 break-all text-lg font-semibold">{account.email}</h2>{account.displayName && <p className="mt-1 text-sm text-white/55">{account.displayName}</p>}</div><span className={`rounded-full border px-3 py-1 text-xs ${account.emailVerified ? "border-emerald-200/20 bg-emerald-200/[0.05] text-emerald-100" : "border-amber-200/20 bg-amber-200/[0.05] text-amber-100"}`}>{account.emailVerified ? "Email verified" : "Email not verified"}</span></div>
@@ -182,7 +182,7 @@ export default function AdminWorkspaceAccessPage() {
         {assignedAccount ? <div className="mt-4 rounded-xl border border-emerald-200/15 bg-emerald-100/[0.035] p-4"><div className="flex items-center gap-2 text-sm font-medium text-emerald-100"><Check className="h-4 w-4" />Practitioner workspace access granted</div><p className="mt-2 text-sm leading-relaxed text-white/65">The profile is still private and is not listed or verified. The account holder needs to complete and submit their profile for the existing human review.</p><a href={inviteHref(assignedAccount, providerType)} className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-200 px-4 text-sm font-semibold text-slate-950"><Mail className="h-4 w-4" />Open onboarding email draft</a><p className="mt-2 text-xs leading-relaxed text-white/45">This opens your email app with the recipient, message, and onboarding link filled in. Review it and press Send there. WellnessCafe does not send invitation emails automatically.</p><Link to="/provider/apply?onboarding=1" className="mt-3 inline-flex min-h-10 items-center gap-2 text-sm text-amber-100 underline underline-offset-4">Preview onboarding page <ExternalLink className="h-4 w-4" /></Link></div> : <>
           {account.alreadyHasPractitionerAccess && <p className="mt-4 rounded-xl border border-sky-200/15 bg-sky-100/[0.035] p-3 text-sm leading-relaxed text-sky-50/80">This account already has practitioner workspace access. You can adjust the service type below. Directory approval remains a separate review.</p>}
           {account.isAdmin && !account.alreadyHasPractitionerAccess && <p className="mt-4 rounded-xl border border-amber-200/15 bg-amber-100/[0.04] p-3 text-sm leading-relaxed text-amber-50/85">This adds a practitioner workspace while preserving administrator access. It does not approve a public listing or verify credentials.</p>}
-          {account.disabled ? <p className="mt-4 text-sm text-rose-100">This account is disabled. Re-enable it in Firebase Authentication before granting workspace access.</p> : <>
+          {account.disabled ? <p className="mt-4 text-sm text-rose-100">This account is inactive. Restore the account before granting workspace access.</p> : <>
             <label htmlFor="practitioner-service-type" className="mt-4 block text-sm font-medium text-white/80">Practitioner service</label>
             <select id="practitioner-service-type" value={providerType} onChange={(event) => setProviderType(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-white/12 bg-slate-950 px-3 text-base text-white outline-none focus:border-amber-100/40"><option value="">Choose their service</option>{PROVIDER_TYPES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
             <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-100/10 bg-amber-100/[0.035] p-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-100/75" /><p className="text-sm leading-relaxed text-white/65">This grants access to the practitioner workspace. It does <strong className="font-semibold text-white/85">not</strong> approve a public listing, verify credentials, or make the person appear in search. Their profile still goes through human review.</p></div>

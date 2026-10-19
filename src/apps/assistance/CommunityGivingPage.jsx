@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { EmailAuthProvider, linkWithCredential, sendEmailVerification } from "firebase/auth";
-import { ArrowLeft, Headphones, HeartHandshake, MapPin, PackageCheck, ShieldCheck, Volume2 } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Headphones, HeartHandshake, MapPin, PackageCheck, ShieldCheck, Volume2 } from "lucide-react";
 import { auth } from "@/firebase";
 import {
   applyToCommunityGiving,
@@ -219,6 +219,7 @@ export default function CommunityGivingPage({ initialMode = "need" }) {
   const [application, setApplication] = useState({ displayName: "", organization: "", type: "", state: "", zone: "", categories: [] });
   const [giverEmail, setGiverEmail] = useState("");
   const [giverPassword, setGiverPassword] = useState("");
+  const [showGiverPassword, setShowGiverPassword] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -427,7 +428,7 @@ export default function CommunityGivingPage({ initialMode = "need" }) {
               <h2 className="text-2xl font-bold">Join as a giver</h2>
               <p className="text-lg leading-relaxed text-[#C8D3CC]">Givers are reviewed before they can see requests. Requests show a need and broad area, not a person’s name or address.</p>
               <label className="block space-y-2 text-base font-semibold">Your name or public giver name<input required maxLength={80} value={application.displayName} onChange={(event) => setApplication({ ...application, displayName: event.target.value })} className={fieldClass} autoComplete="name" /></label>
-              {auth.currentUser?.isAnonymous && <div className="grid gap-4 sm:grid-cols-2"><label className="block space-y-2 text-base font-semibold">Email for giver account<input type="email" required autoComplete="email" value={giverEmail} onChange={(event) => setGiverEmail(event.target.value)} className={fieldClass} /></label><label className="block space-y-2 text-base font-semibold">Create a password<input type="password" required minLength={6} autoComplete="new-password" value={giverPassword} onChange={(event) => setGiverPassword(event.target.value)} className={fieldClass} /><span className="block text-sm font-normal text-[#A8B8AF]">At least 6 characters. This keeps your guest requests with your account.</span></label></div>}
+              {auth.currentUser?.isAnonymous && <div className="grid gap-4 sm:grid-cols-2"><label className="block space-y-2 text-base font-semibold">Email for giver account<input type="email" required autoComplete="email" value={giverEmail} onChange={(event) => setGiverEmail(event.target.value)} className={fieldClass} /></label><label className="block space-y-2 text-base font-semibold">Create a password<div className="relative"><input type={showGiverPassword ? "text" : "password"} required minLength={6} autoComplete="new-password" value={giverPassword} onChange={(event) => setGiverPassword(event.target.value)} className={`${fieldClass} pr-14`} /><button type="button" onClick={() => setShowGiverPassword((visible) => !visible)} aria-label={showGiverPassword ? "Hide password" : "Show password"} aria-pressed={showGiverPassword} title={showGiverPassword ? "Hide password" : "Show password"} className="absolute inset-y-0 right-1 inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-[#A8B8AF] transition hover:bg-white/10 hover:text-[#F4F7F5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B5E2C9]">{showGiverPassword ? <EyeOff aria-hidden="true" className="h-5 w-5" /> : <Eye aria-hidden="true" className="h-5 w-5" />}</button></div><span className="block text-sm font-normal text-[#A8B8AF]">At least 6 characters. This keeps your guest requests with your account.</span></label></div>}
               <label className="block space-y-2 text-base font-semibold">Organization <span className="font-normal">(optional)</span><input maxLength={100} value={application.organization} onChange={(event) => setApplication({ ...application, organization: event.target.value })} className={fieldClass} autoComplete="organization" /></label>
               <SelectField label="I am a…" value={application.type} onChange={(value) => setApplication({ ...application, type: value })} options={GIVER_TYPES} />
               <div className="grid gap-4 sm:grid-cols-2">

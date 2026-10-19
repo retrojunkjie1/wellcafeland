@@ -7,7 +7,7 @@ const COLLECTION = "practitioner_data_access_audit";
  * the protected action. Never pass client-authored text into this event.
  */
 function practitionerAuditEvent(event) {
-  const allowedFields = new Set(["visitPurpose", "priorities", "questions", "accessPreferences", "needType", "goal", "context", "preferredTiming", "contactPreference"]);
+  const allowedFields = new Set(["visitPurpose", "priorities", "questions", "accessPreferences", "needType", "goal", "context", "preferredTiming", "contactPreference", "recoveryProgress", "wellnessPatterns", "practiceProgress", "assessments", "writtenReflections"]);
   const fields = Array.isArray(event.fields)
     ? [...new Set(event.fields.filter((field) => allowedFields.has(field)))].slice(0, allowedFields.size)
     : [];

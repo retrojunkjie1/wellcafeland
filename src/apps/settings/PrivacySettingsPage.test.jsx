@@ -4,8 +4,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PrivacySettingsPage from "./PrivacySettingsPage";
 
-const mocks = vi.hoisted(() => ({ exportMyWellnessData: vi.fn(), deleteMyCheckIns: vi.fn() }));
+const mocks = vi.hoisted(() => ({ exportMyWellnessData: vi.fn(), deleteMyCheckIns: vi.fn(), callAgent: vi.fn() }));
 vi.mock("@/services/practitionerRegistry", () => mocks);
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent, default: mocks.callAgent }));
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); });
 
 describe("PrivacySettingsPage", () => {
@@ -15,9 +16,30 @@ describe("PrivacySettingsPage", () => {
     expect(screen.getByRole("link", { name: /Review sharing/ }).getAttribute("href")).toBe("/settings/practitioner-sharing");
     expect(screen.getByRole("link", { name: /Open Personal support/ }).getAttribute("href")).toBe("/settings/wellness");
     expect(screen.getByText(/automatic timed deletion is not available yet/i)).toBeTruthy();
-    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.getByRole("combobox", { name: "Choose a privacy question" })).toHaveValue("sharing");
     expect(screen.queryByText(/Require PIN for provider view/i)).toBeNull();
     expect(screen.getByRole("button", { name: /Delete my check-ins/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Explain this" })).toBeInTheDocument();
+    expect(screen.getByText(/Only your selected topic is sent; no account records are included/i)).toBeInTheDocument();
+  });
+
+  it("sends Steward only the selected privacy topic and renders its explanation", async () => {
+    mocks.callAgent.mockResolvedValue({ result: { answer: "Your check-ins are not shared just because you have an account." } });
+    render(<MemoryRouter><PrivacySettingsPage /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText("Choose a privacy question"), { target: { value: "sharing" } });
+    fireEvent.click(screen.getByRole("button", { name: "Explain this" }));
+
+    expect(await screen.findByText(/Your check-ins are not shared just because you have an account/)).toBeInTheDocument();
+    expect(mocks.callAgent).toHaveBeenCalledWith("steward", { topicId: "sharing" });
+  });
+
+  it("keeps the page usable if Steward is unavailable", async () => {
+    mocks.callAgent.mockRejectedValue(new Error("Agent is paused"));
+    render(<MemoryRouter><PrivacySettingsPage /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Explain this" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Agent is paused");
+    expect(screen.getByRole("button", { name: /Download my data/ })).toBeEnabled();
   });
 
   it("prepares a visible, user-clicked download link after the account export returns", async () => {

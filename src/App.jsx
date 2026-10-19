@@ -120,6 +120,7 @@ const VerifyEmailPage = lazy(() => import("./apps/auth/VerifyEmailPage"));
 const ForgotPasswordPage = lazy(() => import("./apps/auth/ForgotPasswordPage"));
 
 const OnboardingPage = lazy(() => import("./apps/onboarding/OnboardingPage"));
+const GettingStartedPage = lazy(() => import("./apps/onboarding/GettingStartedPage"));
 const PlanStartPage = lazy(() => import("./apps/plan/PlanStartPage"));
 
 const AdminConsolePage = lazy(() => import("./apps/dashboard/AdminConsolePage"));
@@ -200,6 +201,7 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ForgotPasswordPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/getting-started" element={<GettingStartedPage />} />
           <Route path="/plan/start" element={<PlanStartPage />} />
 
           {/* Public Routes - Accessible in guest mode */}

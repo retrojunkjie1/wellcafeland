@@ -22,8 +22,8 @@ export default function VerifyEmailPage() {
   const emailVerifiedFromLink = query.get("verified") === "1";
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(() => {
-    if (location.state?.deliveryError) return "Your account was created, but Firebase could not send the verification email. Sign in below to try sending a fresh link.";
-    if (location.state?.setupIssue) return "Your account was created and Firebase accepted the verification email request, but setup did not finish. Verify your email, then sign in to continue.";
+    if (location.state?.deliveryError) return "Your account was created, but we couldn’t send the confirmation email yet. Sign in below to try again.";
+    if (location.state?.setupIssue) return "Your account was created, but setup didn’t finish. Confirm your email, then sign in to continue.";
     if (emailVerifiedFromLink) return "Your email is verified. Sign in to continue to your WellnessCafe space.";
     return "Your account is ready. We requested a verification email for this address. Open the link in that email before entering your WellnessCafe space.";
   });

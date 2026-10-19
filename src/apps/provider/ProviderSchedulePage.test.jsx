@@ -28,7 +28,17 @@ function LocationProbe() {
 }
 
 beforeEach(() => {
+  // Keep the mocked service responses hermetic. clearAllMocks only clears call
+  // history and leaves queued one-time implementations behind after failures.
+  vi.resetAllMocks();
   mocks.useSessionIdentity.mockReturnValue({ providerId: "provider-1", userId: "provider-1", orgId: null, isLoading: false, isProvider: true, isAdmin: false });
+  mocks.listAppointmentsForProvider.mockResolvedValue([]);
+  mocks.listAssignmentsForProvider.mockResolvedValue([]);
+  mocks.listProviderAppointmentRequests.mockResolvedValue([]);
+  mocks.getMyProviderAvailability.mockResolvedValue({
+    timezone: "America/Denver",
+    weeklyHours: Array.from({ length: 7 }, (_, dayOfWeek) => ({ dayOfWeek, enabled: false, start: "09:00", end: "17:00" })),
+  });
 });
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 

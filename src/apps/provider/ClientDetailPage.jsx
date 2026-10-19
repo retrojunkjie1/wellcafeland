@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CalendarDays, ChevronRight, Clock3, HandHeart, HeartHandshake, LockKeyhole, MessageSquare, RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
+import { callAgent } from "@/ai/agents/agentClient";
 import { listAssignmentsForProvider } from "@/services/assignmentService";
 import { getMyProviderAvailability, listAppointmentsForProviderClient } from "@/services/appointmentService";
 import { acknowledgeVisitPreparation, getProviderClientOverview, listProviderVisitPreparations, listProviderCareHandoffs, updateProviderCareHandoff } from "@/services/practitionerRegistry";
@@ -47,6 +48,9 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [witnessLoading, setWitnessLoading] = useState(false);
+  const [witnessResult, setWitnessResult] = useState(null);
+  const [witnessError, setWitnessError] = useState("");
   const [loadedScope, setLoadedScope] = useState("");
   const requestSequence = useRef(0);
   const scopeKey = `${providerId || userId || ""}:${clientId || ""}`;
@@ -137,6 +141,23 @@ export default function ClientDetailPage() {
     finally { setUpdatingHandoff(""); }
   };
 
+  const buildSharedTimeline = async () => {
+    if (!clientId || witnessLoading) return;
+    setWitnessLoading(true);
+    setWitnessResult(null);
+    setWitnessError("");
+    try {
+      const response = await callAgent("witness", { clientId });
+      const result = response.result || {};
+      if (result.available !== true && result.available !== false) throw new Error("The shared timeline response was incomplete.");
+      setWitnessResult(result);
+    } catch (err) {
+      setWitnessError(err?.message || "The shared timeline is temporarily unavailable. Refresh the client's sharing choices and try again.");
+    } finally {
+      setWitnessLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (identityLoading) return;
     if (!isProvider && !isAdmin) {
@@ -175,6 +196,13 @@ export default function ClientDetailPage() {
             })}
           </div>
         </section>
+
+        {!isLimitedPractitionerWorkspace(providerType) && !overview?.sharingPaused && (overview?.scopes?.recoveryProgress === true || overview?.scopes?.wellnessPatterns === true || overview?.practiceProgress?.length > 0) && <section className="rounded-2xl border border-violet-100/15 bg-violet-100/[0.035] p-5 sm:p-6" aria-labelledby="shared-timeline-title">
+          <div className="flex flex-wrap items-start justify-between gap-4"><div><h2 id="shared-timeline-title" className="font-semibold">Client-shared timeline</h2><p className="mt-1 max-w-2xl text-sm leading-relaxed text-white/55">A factual snapshot of numeric check-ins and practice choices the client shared with this workspace. It does not interpret risk, diagnosis, causes, or treatment progress.</p></div><button type="button" onClick={buildSharedTimeline} disabled={witnessLoading} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-violet-100/20 px-3 text-sm text-violet-50 hover:bg-violet-100/[0.06] disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${witnessLoading ? "animate-spin" : ""}`} />{witnessLoading ? "Building…" : witnessResult ? "Refresh timeline" : "Build timeline"}</button></div>
+          {witnessError && <p role="alert" className="mt-3 rounded-xl border border-rose-200/15 bg-rose-200/[0.05] p-3 text-sm text-rose-100">{witnessError}</p>}
+          {witnessResult && !witnessResult.available && <p role="status" className="mt-3 rounded-xl border border-white/10 bg-slate-950/35 p-3 text-sm text-white/60">{witnessResult.message || "There is not enough shared information to build this timeline yet."}</p>}
+          {witnessResult?.available && <div className="mt-4 space-y-4"><p className="text-xs text-white/45">{witnessResult.note || "Client-shared values and practice choices; no interpretation."}</p>{witnessResult.metrics?.length > 0 && <div className="grid gap-3 sm:grid-cols-2">{witnessResult.metrics.map((metric) => <article key={metric.label} className="rounded-xl border border-white/10 bg-slate-950/45 p-4"><h3 className="text-sm font-medium text-white/85">{metric.label}</h3><p className="mt-2 text-sm text-white/65">{metric.first} → {metric.latest} <span className="text-white/40">({metric.change > 0 ? "+" : ""}{metric.change})</span></p><p className="mt-1 text-xs text-white/40">{metric.firstDate || "First recorded"} to {metric.latestDate || "Most recent"} · {metric.entries} shared entries</p></article>)}</div>}{witnessResult.practiceOutcomes?.length > 0 && <div><h3 className="text-sm font-medium text-white/75">Reported practice choices</h3><div className="mt-2 flex flex-wrap gap-2">{witnessResult.practiceOutcomes.map((item) => <span key={item.toolId} className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1.5 text-xs text-white/65">{item.toolId.replaceAll("-", " ")} · {item.tried} tried · {item.notYet} not yet · {item.notFit} not a fit</span>)}</div></div>}</div>}
+        </section>}
 
         {!isLimitedPractitionerWorkspace(providerType) && <ClientSharedSupportPanel key={`${clientId}-${overview?.latestCheckInAt || "private"}`} clientId={clientId} providerType={providerType} />}
 

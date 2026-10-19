@@ -15,11 +15,19 @@ import { useAdminClaim } from "@/hooks/useAdminClaim";
  */
 const RequireRole = ({ children, allowedRoles = [], redirectTo = "/unauthorized" }) => {
   const { role, roles = [], loading, isAuthenticated } = useAuth();
+  const { isAdmin, adminReady, claims } = useAdminClaim();
+  const roleAllowed = allowedRoles.includes(role) || roles.some((candidate) => allowedRoles.includes(candidate));
+  // The God-Eye owner can inspect every workspace, but a delegated admin's
+  // narrow admin assignment must not grant practitioner data access.
+  const godEyeAllowed = allowedRoles.includes("admin")
+    && adminReady
+    && isAdmin
+    && claims?.godAdmin === true;
 
   // Show loading state while checking auth
-  if (loading) {
+  if (loading || (isAuthenticated && allowedRoles.includes("admin") && !roleAllowed && !adminReady)) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+      <div role="status" className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-400 border-r-transparent"></div>
           <p className="text-sm text-muted-foreground">Loading...</p>
@@ -35,7 +43,7 @@ const RequireRole = ({ children, allowedRoles = [], redirectTo = "/unauthorized"
 
   // If roles are specified, check if user's role is allowed
   if (allowedRoles.length > 0) {
-    if (!allowedRoles.includes(role) && !roles.some((candidate) => allowedRoles.includes(candidate))) {
+    if (!roleAllowed && !godEyeAllowed) {
       // User is authenticated but doesn't have required role
       // Redirect to home or dashboard
       return <Navigate to={redirectTo} replace />;

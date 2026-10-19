@@ -32,7 +32,7 @@ export default function AdminAccessPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">God-Eye Console</p>
         <h1 className="mt-2 text-3xl font-semibold">Admin access check</h1>
         <p className="mt-3 text-sm leading-6 text-white/65">
-          God-Eye access is assigned by the Alpha Owner and checked by the server. Being signed in, using a certain email, or having an older admin label does not grant backend access.
+          Admin access is assigned by the WellnessCafe system owner. Signing in alone does not grant administrator access.
         </p>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-5" aria-live="polite">
@@ -45,9 +45,9 @@ export default function AdminAccessPage() {
                 <div>
                   <h2 className="font-medium">
                     {localAppCheckUnavailable
-                      ? claims?.godAdmin === true
-                        ? "Alpha Owner recognized locally"
-                        : "Local admin check unavailable"
+                    ? claims?.godAdmin === true
+                        ? "System owner recognized"
+                        : "Admin access is unavailable in this preview"
                       : isAdmin
                         ? "Administrator access confirmed"
                         : user
@@ -61,12 +61,12 @@ export default function AdminAccessPage() {
               </div>
               {localAppCheckUnavailable && (
                 <p className="mt-4 border-t border-white/10 pt-4 text-sm leading-6 text-white/65">
-                  This local preview skips Firebase App Check, while admin services require it. The refresh button cannot fix that local setup. Use the production God-Eye console for live administration, or configure a registered App Check debug token for localhost.
+                  This preview cannot complete administrator checks. Open the live WellnessCafe site to use administrator tools.
                 </p>
               )}
               {!isAdmin && user && !localAppCheckUnavailable && (
                 <p className="mt-4 border-t border-white/10 pt-4 text-sm leading-6 text-white/65">
-                  If this account is meant to be the Alpha Owner, a Firebase project owner must complete the one-time trusted server-side setup. After that, the Alpha Owner can assign verified accounts only the admin work they need. Do not grant admin access by editing a profile or adding a generic role label.
+                  If you should have administrator access, ask the WellnessCafe system owner to review your account and assign the appropriate responsibilities.
                 </p>
               )}
             </>
@@ -75,8 +75,8 @@ export default function AdminAccessPage() {
 
         <div className="mt-6 flex flex-wrap gap-3">
           {localAppCheckUnavailable ? (
-            <a href="https://wellnesscafelanding.web.app/admin/console" className="inline-flex items-center gap-2 rounded-xl bg-amber-200 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-100">
-              <Eye className="h-4 w-4" aria-hidden="true" /> Open production God-Eye console
+            <a href="/admin/console" className="inline-flex items-center gap-2 rounded-xl bg-amber-200 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-100">
+              <Eye className="h-4 w-4" aria-hidden="true" /> Open live administrator tools
             </a>
           ) : isAdmin ? (
             <Link to="/admin/console" className="inline-flex items-center gap-2 rounded-xl bg-amber-200 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-100">

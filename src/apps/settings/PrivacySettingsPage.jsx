@@ -2,7 +2,15 @@ import React, { useEffect, useState } from "react";
 import { ArrowDownToLine, ArrowRight, Database, LockKeyhole, Trash2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { deleteMyCheckIns, exportMyWellnessData } from "@/services/practitionerRegistry";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 import { formatWellnessDataReport } from "./wellnessDataReport";
+
+const STEWARD_TOPICS = [
+  ["sharing", "What can a practitioner see?"],
+  ["export", "What is in my download?"],
+  ["deletion", "What does delete check-ins remove?"],
+  ["retention", "How long is my data kept?"],
+];
 
 const PrivacySettingsPage = () => {
   const [exporting, setExporting] = useState(false);
@@ -11,6 +19,9 @@ const PrivacySettingsPage = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deletingCheckIns, setDeletingCheckIns] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
+  const [stewardTopic, setStewardTopic] = useState("sharing");
+  const [stewardAnswer, setStewardAnswer] = useState("");
+  const [stewardState, setStewardState] = useState({ loading: false, error: "" });
 
   useEffect(() => () => {
     if (exportUrl) URL.revokeObjectURL(exportUrl);
@@ -57,6 +68,18 @@ const PrivacySettingsPage = () => {
     }
   };
 
+  const askSteward = async () => {
+    setStewardState({ loading: true, error: "" });
+    setStewardAnswer("");
+    try {
+      const { result } = await runWellnessExperience("privacy.explanation", { topicId: stewardTopic });
+      setStewardAnswer(result?.answer || "");
+      setStewardState({ loading: false, error: "" });
+    } catch (error) {
+      setStewardState({ loading: false, error: error?.message || "This explanation is unavailable right now. Please use the controls shown on this page." });
+    }
+  };
+
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-6">
@@ -80,6 +103,25 @@ const PrivacySettingsPage = () => {
         {exportMessage && <p role="status" className="mt-3 text-sm text-white/75">{exportMessage}</p>}
         {exportUrl && <a href={exportUrl} download={`wellnesscafe-my-data-${new Date().toISOString().slice(0, 10)}.txt`} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-100"><ArrowDownToLine className="h-4 w-4" />Download readable report</a>}
         <p className="mt-3 text-sm text-white/55">Your download is a plain-text report you can read in Notes, Word, or any text editor.</p>
+      </section>
+
+      <section className="mb-4 rounded-3xl border border-white/10 bg-white/[0.03] p-4 sm:p-5" aria-labelledby="steward-heading">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 id="steward-heading" className="text-base font-semibold text-white">Need a plain-language explanation?</h2>
+            <p className="mt-1 text-sm text-white/60">Steward explains the controls on this page. Only your selected topic is sent; no account records are included.</p>
+          </div>
+          <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/55">General information</span>
+        </div>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <label className="sr-only" htmlFor="steward-topic">Choose a privacy question</label>
+          <select id="steward-topic" value={stewardTopic} disabled={stewardState.loading} onChange={(event) => setStewardTopic(event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/15 bg-slate-950/70 px-3 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-amber-200/60">
+            {STEWARD_TOPICS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+          </select>
+          <button type="button" onClick={askSteward} disabled={stewardState.loading} className="min-h-11 rounded-full border border-amber-200/30 px-4 text-sm font-semibold text-amber-100 transition hover:bg-amber-100/10 disabled:cursor-wait disabled:opacity-50">{stewardState.loading ? "Preparing explanation…" : "Explain this"}</button>
+        </div>
+        {stewardState.error && <p role="alert" className="mt-3 text-sm text-rose-200">{stewardState.error}</p>}
+        {stewardAnswer && <p aria-live="polite" className="mt-3 rounded-xl border border-emerald-200/15 bg-emerald-100/[0.04] p-3 text-sm leading-relaxed text-white/80">{stewardAnswer}</p>}
       </section>
 
       <div className="grid gap-4 sm:grid-cols-2">

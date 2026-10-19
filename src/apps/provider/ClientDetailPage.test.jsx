@@ -13,11 +13,13 @@ const mocks = vi.hoisted(() => ({
   listProviderCareHandoffs: vi.fn(),
   acknowledgeVisitPreparation: vi.fn(),
   updateProviderCareHandoff: vi.fn(),
+  callAgent: vi.fn(),
   navigate: vi.fn(),
   params: { clientId: "client-1" },
 }));
 
 vi.mock("@/hooks/useSessionIdentity", () => ({ useSessionIdentity: mocks.useSessionIdentity }));
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent }));
 vi.mock("@/services/assignmentService", () => ({ listAssignmentsForProvider: mocks.listAssignmentsForProvider }));
 vi.mock("@/services/appointmentService", () => ({ listAppointmentsForProviderClient: mocks.listAppointmentsForProviderClient, getMyProviderAvailability: mocks.getMyProviderAvailability }));
 vi.mock("@/services/practitionerRegistry", () => ({
@@ -50,6 +52,22 @@ function mockEmptyCoordinationServices() {
 }
 
 describe("ClientDetailPage", () => {
+  it("builds the timeline from an explicit client id and displays factual shared values", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", providerType: "therapist", isLoading: false });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);
+    mocks.getProviderClientOverview.mockResolvedValue({ shared: true, scopes: { recoveryProgress: true, wellnessPatterns: false }, checkins: [] });
+    mockEmptyCoordinationServices();
+    mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.callAgent.mockResolvedValue({ result: { available: true, note: "Client-shared values only.", metrics: [{ label: "Craving intensity", first: 7, latest: 4, change: -3, firstDate: "2026-10-01", latestDate: "2026-10-12", entries: 3 }], practiceOutcomes: [] } });
+
+    render(<ClientDetailPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Build timeline" }));
+    expect(await screen.findByText("Craving intensity")).toBeInTheDocument();
+    expect(screen.getByText(/7 → 4/)).toBeInTheDocument();
+    expect(mocks.callAgent).toHaveBeenCalledWith("witness", { clientId: "client-1" });
+  });
+
   it("loads an active connection through the authorized service and shows consent plus appointments", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", isLoading: false });
     mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);

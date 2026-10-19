@@ -5,6 +5,7 @@ import { doc, collection, query, where, getDocs, addDoc, orderBy, limit, setDoc,
 import { db, auth } from "@/firebase";
 import { getAnonymousUserId } from "@/lib/userId";
 import { logError, logInfo } from "./logService";
+import { callFunction } from "@/lib/functionsClient";
 
 /**
  * Get current user ID (authenticated or anonymous)
@@ -87,18 +88,14 @@ export async function sendMessage(threadId, userId, text) {
       return { ok: false, error: "Database not available" };
     }
 
-    // AI moderation check
-    try {
-      const { moderateText } = await import("./aiModeration");
-      const moderationResult = await moderateText(text);
-      if (!moderationResult.ok || moderationResult.blocked) {
-        return { 
-          ok: false, 
-          error: moderationResult.suggestion || "Message was blocked by safety filters" 
-        };
-      }
-    } catch (err) {
-      console.warn("Moderation check failed, allowing message:", err);
+    // Do not write peer content unless Cherubim returned a valid decision.
+    const { moderateText } = await import("./aiModeration");
+    const moderationResult = await moderateText(text);
+    if (!moderationResult.ok || moderationResult.blocked) {
+      return {
+        ok: false,
+        error: moderationResult.suggestion || "This message needs a safety review before it can be sent.",
+      };
     }
 
     const messagesRef = collection(db, "dm_messages");
@@ -217,43 +214,17 @@ export async function listDMThreads(userId = null) {
  */
 export async function postToFeed(text, type = "reflection", anonymized = false, userId = null) {
   try {
-    const currentUserId = userId || getCurrentUserId();
-    if (!text || !currentUserId) {
+    if (!text?.trim()) {
       return { ok: false, error: "Missing required fields" };
     }
-
-    if (!db) {
-      return { ok: false, error: "Database not available" };
-    }
-
-    // AI moderation check
-    try {
-      const { moderateText } = await import("./aiModeration");
-      const moderationResult = await moderateText(text);
-      if (!moderationResult.ok || moderationResult.blocked) {
-        return { 
-          ok: false, 
-          error: moderationResult.suggestion || "Post was blocked by safety filters" 
-        };
-      }
-    } catch (err) {
-      console.warn("Moderation check failed, allowing post:", err);
-    }
-
-    const feedRef = collection(db, "social_feed");
-    const postDoc = await addDoc(feedRef, {
-      userId: anonymized ? null : currentUserId,
-      text: text.trim(),
-      type,
-      anonymized,
-      createdAt: new Date(),
-    });
-
-    logInfo("socialService", "Post created", { postId: postDoc.id, type });
-    return { ok: true, postId: postDoc.id };
+    // Identity, moderation, rate limits, and persistence are enforced by the
+    // callable; never trust the optional legacy userId argument.
+    const result = await callFunction("createSocialFeedPost", { text: text.trim(), type, anonymized });
+    logInfo("socialService", "Post created", { postId: result.postId, type });
+    return { ok: true, postId: result.postId };
   } catch (err) {
     logError("socialService", err, { function: "postToFeed", type });
-    return { ok: false, error: err.message };
+    return { ok: false, error: err?.message || "The post could not be shared. Please try again." };
   }
 }
 
@@ -264,32 +235,11 @@ export async function postToFeed(text, type = "reflection", anonymized = false, 
  */
 export async function getFeedPosts(limitCount = 50) {
   try {
-    if (!db) {
-      return [];
-    }
-
-    const feedRef = collection(db, "social_feed");
-    const q = query(feedRef, orderBy("createdAt", "desc"), limit(limitCount));
-
-    const snapshot = await getDocs(q);
-    const posts = [];
-
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      posts.push({
-        id: docSnap.id,
-        userId: data.userId || null,
-        text: data.text || "",
-        type: data.type || "reflection",
-        anonymized: data.anonymized || false,
-        createdAt: data.createdAt?.toDate?.() || data.createdAt || null,
-      });
-    });
-
-    return posts;
+    const result = await callFunction("listSocialFeedPosts", { limitCount });
+    return Array.isArray(result?.posts) ? result.posts : [];
   } catch (err) {
     logError("socialService", err, { function: "getFeedPosts" });
-    return [];
+    throw err;
   }
 }
 
@@ -302,25 +252,12 @@ export async function getFeedPosts(limitCount = 50) {
  */
 export async function reactToPost(postId, emoji, userId = null) {
   try {
-    const currentUserId = userId || getCurrentUserId();
-    if (!postId || !emoji || !currentUserId) {
+    if (!postId || !emoji) {
       return { ok: false, error: "Missing required fields" };
     }
-
-    if (!db) {
-      return { ok: false, error: "Database not available" };
-    }
-
-    const reactionsRef = collection(db, "social_reactions");
-    const reactionDoc = await addDoc(reactionsRef, {
-      postId,
-      userId: currentUserId,
-      emoji,
-      createdAt: new Date(),
-    });
-
-    logInfo("socialService", "Reaction added", { reactionId: reactionDoc.id, postId });
-    return { ok: true, reactionId: reactionDoc.id };
+    const result = await callFunction("reactToSocialFeedPost", { postId, emoji });
+    logInfo("socialService", "Reaction added", { reactionId: result.reactionId, postId });
+    return { ok: true, reactionId: result.reactionId };
   } catch (err) {
     logError("socialService", err, { function: "reactToPost", postId });
     return { ok: false, error: err.message };
@@ -336,4 +273,3 @@ export default {
   getFeedPosts,
   reactToPost,
 };
-

@@ -355,18 +355,14 @@ export async function postMessage(circleId, threadId, text, anonymous = false, u
       return { ok: false, error: "Database not available" };
     }
 
-    // AI moderation check
-    try {
-      const { moderateText } = await import("./aiModeration");
-      const moderationResult = await moderateText(text);
-      if (!moderationResult.ok || moderationResult.blocked) {
-        return { 
-          ok: false, 
-          error: moderationResult.suggestion || "Message was blocked by safety filters" 
-        };
-      }
-    } catch (err) {
-      console.warn("Moderation check failed, allowing message:", err);
+    // Do not write peer content unless Cherubim returned a valid decision.
+    const { moderateText } = await import("./aiModeration");
+    const moderationResult = await moderateText(text);
+    if (!moderationResult.ok || moderationResult.blocked) {
+      return {
+        ok: false,
+        error: moderationResult.suggestion || "This message needs a safety review before it can be posted.",
+      };
     }
 
     const messagesRef = collection(db, "circle_messages");

@@ -140,6 +140,21 @@
 .grounding-practice__selected-cue p,
 .grounding-practice__active-cue p,
 .grounding-practice__complete p { color: #e1e4dc; font-size: .88rem; line-height: 1.65; margin: 0; }
+.grounding-practice__anchor-assist { background: rgb(255 255 255 / 2.5%); border: 1px solid rgb(215 226 213 / 13%); border-radius: .9rem; display: grid; gap: .7rem; padding: .8rem; }
+.grounding-practice__anchor-assist-head { align-items: center; display: flex; flex-wrap: wrap; gap: .7rem; justify-content: space-between; }
+.grounding-practice__anchor-title { color: var(--grounding-ink); display: block; font-size: .76rem; font-weight: 650; }
+.grounding-practice__anchor-privacy { color: var(--grounding-muted) !important; font-size: .68rem !important; line-height: 1.45 !important; margin-top: .2rem !important; max-width: 23rem; }
+.grounding-practice__anchor-button,
+.grounding-practice__anchor-use { background: rgb(255 255 255 / 4%); border: 1px solid rgb(215 226 213 / 20%); border-radius: 999px; color: var(--grounding-ink); cursor: pointer; font-size: .7rem; min-height: 2.45rem; padding: .45rem .8rem; transition: background .18s ease, border-color .18s ease; }
+.grounding-practice__anchor-button:hover,
+.grounding-practice__anchor-use:hover { background: rgb(255 255 255 / 8%); border-color: rgb(215 226 213 / 36%); }
+.grounding-practice__anchor-button:disabled { cursor: wait; opacity: .65; }
+.grounding-practice__anchor-result { border-top: 1px solid var(--grounding-line); display: grid; gap: .55rem; padding-top: .7rem; }
+.grounding-practice__selected-cue .grounding-practice__anchor-result p { color: var(--grounding-ink); font-size: .8rem; line-height: 1.55; }
+.grounding-practice__selected-cue .grounding-practice__anchor-result .grounding-practice__anchor-next { color: var(--grounding-muted); font-size: .72rem; }
+.grounding-practice__anchor-use { justify-self: start; }
+.grounding-practice__anchor-use[aria-pressed="true"] { background: rgb(180 201 178 / 13%); border-color: rgb(180 201 178 / 42%); color: #e1f0df; }
+.grounding-practice__selected-cue .grounding-practice__anchor-error { color: #f2c9bf; font-size: .75rem; }
 .grounding-practice__primary {
   align-items: center;
   background: linear-gradient(135deg, #d8c58a, #e5d4a4);
@@ -377,6 +392,12 @@ html[data-theme="light"] #root .grounding-practice__choice-icon {
 html[data-theme="light"] #root .grounding-practice__selected-cue p,
 html[data-theme="light"] #root .grounding-practice__active-cue p,
 html[data-theme="light"] #root .grounding-practice__complete p { color: #46564e; }
+html[data-theme="light"] #root .grounding-practice__anchor-assist { background: rgba(255,255,255,.72); border-color: rgba(46,64,56,.16); }
+html[data-theme="light"] #root .grounding-practice__anchor-button,
+html[data-theme="light"] #root .grounding-practice__anchor-use { background: #fffefa; border-color: rgba(46,64,56,.2); color: #33463a; }
+html[data-theme="light"] #root .grounding-practice__anchor-use[aria-pressed="true"] { background: #e4efe3; border-color: rgba(56,99,79,.38); color: #214c3b; }
+html[data-theme="light"] #root .grounding-practice__selected-cue .grounding-practice__anchor-result .grounding-practice__anchor-next { color: #58685f; }
+html[data-theme="light"] #root .grounding-practice__selected-cue .grounding-practice__anchor-error { color: #9b2c1f; }
 html[data-theme="light"] #root .grounding-practice__active-guidance { border-color: rgba(56, 99, 79, .38); color: #58685f !important; }
 html[data-theme="light"] #root .grounding-practice__voice-progress { background: rgba(36, 52, 45, .14); }
 html[data-theme="light"] #root .grounding-practice__voice-progress span { background: linear-gradient(90deg, #4f8066, #9a7924); }

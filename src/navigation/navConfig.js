@@ -134,6 +134,7 @@ export const ROUTE_META = [
   { pattern: "/login", title: "Login", parent: null, rootFallback: "/home" },
   { pattern: "/signup", title: "Sign Up", parent: null, rootFallback: "/home" },
   { pattern: "/onboarding", title: "Onboarding", parent: null, rootFallback: "/home" },
+  { pattern: "/getting-started", title: "How to use WellnessCafe", parent: "/home", rootFallback: "/home" },
 ];
 
 // Find route meta by longest prefix match

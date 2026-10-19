@@ -106,4 +106,17 @@ describe("SignupPage workspace intent", () => {
     await waitFor(() => expect(screen.getByLabelText("Current route")).toHaveTextContent("/verify-email"));
     expect(mocks.signOut).toHaveBeenCalledOnce();
   });
+
+  it("keeps sign-up setup details out of the message shown to people", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.createUserWithEmailAndPassword.mockRejectedValueOnce(new Error("Firebase: Error (auth/configuration-not-found)."));
+    renderAt("/signup");
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "person@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "strong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create my account" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to create account. Please try again.");
+    expect(alert).not.toHaveTextContent(/Firebase|auth\//i);
+  });
 });

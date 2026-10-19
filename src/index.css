@@ -766,6 +766,12 @@ html[data-theme="light"] #root {
   backdrop-filter: blur(22px);
 }
 
+/* Keep the menu legible through the walkthrough spotlight in either theme. */
+body[data-wc-tour-active="true"] .wc-primary-navigation {
+  background: var(--wc-bg-deep);
+  backdrop-filter: none;
+}
+
 .wc-account-trigger { max-width: min(15rem, 34vw); }
 .wc-account-trigger__label { overflow: hidden; text-overflow: ellipsis; }
 .wc-account-panel {
@@ -1213,6 +1219,33 @@ html[data-theme="light"] #root .wc-home-next-session__link:hover { border-color:
 html[data-theme="light"] #root .wc-home-next-session__link:focus-visible { outline-color: #426b67; }
 html[data-theme="light"] #root .wc-home-next-session--error .wc-home-next-session__detail { color: #765c1c; }
 html[data-theme="light"] #root .wc-home-next-session--error .wc-home-next-session__link { color: #765c1c; }
+html[data-theme="light"] #root .wc-home-tour-dialog {
+  border-color: rgba(70, 90, 75, 0.25);
+  background: #fffefa !important;
+  color: #24342f;
+}
+html[data-theme="light"] #root .wc-home-tour-dialog__eyebrow { color: #715819 !important; }
+html[data-theme="light"] #root .wc-home-tour-dialog__title { color: #202d35; }
+html[data-theme="light"] #root .wc-home-tour-dialog__description { color: #46564e !important; }
+html[data-theme="light"] #root .wc-home-tour-dialog__exit,
+html[data-theme="light"] #root .wc-home-tour-dialog__back,
+html[data-theme="light"] #root .wc-home-tour-dialog__skip { color: #43564b !important; }
+html[data-theme="light"] #root .wc-home-tour-dialog__exit:hover,
+html[data-theme="light"] #root .wc-home-tour-dialog__back:hover,
+html[data-theme="light"] #root .wc-home-tour-dialog__skip:hover { background-color: rgba(42, 68, 53, 0.08); color: #24342f !important; }
+html[data-theme="light"] #root .wc-home-tour-dialog > div:last-child { border-color: rgba(42, 68, 53, 0.16); }
+html[data-theme="light"] #root .wc-getting-started { color: #24342f; }
+html[data-theme="light"] #root .wc-getting-started__card {
+  border-color: rgba(70, 90, 75, 0.2);
+  background: linear-gradient(135deg, #fffefa, #f3f5ef 58%, #edf3f0) !important;
+  color: #24342f;
+  box-shadow: 0 20px 50px rgba(32, 42, 56, 0.1), inset 0 1px #fff;
+}
+html[data-theme="light"] #root .wc-getting-started__icon { border-color: rgba(145, 117, 52, 0.25); background: #f4f0e5; color: #715819; }
+html[data-theme="light"] #root .wc-getting-started__eyebrow { color: #715819 !important; }
+html[data-theme="light"] #root .wc-getting-started__title { color: #202d35; }
+html[data-theme="light"] #root .wc-getting-started__description { color: #46564e !important; }
+html[data-theme="light"] #root .wc-getting-started__note { color: #596d64 !important; }
 
 @media (max-width: 639px) {
   .wc-home-hero { border-radius: 1.3rem; }

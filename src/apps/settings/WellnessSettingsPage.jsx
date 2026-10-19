@@ -6,6 +6,9 @@ import {
 } from "lucide-react";
 import { useOSStore } from "@/stores/useOSStore";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
+import { useAuth } from "@/context/AuthContext";
+import { getAnonymousUserId } from "@/lib/userId";
+import CartographerMap from "./CartographerMap";
 import {
   clearConversationMemory,
   hasAccountConversationMemory,
@@ -67,6 +70,7 @@ function SettingsCard({ to, icon: Icon, tint, title, value, detail }) {
 const WellnessSettingsPage = () => {
   const navigate = useNavigate();
   const identity = useSessionIdentity();
+  const { user: authUser } = useAuth();
   const [memoryStatus, setMemoryStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [reviewingMemory, setReviewingMemory] = useState(false);
@@ -78,6 +82,7 @@ const WellnessSettingsPage = () => {
   const setPersonalizationMemoryEnabled = useOSStore((state) => state.setPersonalizationMemoryEnabled);
   const setRecoveryStorySuggestionsEnabled = useOSStore((state) => state.setRecoveryStorySuggestionsEnabled);
   const canUseAccountMemory = hasAccountConversationMemory();
+  const supportMapUserId = authUser && !authUser.isAnonymous ? authUser.uid : getAnonymousUserId();
   const memoryEnabled = canUseAccountMemory && settings.personalizationMemoryEnabled === true;
   const themeLabel = settings.themeMode === "dawn" ? "Dawn appearance" : settings.themeMode === "system" ? "Follows your device" : "Deep Night appearance";
 
@@ -226,6 +231,8 @@ const WellnessSettingsPage = () => {
           </div>
         )}
       </section>
+
+      <CartographerMap userId={supportMapUserId || identity.userId} />
 
       <footer className="mt-4 flex items-center justify-between gap-3 px-1 text-xs text-white/35">
         <span>More choices live in each settings space.</span>

@@ -77,4 +77,11 @@ describe("VerifyEmailPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent(/email is verified/i);
     expect(screen.getByRole("link", { name: /sign in to continue/i })).toBeInTheDocument();
   });
+
+  it("explains a delayed confirmation email without naming internal services", () => {
+    renderPage("/verify-email", { email: "person@example.com", deliveryError: true });
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent("we couldn’t send the confirmation email yet");
+    expect(status).not.toHaveTextContent(/Firebase|auth\//i);
+  });
 });
