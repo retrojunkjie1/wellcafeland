@@ -41,6 +41,17 @@ function formatTimeInZone(value, timezone) {
   };
 }
 
+function signedInRequestWasRejected(error, userId) {
+  if (!userId) return false;
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  return code.includes("unauthenticated")
+    || code.includes("app-check")
+    || code.includes("app_check")
+    || message.includes("app check")
+    || message.includes("app verification");
+}
+
 const ProviderSchedulePage = () => {
   const navigate = useNavigate();
   const { providerId, userId, orgId, isLoading: identityLoading, isProvider, isAdmin } = useSessionIdentity();
@@ -54,6 +65,7 @@ const ProviderSchedulePage = () => {
   const [appointments, setAppointments] = useState([]);
   const [loadedScope, setLoadedScope] = useState("");
   const [scheduleUnavailable, setScheduleUnavailable] = useState(false);
+  const [scheduleRetryAllowed, setScheduleRetryAllowed] = useState(true);
   const [clients, setClients] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -72,6 +84,7 @@ const ProviderSchedulePage = () => {
   const [updatingId, setUpdatingId] = useState("");
   const [sessionRequests, setSessionRequests] = useState([]);
   const [requestServiceError, setRequestServiceError] = useState("");
+  const [requestRetryAllowed, setRequestRetryAllowed] = useState(true);
   const [requestRefreshing, setRequestRefreshing] = useState(false);
   const [requestBusyId, setRequestBusyId] = useState("");
   const [requestSessionDetails, setRequestSessionDetails] = useState({});
@@ -82,6 +95,7 @@ const ProviderSchedulePage = () => {
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
   const [availabilityScope, setAvailabilityScope] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
+  const [availabilityRetryAllowed, setAvailabilityRetryAllowed] = useState(true);
   const [availabilitySaving, setAvailabilitySaving] = useState(false);
   const [availabilityNotice, setAvailabilityNotice] = useState("");
   const [availabilitySaveError, setAvailabilitySaveError] = useState("");
@@ -96,8 +110,10 @@ const ProviderSchedulePage = () => {
     const providerIdToUse = providerId || userId;
     setLoading(true);
     setScheduleUnavailable(false);
+    setScheduleRetryAllowed(true);
     setError("");
     setRequestServiceError("");
+    setRequestRetryAllowed(true);
     if (!providerIdToUse) {
       if (isCurrent()) {
         setAppointments([]);
@@ -105,6 +121,7 @@ const ProviderSchedulePage = () => {
         setSessionRequests([]);
         setLoadedScope(requestScope);
         setScheduleUnavailable(true);
+        setScheduleRetryAllowed(false);
         setError("Your signed-in account could not be confirmed. Sign in again to load this workspace.");
         setLoading(false);
       }
@@ -122,7 +139,11 @@ const ProviderSchedulePage = () => {
       try {
         requestsData = await listProviderAppointmentRequests();
       } catch (requestError) {
-        requestsError = requestError?.message || "New session requests could not be loaded.";
+        const rejectedSignedInRequest = signedInRequestWasRejected(requestError, userId);
+        requestsError = rejectedSignedInRequest
+          ? "Session requests aren’t available right now."
+          : "Session requests couldn’t be loaded. Try again in a moment.";
+        if (isCurrent()) setRequestRetryAllowed(!rejectedSignedInRequest);
       }
       if (!isCurrent()) return;
       setAppointments(appointmentsData);
@@ -137,7 +158,11 @@ const ProviderSchedulePage = () => {
         setSessionRequests([]);
         setLoadedScope(requestScope);
         setScheduleUnavailable(true);
-        setError(err?.message || "The schedule could not be loaded. Please try again.");
+        const rejectedSignedInRequest = signedInRequestWasRejected(err, userId);
+        setScheduleRetryAllowed(!rejectedSignedInRequest);
+        setError(rejectedSignedInRequest
+          ? "Your schedule isn’t available right now."
+          : "We couldn’t load your schedule. Try again in a moment.");
       }
     } finally {
       if (isCurrent()) setLoading(false);
@@ -159,6 +184,7 @@ const ProviderSchedulePage = () => {
     }
     setAvailabilityLoading(true);
     setAvailabilityError("");
+    setAvailabilityRetryAllowed(true);
     try {
       const data = await getMyProviderAvailability();
       if (!isCurrent()) return;
@@ -172,7 +198,11 @@ const ProviderSchedulePage = () => {
     } catch (err) {
       if (isCurrent()) {
         setAvailabilityScope("");
-        setAvailabilityError(err?.message || "Your appointment hours could not be loaded.");
+        const rejectedSignedInRequest = signedInRequestWasRejected(err, userId);
+        setAvailabilityRetryAllowed(!rejectedSignedInRequest);
+        setAvailabilityError(rejectedSignedInRequest
+          ? "Appointment hours aren’t available right now."
+          : "Your appointment hours couldn’t be loaded. Try again in a moment.");
       }
     } finally {
       if (isCurrent()) setAvailabilityLoading(false);
@@ -180,7 +210,7 @@ const ProviderSchedulePage = () => {
   }, [identityLoading, identityScope, providerId, userId]);
 
   const refreshSessionRequests = useCallback(async ({ silent = false } = {}) => {
-    if (identityLoading || (!providerId && !userId)) return;
+    if (identityLoading || (!providerId && !userId) || (silent && !requestRetryAllowed)) return;
     const requestScope = identityScope;
     if (requestRefreshScopes.current.has(requestScope)) return;
     requestRefreshScopes.current.add(requestScope);
@@ -195,12 +225,18 @@ const ProviderSchedulePage = () => {
         setRequestServiceError("");
       }
     } catch (requestError) {
-      if (isCurrent()) setRequestServiceError(requestError?.message || "Session requests could not be refreshed. Please try again.");
+      if (isCurrent()) {
+        const rejectedSignedInRequest = signedInRequestWasRejected(requestError, userId);
+        setRequestRetryAllowed(!rejectedSignedInRequest);
+        setRequestServiceError(rejectedSignedInRequest
+          ? "Session requests aren’t available right now."
+          : "Session requests couldn’t be refreshed. Try again in a moment.");
+      }
     } finally {
       requestRefreshScopes.current.delete(requestScope);
       if (isCurrent()) setRequestRefreshing(false);
     }
-  }, [identityLoading, identityScope, providerId, userId]);
+  }, [identityLoading, identityScope, providerId, userId, requestRetryAllowed]);
 
   useEffect(() => {
     loadData();
@@ -239,6 +275,11 @@ const ProviderSchedulePage = () => {
     setNotice("");
     setError("");
     setScheduleUnavailable(false);
+    setScheduleRetryAllowed(true);
+    setRequestServiceError("");
+    setRequestRetryAllowed(true);
+    setAvailabilityError("");
+    setAvailabilityRetryAllowed(true);
     setAvailabilitySaving(false);
     setAvailabilityNotice("");
     setAvailabilitySaveError("");
@@ -279,7 +320,7 @@ const ProviderSchedulePage = () => {
     ? availability.timezone
     : Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const hoursSummary = availabilityError
-    ? "Hours unavailable · retry to load"
+    ? "Appointment hours unavailable"
     : identityLoading || availabilityLoading || availabilityScope !== identityScope
       ? "Loading hours…"
     : enabledDays.length
@@ -462,7 +503,7 @@ const ProviderSchedulePage = () => {
             <p className="max-w-2xl text-sm leading-relaxed text-white/55">Choose the days and times clients may request. You can update these whenever your schedule changes.</p>
             {availabilityReady && <label className="min-w-56 text-sm text-white/70">Time zone<select aria-label="Appointment time zone" value={availability.timezone} onChange={(event) => { setAvailabilityNotice(""); setAvailabilitySaveError(""); setAvailability((current) => ({ ...current, timezone: event.target.value })); }} className="mt-1.5 min-h-10 w-full rounded-lg border border-white/10 bg-slate-950 px-3 text-sm text-white">{!TIME_ZONES.includes(availability.timezone) && <option value={availability.timezone}>{timeZoneLabel(availability.timezone)}</option>}{TIME_ZONES.map((zone) => <option key={zone} value={zone}>{timeZoneLabel(zone)}</option>)}</select><span className="mt-1 block text-xs text-white/40">Clients see appointment times in this zone.</span></label>}
           </div>
-          {availabilityError ? <div className="mt-4 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-4 text-sm text-amber-50/80" role="alert"><p>Your appointment hours could not be loaded.</p><button type="button" onClick={() => void loadAvailability()} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs text-white/80"><RefreshCw className="h-3.5 w-3.5" />Try again</button></div> : availabilityLoading || availabilityScope !== identityScope ? <p className="mt-4 text-sm text-white/50" role="status">Loading your hours…</p> : <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{availability.weeklyHours.map((day) => <div key={day.dayOfWeek} className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.08] bg-slate-950/35 p-3">
+          {availabilityError ? <div className="mt-4 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-4 text-sm text-amber-50/80" role="alert"><p>{availabilityError}</p>{availabilityRetryAllowed && <button type="button" onClick={() => void loadAvailability()} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs text-white/80"><RefreshCw className="h-3.5 w-3.5" />Try again</button>}</div> : availabilityLoading || availabilityScope !== identityScope ? <p className="mt-4 text-sm text-white/50" role="status">Loading your hours…</p> : <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{availability.weeklyHours.map((day) => <div key={day.dayOfWeek} className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.08] bg-slate-950/35 p-3">
             <input id={`availability-day-${day.dayOfWeek}`} type="checkbox" checked={day.enabled} onChange={(event) => updateAvailabilityDay(day.dayOfWeek, { enabled: event.target.checked })} className="h-4 w-4 accent-emerald-300" />
             <label htmlFor={`availability-day-${day.dayOfWeek}`} className="w-20 shrink-0 text-sm text-white/80">{["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day.dayOfWeek]}</label>
             {day.enabled ? <><input aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day.dayOfWeek]} start`} type="time" value={day.start} onChange={(event) => updateAvailabilityDay(day.dayOfWeek, { start: event.target.value })} className="min-h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950 px-2 text-xs text-white" /><span className="text-white/40">to</span><input aria-label={`${["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day.dayOfWeek]} end`} type="time" value={day.end} onChange={(event) => updateAvailabilityDay(day.dayOfWeek, { end: event.target.value })} className="min-h-9 min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950 px-2 text-xs text-white" /></> : <span className="text-xs text-white/40">Unavailable</span>}
@@ -509,7 +550,7 @@ const ProviderSchedulePage = () => {
 
         {!scheduleUnavailable && <section className="mb-6 rounded-2xl border border-sky-200/15 bg-sky-200/[0.035] p-5" aria-labelledby="session-requests-title">
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 id="session-requests-title" className="font-medium text-white">Client session requests</h3><p className="mt-1 text-sm text-white/55">Review a requested time, then accept it or let the client know it won’t work.</p></div><div className="flex items-center gap-2"><span className="rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/75">{sessionRequests.length} waiting</span><button type="button" onClick={() => refreshSessionRequests()} disabled={requestRefreshing} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs text-white/75 transition hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-50"><RefreshCw aria-hidden="true" className={`h-3.5 w-3.5 ${requestRefreshing ? "animate-spin" : ""}`} />{requestRefreshing ? "Checking…" : "Refresh requests"}</button></div></div>
-          {requestServiceError && <div className="mt-3 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-3 text-sm text-amber-50/75" role="status"><p>Session requests aren’t available right now.</p><button type="button" onClick={() => refreshSessionRequests()} disabled={requestRefreshing} className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs text-white/75 disabled:opacity-50"><RefreshCw className="h-3.5 w-3.5" />Try again</button></div>}
+          {requestServiceError && <div className="mt-3 rounded-xl border border-amber-100/15 bg-amber-100/[0.04] p-3 text-sm text-amber-50/75" role="status"><p>{requestServiceError}</p>{requestRetryAllowed && <button type="button" onClick={() => refreshSessionRequests()} disabled={requestRefreshing} className="mt-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-xs text-white/75 disabled:opacity-50"><RefreshCw className="h-3.5 w-3.5" />Try again</button>}</div>}
           {!requestServiceError && sessionRequests.length === 0 && <p className="mt-3 rounded-xl bg-slate-950/35 p-3 text-sm text-white/50">No new session requests. Requests from connected clients will appear here.</p>}
           {sessionRequests.length > 0 && <ul className="mt-4 grid gap-3 md:grid-cols-2">{sessionRequests.map((request) => {
             const client = clients.find((item) => item.id === request.clientId);
@@ -614,7 +655,7 @@ const ProviderSchedulePage = () => {
             <Calendar className="h-12 w-12 text-rose-100/50 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-white mb-2">Schedule unavailable</h3>
             <p className="text-sm text-white/60">{error || "We couldn’t confirm your appointments."}</p>
-            <button type="button" onClick={loadData} disabled={loading} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-rose-100/20 px-4 text-sm text-rose-50 transition hover:bg-rose-100/10 disabled:opacity-50"><RefreshCw className="h-4 w-4" />{loading ? "Refreshing…" : "Try again"}</button>
+            {scheduleRetryAllowed && <button type="button" onClick={loadData} disabled={loading} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-lg border border-rose-100/20 px-4 text-sm text-rose-50 transition hover:bg-rose-100/10 disabled:opacity-50"><RefreshCw className="h-4 w-4" />{loading ? "Refreshing…" : "Try again"}</button>}
           </div>
         ) : appointments.length === 0 ? (
           <div className="lux-card p-12 text-center border border-white/10 bg-white/5">

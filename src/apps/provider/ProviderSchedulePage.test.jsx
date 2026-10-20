@@ -43,6 +43,32 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("ProviderSchedulePage client requests", () => {
+  it("does not ask a signed-in practitioner to retry or sign in again when protected schedule data is rejected", async () => {
+    const rejected = Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" });
+    mocks.listAppointmentsForProvider.mockRejectedValue(rejected);
+    mocks.getMyProviderAvailability.mockRejectedValue(rejected);
+
+    render(<MemoryRouter><ProviderSchedulePage /></MemoryRouter>);
+
+    expect(await screen.findByText("Your schedule isn’t available right now.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Set hours/ }));
+    expect(await screen.findByText("Appointment hours aren’t available right now.")).toBeTruthy();
+    expect(screen.queryByText(/sign in again|Unauthenticated|functions\/unauthenticated/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it("keeps a rejected session-request queue unavailable without offering a futile retry", async () => {
+    mocks.listProviderAppointmentRequests.mockRejectedValue(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+
+    render(<MemoryRouter><ProviderSchedulePage /></MemoryRouter>);
+
+    expect(await screen.findByText("Session requests aren’t available right now.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(mocks.listProviderAppointmentRequests).toHaveBeenCalledTimes(1);
+  });
+
   it("opens a confirmed WellnessCafe room with a practitioner return destination", async () => {
     mocks.listAppointmentsForProvider.mockResolvedValue([{ id: "provider-private-video", clientId: "client-1", startAt: "2026-10-05T15:00:00.000Z", endAt: "2026-10-05T15:45:00.000Z", status: "confirmed", sessionFormat: "wellnesscafe-video" }]);
     mocks.listAssignmentsForProvider.mockResolvedValue([{ clientId: "client-1", alias: "Client 1" }]);
@@ -147,7 +173,7 @@ describe("ProviderSchedulePage client requests", () => {
     expect(await screen.findByText("Awaiting your response")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Refresh requests" }));
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Session requests aren’t available right now.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Session requests couldn’t be refreshed. Try again in a moment.");
     expect(screen.getByText("Awaiting your response")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 
@@ -297,7 +323,7 @@ describe("ProviderSchedulePage client requests", () => {
     render(<MemoryRouter><ProviderSchedulePage /></MemoryRouter>);
     expect(await screen.findByRole("heading", { name: "No upcoming appointments" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Set hours/ }));
-    expect(await screen.findByText("Your appointment hours could not be loaded.")).toBeTruthy();
+    expect(await screen.findByText("Your appointment hours couldn’t be loaded. Try again in a moment.")).toBeTruthy();
     expect(screen.queryByRole("combobox", { name: "Appointment time zone" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Save appointment hours" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
