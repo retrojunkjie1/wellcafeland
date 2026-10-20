@@ -184,6 +184,19 @@ describe("ProviderDashboardPage", () => {
     expect(mocks.listAppointmentsForProvider).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps appointments visible when the connected-client lookup fails", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider.mockRejectedValue(new Error("temporary client-list outage"));
+    mocks.listAppointmentsForProvider.mockResolvedValue([{ id: "appointment-1", startAt: "2026-09-30T16:00:00.000Z", status: "confirmed" }]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+
+    render(<ProviderDashboardPage />);
+
+    expect(await screen.findByText(/10:00 AM MDT · confirmed/)).toBeInTheDocument();
+    expect(screen.getByText(/connected people couldn’t be checked/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No appointments in the next two weeks/i)).toBeNull();
+  });
+
   it("does not tell a signed-in practitioner to sign in again when protected data calls fail authentication", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
     mocks.listAssignmentsForProvider.mockRejectedValueOnce(

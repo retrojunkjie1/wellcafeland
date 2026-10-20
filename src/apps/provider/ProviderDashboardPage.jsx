@@ -211,8 +211,10 @@ export default function ProviderDashboardPage() {
           setLoadedScope(requestScope);
           return;
         }
-        const [, upcomingResult, availabilityResult] = await Promise.all([
-          refreshClients(),
+        const [clientsResult, upcomingResult, availabilityResult] = await Promise.all([
+          refreshClients()
+            .then(() => ({ value: true }))
+            .catch((error) => ({ unavailable: true, error })),
           listAppointmentsForProvider(id, { from: new Date(), to: new Date(Date.now() + 14 * 86400000) })
             .then((value) => ({ value }))
             .catch(() => ({ unavailable: true })),
@@ -223,7 +225,20 @@ export default function ProviderDashboardPage() {
         if (active && identityScopeRef.current === requestScope) {
           setAppointmentsUnavailable(upcomingResult.unavailable === true);
           if (!upcomingResult.unavailable) setAppointments(upcomingResult.value || []);
-          setClientsUnavailable(false);
+          setClientsUnavailable(clientsResult.unavailable === true);
+          if (clientsResult.unavailable) {
+            setClients([]);
+            setClientsScope(requestScope);
+            const errorCode = String(clientsResult.error?.code || "").toLowerCase();
+            const authFailure = errorCode.includes("unauthenticated") || errorCode.includes("unauthorized");
+            if (authFailure && userId) {
+              setErrorKind("app-check");
+              setError("Your account is still signed in, but some practice information isn’t available right now. Please come back later.");
+            } else {
+              setErrorKind("load");
+              setError("Some practitioner information couldn’t be loaded. You can retry the unavailable section.");
+            }
+          }
           const configuredTimezone = availabilityResult.value?.timezone;
           setTimezoneFromAvailability(Boolean(configuredTimezone));
           setTimezone(configuredTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
