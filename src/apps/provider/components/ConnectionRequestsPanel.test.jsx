@@ -38,4 +38,33 @@ describe("ConnectionRequestsPanel", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Connection accepted. Your client list could not refresh");
     expect(screen.queryByText("Client Two")).toBeNull();
   });
+
+  it("does not report an empty queue when loading fails and lets the user retry", async () => {
+    mocks.listPractitionerConnectionRequests
+      .mockRejectedValueOnce(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }))
+      .mockResolvedValueOnce({ requests: [] });
+
+    render(<ConnectionRequestsPanel onSignIn={vi.fn()} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your sign-in needs refreshing");
+    expect(screen.queryByText("Unauthenticated")).toBeNull();
+    expect(screen.queryByText(/No new requests/)).toBeNull();
+    expect(screen.getByLabelText("Request count unavailable")).toHaveTextContent("—");
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/No new requests/)).toBeInTheDocument();
+    expect(mocks.listPractitionerConnectionRequests).toHaveBeenCalledTimes(2);
+  });
+
+  it("offers sign-in recovery when the request service says the session expired", async () => {
+    mocks.listPractitionerConnectionRequests.mockRejectedValueOnce(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+    const onSignIn = vi.fn();
+
+    render(<ConnectionRequestsPanel onSignIn={onSignIn} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in again" }));
+
+    expect(onSignIn).toHaveBeenCalledTimes(1);
+  });
 });
