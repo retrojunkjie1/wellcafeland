@@ -23,6 +23,19 @@ const CARE_HANDOFF_STATUS = { requested: "New request", acknowledged: "Acknowled
 const CARE_HANDOFF_ACTIONS = [["acknowledged", "Acknowledge"], ["in_progress", "In progress"], ["waiting_on_client", "Waiting on client"], ["follow_up_complete", "Mark follow-up complete"]];
 const CARE_HANDOFF_TRANSITIONS = { requested: ["acknowledged", "in_progress", "waiting_on_client"], acknowledged: ["in_progress", "waiting_on_client", "follow_up_complete"], in_progress: ["in_progress", "waiting_on_client", "follow_up_complete"], waiting_on_client: ["in_progress", "follow_up_complete"] };
 
+function signedInRequestWasRejected(error, userId) {
+  if (!userId) return false;
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  return code.includes("unauthenticated")
+    || code.includes("app-check")
+    || code.includes("app_check")
+    || code.includes("permission-denied")
+    || code.includes("unauthorized")
+    || message.includes("app check")
+    || message.includes("app verification");
+}
+
 function formatDate(value, options = { weekday: "short", month: "short", day: "numeric" }) {
   if (!value) return "Date not set";
   const date = new Date(value);
@@ -48,6 +61,7 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [retryAllowed, setRetryAllowed] = useState(true);
   const [witnessLoading, setWitnessLoading] = useState(false);
   const [witnessResult, setWitnessResult] = useState(null);
   const [witnessError, setWitnessError] = useState("");
@@ -63,6 +77,7 @@ export default function ClientDetailPage() {
     if (quiet) setRefreshing(true);
     else setLoading(true);
     setError("");
+    setRetryAllowed(true);
     try {
       const assignments = await listAssignmentsForProvider(providerId || userId);
       if (!isCurrentRequest()) return;
@@ -103,6 +118,7 @@ export default function ClientDetailPage() {
       setLoadedScope(requestScope);
     } catch (err) {
       if (!isCurrentRequest()) return;
+      const rejected = signedInRequestWasRejected(err, userId);
       setConnection(null);
       setOverview(null);
       setAppointments([]);
@@ -112,7 +128,10 @@ export default function ClientDetailPage() {
       setCareHandoffsUnavailable(false);
       setAppointmentsUnavailable(false);
       setLoadedScope(requestScope);
-      setError(err?.message || "This connection could not be loaded. Try again.");
+      setRetryAllowed(!rejected);
+      setError(rejected
+        ? "This connection isn’t available right now. Please try again later."
+        : "This connection could not be loaded. Try again in a moment.");
     } finally {
       if (isCurrentRequest()) {
         setLoading(false);
@@ -176,10 +195,10 @@ export default function ClientDetailPage() {
     <div className="lux-shell space-y-5 py-6 sm:py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link to="/provider/clients" className="inline-flex min-h-10 items-center gap-2 text-sm text-white/65 hover:text-white"><Users className="h-4 w-4" />My people</Link>
-        <button type="button" onClick={() => load({ quiet: true })} disabled={refreshing} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/75 hover:bg-white/[0.05] disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />Refresh sharing</button>
+        {retryAllowed && <button type="button" onClick={() => load({ quiet: true })} disabled={refreshing} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/75 hover:bg-white/[0.05] disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />Refresh sharing</button>}
       </div>
 
-      {error && <section role="alert" className="rounded-2xl border border-rose-200/20 bg-rose-300/[0.07] p-4 text-sm text-rose-100"><p>{error}</p><button type="button" onClick={() => load()} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-rose-100/20 px-3"><RefreshCw className="h-4 w-4" />Try again</button></section>}
+      {error && <section role="alert" className="rounded-2xl border border-rose-200/20 bg-rose-300/[0.07] p-4 text-sm text-rose-100"><p>{error}</p>{retryAllowed && <button type="button" onClick={() => load()} className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg border border-rose-100/20 px-3"><RefreshCw className="h-4 w-4" />Try again</button>}</section>}
 
       {connection && <>
         {overview?.sharingPaused && <section role="status" className="rounded-2xl border border-amber-100/20 bg-amber-100/[0.05] p-4 text-sm leading-relaxed text-amber-50/80"><strong className="block text-amber-50">{overview.sharingStatusUnknown ? "Sharing status couldn’t be confirmed" : "Client sharing is temporarily paused"}</strong><span className="mt-1 block">{overview.message || "Personal check-ins and assessment answers are hidden until client sharing is available again."}</span></section>}

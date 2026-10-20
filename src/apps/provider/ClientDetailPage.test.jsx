@@ -213,4 +213,34 @@ describe("ClientDetailPage", () => {
     expect(screen.getByText("Recovery progress: private")).toBeTruthy();
     expect(screen.queryByText(/private detail from account A/)).toBeNull();
   });
+
+  it("does not expose backend verification errors or offer futile retries after a signed-in rejection", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", isLoading: false });
+    mocks.listAssignmentsForProvider.mockRejectedValue(Object.assign(new Error("App Check token missing for listAssignmentsForProvider"), { code: "functions/failed-precondition" }));
+
+    render(<ClientDetailPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This connection isn’t available right now. Please try again later.");
+    expect(screen.queryByText(/App Check token missing/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Refresh sharing" })).toBeNull();
+  });
+
+  it("keeps a manual retry for a temporary client-detail load failure", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1", isLoading: false });
+    mocks.listAssignmentsForProvider.mockResolvedValue([{ id: "assignment-1", clientId: "client-1", status: "active" }]);
+    mocks.getProviderClientOverview
+      .mockRejectedValueOnce(new Error("temporary service outage"))
+      .mockResolvedValueOnce({ shared: false, scopes: {}, checkins: [], totalRecentCheckins: 0 });
+    mocks.listAppointmentsForProviderClient.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mockEmptyCoordinationServices();
+
+    render(<ClientDetailPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This connection could not be loaded. Try again in a moment.");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Your connected person")).toBeInTheDocument();
+    expect(mocks.getProviderClientOverview).toHaveBeenCalledTimes(2);
+  });
 });
