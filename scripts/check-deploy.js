@@ -106,7 +106,7 @@ function checkEnvFile() {
   return { valid: false, error: "Firebase web configuration is missing" };
 }
 
-function checkVideoAppCheckConfig() {
+function checkAppCheckConfig() {
   // Vite reads production.local after production, while process variables have
   // the highest precedence. Merge in that order so preflight sees the same
   // public client settings that a production build will receive.
@@ -116,20 +116,15 @@ function checkVideoAppCheckConfig() {
   }
   Object.assign(env, process.env);
 
-  if (env.VITE_WELLNESSCAFE_VIDEO_ENABLED !== "true") {
-    console.log("ℹ️  First-party video is disabled; no client App Check key is required");
-    return { valid: true };
-  }
-
   if (!env.VITE_RECAPTCHA_SITE_KEY && !env.VITE_RECAPTCHA_KEY) {
-    console.error("❌ First-party video is enabled, but the client App Check site key is missing");
+    console.error("❌ App Check is required for protected practitioner and client workflows, but the client site key is missing");
     return {
       valid: false,
-      error: "Configure VITE_RECAPTCHA_SITE_KEY (or VITE_RECAPTCHA_KEY) before deploying App-Check-protected video",
+      error: "Configure VITE_RECAPTCHA_SITE_KEY (or VITE_RECAPTCHA_KEY) before deploying App-Check-protected workflows",
     };
   }
 
-  console.log("✅ First-party video client App Check key is present");
+  console.log("✅ Client App Check site key is present for protected workflows");
   return { valid: true };
 }
 
@@ -194,7 +189,7 @@ function main() {
 
   const firebasercCheck = checkFirebaserc();
   const envCheck = checkEnvFile();
-  const videoAppCheckCheck = checkVideoAppCheckConfig();
+  const appCheckCheck = checkAppCheckConfig();
   const firebaseJsonCheck = checkFirebaseJson();
   const functionsRuntimeCheck = checkFunctionsRuntime();
 
@@ -207,8 +202,8 @@ function main() {
   if (!envCheck.valid) {
     errors.push(envCheck.error);
   }
-  if (!videoAppCheckCheck.valid) {
-    errors.push(videoAppCheckCheck.error);
+  if (!appCheckCheck.valid) {
+    errors.push(appCheckCheck.error);
   }
   if (!firebaseJsonCheck.valid) {
     errors.push(firebaseJsonCheck.error);
