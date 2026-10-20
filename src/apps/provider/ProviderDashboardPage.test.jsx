@@ -184,6 +184,22 @@ describe("ProviderDashboardPage", () => {
     expect(mocks.listAppointmentsForProvider).toHaveBeenCalledTimes(2);
   });
 
+  it("does not tell a signed-in practitioner to sign in again when protected data calls fail authentication", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider.mockRejectedValueOnce(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+    mocks.listAppointmentsForProvider.mockRejectedValue(new Error("request denied"));
+    mocks.getMyProviderAvailability.mockRejectedValue(new Error("request denied"));
+
+    render(<ProviderDashboardPage />);
+
+    expect(await screen.findByText(/You’re signed in, but WellnessCafe is not receiving the app verification/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reload WellnessCafe" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Sign in again" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
   it("labels appointment times as device-local when saved provider time-zone settings cannot load", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
     mocks.listAssignmentsForProvider.mockResolvedValue([]);

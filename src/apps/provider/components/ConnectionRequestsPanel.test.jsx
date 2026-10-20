@@ -46,7 +46,7 @@ describe("ConnectionRequestsPanel", () => {
 
     render(<ConnectionRequestsPanel onSignIn={vi.fn()} />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Your sign-in needs refreshing");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Please sign in to load connection requests");
     expect(screen.queryByText("Unauthenticated")).toBeNull();
     expect(screen.queryByText(/No new requests/)).toBeNull();
     expect(screen.getByLabelText("Request count unavailable")).toHaveTextContent("—");
@@ -56,15 +56,28 @@ describe("ConnectionRequestsPanel", () => {
     expect(mocks.listPractitionerConnectionRequests).toHaveBeenCalledTimes(2);
   });
 
-  it("offers sign-in recovery when the request service says the session expired", async () => {
+  it("offers sign-in when the request service says there is no active session", async () => {
     mocks.listPractitionerConnectionRequests.mockRejectedValueOnce(
       Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
     );
     const onSignIn = vi.fn();
 
     render(<ConnectionRequestsPanel onSignIn={onSignIn} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Sign in again" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in" }));
 
     expect(onSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not ask an already signed-in user to sign in again when app verification failed", async () => {
+    mocks.listPractitionerConnectionRequests.mockRejectedValueOnce(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+
+    render(<ConnectionRequestsPanel isSignedIn appVerificationFailed onSignIn={vi.fn()} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("You’re signed in, but WellnessCafe couldn’t verify this browser connection");
+    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByText(/No new requests/)).toBeNull();
   });
 });
