@@ -75,7 +75,8 @@ describe("ConnectionRequestsPanel", () => {
 
     render(<ConnectionRequestsPanel isSignedIn appVerificationFailed onSignIn={vi.fn()} />);
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Connection requests are unavailable because secure app verification is not reaching WellnessCafe");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Connection requests aren’t available right now.");
+    expect(screen.queryByText(/App Check|secure app verification|verification setup/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(screen.queryByText(/No new requests/)).toBeNull();

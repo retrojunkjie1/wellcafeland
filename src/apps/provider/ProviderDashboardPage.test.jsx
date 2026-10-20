@@ -194,13 +194,14 @@ describe("ProviderDashboardPage", () => {
 
     render(<ProviderDashboardPage />);
 
-    expect(await screen.findByText(/Your account is signed in, but secure app verification is not reaching WellnessCafe/)).toBeInTheDocument();
+    expect(await screen.findByText(/Your account is still signed in, but some practice information isn’t available right now/)).toBeInTheDocument();
+    expect(screen.queryByText(/App Check|secure app verification|verification setup/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "Reload WellnessCafe" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sign in again" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    expect(screen.getByText(/Appointments are unavailable because secure app verification/)).toBeInTheDocument();
-    expect(screen.getByText(/Shared updates are unavailable because secure app verification/)).toBeInTheDocument();
-    expect(screen.getByText(/Your connected people are unavailable because secure app verification/)).toBeInTheDocument();
+    expect(screen.getByText("Appointments aren’t available right now.")).toBeInTheDocument();
+    expect(screen.getByText("Shared updates aren’t available right now.")).toBeInTheDocument();
+    expect(screen.getByText("Your connected clients aren’t available right now.")).toBeInTheDocument();
   });
 
   it("labels appointment times as device-local when saved provider time-zone settings cannot load", async () => {
