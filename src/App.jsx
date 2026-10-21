@@ -7,7 +7,6 @@ import Loading from "./components/Loading";
 import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
-import { getAssistanceEntry } from "./apps/assistance/assistanceRoute";
 
 import ExperienceShell from "./system/ExperienceShell";
 
@@ -20,7 +19,6 @@ const ChatPage = lazy(() => import("./apps/chat/ChatPage"));
 const LivingGuidePage = lazy(() => import("./apps/living/LivingGuidePage"));
 const LivingGuidePageV3 = lazy(() => import("./apps/living/LivingGuidePageV3").then((module) => ({ default: module.LivingGuidePageV3 })));
 const SequencePage = lazy(() => import("./apps/sequences/SequencePage"));
-const AssistancePage = lazy(() => import("./apps/assistance/AssistancePage"));
 const CommandConsolePage = lazy(() => import("./apps/command/CommandConsolePage"));
 const WorkspacePage = lazy(() => import("./apps/workspace/WorkspacePage"));
 const RealHelpWorkspace = lazy(() => import("./apps/workspace/RealHelpWorkspace"));
@@ -30,27 +28,14 @@ const RecoveryMeetingSourcesAdminPage = lazy(() => import("./apps/admin/Recovery
 const HelpDirectoryAdminPage = lazy(() => import("./apps/admin/HelpDirectoryPage"));
 const MeetingDirectoryPolicyPage = lazy(() => import("./apps/legal/MeetingDirectoryPolicyPage"));
 const CommunityGivingPage = lazy(() => import("./apps/assistance/CommunityGivingPage"));
-const AssistanceHubPage = lazy(() => import("./apps/assistance/AssistanceHubPage"));
+const AssistanceRoute = lazy(() => import("./apps/assistance/AssistanceEntryRoute"));
+const AssistanceRequestRedirect = lazy(() => import("./apps/assistance/AssistanceRequestRedirect"));
 const ResourcesListPage = lazy(() => import("./apps/resources/ResourcesListPage"));
 const ResourcesDetailPage = lazy(() => import("./apps/resources/ResourcesDetailPage"));
 
 const RealHelpRedirect = () => {
   const { search } = useLocation();
   return <Navigate to={`/assistance${search || ""}`} replace />;
-};
-
-const AssistanceRoute = () => {
-  const { search } = useLocation();
-  const entry = getAssistanceEntry(search);
-  if (entry === "meetings") {
-    return <Navigate to="/recovery/meetings" replace />;
-  }
-  // A general “find help” entry should let the person choose a need first.
-  // Only open the results workspace directly when the link carries intent.
-  if (entry === "hub") {
-    return <AssistanceHubPage />;
-  }
-  return <RealHelpWorkspace />;
 };
 
 const DirectoryRedirect = () => {
@@ -187,8 +172,8 @@ const App = () => {
           <Route path="/policies/meeting-directory" element={<MeetingDirectoryPolicyPage />} />
           <Route path="/assistance/community" element={<CommunityGivingPage />} />
           <Route path="/giver" element={<CommunityGivingPage initialMode="give" />} />
-          {/* Phase 70: Route unrouted AssistancePage */}
-          <Route path="/assistance/request" element={<AssistancePage />} />
+          {/* Keep old request links inside the canonical, location-aware help journey. */}
+          <Route path="/assistance/request" element={<AssistanceRequestRedirect />} />
           <Route path="/command" element={<CommandConsolePage />} />
           <Route path="/workspace/real-help" element={<RealHelpRedirect />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />

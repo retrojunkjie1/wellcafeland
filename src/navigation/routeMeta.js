@@ -39,7 +39,6 @@ export const ROUTE_META = [
   // Assistance / Support / Command
   { pattern: "/assistance", title: "Assistance", parent: "/home", breadcrumb: false },
   { pattern: "/assistance/community", title: "Community support", parent: "/assistance", breadcrumb: true },
-  { pattern: "/assistance/request", title: "Assistance Request", parent: "/assistance", breadcrumb: true }, // AssistancePage
   { pattern: "/support", title: "Support", parent: "/home", breadcrumb: false },
   { pattern: "/command", title: "Command", parent: "/home", breadcrumb: true },
 

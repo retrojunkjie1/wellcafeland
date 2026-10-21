@@ -148,6 +148,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
   }, [open, stopRecording]);
 
   const handleProcessCheckIn = useCallback(async (blob) => {
+    if (mode !== "chat" && !serviceConsent) {
+      setErrorMessage("Choose the consent option before sending your recording for transcription.");
+      return;
+    }
     setProcessing(true);
     setErrorMessage(null);
     try {
@@ -216,7 +220,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
             tags: emotion.tags,
             grounding: groundingSuggestion,
           },
-          durationSeconds: duration,
+          durationSeconds: recordingTimeRef.current,
         });
       }
     } catch (err) {
@@ -291,11 +295,6 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
     setErrorMessage(null);
     cancelStartRef.current = false;
     setIsStarting(true);
-    if (mode !== "chat" && !serviceConsent) {
-      setIsStarting(false);
-      setErrorMessage("Choose whether to send your audio for transcription and response before recording.");
-      return;
-    }
     try {
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
         throw new Error("Voice recording is not available in this browser. You can still type your message.");
@@ -430,7 +429,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
           <div className="mx-auto max-w-sm space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-xs leading-relaxed text-white/65">{mode === "chat" ? "Your recording stays with this chat on this device. If you send it, we turn your words into text so the guide can reply." : "Your recording is used to create a text check-in."} <a href="/privacy" className="text-amber-200 underline underline-offset-4">Privacy details</a>.</p>
             <label className="flex min-h-11 items-start gap-3 text-xs leading-relaxed text-white/75">
-              <input type="checkbox" checked={serviceConsent} disabled={isRecording || processing || Boolean(recordedAudio)} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-300 disabled:opacity-50" />
+              <input type="checkbox" checked={serviceConsent} disabled={isRecording || processing} onChange={(event) => { setServiceConsent(event.target.checked); setErrorMessage(null); }} className="mt-0.5 h-4 w-4 accent-amber-300 disabled:opacity-50" />
               I choose to send my audio for transcription and my words to the AI guide.
             </label>
             <p className="text-xs leading-relaxed text-white/55">If you may be in immediate danger, contact local emergency services. In the U.S. or its territories, call or text <a href="tel:988" className="text-amber-200 underline">988</a> or <a href="https://988lifeline.org/get-help/" target="_blank" rel="noreferrer" className="text-amber-200 underline">chat with 988</a>.</p>
@@ -465,10 +464,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
               )}
               <button
                 type="button"
-                onClick={() => (mode === "chat" && recordedAudio ? handleProcessCheckIn(recordedAudio) : attemptGetUserMedia())}
+                onClick={() => (recordedAudio ? handleProcessCheckIn(recordedAudio) : attemptGetUserMedia())}
                 className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 transition text-sm"
               >
-                {mode === "chat" && recordedAudio ? "Retry transcription" : "Try again"}
+                {recordedAudio ? "Retry transcription" : "Try again"}
               </button>
               <button
                 type="button"
@@ -548,8 +547,8 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
 
               {response && (
                 <div className="rounded-xl p-4 border border-amber-400/30 bg-amber-400/10">
-                  <h3 className="text-sm font-medium text-amber-200 mb-2">Grounding Suggestion</h3>
-                  <p className="text-white leading-relaxed text-sm">{response.grounding}</p>
+                  <h3 className="text-sm font-medium text-amber-200 mb-2">A reflection</h3>
+                  <p className="text-white leading-relaxed text-sm">{response.text || response.grounding}</p>
                 </div>
               )}
 
@@ -577,7 +576,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
               <audio controls preload="metadata" src={audioPreviewUrl} onError={() => setErrorMessage("This recording could not be played. Please record it again.")} className="w-full" aria-label="Play your recorded voice message" />
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={discardAndRetake} className="min-h-11 rounded-xl border border-white/15 bg-white/5 px-4 text-sm text-white hover:bg-white/10">Record again</button>
-                <button type="button" onClick={() => handleProcessCheckIn(recordedAudio)} disabled={processing} className="min-h-11 rounded-xl border border-amber-200/60 bg-amber-300 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">{mode === "chat" ? "Send voice message" : "Transcribe check-in"}</button>
+                <button type="button" onClick={() => handleProcessCheckIn(recordedAudio)} disabled={processing || (mode !== "chat" && !serviceConsent)} className="min-h-11 rounded-xl border border-amber-200/60 bg-amber-300 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">{mode === "chat" ? "Send voice message" : "Transcribe check-in"}</button>
               </div>
               {errorMessage && <p role="alert" className="text-sm text-rose-200">{errorMessage}</p>}
             </div>

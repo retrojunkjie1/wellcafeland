@@ -48,4 +48,25 @@ describe("chat history voice privacy", () => {
     const assistant = { role: "assistant", type: "assistant_audio", audioUrl: "https://cdn.example/audio.mp3" };
     expect(sanitizeChatMessage(assistant)).toEqual(assistant);
   });
+
+  it("removes the retired voice-session auto-open notice from saved conversations", () => {
+    const storage = memoryStorage({
+      "wc-os-chats": JSON.stringify([{
+        id: "chat-legacy-voice",
+        hasUserMessages: true,
+        messages: [
+          { id: "welcome", role: "system", content: "Welcome to WellnessCafe." },
+          { id: "user-1", role: "user", content: "I want to talk this through." },
+          { id: "legacy-notice", role: "assistant", type: "system", content: "Opening voice session workspace…" },
+          { id: "assistant-1", role: "assistant", content: "What would you like to discuss?" },
+        ],
+      }]),
+    });
+
+    const chats = loadChatHistory(storage);
+    const saved = JSON.parse(storage.getItem("wc-os-chats"));
+
+    expect(chats[0].messages.map(({ id }) => id)).toEqual(["welcome", "user-1", "assistant-1"]);
+    expect(saved[0].messages.some(({ content }) => content?.startsWith("Opening voice session workspace"))).toBe(false);
+  });
 });

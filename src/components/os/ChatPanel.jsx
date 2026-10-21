@@ -16,7 +16,6 @@ import DirectoryResultBlock from "./DirectoryResultBlock";
 import DirectoryResultsPanel from "@/components/directory/DirectoryResultsPanel";
 import IntentRenderer from "@/core/intent/IntentRenderer";
 import InAppWebView from "@/components/InAppWebView";
-import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
 import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
@@ -1017,17 +1016,6 @@ const ChatPanel = ({ startConversation = false }) => {
     }
   }, [messages, addMessage, injectToolIntoChat, setThinking, logEvent, openWorkspace, navigate, settings]);
 
-  const handleVoiceInputComplete = (audioBlob) => {
-    // Phase 14: Open voice session workspace when mic is held
-    if (audioBlob) {
-      openWorkspace({
-        type: "voice-session",
-        title: "Voice Session",
-        data: { audioBlob },
-      });
-    }
-  };
-
   const handleSend = async (voiceMessage = null) => {
     const outgoingImage = imageAttachment;
     const typedText = String(input || "").trim();
@@ -1812,13 +1800,8 @@ const ChatPanel = ({ startConversation = false }) => {
                 if (msg.role === "assistant" && msg.type) {
                   if (msg.type === "assistant_audio") {
                     return (
-                      <div key={msg.id} className="space-y-2 animate-fade-in">
+                      <div key={msg.id} className="animate-fade-in">
                         <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} {...chatActionHandlers} />
-                        {msg.audioUrl && (
-                          <div className="ml-0 sm:ml-12 w-full sm:w-auto">
-                            <VoiceResponse text={msg.text || msg.content} audioUrl={msg.audioUrl} />
-                          </div>
-                        )}
                       </div>
                     );
                   }

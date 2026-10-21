@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import VoiceCheckInModal from "./VoiceCheckInModal";
-import { transcribeAudio } from "@/services/multimodalClient";
+import { detectEmotionFromText, transcribeAudio } from "@/services/multimodalClient";
+import { callAgent } from "@/agents/aiAgents";
 
 vi.mock("@/services/multimodalClient", () => ({
   detectEmotionFromText: vi.fn(),
@@ -25,6 +26,7 @@ class MockMediaRecorder {
 describe("VoiceCheckInModal chat recording", () => {
   beforeEach(() => {
     vi.stubGlobal("MediaRecorder", MockMediaRecorder);
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addListener: vi.fn(), removeListener: vi.fn() })));
     vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
     Object.defineProperty(navigator, "mediaDevices", {
@@ -99,5 +101,31 @@ describe("VoiceCheckInModal chat recording", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Retry transcription" }));
     expect(mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
     expect(transcribeAudio).toHaveBeenCalledTimes(2);
+  });
+
+  it("requires explicit send consent and shows the reflection actually returned", async () => {
+    detectEmotionFromText.mockReturnValue({ emotionalState: "grounded", intensity: 1, tags: [] });
+    callAgent.mockResolvedValue({ reply: "You can take this one step at a time." });
+    const onComplete = vi.fn();
+    render(<MemoryRouter><VoiceCheckInModal open onComplete={onComplete} onClose={vi.fn()} /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start voice check-in recording" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Stop voice check-in recording" }));
+
+    const transcribe = await screen.findByRole("button", { name: "Transcribe check-in" });
+    expect(transcribe).toBeDisabled();
+    fireEvent.click(transcribe);
+    expect(transcribeAudio).not.toHaveBeenCalled();
+    expect(callAgent).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(transcribe);
+
+    expect(await screen.findByText("You can take this one step at a time.")).toBeInTheDocument();
+    expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({
+      type: "tool_result",
+      toolId: "voice-checkin",
+      durationSeconds: 0,
+    }));
   });
 });

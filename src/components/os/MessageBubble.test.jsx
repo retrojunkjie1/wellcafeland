@@ -19,6 +19,19 @@ describe("MessageBubble", () => {
     expect(document.querySelector("audio")).not.toBeInTheDocument();
   });
 
+  it("renders one playback control for an assistant voice response", () => {
+    render(<MessageBubble message={{
+      id: "assistant-audio-1",
+      role: "assistant",
+      type: "assistant_audio",
+      content: "A short spoken response.",
+      audioUrl: "blob:assistant-response",
+    }} />);
+
+    expect(screen.getByText("A short spoken response.")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Voice response player")).toHaveLength(1);
+  });
+
   it("keeps internal response diagnostics out of the client conversation", () => {
     render(<MessageBubble message={{
       id: "assistant-1",

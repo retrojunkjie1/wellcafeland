@@ -1,6 +1,13 @@
 const CHAT_HISTORY_KEY = "wc-os-chats";
+const LEGACY_VOICE_SESSION_NOTICE = /^Opening voice session workspace[.…]*$/i;
 
 function stripUserVoiceRecording(message) {
+  if (
+    (message?.role === "system" || message?.type === "system") &&
+    typeof message.content === "string" &&
+    LEGACY_VOICE_SESSION_NOTICE.test(message.content.trim())
+  ) return null;
+
   if (!message || typeof message !== "object" || message.role !== "user") return message;
   if (!message.audioUrl && message.type !== "voice_message") return message;
 
@@ -13,7 +20,7 @@ export function sanitizeChatHistory(chats) {
   if (!Array.isArray(chats)) return [];
   return chats.map((chat) => {
     if (!chat || !Array.isArray(chat.messages)) return chat;
-    const messages = chat.messages.map(stripUserVoiceRecording);
+    const messages = chat.messages.map(stripUserVoiceRecording).filter(Boolean);
     return messages.some((message, index) => message !== chat.messages[index])
       ? { ...chat, messages }
       : chat;

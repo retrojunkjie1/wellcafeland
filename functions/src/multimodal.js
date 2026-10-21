@@ -39,6 +39,64 @@ const MAX_SPEECH_CHARACTERS = 4096;
 const MAX_AUDIO_BASE64_CHARACTERS = 8_000_000;
 const MAX_CHAT_MESSAGES = 30;
 const MAX_CHAT_PAYLOAD_CHARACTERS = 2_200_000;
+const AUDIO_MIME_EXTENSIONS = Object.freeze({
+  "audio/flac": ".flac",
+  "audio/mp3": ".mp3",
+  "audio/mp4": ".mp4",
+  "audio/m4a": ".m4a",
+  "audio/mpga": ".mpga",
+  "audio/mpeg": ".mp3",
+  "audio/ogg": ".ogg",
+  "audio/wav": ".wav",
+  "audio/webm": ".webm",
+  "audio/x-m4a": ".m4a",
+  "audio/x-wav": ".wav",
+});
+
+function resolveTranscriptionAudioType(mimeType) {
+  const normalizedMimeType = typeof mimeType === "string" && mimeType.trim()
+    ? mimeType.split(";")[0].trim().toLowerCase()
+    : "audio/webm"; // Backward compatibility for clients predating MIME forwarding.
+  const extension = AUDIO_MIME_EXTENSIONS[normalizedMimeType];
+  return extension ? { mimeType: normalizedMimeType, extension } : null;
+}
+
+async function transcribeAudioPayload({ audio, mimeType }, openai) {
+  if (typeof audio !== "string" || !audio) {
+    return { status: 400, body: { error: "Missing audio" } };
+  }
+  if (audio.length > MAX_AUDIO_BASE64_CHARACTERS) {
+    return { status: 413, body: { ok: false, code: "AUDIO_TOO_LARGE", error: "This recording is too large to process." } };
+  }
+
+  const audioType = resolveTranscriptionAudioType(mimeType);
+  if (!audioType) {
+    return { status: 415, body: { ok: false, code: "AUDIO_FORMAT_UNSUPPORTED", error: "This recording format can’t be transcribed. Please record again." } };
+  }
+  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(audio)) {
+    return { status: 400, body: { ok: false, code: "AUDIO_INVALID", error: "This recording could not be read. Please record again." } };
+  }
+
+  const buffer = Buffer.from(audio, "base64");
+  if (!buffer.length) {
+    return { status: 400, body: { ok: false, code: "AUDIO_INVALID", error: "This recording could not be read. Please record again." } };
+  }
+
+  const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "wellnesscafe-stt-"));
+  const tmp = path.join(tempDir, `recording${audioType.extension}`);
+  try {
+    await fs.promises.writeFile(tmp, buffer);
+    const transcript = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(tmp),
+      model: "whisper-1",
+      language: "en",
+    });
+    return { status: 200, body: { ok: true, text: transcript.text } };
+  } finally {
+    await fs.promises.unlink(tmp).catch(() => {});
+    await fs.promises.rmdir(tempDir).catch(() => {});
+  }
+}
 
 async function authorizeAICall(req, res, dependencies = {}) {
   const appCheckAccepted = await verifyHttpAppCheck(req, res, {
@@ -317,27 +375,8 @@ exports.stt = onRequest(
     }
 
     try {
-      const { audio } = req.body;
-      if (typeof audio !== "string" || !audio) return res.status(400).json({ error: "Missing audio" });
-      if (audio.length > MAX_AUDIO_BASE64_CHARACTERS) {
-        return res.status(413).json({ ok: false, code: "AUDIO_TOO_LARGE", error: "This recording is too large to process." });
-      }
-
-      const buffer = Buffer.from(audio, "base64");
-      const tmp = path.join(os.tmpdir(), `audio-${Date.now()}.webm`);
-      let transcript;
-      try {
-        await fs.promises.writeFile(tmp, buffer);
-        transcript = await openai.audio.transcriptions.create({
-          file: fs.createReadStream(tmp),
-          model: "whisper-1",
-          language: "en",
-        });
-      } finally {
-        await fs.promises.unlink(tmp).catch(() => {});
-      }
-
-      res.json({ ok: true, text: transcript.text });
+      const result = await transcribeAudioPayload(req.body || {}, openai);
+      return res.status(result.status).json(result.body);
     } catch (err) {
       logger.error("STT error:", err);
       res.status(500).json({ error: "STT failed" });
@@ -345,4 +384,11 @@ exports.stt = onRequest(
   }
 );
 
-exports.__test = { authorizeAICall, MAX_AUDIO_BASE64_CHARACTERS, MAX_CHAT_MESSAGES, MAX_CHAT_PAYLOAD_CHARACTERS };
+exports.__test = {
+  authorizeAICall,
+  resolveTranscriptionAudioType,
+  transcribeAudioPayload,
+  MAX_AUDIO_BASE64_CHARACTERS,
+  MAX_CHAT_MESSAGES,
+  MAX_CHAT_PAYLOAD_CHARACTERS,
+};

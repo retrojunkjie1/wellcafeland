@@ -48,7 +48,6 @@ export const ROUTE_META = [
   // Assistance
   { pattern: "/assistance", title: "Assistance", parent: "/home", rootFallback: "/home" },
   { pattern: "/assistance/community", title: "Community support", parent: "/assistance", rootFallback: "/assistance" },
-  { pattern: "/assistance/request", title: "Request Assistance", parent: "/assistance", rootFallback: "/assistance" },
 
   // Support & Command
   { pattern: "/support", title: "Support", parent: "/home", rootFallback: "/home" },

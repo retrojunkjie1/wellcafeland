@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { __test } = require("../src/multimodal");
 
 function responseMock() {
@@ -117,4 +119,85 @@ test("rejects invalid App Check before Firebase auth or quota", async () => {
   assert.equal(res.body.code, "APP_CHECK_INVALID");
   assert.equal(authCalled, false);
   assert.equal(quotaCalled, false);
+});
+
+test("preserves supported browser recording formats for transcription uploads", () => {
+  assert.deepEqual(__test.resolveTranscriptionAudioType("audio/mp4;codecs=mp4a.40.2"), {
+    mimeType: "audio/mp4",
+    extension: ".mp4",
+  });
+  assert.deepEqual(__test.resolveTranscriptionAudioType("audio/webm;codecs=opus"), {
+    mimeType: "audio/webm",
+    extension: ".webm",
+  });
+  assert.deepEqual(__test.resolveTranscriptionAudioType("audio/x-wav"), {
+    mimeType: "audio/x-wav",
+    extension: ".wav",
+  });
+});
+
+test("uses WebM only for legacy requests without a MIME type and rejects unknown formats", () => {
+  assert.deepEqual(__test.resolveTranscriptionAudioType(undefined), {
+    mimeType: "audio/webm",
+    extension: ".webm",
+  });
+  assert.equal(__test.resolveTranscriptionAudioType("video/mp4"), null);
+  assert.equal(__test.resolveTranscriptionAudioType("application/octet-stream"), null);
+});
+
+test("writes an MP4 capture with its matching extension and removes the temporary upload", async () => {
+  let uploadPath;
+  const openai = {
+    audio: {
+      transcriptions: {
+        async create({ file, model, language }) {
+          uploadPath = file.path;
+          assert.equal(model, "whisper-1");
+          assert.equal(language, "en");
+          assert.deepEqual(await fs.promises.readFile(uploadPath), Buffer.from("voice bytes"));
+          return { text: "A captured sentence." };
+        },
+      },
+    },
+  };
+
+  const result = await __test.transcribeAudioPayload({
+    audio: Buffer.from("voice bytes").toString("base64"),
+    mimeType: "audio/mp4;codecs=mp4a.40.2",
+  }, openai);
+
+  assert.deepEqual(result, { status: 200, body: { ok: true, text: "A captured sentence." } });
+  assert.match(uploadPath, /recording\.mp4$/);
+  await assert.rejects(fs.promises.access(path.dirname(uploadPath)));
+});
+
+test("rejects unsupported or malformed audio before contacting transcription", async () => {
+  let providerCalled = false;
+  const openai = { audio: { transcriptions: { create: async () => { providerCalled = true; } } } };
+
+  const unsupported = await __test.transcribeAudioPayload({ audio: "d29yZA==", mimeType: "video/mp4" }, openai);
+  const malformed = await __test.transcribeAudioPayload({ audio: "not-base64!", mimeType: "audio/webm" }, openai);
+
+  assert.equal(unsupported.status, 415);
+  assert.equal(unsupported.body.code, "AUDIO_FORMAT_UNSUPPORTED");
+  assert.equal(malformed.status, 400);
+  assert.equal(malformed.body.code, "AUDIO_INVALID");
+  assert.equal(providerCalled, false);
+});
+
+test("removes the temporary upload when the transcription provider fails", async () => {
+  let uploadPath;
+  const openai = {
+    audio: {
+      transcriptions: {
+        async create({ file }) {
+          uploadPath = file.path;
+          throw new Error("provider unavailable");
+        },
+      },
+    },
+  };
+
+  await assert.rejects(__test.transcribeAudioPayload({ audio: "d29yZA==", mimeType: "audio/webm" }, openai), /provider unavailable/);
+  await assert.rejects(fs.promises.access(path.dirname(uploadPath)));
 });
