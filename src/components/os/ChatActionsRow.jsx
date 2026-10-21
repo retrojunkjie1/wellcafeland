@@ -17,15 +17,19 @@ export default function ChatActionsRow({
   const [notice, setNotice] = useState("");
   const [voiceOpen, setVoiceOpen] = useState(false);
   const buttons = [];
+  const isServiceError = message?.type === "assistant_error" || message?.meta?.kind === "service_error";
   const actionIds = new Set((Array.isArray(message?.actions) ? message.actions : []).map((action) => action?.action));
-  if (typeof onRetry === "function" && !actionIds.has("retry")) {
+  // Recovery controls belong to an actual failed response, never a successful reply.
+  // Failure messages normally provide their own context-specific actions; these are
+  // fallback controls only when the message does not already include them.
+  if (isServiceError && typeof onRetry === "function" && !actionIds.has("retry")) {
     buttons.push(
       <button key="retry" type="button" onClick={() => onRetry?.(message)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[12px] text-white/55 hover:text-white" aria-label="Retry">
         Retry
       </button>
     );
   }
-  if (typeof onContinueOffline === "function" && !actionIds.has("offline") && !actionIds.has("continue_guidance")) {
+  if (isServiceError && typeof onContinueOffline === "function" && !actionIds.has("offline") && !actionIds.has("continue_guidance")) {
     buttons.push(
       <button key="offline" type="button" onClick={() => onContinueOffline?.(message)} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[12px] text-white/55 hover:text-white" aria-label="Continue offline">
         Continue offline

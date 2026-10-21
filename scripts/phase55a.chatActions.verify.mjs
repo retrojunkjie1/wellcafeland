@@ -95,7 +95,7 @@ checks.push(() => {
   const chatSrc = read(chat);
   const actionsSrc = read(actions);
   const duplicateComposerControls = /ComposerPresenceControls|useAutoSpeak/.test(chatSrc);
-  const perReplySpeak = /onSpeak:\s*typeof window[^\n]*handleSpeakMessage/.test(chatSrc) && /aria-label="Read response aloud"/.test(actionsSrc);
+  const perReplySpeak = /onSpeak:\s*true/.test(chatSrc) && actionsSrc.includes("Read response aloud") && /<VoiceResponse\s+text=/.test(actionsSrc);
   const pass = !duplicateComposerControls && perReplySpeak;
   return {
     name: "single_voice_control_surface",

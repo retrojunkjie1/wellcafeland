@@ -28,16 +28,16 @@ if (existsSync(messageBubblePath)) {
   const hasClipboard = actionRow.includes("Copy") && actionRow.includes("onCopy");
   const hasTypography = content.includes("text-base sm:text-lg") || content.includes("text-[15px]") || content.includes("text-[16px]");
   const hasCopy = actionRow.includes("Copy");
-  const hasBookmark = actionRow.includes("Bookmark");
+  const hasFeedback = actionRow.includes("Helpful response") && actionRow.includes("Not helpful response") && actionRow.includes("aria-pressed");
   const hasVolume2 = actionRow.includes("Volume2");
   const hasActionRowClass = actionRow.includes("rounded-full border border-white/10");
   results.messageBubbleWiring = {
-    ok: hasMarkdownLite && hasClipboard && hasTypography && hasCopy && hasBookmark && hasVolume2 && hasActionRowClass,
+    ok: hasMarkdownLite && hasClipboard && hasTypography && hasCopy && hasFeedback && hasVolume2 && hasActionRowClass,
     hasMarkdownLite,
     hasClipboard,
     hasTypography,
     hasCopy,
-    hasBookmark,
+    hasFeedback,
     hasVolume2,
     hasActionRowClass,
   };
