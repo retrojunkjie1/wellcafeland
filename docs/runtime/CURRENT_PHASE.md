@@ -14,6 +14,14 @@ God-Eye now separates server handler registration, local handler-contract tests,
 
 The focused evidence tests passed (2/2), lint passed on the changed files, and `npm run verify:release` passed against the final UI: 124 UI test files / 537 tests, 56 agent contracts, 10 authenticated agent workflow scenarios, the client-practitioner journey, 25 practitioner care/scheduling/messaging/workspace lifecycle checks, 13 Firestore Rules checks, production build, Firebase predeploy checks, and `git diff --check`. Commit `723d8b7` was deployed to Firebase Hosting (`wellnesscafelanding`). The live `https://wellnesscafe.app/admin/console` route returned HTTP 200, and its published `AdminConsolePage` bundle contains the evidence display. This confirms route delivery and UI assets only; no authenticated admin session or production agent call was exercised.
 
+### Chat composer and conversation spacing (Hosting deployed 2026-10-21)
+
+Refined the live chat page around the supplied compact-composer reference. Removed the oversized framed dock, widened the composer rail, and made the chat route and conversation panel use the app's available viewport height. Reduced excess spacing around the opening prompt and first message. Starting a conversation now focuses the message field without scrolling the page. Text, explicit microphone control, and Speak/Auto controls remain available; no microphone is activated automatically and no private content is spoken automatically.
+
+The targeted `phase54b` and `phase55a` chat checks passed, the fresh production build and Firebase deployment preflight passed, and `git diff --check` passed. The deployed `/chat` page was opened and visually inspected: the opening prompt is centered in the available conversation space, while the compact composer is at the bottom of the app viewport without the former oversized outer frame. This is a layout and focus verification only; no message was submitted and no live AI request was made. Commit `71e35ee36c27fae86104e5b47d5b954c7aa744da` is deployed to Firebase Hosting (`wellnesscafelanding`).
+
+This completes the chat-layout repair. The broader cross-phase reliability iteration remains open: authenticated production data workflows and the previously deferred production smoke-account walkthrough still need their own evidence.
+
 ### Cross-phase reliability and lint cleanup (verified 2026-10-21)
 
 Completed a system-wide reliability cleanup rather than adding a new feature slice. Removed unused/dead bindings, made async hook dependencies explicit, removed state mirrors that could cause cascading renders, made tool/audio controllers stable across renders, and separated provider hooks/context values from Fast Refresh component modules. Existing safety, sharing, and consent behavior remains covered by the existing release suites.
