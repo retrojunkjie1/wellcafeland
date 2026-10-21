@@ -40,7 +40,7 @@ const content = [
   "We do not use your data for advertising.",
   "WellnessCafe does not diagnose, treat, cure, or replace professional medical care.",
   "3. How Your Data Is Stored",
-  "Chat messages are saved in this browser. Voice messages sent in chat can include the recording in that browser-saved chat history.",
+  "Chat messages and voice transcripts you send are saved in this browser. The recording is used to create the transcript and is not added to chat history.",
   "Saved check-ins and journal entries are stored in your account when signed in, or in this browser when account saving is unavailable.",
   "Guide conversation memory is separate from browser chat history. When you enable it, guide exchanges are saved to your account until you review or clear them in Wellness settings.",
   "Voice recordings are sent for transcription only after the confirmation shown in the voice feature. Voice Journal asks separately before sending a reviewed transcript for an AI summary. Voice Session keeps a recording on this device until you choose Send; after sending, its transcript and reply are added to the browser-saved chat.",

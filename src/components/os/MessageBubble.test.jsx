@@ -4,6 +4,21 @@ import { render, screen } from "@testing-library/react";
 import MessageBubble from "./MessageBubble";
 
 describe("MessageBubble", () => {
+  it("shows a sent voice transcript without a stale recording player", () => {
+    render(<MessageBubble message={{
+      id: "user-voice-1",
+      role: "user",
+      type: "voice_message",
+      content: "The words I chose to send",
+      audioUrl: "data:audio/webm;base64,old-recording",
+      audioDurationSeconds: 9,
+    }} />);
+
+    expect(screen.getByText("The words I chose to send")).toBeInTheDocument();
+    expect(screen.queryByText(/Recording unavailable|Voice message|could not be played/i)).not.toBeInTheDocument();
+    expect(document.querySelector("audio")).not.toBeInTheDocument();
+  });
+
   it("keeps internal response diagnostics out of the client conversation", () => {
     render(<MessageBubble message={{
       id: "assistant-1",
