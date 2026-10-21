@@ -86,21 +86,48 @@ checks.push(() => {
   };
 });
 
-// Phase 55A.2: ComposerPresenceControls exists and is used in ChatPanel
+// The composer keeps input/voice capture only; reply playback and auto-speech
+// controls must not be duplicated beside it. Reading is a per-response action.
 checks.push(() => {
-  const cp = "src/components/os/ComposerPresenceControls.jsx";
   const chat = "src/components/os/ChatPanel.jsx";
-  if (!exists(cp)) return { name: "composer_presence_controls_present", pass: false, detail: "ComposerPresenceControls.jsx missing" };
-  if (!exists(chat)) return { name: "composer_presence_controls_present", pass: false, detail: "ChatPanel missing" };
+  const actions = "src/components/os/ChatActionsRow.jsx";
+  if (!exists(chat) || !exists(actions)) return { name: "single_voice_control_surface", pass: false, detail: "ChatPanel or ChatActionsRow missing" };
   const chatSrc = read(chat);
-  const hasImport = /ComposerPresenceControls/.test(chatSrc);
-  const hasUsage = /<ComposerPresenceControls[\s\>]/.test(chatSrc);
-  const pass = hasImport && hasUsage;
+  const actionsSrc = read(actions);
+  const duplicateComposerControls = /ComposerPresenceControls|useAutoSpeak/.test(chatSrc);
+  const perReplySpeak = /onSpeak:\s*typeof window[^\n]*handleSpeakMessage/.test(chatSrc) && /aria-label="Read response aloud"/.test(actionsSrc);
+  const pass = !duplicateComposerControls && perReplySpeak;
   return {
-    name: "composer_presence_controls_present",
+    name: "single_voice_control_surface",
     pass,
-    detail: !pass ? (!hasImport ? "ChatPanel does not import ComposerPresenceControls" : "ChatPanel does not render <ComposerPresenceControls>") : "",
+    detail: !pass ? (duplicateComposerControls ? "duplicate Speak/Auto controls remain in the composer" : "per-response read-aloud action missing") : "",
   };
+});
+
+checks.push(() => {
+  const chat = "src/components/os/ChatPanel.jsx";
+  const status = "src/components/os/ThinkingStatus.jsx";
+  if (!exists(chat) || !exists(status)) return { name: "pending_response_disclosure", pass: false, detail: "ChatPanel or ThinkingStatus missing" };
+  const chatSrc = read(chat);
+  const statusSrc = read(status);
+  const renderedForPending = /pending\s*!=\s*null/.test(chatSrc) && /<ThinkingStatus\s+intent=\{pending\.intent\}/.test(chatSrc);
+  const userControlled = /aria-expanded=\{open\}/.test(statusSrc) && /setOpen\(\(value\) => !value\)/.test(statusSrc);
+  const safeSummary = /reviewing what you asked|checking for relevant public resources/.test(statusSrc) && !/chain.of.thought|internal reasoning/i.test(statusSrc);
+  const pass = renderedForPending && userControlled && safeSummary;
+  return {
+    name: "pending_response_disclosure",
+    pass,
+    detail: !pass ? "pending status must have an optional disclosure with a plain-language process summary" : "",
+  };
+});
+
+checks.push(() => {
+  const p = "src/components/os/ChatActionsRow.jsx";
+  if (!exists(p)) return { name: "response_toolbar_actions", pass: false, detail: "ChatActionsRow missing" };
+  const s = read(p);
+  const actions = ["Copy response", "Read response aloud", "Helpful response", "Not helpful response", "Share response"];
+  const pass = actions.every((label) => s.includes(label)) && /aria-pressed/.test(s);
+  return { name: "response_toolbar_actions", pass, detail: pass ? "" : "copy, read aloud, feedback, and share actions must be available" };
 });
 
 // Phase 55A.2: Experience signal parser exists

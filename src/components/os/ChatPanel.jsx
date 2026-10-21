@@ -64,9 +64,7 @@ import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
 import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
 import GroundingModal from "@/components/chat/GroundingModal";
-import ThinkingOverlay from "@/components/presence/ThinkingOverlay";
-import useAutoSpeak from "@/components/presence/useAutoSpeak";
-import ComposerPresenceControls from "./ComposerPresenceControls";
+import ThinkingStatus from "./ThinkingStatus";
 import {parseExperienceSignal} from "@/core/experience/experienceSignal";
 
 // Phase 54K: simple hash for variation (no deps)
@@ -276,10 +274,8 @@ const ChatPanel = ({ startConversation = false }) => {
   const [pending, setPending] = useState(null);
   const pendingStartMsRef = useRef(null);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
-  const [expandedMessageIds, setExpandedMessageIds] = useState({});
   const [speakError, setSpeakError] = useState(null);
   const [groundingModalOpen, setGroundingModalOpen] = useState(false);
-  const [showThinkingOverlay, setShowThinkingOverlay] = useState(false);
   const composerRef = useRef(null);
   const [composerH, setComposerH] = useState(0);
   const COMPOSER_MARGIN = 16;
@@ -302,32 +298,6 @@ const ChatPanel = ({ startConversation = false }) => {
   const offlineMessageQueueRef = useRef([]); // Message queue for offline sends
   const ingestDebounceRef = useRef(null);
   useEffect(() => { initThread(); }, [initThread]);
-
-  const { autoSpeakEnabled, setAutoSpeakEnabled } = useAutoSpeak({ messages, pending });
-
-  const speakLastAssistant = React.useCallback(() => {
-    if (pending) return;
-    const last = [...(messages || [])].reverse().find((m) => m.role === "assistant" && m.content);
-    if (!last) return;
-    try {
-      window.speechSynthesis?.cancel?.();
-      const u = new SpeechSynthesisUtterance(String(last.content));
-      u.rate = 1;
-      u.pitch = 1;
-      window.speechSynthesis?.speak?.(u);
-    } catch (e) {}
-  }, [messages, pending]);
-
-  useEffect(() => {
-    if (!pending) {
-      setShowThinkingOverlay(false);
-      return undefined;
-    }
-    // Avoid flashing the overlay for replies that arrive immediately. One
-    // timeout is enough; a recurring render timer is not needed.
-    const timeout = window.setTimeout(() => setShowThinkingOverlay(true), 250);
-    return () => window.clearTimeout(timeout);
-  }, [pending]);
 
   useEffect(() => {
     const el = composerRef.current;
@@ -1459,32 +1429,26 @@ const ChatPanel = ({ startConversation = false }) => {
   const handleCopyMessage = React.useCallback((messageOrContent) => {
     const content = typeof messageOrContent === "string" ? messageOrContent : (messageOrContent?.content ?? messageOrContent?.text ?? "");
     if (typeof navigator !== "undefined" && navigator.clipboard?.writeText && content) {
-      navigator.clipboard.writeText(typeof content === "string" ? content : "");
+      return navigator.clipboard.writeText(typeof content === "string" ? content : "").then(() => true).catch(() => false);
     }
+    return Promise.resolve(false);
   }, []);
 
-  const handleSaveMessage = React.useCallback((message) => {
+  const handleShareMessage = React.useCallback(async (message) => {
     const text = typeof message?.content === "string" ? message.content : message?.text || "";
-    if (!text) return;
-    const timestamp = Date.now();
-    const payload = { id: message?.id || `saved-${timestamp}`, role: message?.role ?? "assistant", text, timestamp };
-    const saveToLocal = () => {
+    if (!text) return false;
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        const list = JSON.parse(localStorage.getItem("wc_saved_messages") || "[]");
-        list.push(payload);
-        localStorage.setItem("wc_saved_messages", JSON.stringify(list));
-      } catch {}
-    };
-    if (identity?.userId && identity.mode === "account") {
-      import("firebase/firestore").then(({ collection, addDoc }) => {
-        import("@/firebase").then(({ db }) => {
-          addDoc(collection(db, "users", identity.userId, "savedMessages"), payload).catch(saveToLocal);
-        }).catch(saveToLocal);
-      }).catch(saveToLocal);
-    } else {
-      saveToLocal();
+        await navigator.share({ title: "WellnessCafe response", text });
+        return "shared";
+      } catch (error) {
+        if (error?.name === "AbortError") return "cancelled";
+        return false;
+      }
     }
-  }, [identity?.userId, identity?.mode]);
+    const copied = await handleCopyMessage(text);
+    return copied ? "copied" : false;
+  }, [handleCopyMessage]);
 
   const handleSpeakMessage = React.useCallback((message) => {
     const text = typeof message?.content === "string" ? message.content : message?.text || "";
@@ -1500,12 +1464,6 @@ const ChatPanel = ({ startConversation = false }) => {
     } catch {}
     const u = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(u);
-  }, []);
-
-  const handleExpandMessage = React.useCallback((message) => {
-    const id = message?.id;
-    if (id == null) return;
-    setExpandedMessageIds((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const handleContinueOffline = React.useCallback((msg) => {
@@ -1527,10 +1485,8 @@ const ChatPanel = ({ startConversation = false }) => {
     onOpenToolRoute: (route) => route && navigate(route),
     onContinueOffline: handleContinueOffline,
     onCopy: handleCopyMessage,
-    onSave: handleSaveMessage,
     onSpeak: typeof window !== "undefined" && window.speechSynthesis ? handleSpeakMessage : undefined,
-    onExpand: handleExpandMessage,
-    expandedMessageIds,
+    onShare: handleShareMessage,
   };
 
   const beginConversation = React.useCallback(() => {
@@ -2034,10 +1990,7 @@ const ChatPanel = ({ startConversation = false }) => {
                 <div className="flex items-start gap-3 animate-fade-in">
                   <div className="flex-1">
                     <div className="inline-block max-w-[85%] rounded-2xl bg-white/5 p-4">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-wcGold" />
-                        <span className="text-base text-white/60">{pending.label ?? "Thinking"}</span>
-                      </div>
+                      <ThinkingStatus intent={pending.intent} />
                     </div>
                   </div>
                 </div>
@@ -2091,12 +2044,6 @@ const ChatPanel = ({ startConversation = false }) => {
                 />
               ) : (
                 <div className="flex items-end gap-2 w-full">
-                  <ComposerPresenceControls
-                    pending={!!pending}
-                    onSpeakLast={speakLastAssistant}
-                    autoSpeakEnabled={autoSpeakEnabled}
-                    onToggleAutoSpeak={(v) => setAutoSpeakEnabled(!!v)}
-                  />
                   <ChatComposerBar
                     value={input}
                     onChange={(v) => {
@@ -2135,8 +2082,6 @@ const ChatPanel = ({ startConversation = false }) => {
       />
 
       <GroundingModal open={groundingModalOpen} onClose={() => setGroundingModalOpen(false)} />
-
-      <ThinkingOverlay show={showThinkingOverlay && Boolean(pending)} />
 
       {/* In-app link preview (resource.preview intent) */}
       {webViewUrl && (

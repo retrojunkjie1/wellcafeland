@@ -1,7 +1,7 @@
 // src/components/os/MessageBubble.jsx
 // Animated message bubbles with human pacing and guide avatar
 
-import React, { useState } from "react";
+import React from "react";
 import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -9,14 +9,10 @@ import MarkdownLite from "@/components/system/MarkdownLite";
 import ChatActionsRow from "./ChatActionsRow";
 import MicroVideoCard from "../presence/MicroVideoCard";
 
-function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy, onSave, onSpeak, onExpand, onRetry, onOpenToolRoute, onContinueOffline, expandedMessageIds }) {
-  const isAssistant = message?.role === "assistant";
+function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy, onSpeak, onShare, onRetry, onOpenToolRoute, onContinueOffline }) {
   const isPending = Boolean(message?.status === "pending" || message?.meta?.pending);
   const content = typeof message.content === "string" ? message.content : message.content?.content || message.text || "";
   const displayContent = isPending ? "" : content;
-  const isControlledExpand = typeof onExpand === "function" && expandedMessageIds != null;
-  const [localDetailsOpen, setLocalDetailsOpen] = useState(false);
-  const detailsOpen = isControlledExpand ? Boolean(expandedMessageIds[message?.id]) : localDetailsOpen;
   const isServiceError = message.type === "assistant_error" || message.meta?.kind === "service_error";
   const serviceErrorCode = message.errorCode || message.meta?.errorCode;
   const serviceErrorTitle = serviceErrorCode === "AI_PROVIDER_NOT_CONFIGURED"
@@ -24,13 +20,6 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
     : message.meta?.errorReason === "offline"
       ? "No internet connection"
       : "Connection issue";
-  const showListen = isAssistant && !isPending && !isServiceError && content && String(message.text || content).trim() !== "Thinking…";
-
-  const handleExpandClick = () => {
-    if (isControlledExpand) onExpand(message);
-    else setLocalDetailsOpen((v) => !v);
-  };
-
   const isMultimodal = message.type === "assistant_audio" || message.type === "assistant_video" || message.type === "voice_session";
 
   return (
@@ -142,11 +131,6 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
             )}
           </div>
         )}
-        {showListen && !isMultimodal && content && !message.audioUrl && (
-          <div className="mt-2">
-            <VoiceResponse text={content} />
-          </div>
-        )}
         {!isPending && message.actions?.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {message.actions.map((a, i) => (
@@ -167,22 +151,16 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
             onRetry={onRetry}
             onContinueOffline={onContinueOffline}
             onCopy={onCopy}
-            onSave={onSave}
             onSpeak={onSpeak}
-            onExpand={onExpand}
+            onShare={onShare}
           />
-        )}
-        {!isPending && detailsOpen && (
-          <pre className="mt-2 rounded-xl border border-white/10 bg-black/30 p-3 text-[11px] text-white/60 overflow-x-auto">
-            {JSON.stringify({ id: message.id, type: message.type, timestamp: message.timestamp, role: message.role }, null, 2)}
-          </pre>
         )}
       </div>
     </>
   );
 }
 
-const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsProp, onCopy, onSave, onSpeak, onExpand, onRetry, onOpenToolRoute, onContinueOffline, expandedMessageIds }) => {
+const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsProp, onCopy, onSpeak, onShare, onRetry, onOpenToolRoute, onContinueOffline }) => {
   // Handle tool result messages
   if (message.type === "tool_result" || (typeof message.content === "object" && message.content?.type === "tool_result")) {
     const toolData = typeof message.content === "object" ? message.content : message;
@@ -234,13 +212,11 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
             onAction={onAction}
             showSignals={showSignals}
             onCopy={onCopy}
-            onSave={onSave}
             onSpeak={onSpeak}
-            onExpand={onExpand}
+            onShare={onShare}
             onRetry={onRetry}
             onOpenToolRoute={onOpenToolRoute}
             onContinueOffline={onContinueOffline}
-            expandedMessageIds={expandedMessageIds}
           />
         </div>
       </div>

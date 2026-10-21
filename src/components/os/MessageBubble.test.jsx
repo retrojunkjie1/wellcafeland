@@ -25,6 +25,7 @@ describe("MessageBubble", () => {
     }} />);
 
     expect(screen.getByText("What's on your mind?")).toBeInTheDocument();
+    expect(screen.queryByText(/Play this response/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Role: default|Depth: standard|Risk: Low|How I'm approaching|Thought for|intent understanding/i)).not.toBeInTheDocument();
   });
 });
