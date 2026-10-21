@@ -42,4 +42,13 @@ describe("App Check initialization", () => {
 
     expect(mocks.initializeAppCheck).not.toHaveBeenCalled();
   });
+
+  it("supports an explicit token refresh for a user-triggered connection check", async () => {
+    mocks.getToken.mockResolvedValue({ token: "private-app-check-token" });
+    const { initAppCheck, getAppCheckToken } = await import("./appCheck");
+    initAppCheck({ name: "wellnesscafe" });
+
+    await expect(getAppCheckToken({ forceRefresh: true })).resolves.toBe("private-app-check-token");
+    expect(mocks.getToken).toHaveBeenCalledWith({ appCheck: true }, true);
+  });
 });

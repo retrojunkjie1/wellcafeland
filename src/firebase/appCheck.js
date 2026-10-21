@@ -44,8 +44,8 @@ export function initAppCheck(app) {
   }
 }
 
-export async function getAppCheckToken() {
+export async function getAppCheckToken({ forceRefresh = false } = {}) {
   if (!appCheckInstance) return null;
-  const result = await getToken(appCheckInstance, false);
+  const result = await getToken(appCheckInstance, forceRefresh);
   return result?.token || null;
 }

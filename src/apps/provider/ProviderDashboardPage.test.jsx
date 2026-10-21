@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   listProviderCareHandoffs: vi.fn(),
   listProviderVisitPreparations: vi.fn(),
   callAgent: vi.fn(),
+  getAppCheckToken: vi.fn(),
 }));
 
 vi.mock("react-router-dom", async (importOriginal) => ({ ...(await importOriginal()), useNavigate: () => mocks.navigate, useLocation: () => ({ hash: "" }) }));
@@ -21,6 +22,7 @@ vi.mock("@/services/assignmentService", () => ({ listAssignmentsForProvider: moc
 vi.mock("@/services/appointmentService", () => ({ listAppointmentsForProvider: mocks.listAppointmentsForProvider, getMyProviderAvailability: mocks.getMyProviderAvailability }));
 vi.mock("@/services/practitionerRegistry", () => ({ getProviderClientOverview: mocks.getProviderClientOverview, listProviderCareHandoffs: mocks.listProviderCareHandoffs, listProviderVisitPreparations: mocks.listProviderVisitPreparations }));
 vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent }));
+vi.mock("@/firebase/appCheck", () => ({ getAppCheckToken: mocks.getAppCheckToken }));
 vi.mock("@/components/navigation/PageHeader", () => ({ default: ({ title }) => <header>{title}</header> }));
 vi.mock("./components/ConnectionRequestsPanel", () => ({ default: () => <section>Connection requests</section> }));
 
@@ -207,7 +209,7 @@ describe("ProviderDashboardPage", () => {
 
     render(<ProviderDashboardPage />);
 
-    expect(await screen.findByText(/Your account is still signed in, but some practice information isn’t available right now/)).toBeInTheDocument();
+    expect(await screen.findByText(/Your account is signed in, but we couldn’t load some practice information/i)).toBeInTheDocument();
     expect(screen.queryByText(/App Check|secure app verification|verification setup/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "Reload WellnessCafe" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sign in again" })).toBeNull();
@@ -215,6 +217,39 @@ describe("ProviderDashboardPage", () => {
     expect(screen.getByText("Appointments aren’t available right now.")).toBeInTheDocument();
     expect(screen.getByText("Shared updates aren’t available right now.")).toBeInTheDocument();
     expect(screen.getByText("Your connected clients aren’t available right now.")).toBeInTheDocument();
+  });
+
+  it("checks for a browser token once, then retries dashboard reads without exposing the token", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider
+      .mockRejectedValueOnce(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }))
+      .mockResolvedValueOnce([]);
+    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.getAppCheckToken.mockResolvedValue("private-app-check-token");
+
+    render(<ProviderDashboardPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Check connection" }));
+
+    await waitFor(() => expect(mocks.getAppCheckToken).toHaveBeenCalledWith({ forceRefresh: true }));
+    await waitFor(() => expect(mocks.listAssignmentsForProvider).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/No appointments in the next two weeks/i)).toBeInTheDocument();
+    expect(screen.queryByText("private-app-check-token")).toBeNull();
+  });
+
+  it("stops after one browser token check when token acquisition fails", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider.mockRejectedValue(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }));
+    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.getAppCheckToken.mockRejectedValue(new Error("token unavailable"));
+
+    render(<ProviderDashboardPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Check connection" }));
+
+    expect(await screen.findByText(/couldn’t check this browser connection/i)).toBeInTheDocument();
+    expect(mocks.getAppCheckToken).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Check connection" })).toBeNull();
   });
 
   it("labels appointment times as device-local when saved provider time-zone settings cannot load", async () => {
