@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
 
 export default function useAutoSpeak({ messages, pending }) {
-  const key = "wc_autospeak_enabled";
+  // Voice playback stays off unless the person opts in. Use a new key so browsers
+  // that previously stored the old default-on value don't inherit it as consent.
+  const key = "wc_autospeak_enabled_v2";
   const [enabled, setEnabled] = useState(() => {
     const v = safeLocalStorage.get(key);
-    return v === null ? true : v === "1";
+    return v === "1";
   });
 
   const lastSpokenIdRefKey = "wc_autospeak_last_id";
@@ -20,6 +22,7 @@ export default function useAutoSpeak({ messages, pending }) {
     const last = (messages?.length) ? messages[messages.length - 1] : null;
     if (!last) return;
     if (last.role !== "assistant") return;
+    if (last.type === "system") return;
     if (!last.content) return;
 
     const lastId = safeLocalStorage.get(lastSpokenIdRefKey);

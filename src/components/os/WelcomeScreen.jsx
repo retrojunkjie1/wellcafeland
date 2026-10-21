@@ -17,7 +17,7 @@ const WelcomeScreen = ({ onAction, onContinueChat }) => {
 
   const handlePathwayClick = (pathwayId) => {
     if (pathwayId === "process") {
-      onAction?.("I want to talk this through. Please start with one simple question and let me choose what kind of help I want.");
+      onContinueChat?.();
       return;
     }
     if (pathwayId === "real-help") {

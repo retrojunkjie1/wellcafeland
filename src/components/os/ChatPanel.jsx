@@ -22,7 +22,7 @@ import { searchResources } from "@/services/resourceSearch";
 import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
 import { callAI } from "@/services/aiClient";
 import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
-import { makeLivingMeta, detectRoleIntent, safeApproachForRole } from "@/lib/living";
+import { makeLivingMeta, detectRoleIntent } from "@/lib/living";
 import { useLivingSession } from "@/hooks/useLivingSession";
 import { offlineRespond } from "@/services/offlineGuide";
 import { getAIServiceFailureActions } from "@/services/aiFailureGuidance";
@@ -62,7 +62,6 @@ import ChatComposerBar from "@/components/system/ChatComposerBar";
 import ChatDock from "@/components/system/ChatDock";
 import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
-import { planResponse } from "@/engines/trust/responsePlanner";
 import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
 import GroundingModal from "@/components/chat/GroundingModal";
 import ThinkingOverlay from "@/components/presence/ThinkingOverlay";
@@ -265,7 +264,6 @@ const ChatPanel = () => {
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
   const living = useLivingSession();
-  const roleSetThisTurnRef = useRef(false);
   const { ingestUserDraft, pushAction, initThread } = useContinuityStore();
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
@@ -275,7 +273,6 @@ const ChatPanel = () => {
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const [voiceCheckInModalOpen, setVoiceCheckInModalOpen] = useState(false);
   const [pending, setPending] = useState(null);
-  const pendingPlanRef = useRef(null);
   const pendingStartMsRef = useRef(null);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
   const [expandedMessageIds, setExpandedMessageIds] = useState({});
@@ -566,24 +563,16 @@ const ChatPanel = () => {
           const routeIntent = classifyRouteIntent(text, !!directoryQueries);
           lastTurnRef.current = { text, routeIntent, sourceMessageId: media?.sourceMessageId || null };
 
-          // Trust layer: plan (for reasoning envelope on success); then single pending indicator (Phase 54J)
+          // Keep the visible pending state tied to the actual request.
           const startMs = Date.now();
           pendingStartMsRef.current = startMs;
-          let plan;
-          try {
-            plan = await planResponse({ userText: text });
-          } catch (e) {
-            plan = { reply: { id: "pending", text: "", mode: "chat" }, reasoning: { role: "default", depth: "standard", safety: { risk: "low", crisis: false, disclaimers: [] }, checks: ["scope limits"], summary: ["Identify ask", "Offer next action"], confidence: 3, latencyMs: 0 } };
-          }
-          pendingPlanRef.current = plan;
           const pendingId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : "wc_" + Date.now() + "_" + Math.random().toString(36).slice(2);
           setPending({ id: pendingId, startedAt: startMs, label: "Thinking", intent: directoryFallback ? "directory" : "chat", text });
 
-          // Phase 54I: Role intent — persist (approach shown on final message when showApproach)
+          // Preserve the requested conversation role without exposing internal planning details.
           const roleHit = detectRoleIntent(text);
           if (roleHit?.confidence >= 0.8) {
             living.setRole(roleHit.role);
-            roleSetThisTurnRef.current = true;
           }
 
         // Guest safe mode: try token with short wait (anonymous sign-in); if none, show helpful message (no dead-end)
@@ -668,7 +657,6 @@ const ChatPanel = () => {
             sessionStorage.setItem("wc_last_key_count", "0");
           }
         }
-        const showApproach = roleSetThisTurnRef.current || /how (are|you're) (thinking|approaching)/i.test(text) || /analy(z|s)e deeply/i.test(text);
         const res = await callAI("aiSession", {
           messages: messageHistory,
           mode,
@@ -828,7 +816,6 @@ const ChatPanel = () => {
         const lastMsgIntent = res.intent && typeof res.intent === "object" ? res.intent : null;
         const lastMsgLinks = Array.isArray(res.links) ? res.links : [];
         const doneMs = Date.now();
-        const envelope = pendingPlanRef.current;
         // Phase 55A: truthful thinking — MessageBubble shows "Thought for Xs" only when thoughtMs>=250
         const thoughtMsRes = res.meta?.thoughtMs ?? livingMeta.thoughtMs ?? (pendingStartMsRef.current != null ? doneMs - pendingStartMsRef.current : null);
         const patch = {
@@ -839,17 +826,14 @@ const ChatPanel = () => {
           timestamp: doneMs,
           intent: lastMsgIntent,
           links: lastMsgLinks,
-          reasoning: envelope?.reasoning,
           meta: {
             pending: false,
             startMs: pendingStartMsRef.current,
             doneMs,
             thoughtMs: thoughtMsRes,
             ...nextMetaFromSignal,
-            ...(showApproach ? { approach: safeApproachForRole(living.role || "coach") } : {}),
           },
         };
-        roleSetThisTurnRef.current = false;
         if (import.meta.env.DEV && typeof window !== "undefined") {
           window.__wcLastAssistantMessage = patch;
           console.debug("[ChatPanel] assistantMessage", {
@@ -896,24 +880,6 @@ const ChatPanel = () => {
               }
             }, 500);
           }
-        }
-
-          // Phase 14: Voice intent detection (reuse lowerText from above)
-        if (
-          lowerText.includes("i want to talk it out") ||
-          lowerText.includes("can i speak instead") ||
-          lowerText.includes("i want voice support") ||
-          lowerText.includes("i want to talk") ||
-          lowerText.includes("let me speak")
-        ) {
-          setTimeout(() => {
-            addMessage("assistant", {
-              type: "system",
-              content: "Opening voice session workspace...",
-            });
-            openWorkspace("voice-session", "Voice Session", {});
-          }, 500);
-          return;
         }
 
         // Phase 14: Video request detection

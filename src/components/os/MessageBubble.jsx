@@ -5,8 +5,6 @@ import React, { useState } from "react";
 import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { AlertCircle, Loader2 } from "lucide-react";
-import ThinkingTimer from "@/components/system/ThinkingTimer";
-import ReasoningDisclosure from "@/components/system/ReasoningDisclosure";
 import MarkdownLite from "@/components/system/MarkdownLite";
 import ChatActionsRow from "./ChatActionsRow";
 import MicroVideoCard from "../presence/MicroVideoCard";
@@ -35,25 +33,8 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
 
   const isMultimodal = message.type === "assistant_audio" || message.type === "assistant_video" || message.type === "voice_session";
 
-  // Phase 54M: Only one "Thought for Xs" line — show when thoughtMs >= 250 and assistant and not pending; omit ThinkingTimer when we have thoughtMs to avoid duplicate
-  const showThoughtMs = !isPending && message?.role === "assistant" && message.meta?.thoughtMs != null && Number(message.meta.thoughtMs) >= 250;
-  const showThinkingTimer = !isPending && (message.meta?.startMs != null || message.meta?.doneMs != null) && !showThoughtMs;
-
   return (
     <>
-      {showThinkingTimer && (
-        <div className="mb-1">
-          <ThinkingTimer startMs={message.meta?.startMs} doneMs={message.meta?.doneMs} />
-        </div>
-      )}
-      {showThoughtMs && (() => {
-        const sec = Math.max(0.25, Number(message.meta.thoughtMs) / 1000);
-        return (
-          <div className="mb-1 text-[11px] text-white/45">
-            Thought for {sec.toFixed(sec < 10 ? 1 : 0)}s
-          </div>
-        );
-      })()}
       <div className={`inline-block w-full sm:max-w-[90%] rounded-2xl border px-4 sm:px-5 py-4 sm:py-5 text-base sm:text-lg leading-relaxed break-words ${isServiceError ? "border-amber-200/20 bg-amber-300/[0.06] text-amber-50/90" : "border-white/10 bg-white/[0.05] text-white/90"}`}>
         {isServiceError && (
           <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-100/80">
@@ -195,29 +176,6 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
           <pre className="mt-2 rounded-xl border border-white/10 bg-black/30 p-3 text-[11px] text-white/60 overflow-x-auto">
             {JSON.stringify({ id: message.id, type: message.type, timestamp: message.timestamp, role: message.role }, null, 2)}
           </pre>
-        )}
-        {!isPending && message.meta?.approach && (
-          <details className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] overflow-hidden">
-            <summary className="cursor-pointer px-3 py-2 text-xs text-white/50 hover:text-white/70 list-none">
-              How I'm approaching this
-            </summary>
-            <div className="mt-0 px-3 pb-3 pt-1 text-xs text-white/70 border-t border-white/10">
-              <MarkdownLite text={message.meta.approach} />
-            </div>
-          </details>
-        )}
-        {!isPending && message.meta?.plan && (
-          <details className="mt-2 rounded-xl border border-white/10 bg-white/[0.04] overflow-hidden">
-            <summary className="cursor-pointer px-3 py-2 text-xs text-white/50 hover:text-white/70 list-none">
-              How I'm responding
-            </summary>
-            <div className="mt-0 px-3 pb-3 pt-1 text-xs text-white/70 border-t border-white/10">
-              {message.meta.plan}
-            </div>
-          </details>
-        )}
-        {!isPending && message.reasoning && (
-          <ReasoningDisclosure reasoning={message.reasoning} defaultOpen={false} />
         )}
       </div>
     </>
