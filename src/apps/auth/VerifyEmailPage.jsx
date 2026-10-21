@@ -79,7 +79,7 @@ export default function VerifyEmailPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/70">One quick account check</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Verify your email</h1>
         <p className="mt-3 break-words leading-relaxed text-white/70">Verification email for <span className="font-medium text-white">{email}</span></p>
-        <p className="mt-3 text-sm leading-relaxed text-white/65">Check Inbox, Spam/Junk, and Promotions. Search for “verify your email” and allow a few minutes for delivery. If you still can’t find it, sign in below with the same email and password; we’ll request a fresh link and return you here.</p>
+        <p className="mt-3 text-sm leading-relaxed text-white/65">Check Inbox, Spam/Junk, and Promotions. Search for “verify your email” and allow a few minutes for delivery. {user && !user.isAnonymous && !user.emailVerified ? <>If it hasn’t arrived, choose <strong className="font-medium text-white/85">Send a fresh link</strong> below. After opening it, choose <strong className="font-medium text-white/85">I’ve verified — check</strong>.</> : <>If it hasn’t arrived, sign in below with the same email and password to request a fresh link.</>}</p>
         {message && <p role="status" className="mt-5 rounded-xl border border-emerald-200/15 bg-emerald-100/[0.05] p-4 text-sm leading-relaxed text-emerald-50">{message}</p>}
         {error && <p role="alert" className="mt-4 rounded-xl border border-rose-200/20 bg-rose-100/[0.05] p-4 text-sm leading-relaxed text-rose-100">{error}</p>}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

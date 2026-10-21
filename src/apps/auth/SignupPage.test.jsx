@@ -66,7 +66,7 @@ describe("SignupPage workspace intent", () => {
     await waitFor(() => expect(screen.getByLabelText("Current route")).toHaveTextContent("/verify-email"));
     expect(mocks.setDoc).toHaveBeenCalledWith("user-ref", expect.objectContaining({ role: "client", roles: [], workspaceIntent: "practitioner" }));
     expect(mocks.sendEmailVerification).toHaveBeenCalledOnce();
-    expect(mocks.signOut).toHaveBeenCalledOnce();
+    expect(mocks.signOut).not.toHaveBeenCalled();
   });
 
   it("requires a new client account to verify email before entering the client space", async () => {
@@ -80,7 +80,7 @@ describe("SignupPage workspace intent", () => {
     await waitFor(() => expect(screen.getByLabelText("Current route")).toHaveTextContent("/verify-email"));
     expect(mocks.setDoc).toHaveBeenCalledWith("user-ref", expect.objectContaining({ roles: ["client"], workspaceIntent: "client" }));
     expect(mocks.sendEmailVerification).toHaveBeenCalledOnce();
-    expect(mocks.signOut).toHaveBeenCalledOnce();
+    expect(mocks.signOut).not.toHaveBeenCalled();
   });
 
   it("requires email verification before the dual-space account continues to its application", async () => {
@@ -93,7 +93,7 @@ describe("SignupPage workspace intent", () => {
     await waitFor(() => expect(screen.getByLabelText("Current route")).toHaveTextContent("/verify-email"));
     expect(mocks.setDoc).toHaveBeenCalledWith("user-ref", expect.objectContaining({ role: "client", roles: ["client"], workspaceIntent: "both" }));
     expect(mocks.sendEmailVerification).toHaveBeenCalledOnce();
-    expect(mocks.signOut).toHaveBeenCalledOnce();
+    expect(mocks.signOut).not.toHaveBeenCalled();
   });
 
   it("shows a clear recovery route if Firebase cannot send the verification request", async () => {
@@ -104,7 +104,7 @@ describe("SignupPage workspace intent", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create my account" }));
 
     await waitFor(() => expect(screen.getByLabelText("Current route")).toHaveTextContent("/verify-email"));
-    expect(mocks.signOut).toHaveBeenCalledOnce();
+    expect(mocks.signOut).not.toHaveBeenCalled();
   });
 
   it("keeps sign-up setup details out of the message shown to people", async () => {

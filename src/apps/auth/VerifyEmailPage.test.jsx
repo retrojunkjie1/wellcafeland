@@ -69,6 +69,8 @@ describe("VerifyEmailPage", () => {
 
     await waitFor(() => expect(mocks.sendEmailVerification).toHaveBeenCalledOnce());
     expect(screen.getByRole("status")).toHaveTextContent(/requested a fresh verification email/i);
+    expect(screen.getByText(/If it hasn’t arrived, choose/i)).toBeInTheDocument();
+    expect(screen.getByText(/After opening it, choose/i)).toBeInTheDocument();
   });
 
   it("shows a sign-in continuation after verification", () => {

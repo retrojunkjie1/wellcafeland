@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut as firebaseSignOut, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
@@ -80,12 +80,10 @@ const SignupPage = () => {
       verificationUrl.searchParams.set("next", destination);
       await sendEmailVerification(user, { url: verificationUrl.toString(), handleCodeInApp: false });
       verificationSent = true;
-      await firebaseSignOut(auth);
       navigate("/verify-email", { replace: true, state: { email: user.email, destination } });
     } catch (err) {
       console.error("Signup error:", err);
       if (createdUser) {
-        try { await firebaseSignOut(auth); } catch { /* the account is already signed out */ }
         navigate("/verify-email", {
           replace: true,
           state: {
