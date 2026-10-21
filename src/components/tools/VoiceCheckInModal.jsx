@@ -27,15 +27,6 @@ const isDevLanBaseUrl = () => {
 
 const TEXT_FALLBACK_PREFILL = "You don't have to explain everything—share only what feels comfortable.";
 
-function blobToDataUrl(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(reader.error || new Error("Could not prepare audio playback."));
-    reader.readAsDataURL(blob);
-  });
-}
-
 function createCompatibleMediaRecorder(stream) {
   const preferredTypes = [
     "audio/mp4;codecs=mp4a.40.2",
@@ -157,7 +148,6 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
   }, [open, stopRecording]);
 
   const handleProcessCheckIn = useCallback(async (blob) => {
-    const duration = recordingTimeRef.current;
     setProcessing(true);
     setErrorMessage(null);
     try {
@@ -172,11 +162,8 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
       setTranscript(transcriptText);
 
       if (mode === "chat") {
-        const audioDataUrl = await blobToDataUrl(blob);
         onComplete?.({
           transcript: transcriptText,
-          audioUrl: audioDataUrl,
-          durationSeconds: duration,
           type: "voice_message",
         });
         setCompleted(true);

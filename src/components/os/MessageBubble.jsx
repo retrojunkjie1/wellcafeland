@@ -3,7 +3,6 @@
 
 import React from "react";
 import VoiceResponse from "./VoiceResponse";
-import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import VideoGuidance from "./VideoGuidance";
 import { AlertCircle, Loader2 } from "lucide-react";
 import MarkdownLite from "@/components/system/MarkdownLite";
@@ -25,7 +24,7 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
 
   return (
     <>
-      <div className={`inline-block w-full sm:max-w-[90%] rounded-2xl border px-4 sm:px-5 py-4 sm:py-5 text-base sm:text-lg leading-relaxed break-words ${isServiceError ? "border-amber-200/20 bg-amber-300/[0.06] text-amber-50/90" : "border-white/10 bg-white/[0.05] text-white/90"}`}>
+      <div className={`inline-block w-full sm:max-w-[90%] rounded-2xl border border-white/[0.045] px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg leading-relaxed break-words ${isServiceError ? "border-amber-200/20 bg-amber-300/[0.06] text-amber-50/90" : "bg-white/[0.035] text-white/90"}`}>
         {isServiceError && (
           <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-100/80">
             <AlertCircle className="h-4 w-4" aria-hidden="true" />
@@ -44,12 +43,6 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
             <img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" />
             <figcaption className="px-3 py-2 text-xs text-white/55">Image attached to your message</figcaption>
           </figure>
-        )}
-        {message.role === "user" && message.audioUrl && !isPending && (
-          <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3">
-            <p className="mb-2 text-xs font-medium text-white/65">Your recorded voice · {message.audioDurationSeconds || ""}</p>
-            <audio controls preload="metadata" src={message.audioUrl} className="w-full" aria-label="Play your recorded voice message" />
-          </div>
         )}
         {(message.type === "assistant_audio" || message.audioUrl) && !isServiceError && (
           <div className="mt-3">
@@ -229,10 +222,9 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
   return (
     <div className="flex items-start justify-end">
       <div className="flex-1 flex justify-end min-w-0">
-        <div className="inline-block w-full sm:max-w-[90%] rounded-lg bg-white/10 px-3 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-[16px] leading-relaxed text-white/95 break-words whitespace-pre-wrap border border-white/5">
+        <div className="inline-block w-full sm:max-w-[90%] rounded-2xl bg-indigo-200/[0.075] px-3 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-[16px] leading-relaxed text-white/95 break-words whitespace-pre-wrap border border-white/[0.035]">
           {userContent}
           {message.imageUrl && <figure className="mt-2 max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20"><img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" /><figcaption className="px-2 py-1 text-xs text-white/55">Image attached</figcaption></figure>}
-          {message.audioUrl && <VoiceMessagePlayer src={message.audioUrl} durationSeconds={message.audioDurationSeconds} />}
         </div>
       </div>
     </div>

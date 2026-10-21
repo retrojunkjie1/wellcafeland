@@ -1349,9 +1349,9 @@ const ChatPanel = ({ startConversation = false }) => {
     await sendToAI(text, { imageUrl: outgoingImage?.dataUrl || "", sourceMessageId: messageForStore.id });
   };
 
-  const handleVoiceMessageComplete = ({ transcript, audioUrl, durationSeconds }) => {
+  const handleVoiceMessageComplete = ({ transcript }) => {
     setVoiceCheckInModalOpen(false);
-    void handleSend({ transcript, audioUrl, durationSeconds });
+    void handleSend({ transcript });
   };
 
   useEffect(() => {
@@ -1753,7 +1753,7 @@ const ChatPanel = ({ startConversation = false }) => {
                 <p className="text-base text-white/60">Living Guide</p>
               </div>
             )}
-            <div className="space-y-6">
+            <div className="space-y-3">
               {messages
                 .filter((m) => !(m?.meta?.kind === "thinking_placeholder" || (typeof m?.content === "string" && m.content.trim() === "Thinking…")))
                 .map((msg) => {
