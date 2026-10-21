@@ -36,6 +36,26 @@ function blobToDataUrl(blob) {
   });
 }
 
+function createCompatibleMediaRecorder(stream) {
+  const preferredTypes = [
+    "audio/mp4;codecs=mp4a.40.2",
+    "audio/mp4",
+    "audio/webm;codecs=opus",
+    "audio/webm",
+  ];
+  const supportedType = typeof MediaRecorder.isTypeSupported === "function"
+    ? preferredTypes.find((type) => MediaRecorder.isTypeSupported(type))
+    : "";
+  if (supportedType) {
+    try {
+      return new MediaRecorder(stream, { mimeType: supportedType });
+    } catch {
+      // Some browsers report support but reject the MIME option; use their default.
+    }
+  }
+  return new MediaRecorder(stream);
+}
+
 function getMicErrorMessage(err) {
   const name = err?.name || "";
   const isLan = isLanHost() && !isSecureContextOk();
@@ -299,7 +319,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
         return;
       }
       streamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = createCompatibleMediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -319,7 +339,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
       };
 
       mediaRecorder.onstop = () => {
-        const audioType = mediaRecorder.mimeType || chunksRef.current.find((chunk) => chunk.type)?.type || "audio/webm";
+        const audioType = chunksRef.current.find((chunk) => chunk.type)?.type || mediaRecorder.mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type: audioType });
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;

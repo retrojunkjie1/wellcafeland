@@ -3,6 +3,7 @@
 
 import React from "react";
 import VoiceResponse from "./VoiceResponse";
+import VoiceMessagePlayer from "./VoiceMessagePlayer";
 import VideoGuidance from "./VideoGuidance";
 import { AlertCircle, Loader2 } from "lucide-react";
 import MarkdownLite from "@/components/system/MarkdownLite";
@@ -231,7 +232,7 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
         <div className="inline-block w-full sm:max-w-[90%] rounded-lg bg-white/10 px-3 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-[16px] leading-relaxed text-white/95 break-words whitespace-pre-wrap border border-white/5">
           {userContent}
           {message.imageUrl && <figure className="mt-2 max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20"><img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" /><figcaption className="px-2 py-1 text-xs text-white/55">Image attached</figcaption></figure>}
-          {message.audioUrl && <div className="mt-2 rounded-lg border border-white/10 bg-black/20 p-2"><p className="mb-1 text-xs text-white/65">Voice message · {message.audioDurationSeconds ? `${message.audioDurationSeconds}s` : "recording"}</p><audio controls preload="metadata" src={message.audioUrl} className="w-full" aria-label="Play your recorded voice message" /></div>}
+          {message.audioUrl && <VoiceMessagePlayer src={message.audioUrl} durationSeconds={message.audioDurationSeconds} />}
         </div>
       </div>
     </div>

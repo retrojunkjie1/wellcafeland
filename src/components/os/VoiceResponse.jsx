@@ -22,7 +22,7 @@ function speechLength(text) {
   return `About ${minutes} min`;
 }
 
-export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl }) {
+export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl, compact = false }) {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
@@ -154,7 +154,7 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
     status === "playing" ? "Now playing" : status === "paused" ? "Paused" : "Play this response";
 
   return (
-    <div className="my-3 w-full max-w-sm" aria-label="Voice response player">
+    <div className={`${compact ? "mt-2 w-full max-w-sm" : "my-3 w-full max-w-sm"}`} aria-label="Voice response player">
       <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.035] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl">
         <button
           type="button"

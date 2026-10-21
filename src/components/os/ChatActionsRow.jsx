@@ -3,6 +3,7 @@
 
 import React, { useState } from "react";
 import { Copy, Volume2, ThumbsUp, ThumbsDown, Share2, Check } from "lucide-react";
+import VoiceResponse from "./VoiceResponse";
 
 export default function ChatActionsRow({
   message,
@@ -14,6 +15,7 @@ export default function ChatActionsRow({
 }) {
   const [feedback, setFeedback] = useState(null);
   const [notice, setNotice] = useState("");
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const buttons = [];
   const actionIds = new Set((Array.isArray(message?.actions) ? message.actions : []).map((action) => action?.action));
   if (typeof onRetry === "function" && !actionIds.has("retry")) {
@@ -38,10 +40,10 @@ export default function ChatActionsRow({
       </button>
     );
   }
-  if (typeof onSpeak === "function") {
+  if (onSpeak) {
     buttons.push(
-      <button key="speak" type="button" onClick={() => onSpeak?.(message)} className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-wcGold" aria-label="Read response aloud" title="Read response aloud">
-        <Volume2 size={17} />
+      <button key="speak" type="button" onClick={() => setVoiceOpen((open) => !open)} className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-wcGold ${voiceOpen ? "text-amber-200" : "text-white/55"}`} aria-label={voiceOpen ? "Close voice response player" : "Read response aloud"} aria-expanded={voiceOpen} title="Read response aloud">
+        <Volume2 size={17} aria-hidden="true" />
       </button>
     );
   }
@@ -69,9 +71,12 @@ export default function ChatActionsRow({
   if (buttons.length === 0) return null;
 
   return (
-    <div className="mt-3 flex min-h-9 items-center gap-1 border-t border-white/10 pt-2" aria-label="Response actions">
-      {buttons}
-      {notice && <span className="ml-2 text-xs text-white/50" role="status">{notice}</span>}
+    <div className="mt-3 border-t border-white/10 pt-2" aria-label="Response actions">
+      <div className="flex min-h-9 items-center gap-1">
+        {buttons}
+        {notice && <span className="ml-2 text-xs text-white/50" role="status">{notice}</span>}
+      </div>
+      {voiceOpen && <VoiceResponse text={typeof message?.content === "string" ? message.content : message?.text || ""} compact />}
     </div>
   );
 }

@@ -274,7 +274,6 @@ const ChatPanel = ({ startConversation = false }) => {
   const [pending, setPending] = useState(null);
   const pendingStartMsRef = useRef(null);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
-  const [speakError, setSpeakError] = useState(null);
   const [groundingModalOpen, setGroundingModalOpen] = useState(false);
   const composerRef = useRef(null);
   const [composerH, setComposerH] = useState(0);
@@ -1450,22 +1449,6 @@ const ChatPanel = ({ startConversation = false }) => {
     return copied ? "copied" : false;
   }, [handleCopyMessage]);
 
-  const handleSpeakMessage = React.useCallback((message) => {
-    const text = typeof message?.content === "string" ? message.content : message?.text || "";
-    if (!text) return;
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      setSpeakError("Speech isn't available on this device.");
-      if (typeof window !== "undefined") setTimeout(() => setSpeakError(null), 3000);
-      return;
-    }
-    setSpeakError(null);
-    try {
-      window.speechSynthesis.cancel();
-    } catch {}
-    const u = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(u);
-  }, []);
-
   const handleContinueOffline = React.useCallback((msg) => {
     const turn = resolveChatActionTurn(useOSStore.getState().messages, msg, lastTurnRef.current);
     if (!turn?.text) return;
@@ -1485,7 +1468,7 @@ const ChatPanel = ({ startConversation = false }) => {
     onOpenToolRoute: (route) => route && navigate(route),
     onContinueOffline: handleContinueOffline,
     onCopy: handleCopyMessage,
-    onSpeak: typeof window !== "undefined" && window.speechSynthesis ? handleSpeakMessage : undefined,
+    onSpeak: true,
     onShare: handleShareMessage,
   };
 
@@ -1507,13 +1490,6 @@ const ChatPanel = ({ startConversation = false }) => {
       {/* Phase 54B: Thread continuity cue */}
       {(hasStarted || conversationReady) && <ThreadCueBar onContinue={beginConversation} />}
 
-      {/* Phase 54N: Speak fallback message when TTS unavailable */}
-      {speakError && (
-        <div className="px-4 py-2 text-center text-sm text-amber-400/90 bg-amber-500/10 border-b border-amber-500/20">
-          {speakError}
-        </div>
-      )}
-      
       {/* Welcome Screen (before conversation starts) */}
       {!hasStarted && !conversationReady && (
         <WelcomeScreen
