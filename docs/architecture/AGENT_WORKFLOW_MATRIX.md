@@ -4,6 +4,8 @@
 **Status:** Living verification sheet
 **Comparison source:** the user-provided Master Intelligence Engine Registry in this conversation.
 
+**God-Eye evidence display update (2026-10-21):** Handler availability is now shown separately from local contract coverage, authenticated emulator workflow coverage, and production-observed behavior. Current recorded counts are 25/25, 25/25, and 0/25 respectively. The local columns represent fixture/emulator evidence; they do not imply live model behavior. Update the matching evidence ledger and this matrix when a guarded production run records per-agent outcomes.
+
 ## Evidence rules
 
 - **Handler test** means an isolated Functions contract test exercises that agent's request/prompt/output contract. It does not prove a live provider call.

@@ -61,8 +61,11 @@ import AdminNotificationPolicy from "./AdminNotificationPolicy";
 import AdminReviewQueues from "./AdminReviewQueues";
 import PrivateFriendGroupReportsQueue from "./PrivateFriendGroupReportsQueue";
 import { INTELLIGENCE_AGENTS, getAgentControlId } from "../../ai/agents/agentRegistry";
+import { getAgentEvidence, getAgentEvidenceSummary } from "../../ai/agents/agentEvidence";
 import { buildAgentSmokeTestPlan, canRunAdminAgentSmokeTest } from "./agentSmokeTest";
 import { AgentHealthBar, AgentReadinessMeter, MemberBaseVisual, RiskSeverityMeter, RiskTrendChart, RingMeter } from "./components/ConsoleVisuals";
+
+const agentEvidenceSummary = getAgentEvidenceSummary();
 import "./components/GodEyeVisuals.css";
 
 function presentAdminServiceError(error, fallback) {
@@ -794,8 +797,41 @@ const AdminConsolePage = () => {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100/65">Intelligence layer</p>
             <h2 className="mt-1 text-xl font-semibold text-foreground sm:text-2xl">Agents &amp; service handlers</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Registry visibility, server-backed availability, and safe controls for production handlers.</p>
+            <p className="mt-1 text-sm text-muted-foreground">See which workflows have local evidence, which handlers are available, and what still needs a live production check.</p>
           </div>
+
+          <section aria-labelledby="agent-evidence-heading" className="rounded-2xl border border-sky-100/15 bg-sky-100/[.025] p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 id="agent-evidence-heading" className="text-sm font-semibold text-white">Workflow validation evidence</h3>
+                <p className="mt-1 text-xs leading-relaxed text-white/55">Local checks and live production observations are tracked separately. Local checks use test fixtures and Firebase emulators.</p>
+              </div>
+              <span className="rounded-full border border-white/10 px-2.5 py-1 text-[10px] text-white/45">Evidence recorded {agentEvidenceSummary.verifiedOn}</span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-xl border border-white/10 bg-slate-950/35 p-3">
+                <p className="text-xs text-white/50">Handler connections</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-white">{agentEvidenceSummary.handlerReady} / {agentEvidenceSummary.registered}</p>
+                <p className="mt-1 text-[11px] text-white/40">Registered in the server catalog</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/35 p-3">
+                <p className="text-xs text-white/50">Local handler contracts</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-white">{agentEvidenceSummary.localContracts} / {agentEvidenceSummary.registered}</p>
+                <p className="mt-1 text-[11px] text-white/40">Bounded request and response checks</p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-950/35 p-3">
+                <p className="text-xs text-white/50">Authenticated emulator workflows</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-white">{agentEvidenceSummary.authenticatedEmulatorWorkflows} / {agentEvidenceSummary.registered}</p>
+                <p className="mt-1 text-[11px] text-white/40">Local sign-in and access-boundary paths</p>
+              </div>
+              <div className="rounded-xl border border-amber-100/15 bg-amber-100/[.035] p-3">
+                <p className="text-xs text-amber-50/60">Observed in live production</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-amber-50">{agentEvidenceSummary.productionObserved} / {agentEvidenceSummary.registered}</p>
+                <p className="mt-1 text-[11px] text-amber-50/45">Individual live checks are still pending</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-white/45">A connected or enabled handler is not proof of a successful live model response. No clinical or regulatory certification is implied.</p>
+          </section>
 
           {/* NEW: Quick Agent Test Section */}
           <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -900,6 +936,7 @@ const AdminConsolePage = () => {
               const handlerAvailable = Boolean(controlId && agentControls.implementedAgentIds.includes(controlId));
               const handlerKnown = !agentControls.loading && !agentControls.error;
               const productionEnabled = handlerKnown && handlerAvailable && agentControls.enabled[controlId] === true;
+              const evidence = getAgentEvidence(agent.id);
               const runWidth = maxRecentRuns ? Math.max(agent.runCount > 0 ? 3 : 0, (Number(agent.runCount) || 0) / maxRecentRuns * 100) : 0;
               return (
                 <div
@@ -948,6 +985,9 @@ const AdminConsolePage = () => {
                     <div className="col-span-2">
                       <p className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-medium ${!handlerKnown ? "border-amber-100/15 bg-amber-100/[.04] text-amber-50/65" : handlerAvailable && agent.readiness === "partial" ? "border-amber-200/20 bg-amber-200/[.06] text-amber-100" : handlerAvailable ? "border-emerald-200/20 bg-emerald-200/[.06] text-emerald-200" : "border-white/10 bg-white/[.03] text-white/50"}`}>
                         {!handlerKnown ? "Status unavailable" : handlerAvailable && agent.readiness === "partial" ? "Partial handler" : handlerAvailable ? "Production handler" : "No production handler"}
+                      </p>
+                      <p className="mt-2 text-[10px] leading-relaxed text-white/45">
+                        {evidence?.localEvidence ? "Local workflow checks recorded · live production behavior pending" : "Workflow evidence not recorded"}
                       </p>
                     </div>
                     <div>
@@ -1066,6 +1106,25 @@ const AdminConsolePage = () => {
                     <p className="mt-1 text-xs text-white/50">Health: {selectedAgent.health || "unknown"}</p>
                   </div>
                 </div>
+
+                {(() => {
+                  const evidence = getAgentEvidence(selectedAgent.id);
+                  return <section aria-label={`${selectedAgent.name} workflow evidence`} className="mt-4 rounded-2xl border border-sky-100/15 bg-sky-100/[.025] p-4">
+                    <h4 className="text-sm font-semibold text-white">Workflow validation evidence</h4>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border border-white/10 p-3">
+                        <p className="text-xs text-white/45">Local checks</p>
+                        <p className="mt-1 text-sm font-medium text-emerald-100">{evidence?.localEvidence ? "Contract and authenticated emulator path recorded" : "Not recorded"}</p>
+                        <p className="mt-1 break-all text-[10px] text-white/35">{evidence?.contractSuite || "No contract suite recorded"}</p>
+                      </div>
+                      <div className="rounded-xl border border-amber-100/15 p-3">
+                        <p className="text-xs text-amber-50/50">Live production behavior</p>
+                        <p className="mt-1 text-sm font-medium text-amber-50">{evidence?.productionObserved ? "Observed" : "Pending"}</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-white/40">Requires the guarded smoke workflow with dedicated test accounts. Local checks do not count as live evidence.</p>
+                      </div>
+                    </div>
+                  </section>;
+                })()}
 
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-white/10 p-3">
