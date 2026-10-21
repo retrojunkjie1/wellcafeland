@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { normalizeSeerTelemetry, buildSeerPrompt, normalizeSeerResult } = require("../src/seerAgent");
+const { normalizeSeerTelemetry, buildSeerPrompt, normalizeSeerResult, normalizeClientPatternRequest, buildClientPatternPrompt } = require("../src/seerAgent");
 
 test("Seer accepts only bounded aggregate operations data", () => {
   const snapshot = normalizeSeerTelemetry({
@@ -86,4 +86,35 @@ test("Seer keeps a useful partial answer when optional model fields are omitted"
     insights: [],
     nextCheck: "No additional check is supported by the returned evidence.",
   });
+});
+
+test("client Seer accepts only consented, selected, bounded check-in fields", () => {
+  const request = normalizeClientPatternRequest({
+    consent: true,
+    selectedFields: ["mood", "stress"],
+    entries: [
+      { date: "2026-10-01", fields: { mood: "good", stress: 4, journal: "PRIVATE" } },
+      { date: "2026-10-02", fields: { mood: "okay", stress: 6, userId: "PRIVATE" } },
+      { date: "2026-10-03", fields: { mood: "difficult", stress: 8, cravingDetails: "PRIVATE" } },
+    ],
+    identity: "PRIVATE",
+  });
+  assert.deepEqual(request, {
+    selectedFields: ["mood", "stress"],
+    entries: [
+      { date: "2026-10-01", fields: { mood: "good", stress: 4 } },
+      { date: "2026-10-02", fields: { mood: "okay", stress: 6 } },
+      { date: "2026-10-03", fields: { mood: "difficult", stress: 8 } },
+    ],
+  });
+  const prompt = buildClientPatternPrompt(request);
+  assert.match(prompt, /explicitly selected/);
+  assert.match(prompt, /Do not diagnose, assign risk, infer causes/);
+  assert.doesNotMatch(prompt, /PRIVATE/);
+});
+
+test("client Seer requires explicit consent and at least three usable entries", () => {
+  assert.throws(() => normalizeClientPatternRequest({ selectedFields: ["stress"], entries: [] }), { code: "INVALID_SEER_CLIENT_PATTERN" });
+  assert.throws(() => normalizeClientPatternRequest({ consent: true, selectedFields: ["journal"], entries: [] }), { code: "INVALID_SEER_CLIENT_PATTERN" });
+  assert.throws(() => normalizeClientPatternRequest({ consent: true, selectedFields: ["stress"], entries: [{ date: "2026-10-01", fields: { stress: 2 } }] }), { code: "INVALID_SEER_CLIENT_PATTERN" });
 });

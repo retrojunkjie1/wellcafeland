@@ -49,6 +49,8 @@ describe("choice-led WellnessCafe Experience Engine", () => {
 
   it("exposes the 15 named journeys currently wired through this engine", () => {
     expect(WELLNESS_EXPERIENCE_IDS).toEqual([
+      "patterns.client-review",
+      "patterns.meaning-reflection",
       "support.human-route",
       "support.companion",
       "support.early-option",
@@ -65,6 +67,24 @@ describe("choice-led WellnessCafe Experience Engine", () => {
       "practice.breathing-cue",
       "progress.reflection",
     ]);
+  });
+
+  it("requires confirmed consent and strips journal and identity data from Seer and Oracle handoffs", () => {
+    const entries = [
+      { date: "2026-10-01", fields: { stress: 3, journal: "private note", userId: "private-id" } },
+      { date: "2026-10-02", fields: { stress: 5 } },
+      { date: "2026-10-03", fields: { stress: 7 } },
+    ];
+    expect(() => planWellnessExperience("patterns.client-review", { selectedFields: ["stress"], entries }))
+      .toThrow(/confirm/i);
+    const plan = planWellnessExperience("patterns.client-review", { consent: true, selectedFields: ["stress"], entries });
+    expect(plan).toMatchObject({ agentId: "seer", payload: { clientPatternReview: { consent: true, selectedFields: ["stress"] } } });
+    expect(JSON.stringify(plan.payload)).not.toMatch(/private note|private-id/);
+
+    const oraclePlan = planWellnessExperience("patterns.meaning-reflection", { consent: true, insight: "Stress ratings varied in these entries." });
+    expect(oraclePlan).toMatchObject({ agentId: "oracle", payload: { memory: { selectedSeerObservation: "Stress ratings varied in these entries." } } });
+    expect(() => planWellnessExperience("patterns.meaning-reflection", { insight: "No consent" })).toThrow(/Confirm/i);
+    expect(callAgent).not.toHaveBeenCalled();
   });
 
   it.each([

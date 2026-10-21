@@ -8,6 +8,46 @@ import { callAgent } from "@/ai/agents/agentClient";
  * selection to one specialist through the canonical callAgent entry point.
  */
 const EXPERIENCE_ROUTES = Object.freeze({
+  "patterns.client-review": Object.freeze({
+    agentId: "seer",
+    buildPayload(selection) {
+      const fields = ["mood", "cravingIntensity", "triggerIntensity", "energy", "stress", "sleep"];
+      const selectedFields = selection?.selectedFields;
+      const entries = selection?.entries;
+      if (selection?.consent !== true || !Array.isArray(selectedFields) || selectedFields.length < 1 || selectedFields.length > fields.length
+        || new Set(selectedFields).size !== selectedFields.length || selectedFields.some((field) => !fields.includes(field))
+        || !Array.isArray(entries) || entries.length < 3 || entries.length > 20) {
+        throw invalidRequest("Choose the details to share and confirm before asking for a review.", "INVALID_EXPERIENCE_SELECTION");
+      }
+      const allowedMoods = ["excellent", "good", "okay", "difficult", "challenging"];
+      const normalizedEntries = entries.map((entry) => {
+        if (!entry || typeof entry.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)
+          || !entry.fields || typeof entry.fields !== "object" || Array.isArray(entry.fields)) {
+          throw invalidRequest("The selected check-in details could not be prepared.", "INVALID_EXPERIENCE_SELECTION");
+        }
+        const normalizedFields = {};
+        for (const key of selectedFields) {
+          const value = entry.fields[key];
+          if (key === "mood" && allowedMoods.includes(value)) normalizedFields[key] = value;
+          if (key !== "mood" && Number.isInteger(value) && value >= 0 && value <= 10) normalizedFields[key] = value;
+        }
+        return { date: entry.date, fields: normalizedFields };
+      }).filter((entry) => Object.keys(entry.fields).length > 0);
+      if (normalizedEntries.length < 3) throw invalidRequest("At least three saved check-ins need one of the selected details.", "INVALID_EXPERIENCE_SELECTION");
+      return { clientPatternReview: { consent: true, selectedFields: [...selectedFields], entries: normalizedEntries } };
+    },
+  }),
+  "patterns.meaning-reflection": Object.freeze({
+    agentId: "oracle",
+    buildPayload(selection) {
+      const insight = requireBoundedText(selection, "insight", 500);
+      if (selection?.consent !== true) throw invalidRequest("Confirm before sharing this observation for a reflection.", "INVALID_EXPERIENCE_SELECTION");
+      return {
+        question: "Offer a brief, non-clinical reflection on this observation. Explain that it may or may not feel meaningful to the person. End with one optional question. Do not infer causes, safety risk, diagnosis, treatment needs, or what the person should do.",
+        memory: { selectedSeerObservation: insight },
+      };
+    },
+  }),
   "support.human-route": Object.freeze({
     agentId: "sentinel",
     selectionKey: "supportNeed",

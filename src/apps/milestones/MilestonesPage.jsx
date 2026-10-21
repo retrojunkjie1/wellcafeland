@@ -10,6 +10,7 @@ import { RECOVERY_MARKERS, summarizeMilestoneProgress, SUPPORT_CHOICE_OPTIONS } 
 import { getPracticeReturnTarget } from "@/apps/assistance/assistanceReturnPath";
 import { returnFromTool } from "@/navigation/toolReturn";
 import { runWellnessExperience } from "@/ai/experience/experienceEngine";
+import ClientPatternReview from "./ClientPatternReview";
 
 function readGuestCheckIns() {
   try {
@@ -278,6 +279,7 @@ export default function MilestonesPage() {
             </section>
 
             <SupportChoices counts={progress.supportChoiceCounts} />
+            {!isGuest && progress.checkInsSaved >= 3 && <ClientPatternReview key={progressScope} />}
           </>
         )}
 

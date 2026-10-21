@@ -289,6 +289,41 @@ test("authenticated operations admins reach all four admin agent workflows with 
   }
 });
 
+test("authenticated client can request an explicitly consented Seer review without exposing journal fields", async () => {
+  const identity = await createEmulatorIdentity("client-seer-review");
+  const originalFetch = global.fetch;
+  const captured = [];
+  const review = {
+    consent: true,
+    selectedFields: ["stress"],
+    entries: [
+      { date: "2026-10-01", fields: { stress: 3, journal: PRIVATE_MARKER } },
+      { date: "2026-10-02", fields: { stress: 5, cravingDetails: PRIVATE_MARKER } },
+      { date: "2026-10-03", fields: { stress: 7, userId: PRIVATE_MARKER } },
+    ],
+  };
+  try {
+    global.fetch = fakeProviderResponse(VALID_OUTPUTS.seer, captured);
+    const response = await postAgent({ identity, agent: "seer", body: { clientPatternReview: review } });
+    assert.equal(response.statusCode, 200, JSON.stringify(response.body));
+    assert.equal(response.body.success, true);
+    assert.equal(response.body.agent, "seer");
+    assert.equal(captured.length, 1);
+    const modelInput = JSON.stringify(captured[0]);
+    assert.match(modelInput, /2026-10-01/);
+    assert.match(modelInput, /stress/);
+    assert.equal(modelInput.includes(PRIVATE_MARKER), false);
+    assert.equal(JSON.stringify(response.body.result).includes(PRIVATE_MARKER), false);
+
+    const invalid = await postAgent({ identity, agent: "seer", body: { clientPatternReview: { ...review, consent: false } } });
+    assert.equal(invalid.statusCode, 400);
+    assert.equal(invalid.body.error.code, "INVALID_SEER_CLIENT_PATTERN");
+    assert.equal(captured.length, 1, "invalid consent must fail before model invocation");
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test("unauthorized users cannot invoke admin intelligence workflows or reach the model", async () => {
   const identity = await createEmulatorIdentity("unscoped-admin");
   const originalFetch = global.fetch;

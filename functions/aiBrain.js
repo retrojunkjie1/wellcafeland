@@ -9,7 +9,7 @@ const { getResolvedOpenAIKey } = require("./openaiKey");
 const { getAgentAvailability, isProductFeatureEnabled } = require("./src/agentOperations");
 const { requireAdminScope } = require("./src/adminAuthorization");
 const { normalizePulseSnapshot, buildPulsePrompt } = require("./src/pulseAgent");
-const { normalizeSeerTelemetry, buildSeerPrompt, normalizeSeerResult } = require("./src/seerAgent");
+const { normalizeSeerTelemetry, buildSeerPrompt, normalizeSeerResult, normalizeClientPatternRequest, buildClientPatternPrompt } = require("./src/seerAgent");
 const { normalizeOverseerRequest, buildOverseerPrompt, normalizeOverseerResult } = require("./src/overseerAgent");
 const { normalizeBridgeRequest, buildBridgePrompt } = require("./src/bridgeAgent");
 const { normalizeHealerRequest, buildHealerPrompt, normalizeHealerResult } = require("./src/healerAgent");
@@ -1423,6 +1423,14 @@ async function handleMedia(req, res) {
 async function handleAgent(req, res, body) {
   const agent = body.agent || "seer";
   const userId = body.userId || "unknown";
+  if (agent === "seer" && body.telemetry && body.clientPatternReview) {
+    return res.status(400).json({
+      agent,
+      success: false,
+      error: { code: "CONFLICTING_SEER_MODES", message: "Choose one Seer review at a time." },
+      correlationId: body.correlationId || "",
+    });
+  }
   if (agent === "pulse" || agent === "towncrier") {
     try {
       await requireAdminScope({ auth: { uid: req.user?.uid, token: req.user?.raw || {} } }, "platform.operations.view");
@@ -1664,6 +1672,7 @@ Respond with a JSON object: { "summary": "your plan", "steps": ["step1", "step2"
   let lighthouseRequest = null;
   let gatekeeperRequest = null;
   let seerSnapshot = null;
+  let seerClientPattern = null;
   let overseerRequest = null;
   let oracleRequest = null;
   if (agent === "sentinel" && body.thresholds) {
@@ -1715,6 +1724,20 @@ Respond with a JSON object: { "summary": "your plan", "steps": ["step1", "step2"
     }
     context = "";
     userPrompt = buildSeerPrompt(seerSnapshot);
+  }
+  if (agent === "seer" && body.clientPatternReview) {
+    try {
+      seerClientPattern = normalizeClientPatternRequest(body.clientPatternReview);
+    } catch (error) {
+      return res.status(400).json({
+        agent,
+        success: false,
+        error: { code: error.code || "INVALID_SEER_CLIENT_PATTERN", message: error.message || "Choose the check-in details you want Seer to review." },
+        correlationId: body.correlationId || "",
+      });
+    }
+    context = "";
+    userPrompt = buildClientPatternPrompt(seerClientPattern);
   }
   if (agent === "overseer") {
     try {
@@ -1918,7 +1941,9 @@ Respond with a JSON object: { "summary": "your plan", "steps": ["step1", "step2"
     userPrompt = buildGatekeeperPrompt(gatekeeperRequest);
   }
 
-  const systemPrompt = agent === "seer" && seerSnapshot
+  const systemPrompt = agent === "seer" && seerClientPattern
+    ? "You are Seer, a non-clinical self-reflection assistant. Review only the client-selected, minimized check-in ratings shown in the request. State uncertainty. Do not infer causes, safety risk, diagnoses, relapse, treatment needs, or personal history. Return only the requested JSON."
+    : agent === "seer" && seerSnapshot
     ? "You are Seer, an operational pattern reviewer for WellnessCafe administrators. Analyze only the sanitized aggregate snapshot in the user's request. State uncertainty and missing measurements. Never infer individual member safety, clinical outcomes, causes, or future health. Return only the requested JSON."
     : agent === "overseer" && overseerRequest
       ? "You are Overseer, an operations-planning assistant for authorized WellnessCafe administrators. Prepare a brief, practical review plan based only on the sanitized aggregate snapshot and fixed goal. Do not change configuration, claim to have checked a live service beyond the snapshot, or infer member or clinical outcomes. Return the requested JSON only."
@@ -1972,7 +1997,7 @@ Respond with a JSON object: { "summary": "your plan", "steps": ["step1", "step2"
     if (agent === "cherubim") {
       Object.assign(result, normalizeCherubimResult(result));
     }
-    if (agent === "seer" && seerSnapshot) {
+    if (agent === "seer" && (seerSnapshot || seerClientPattern)) {
       const normalized = normalizeSeerResult(result);
       Object.keys(result).forEach((key) => delete result[key]);
       Object.assign(result, normalized);

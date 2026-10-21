@@ -35,6 +35,31 @@ export async function listMyCheckInHistory(maxEntries = 30) {
     .sort((a, b) => b.displayDate.getTime() - a.displayDate.getTime());
 }
 
+/** Load a small, text-free projection for a client-requested pattern review. */
+export async function listMyCheckInPatternEntries(maxEntries = 20) {
+  const user = auth.currentUser;
+  if (!db || !user || user.isAnonymous) return [];
+  const snapshot = await getDocs(query(
+    collection(db, "checkins"),
+    where("userId", "==", user.uid),
+    orderBy("timestamp", "desc"),
+    limit(Math.min(Math.max(Number(maxEntries) || 20, 3), 20)),
+  ));
+  const allowedMoods = new Set(["excellent", "good", "okay", "difficult", "challenging"]);
+  const allowedRatings = ["cravingIntensity", "triggerIntensity", "energy", "stress", "sleep"];
+  return snapshot.docs.map((document) => {
+    const data = document.data();
+    const timestamp = data.timestamp?.toDate ? data.timestamp.toDate() : data.timestamp instanceof Date ? data.timestamp : new Date(data.date || 0);
+    const date = Number.isNaN(timestamp.getTime()) ? "" : timestamp.toISOString().slice(0, 10);
+    const fields = {};
+    if (allowedMoods.has(data.mood)) fields.mood = data.mood;
+    for (const key of allowedRatings) {
+      if (Number.isInteger(data[key]) && data[key] >= 0 && data[key] <= 10) fields[key] = data[key];
+    }
+    return { date, fields };
+  }).filter((entry) => entry.date && Object.keys(entry.fields).length > 0);
+}
+
 /** Load one account-scoped page for history screens that let clients browse older entries. */
 export async function listMyCheckInHistoryPage({ pageSize = 30, cursor = null } = {}) {
   const user = auth.currentUser;
