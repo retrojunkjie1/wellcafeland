@@ -27,12 +27,12 @@ checks.push(() => {
   const p = "src/components/os/MessageBubble.jsx";
   if (!exists(p)) return { name: "messagebubble_exists", pass: false, detail: `missing ${p}` };
   const s = read(p);
-  const usesSafeHandlerPattern = (s.includes("onOpenTools?.()") || (s.includes("onOpenTools") && s.includes("!= null"))) && s.includes("ChatActionsRow");
-  const hasBareOnOpenTools = /\bonOpenTools\s*\(\s*\)/.test(s) && !s.includes("onOpenTools?.");
+  const usesSafeHandlerPattern = s.includes("onOpenToolRoute?.(message.meta.toolRoute)") && s.includes("ChatActionsRow");
+  const hasBareOnOpenToolRoute = /\bonOpenToolRoute\s*\(\s*message\.meta\.toolRoute\s*\)/.test(s);
   return {
     name: "messagebubble_safe_handlers",
-    pass: usesSafeHandlerPattern && !hasBareOnOpenTools,
-    detail: !usesSafeHandlerPattern ? "safe handler guards missing" : (hasBareOnOpenTools ? "bare onOpenTools reference found" : ""),
+    pass: usesSafeHandlerPattern && !hasBareOnOpenToolRoute,
+    detail: !usesSafeHandlerPattern ? "safe handler guards missing" : (hasBareOnOpenToolRoute ? "bare onOpenToolRoute invocation found" : ""),
   };
 });
 

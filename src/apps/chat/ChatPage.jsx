@@ -2,11 +2,13 @@
 // Clean chat mode - full screen, no distractions
 
 import React, { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import ChatPanel from "@/components/os/ChatPanel";
 import { useOSStore, MODES } from "@/stores/useOSStore";
 import RouteGuard from "@/components/system/RouteGuard";
 
 const ChatPage = () => {
+  const location = useLocation();
   const { setMode, createChat, currentChatId, messages } = useOSStore();
 
   useEffect(() => {
@@ -20,7 +22,7 @@ const ChatPage = () => {
   return (
     <RouteGuard ready={true}>
       <div className="flex flex-1 flex-col min-h-0 animate-fade-in">
-        <ChatPanel />
+        <ChatPanel startConversation={location.state?.startConversation === true} />
       </div>
     </RouteGuard>
   );

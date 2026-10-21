@@ -255,7 +255,7 @@ const SIGNIN_ALTERNATIVE_BODY =
   "Your account is needed to schedule or message a practitioner. You can browse practitioners now, or sign in to continue.";
 
 // Helper: Convert base64 to Blob
-const ChatPanel = () => {
+const ChatPanel = ({ startConversation = false }) => {
   const navigate = useNavigate();
   const { messages, addMessage, updateLastAssistantMessage, injectToolIntoChat, openWorkspace, settings } = useOSStore();
   const allowEmotionAnalysis = settings?.allowEmotionFromChat === true;
@@ -268,6 +268,7 @@ const ChatPanel = () => {
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
   const [input, setInput] = useState("");
+  const [conversationReady, setConversationReady] = useState(startConversation);
   const [imageAttachment, setImageAttachment] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
@@ -1532,6 +1533,14 @@ const ChatPanel = () => {
     expandedMessageIds,
   };
 
+  const beginConversation = React.useCallback(() => {
+    setConversationReady(true);
+    window.requestAnimationFrame(() => {
+      composerRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      textareaRef.current?.focus();
+    });
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-950">
       {/* Phase 19: Provider Monitor Strip */}
@@ -1541,7 +1550,7 @@ const ChatPanel = () => {
       <IntelligencePulse />
       
       {/* Phase 54B: Thread continuity cue */}
-      <ThreadCueBar onContinue={() => textareaRef.current?.focus()} />
+      {(hasStarted || conversationReady) && <ThreadCueBar onContinue={beginConversation} />}
 
       {/* Phase 54N: Speak fallback message when TTS unavailable */}
       {speakError && (
@@ -1551,9 +1560,9 @@ const ChatPanel = () => {
       )}
       
       {/* Welcome Screen (before conversation starts) */}
-      {!hasStarted && (
+      {!hasStarted && !conversationReady && (
         <WelcomeScreen
-          onContinueChat={() => textareaRef.current?.focus()}
+          onContinueChat={beginConversation}
           onAction={async (action) => {
             // Phase 17: Enrich welcome screen actions with emotion/risk too
             const userMessage = {
@@ -1789,6 +1798,15 @@ const ChatPanel = () => {
             await sendToAI(action);
           }}
         />
+      )}
+
+      {!hasStarted && conversationReady && (
+        <main className="flex flex-1 items-center justify-center px-5 pb-32 text-center" aria-label="Start a conversation">
+          <div className="max-w-lg">
+            <p className="text-xl font-medium text-white sm:text-2xl">I’m here. What would you like to start with?</p>
+            <p className="mt-2 text-sm text-white/65">A few words is enough. You can also use the microphone when you’re ready.</p>
+          </div>
+        </main>
       )}
 
       {/* Messages Area — Phase 55A: bottom padding so content is not hidden behind composer */}

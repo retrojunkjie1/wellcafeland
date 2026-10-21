@@ -2,7 +2,7 @@
 // Guided session entry by mode — luxury glass UI, 3 big action cards per mode
 // "I'm overwhelmed" runs live intervention (no template navigation).
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { navigateToTool } from "@/navigation/toolReturn";
 import { Activity, MessageCircle, HandHeart, Waves, ArrowRight, Compass, BookOpen, PenLine, HeartHandshake, Sparkles } from "lucide-react";
@@ -63,10 +63,20 @@ const GuidedEntrySessionPage = () => {
   const { mode } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (mode === "cravings") {
+      // Go straight to the existing urge practice. Returning lands in chat,
+      // not back on a second chooser page.
+      navigateToTool(navigate, "/tools/urge-surfing", { pathname: "/chat" }, { replace: true });
+    }
+  }, [mode, navigate]);
+
   if (!mode || !ALLOWED_MODES.includes(mode)) {
     navigate("/", { replace: true });
     return null;
   }
+  if (mode === "cravings") return null;
 
   const config = MODE_CONFIG[mode];
   const Icon = config.icon;
@@ -95,7 +105,15 @@ const GuidedEntrySessionPage = () => {
                 <button
                   key={`${mode}-${card.label}`}
                   type="button"
-                  onClick={() => card.path.startsWith("/tools/") ? navigateToTool(navigate, card.path, location) : navigate(card.path)}
+                  onClick={() => {
+                    if (mode === "process" && card.path === "/chat") {
+                      navigate("/chat", { state: { startConversation: true } });
+                    } else if (card.path.startsWith("/tools/")) {
+                      navigateToTool(navigate, card.path, location);
+                    } else {
+                      navigate(card.path);
+                    }
+                  }}
                   className={`group flex min-h-36 w-full items-start gap-3 rounded-2xl border bg-gradient-to-br p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200 sm:p-5 ${cardThemes[card.theme]}`}
                 >
                   <span className="rounded-xl bg-white/10 p-2.5"><CardIcon className="h-5 w-5" aria-hidden="true" /></span>
