@@ -113,3 +113,5 @@ Commit `28ff111` was deployed to Firebase Hosting and the `aiSession` Cloud Func
 ## Conversation experience update — 2026-10-21
 
 The chat entry no longer submits a sample message on the client's behalf, ordinary wording no longer opens the voice workspace, and voice playback defaults to off. System/navigation notices are excluded from speech. Internal role, risk, reasoning, and timing diagnostics have been removed from ordinary conversation bubbles to reduce cognitive load. The explicit microphone path and review-before-send voice-session consent remain in place. Focused regression tests and the full local/emulator release gate passed. This is a targeted correction to the chat journey; the rest of the application still needs an evidence-based page review, and production smoke remains a separate deferred gate.
+
+Commit `1f18048` was deployed to Firebase Hosting; `/chat` returned HTTP 200 and the delivered ChatPage bundle contains the changed opt-in speech behavior. This does not verify a signed-in live conversation or constitute 25-agent production evidence.
