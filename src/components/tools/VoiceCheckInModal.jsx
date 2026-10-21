@@ -559,8 +559,8 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
               <button type="button" onClick={cancelChatRecording} aria-label="Discard recording and close" title="Discard recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
                 <X className="h-5 w-5" />
               </button>
-              <p className="min-w-0 flex-1 truncate text-sm text-white/70">Recording ready</p>
-              <button type="button" onClick={() => handleProcessCheckIn(recordedAudio)} disabled={processing} aria-label="Send recording for transcription and reply" title="Send for transcription and reply" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200 disabled:opacity-50">
+            <p className="min-w-0 flex-1 text-sm text-white/70">Tap ↑ to transcribe and send</p>
+            <button type="button" onClick={() => handleProcessCheckIn(recordedAudio)} disabled={processing} aria-label="Transcribe and send voice message" title="Transcribe and send voice message" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200 disabled:opacity-50">
                 <ArrowUp className="h-5 w-5" />
               </button>
             </div>

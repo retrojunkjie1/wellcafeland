@@ -62,7 +62,8 @@ describe("VoiceCheckInModal chat recording", () => {
     expect(screen.getByRole("button", { name: "Cancel voice recording" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Stop voice recording" }));
 
-    const send = await screen.findByRole("button", { name: "Send recording for transcription and reply" });
+    const send = await screen.findByRole("button", { name: "Transcribe and send voice message" });
+    expect(screen.getByText("Tap ↑ to transcribe and send")).toBeInTheDocument();
     expect(transcribeAudio).not.toHaveBeenCalled();
     fireEvent.click(send);
     await waitFor(() => expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ transcript: "I feel overwhelmed", type: "voice_message" })));
@@ -94,7 +95,7 @@ describe("VoiceCheckInModal chat recording", () => {
     render(<MemoryRouter><VoiceCheckInModal open mode="chat" presentation="inline" onComplete={vi.fn()} onClose={vi.fn()} /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Start voice message recording" }));
     fireEvent.click(await screen.findByRole("button", { name: "Stop voice recording" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Send recording for transcription and reply" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Transcribe and send voice message" }));
     fireEvent.click(await screen.findByRole("button", { name: "Retry transcription" }));
     expect(mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
     expect(transcribeAudio).toHaveBeenCalledTimes(2);
