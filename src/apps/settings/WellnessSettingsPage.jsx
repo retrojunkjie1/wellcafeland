@@ -51,11 +51,11 @@ function SettingSwitch({ label, checked, disabled = false, onChange, help, summa
   );
 }
 
-function SettingsCard({ to, icon: Icon, tint, title, value, detail }) {
+function SettingsCard({ to, icon: _Icon, tint, title, value, detail }) {
   return (
     <Link to={to} className="group flex min-h-[112px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-4 transition hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
       <span className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${tint}`}>
-        <Icon className="h-5 w-5" />
+        <_Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-white">{title}</span>

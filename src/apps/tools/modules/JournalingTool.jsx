@@ -241,7 +241,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   const handleCancel = useCallback(() => {
     voice.stop();
     safeCancel(onCancel);
-  }, [onCancel, voice.stop]);
+  }, [onCancel, voice]);
 
   // Mode selection
   if (!selectedMode) {

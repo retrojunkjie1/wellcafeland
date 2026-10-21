@@ -16,7 +16,9 @@ export function useVoiceSession() {
   const stopTracks = useCallback(() => {
     try {
       streamRef.current?.getTracks?.().forEach((t) => t.stop());
-    } catch (e) {}
+    } catch {
+      // Continue cleanup even when the browser refuses to stop a media track.
+    }
     streamRef.current = null;
   }, []);
 

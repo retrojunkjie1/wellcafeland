@@ -1,6 +1,6 @@
 // Chat composer for typed, recorded, and image-supported messages.
 import React, { useRef, useState } from "react";
-import { useSheet } from "@/context/SheetContext";
+import { useSheet } from "@/context/useSheet";
 import { ArrowUp, Camera, ImagePlus, Loader2, Mic, X } from "lucide-react";
 
 const ChatComposerBar = ({

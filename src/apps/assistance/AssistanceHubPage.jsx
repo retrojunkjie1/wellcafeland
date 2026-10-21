@@ -74,8 +74,6 @@ const TONES = {
   rose: "border-rose-200/20 bg-rose-100/[0.045] text-rose-200 group-hover:border-rose-200/45",
 };
 
-export const assistanceNeeds = NEEDS;
-
 const AssistanceHubPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -93,7 +91,7 @@ const AssistanceHubPage = () => {
         </header>
 
         <section aria-label="Choose the kind of help you need" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {NEEDS.map(({ id, title, description, icon: Icon, to, tone }) => (
+          {NEEDS.map(({ id, title, description, icon: _Icon, to, tone }) => (
             <button
               key={id}
               type="button"
@@ -101,7 +99,7 @@ const AssistanceHubPage = () => {
               className={`group flex min-h-28 items-center gap-4 rounded-2xl border bg-slate-900/70 p-4 text-left transition duration-200 hover:-translate-y-0.5 hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 sm:min-h-32 sm:p-5 ${TONES[tone]}`}
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/20 sm:h-14 sm:w-14">
-                <Icon aria-hidden="true" className="h-6 w-6 sm:h-7 sm:w-7" />
+                <_Icon aria-hidden="true" className="h-6 w-6 sm:h-7 sm:w-7" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-lg font-semibold leading-snug text-white sm:text-xl">{title}</span>

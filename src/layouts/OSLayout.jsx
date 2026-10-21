@@ -14,7 +14,8 @@ import { KillSwitchGate } from "@/components/routing/KillSwitchGate";
 import GodEyeDrawer from "@/components/os/GodEyeDrawer";
 import { EmulatorStatusPill } from "@/components/system/EmulatorStatusPill";
 import AppTopBar from "@/components/system/AppTopBar";
-import { SheetProvider, useSheet } from "@/context/SheetContext";
+import { SheetProvider } from "@/context/SheetContext";
+import { useSheet } from "@/context/useSheet";
 
 export default function OSLayout() {
   const location = useLocation();

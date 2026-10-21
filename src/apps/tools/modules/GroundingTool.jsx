@@ -87,7 +87,7 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
 
     setPhase("complete");
     safeComplete(onComplete, result);
-  }, [onComplete, voice.stop]);
+  }, [onComplete, voice]);
 
   const beginPause = () => {
     if (!activeChoice) return;
@@ -136,7 +136,7 @@ const GroundingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
   const handleCancel = useCallback(() => {
     voice.stop();
     safeCancel(onCancel);
-  }, [onCancel, voice.stop]);
+  }, [onCancel, voice]);
   const playActiveCue = () => {
     if (activeChoice) void voice.play(`${activeChoice.cue} ${activeChoice.guidance}`);
   };

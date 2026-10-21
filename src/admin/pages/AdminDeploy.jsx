@@ -1,8 +1,6 @@
 // src/admin/pages/AdminDeploy.jsx
 import React, { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { httpsCallable, getFunctions } from "firebase/functions";
-import app from "@/firebase";
 import { db } from "@/firebase";
 import { APP_VERSION } from "@/config/version";
 import { callAiSession } from "@/services/aiSessionClient";

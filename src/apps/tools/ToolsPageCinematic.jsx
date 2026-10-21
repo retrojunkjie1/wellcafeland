@@ -245,11 +245,11 @@ const ToolsPageCinematic = () => {
               <span className="inline-flex items-center gap-3"><BookOpen aria-hidden="true" className="h-5 w-5 shrink-0 text-amber-200" /><span><span className="block text-sm font-medium text-white/90">Explore practice collections</span><span className="mt-1 block text-sm font-normal leading-snug text-white/55">Five support areas. Open one to see the practices inside.</span></span></span><ChevronDown aria-hidden="true" className={`h-5 w-5 shrink-0 transition-transform ${showCatalog ? "rotate-180" : ""}`} />
             </button>
             {showCatalog && <div id="practice-collections" className="mt-4 space-y-3">
-              {practiceGroups.map(({ id, title, description, Icon, tools }) => {
+              {practiceGroups.map(({ id, title, description, Icon: _Icon, tools }) => {
                 const isOpen = openGroupId === id;
                 return <section key={id} className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025]">
                   <button type="button" aria-expanded={isOpen} onClick={() => setOpenGroupId((current) => current === id ? "" : id)} className="flex min-h-20 w-full items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-amber-300 sm:px-5">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-200/[0.09] text-amber-100"><Icon aria-hidden="true" className="h-5 w-5" /></span>
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-200/[0.09] text-amber-100"><_Icon aria-hidden="true" className="h-5 w-5" /></span>
                     <span className="min-w-0 flex-1"><span className="block text-base font-medium text-white">{title}</span><span className="mt-1 block text-sm leading-relaxed text-white/60">{description}</span></span>
                     <span className="ml-1 flex shrink-0 flex-col items-end gap-1"><span className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/55">{tools.length} {tools.length === 1 ? "practice" : "practices"}</span><ChevronDown aria-hidden="true" className={`h-4 w-4 text-white/45 transition-transform ${isOpen ? "rotate-180" : ""}`} /></span>
                   </button>

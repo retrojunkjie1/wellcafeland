@@ -607,7 +607,7 @@ const AdminConsolePage = () => {
         <nav role="tablist" aria-label="Command center sections" className="god-eye-tabs flex gap-2 overflow-x-auto border-b border-white/[0.07] pb-3">
           {[
             ["overview", "Overview", LayoutDashboard], ["queues", "Review queues", ClipboardList], ["agents", "Agents", Bot], ["events", "Event stream", Radio], ["risk", "Risk radar", Siren], ["controls", "Controls", Settings2],
-          ].map(([id, label, Icon]) => <button key={id} id={`god-eye-tab-${id}`} type="button" role="tab" aria-selected={activeConsoleTab === id} aria-controls={`god-eye-panel-${id}`} tabIndex={activeConsoleTab === id ? 0 : -1} onClick={() => setActiveConsoleTab(id)} onKeyDown={(event) => {
+          ].map(([id, label, _Icon]) => <button key={id} id={`god-eye-tab-${id}`} type="button" role="tab" aria-selected={activeConsoleTab === id} aria-controls={`god-eye-panel-${id}`} tabIndex={activeConsoleTab === id ? 0 : -1} onClick={() => setActiveConsoleTab(id)} onKeyDown={(event) => {
             if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
             event.preventDefault();
             const tabs = Array.from(event.currentTarget.parentElement.querySelectorAll('[role="tab"]'));
@@ -618,7 +618,7 @@ const AdminConsolePage = () => {
             const nextId = nextTab?.id.replace("god-eye-tab-", "");
             if (nextId) setActiveConsoleTab(nextId);
           }} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-100" aria-label={label}>
-            <Icon className="h-4 w-4" aria-hidden="true" />{label}
+            <_Icon className="h-4 w-4" aria-hidden="true" />{label}
           </button>)}
         </nav>
 
@@ -760,9 +760,9 @@ const AdminConsolePage = () => {
               { label: "Avg. response", value: metrics.avgResponseTime == null ? null : `${metrics.avgResponseTime} ms`, Icon: Clock, tone: "text-violet-200", accent: "bg-violet-200" },
               { label: "Reviews waiting", value: pendingReviewCount, Icon: Database, tone: "text-rose-200", accent: "bg-rose-200" },
               { label: "Total accounts", value: metrics.totalUsers, Icon: Users, tone: "text-emerald-200", accent: "bg-emerald-200" },
-            ].map(({ label, value, Icon, tone, accent }) => (
+            ].map(({ label, value, Icon: _Icon, tone, accent }) => (
               <article key={label} className="god-eye-metric group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.035] p-3 transition duration-200 hover:border-white/[0.14] hover:bg-white/[0.05] sm:p-4">
-                <div className="flex items-center justify-between gap-2"><p className="truncate text-[11px] font-medium text-white/55">{label}</p><Icon className={`h-3.5 w-3.5 shrink-0 ${tone}`} aria-hidden="true" /></div>
+                <div className="flex items-center justify-between gap-2"><p className="truncate text-[11px] font-medium text-white/55">{label}</p><_Icon className={`h-3.5 w-3.5 shrink-0 ${tone}`} aria-hidden="true" /></div>
                 <p className="mt-2 text-2xl font-semibold tracking-tight text-white tabular-nums sm:text-3xl">{metricsLoading || metricsError ? "—" : value == null ? "—" : value.toLocaleString?.() ?? value}</p>
                 <span className={`absolute inset-x-0 bottom-0 h-px ${accent} opacity-45`} />
               </article>
@@ -1390,7 +1390,7 @@ const AdminConsolePage = () => {
           </p>
 
           <nav role="tablist" aria-label="System settings categories" className="god-eye-tabs flex gap-2 overflow-x-auto border-b border-white/[0.07] pb-3">
-            {[["features", "Features", Sliders], ["thresholds", "Risk thresholds", TrendingUp], ["notifications", "Notifications", Bell], ["copy", "Home page copy", Database]].map(([id, label, Icon]) => (
+            {[["features", "Features", Sliders], ["thresholds", "Risk thresholds", TrendingUp], ["notifications", "Notifications", Bell], ["copy", "Home page copy", Database]].map(([id, label, _Icon]) => (
               <button key={id} id={`god-eye-settings-tab-${id}`} type="button" role="tab" aria-selected={activeSettingsTab === id} aria-controls={`god-eye-settings-panel-${id}`} tabIndex={activeSettingsTab === id ? 0 : -1} onClick={() => setActiveSettingsTab(id)} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-white/[0.08] px-4 text-sm text-white/65 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-100">
                 <Icon className="h-4 w-4" aria-hidden="true" />{label}
               </button>

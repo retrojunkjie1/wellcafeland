@@ -8,12 +8,12 @@ const themeOptions = [
   { id: "system", title: "Follow my device", detail: "Changes when your device theme changes.", icon: Laptop, swatch: "from-slate-800 via-slate-100 to-slate-800" },
 ];
 
-function ChoiceCard({ selected, onClick, title, detail, icon: Icon, swatch }) {
+function ChoiceCard({ selected, onClick, title, detail, icon: _Icon, swatch }) {
   return (
     <button type="button" aria-pressed={selected} onClick={onClick}
       className={`flex min-h-28 items-center gap-3 rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200 ${selected ? "border-amber-300/70 bg-amber-200/[0.08]" : "border-white/10 bg-white/[0.025] hover:border-white/25 hover:bg-white/[0.05]"}`}>
       <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${swatch} ${title === "Dawn" ? "text-slate-800" : "text-white"}`}>
-        <Icon className="h-5 w-5" />
+        <_Icon className="h-5 w-5" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-white">{title}</span>

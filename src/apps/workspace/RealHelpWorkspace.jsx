@@ -1,7 +1,7 @@
 // src/apps/workspace/RealHelpWorkspace.jsx
 // Unified Assistance — one page, action-first. Housing, Food, Funding, Programs, Emergency, Circles.
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { ExternalLink, Heart, MapPin, PhoneCall, X, UsersRound, Flag, Send, Sparkles } from "lucide-react";
 import { runWellnessExperience } from "@/ai/experience/experienceEngine";
@@ -129,31 +129,6 @@ const RealHelpWorkspace = () => {
   const MIN_QUERY_LEN = 3;
 
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (activeTab === "food") {
-      // Resolve the typed place only after an explicit click, never on each keystroke.
-      if (selectedFoodLocation?.value === region.trim()) return undefined;
-      abortControllerRef.current?.abort();
-      requestIdRef.current += 1;
-      setLoading(false);
-      setResults([]);
-      setSearchResponse(null);
-      setCuratedResults([]);
-      setFoodLocationOptions([]);
-      setFoodLocationMessage("");
-      return () => {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-      };
-    }
-    debounceRef.current = setTimeout(() => loadData(), DEBOUNCE_MS);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    };
-  }, [activeTab, query, region, resolvedDomain, selectedFoodLocation]);
-
-  useEffect(() => {
     // Remember workspace visit (PHASE 44)
     rememberWorkspace("real-help", {
       priority: activeTab,
@@ -166,7 +141,7 @@ const RealHelpWorkspace = () => {
     setShowAllFoodResults(false);
   }, [activeTab, region]);
 
-  const loadData = async ({ searchFood = false } = {}) => {
+  const loadData = useCallback(async ({ searchFood = false } = {}) => {
     if (abortControllerRef.current) abortControllerRef.current.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
@@ -309,7 +284,32 @@ const RealHelpWorkspace = () => {
     } finally {
       if (abortControllerRef.current === controller) setLoading(false);
     }
-  };
+  }, [activeTab, query, region, resolvedDomain]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (activeTab === "food") {
+      // Resolve the typed place only after an explicit click, never on each keystroke.
+      if (selectedFoodLocation?.value === region.trim()) return undefined;
+      abortControllerRef.current?.abort();
+      requestIdRef.current += 1;
+      setLoading(false);
+      setResults([]);
+      setSearchResponse(null);
+      setCuratedResults([]);
+      setFoodLocationOptions([]);
+      setFoodLocationMessage("");
+      return () => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      };
+    }
+    debounceRef.current = setTimeout(() => loadData(), DEBOUNCE_MS);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    };
+  }, [activeTab, loadData, query, region, resolvedDomain, selectedFoodLocation]);
 
   const handleSaveFavorite = async (item) => {
     const itemId = item.id || item.url || item.website || item.name || item.title;

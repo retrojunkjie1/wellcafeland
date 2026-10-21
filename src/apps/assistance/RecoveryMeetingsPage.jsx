@@ -118,7 +118,7 @@ export default function RecoveryMeetingsPage() {
           <fieldset className="mt-5">
             <legend className="text-sm font-semibold text-white/80">Meeting type</legend>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              {[{ id: "in-person", label: "In person", icon: MapPin }, { id: "online", label: "Online", icon: Globe2 }].map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-pressed={format === id} onClick={() => { setFormat(id); setSearchState({ status: "idle", meetings: [], message: "" }); }} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 text-sm font-medium transition ${format === id ? "border-emerald-200/60 bg-emerald-200/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"}`}><Icon className="h-4 w-4" />{label}</button>)}
+              {[{ id: "in-person", label: "In person", icon: MapPin }, { id: "online", label: "Online", icon: Globe2 }].map(({ id, label, icon: _Icon }) => <button key={id} type="button" aria-pressed={format === id} onClick={() => { setFormat(id); setSearchState({ status: "idle", meetings: [], message: "" }); }} className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl border px-3 text-sm font-medium transition ${format === id ? "border-emerald-200/60 bg-emerald-200/10 text-emerald-100" : "border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]"}`}><_Icon className="h-4 w-4" />{label}</button>)}
             </div>
           </fieldset>
 

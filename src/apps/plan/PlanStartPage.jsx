@@ -118,9 +118,9 @@ const PlanStartPage = () => {
             <h2 className="mt-1 text-xl font-medium">What would help now?</h2>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
-            {PLAN_ACTIONS.map(({ title, detail, action, icon: Icon, path, tone }) => (
+            {PLAN_ACTIONS.map(({ title, detail, action, icon: _Icon, path, tone }) => (
               <button key={title} type="button" onClick={() => navigate(path)} className="group flex min-h-44 flex-col rounded-3xl border border-white/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.045),rgba(255,255,255,0.015))] p-5 text-left shadow-[0_14px_40px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 sm:p-6">
-                <span className={`grid h-12 w-12 place-items-center rounded-2xl border ${tone === "amber" ? "border-amber-100/20 bg-amber-100/[0.07] text-amber-100" : tone === "teal" ? "border-teal-100/20 bg-teal-100/[0.06] text-teal-100" : "border-emerald-100/20 bg-emerald-100/[0.06] text-emerald-100"}`}><Icon aria-hidden="true" className="h-5 w-5" /></span>
+                <span className={`grid h-12 w-12 place-items-center rounded-2xl border ${tone === "amber" ? "border-amber-100/20 bg-amber-100/[0.07] text-amber-100" : tone === "teal" ? "border-teal-100/20 bg-teal-100/[0.06] text-teal-100" : "border-emerald-100/20 bg-emerald-100/[0.06] text-emerald-100"}`}><_Icon aria-hidden="true" className="h-5 w-5" /></span>
                 <span className="mt-5 text-lg font-medium">{title}</span>
                 <span className="mt-1 flex-1 text-sm leading-relaxed text-white/55">{detail}</span>
                 <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-amber-100/85">{action}<ArrowRight aria-hidden="true" className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>

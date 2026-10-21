@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  clearJourneyState,
   getJourneyNodes,
   getJourneyFollowUps,
   pickNextTopicJourneyNode,
-  rememberNode,
 } from "./interactiveJourneyEngine";
 
 describe("getJourneyFollowUps", () => {

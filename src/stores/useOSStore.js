@@ -378,16 +378,8 @@ export const useOSStore = create((set, get) => ({
       });
       
       // Navigate to tool route (use navigate if available, fallback to location)
-      try {
-        // Try using React Router navigate if available
-        const { useNavigate } = await import("react-router-dom");
-        // Note: This won't work here as we're not in a component context
-        // Fallback to window.location
-        window.location.href = route;
-      } catch {
-        // Fallback: direct navigation
-        window.location.href = route;
-      }
+      // Zustand actions are outside React components, so use a direct route transition.
+      window.location.href = route;
       
       // Return tool message to confirm successful opening
       return toolMessage;
@@ -598,7 +590,7 @@ export const useOSStore = create((set, get) => ({
       saveLocalSettings(settings);
       if (!value) {
         const stripAnalysis = (message) => {
-          const { emotion, triggers, risk, trajectory, identity, relationship, humanMode, toneProfile, phrasingStyle, drift, crisisForecast, ...content } = message || {};
+          const { emotion: _emotion, triggers: _triggers, risk: _risk, trajectory: _trajectory, identity: _identity, relationship: _relationship, humanMode: _humanMode, toneProfile: _toneProfile, phrasingStyle: _phrasingStyle, drift: _drift, crisisForecast: _crisisForecast, ...content } = message || {};
           return content;
         };
         const messages = (state.messages || []).map(stripAnalysis);

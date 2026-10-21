@@ -237,7 +237,7 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
       if (!translation || translation.length > 1800) throw new Error("The translation was incomplete.");
       const language = TRANSLATION_LANGUAGES.find((item) => item.id === translationLanguage)?.label || "Selected language";
       setTranslationState({ loading: false, error: "", text: translation, language });
-    } catch (error) {
+    } catch {
       setTranslationState({ loading: false, error: "The translation could not be prepared right now. The English key idea remains available above.", text: "", language: "" });
     }
   };

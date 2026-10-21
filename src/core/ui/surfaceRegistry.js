@@ -14,7 +14,9 @@ export const getSurfaceOwner = (pathname) => {
   for (const r of surfaceRegistry) {
     try {
       if (r.match(pathname)) return r.surface;
-    } catch (e) {}
+    } catch {
+      // A broken optional route matcher should not prevent resolving other surfaces.
+    }
   }
   return "none";
 };

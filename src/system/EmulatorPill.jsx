@@ -1,7 +1,7 @@
 // Phase 55: Quiet emulator pill — dismissible, above bottom nav
 // Replaces red banner; never red; subtle amber
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Server, X } from "lucide-react";
 
 const STORAGE_KEY = "wc_emulator_pill_dismissed";
@@ -10,23 +10,22 @@ const isEmulatorMode = () =>
   import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === "true";
 
 export function EmulatorPill() {
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
-    if (!isEmulatorMode()) return;
+  const [dismissed, setDismissed] = useState(() => {
+    if (!isEmulatorMode()) return true;
     try {
-      const val = localStorage.getItem(STORAGE_KEY);
-      setDismissed(val === "1");
+      return localStorage.getItem(STORAGE_KEY) === "1";
     } catch {
-      setDismissed(false);
+      return false;
     }
-  }, []);
+  });
 
   const handleDismiss = () => {
     try {
       localStorage.setItem(STORAGE_KEY, "1");
       setDismissed(true);
-    } catch {}
+    } catch {
+      // Keep the dismiss action usable when browser storage is disabled.
+    }
   };
 
   if (!isEmulatorMode() || dismissed) return null;

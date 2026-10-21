@@ -1,9 +1,9 @@
 // src/admin/pages/AdminControlCenter.jsx
 // Control Center - Feature flags, theme tokens, system settings with 2-step approval
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { httpsCallable, getFunctions } from "firebase/functions";
-import { doc, getDoc, setDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 import { getAuth } from "firebase/auth";
 import app from "@/firebase";
@@ -14,7 +14,6 @@ export function AdminControlCenter() {
   const user = auth.currentUser;
   const [featureFlags, setFeatureFlags] = useState({});
   const [themeTokens, setThemeTokens] = useState({});
-  const [systemSettings, setSystemSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [pendingAction, setPendingAction] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -29,7 +28,6 @@ export function AdminControlCenter() {
         const data = settingsDoc.data();
         setFeatureFlags(data.features?.flags || {});
         setThemeTokens(data.theme?.tokens || {});
-        setSystemSettings(data);
         setGuardrails(data.guardrails || { allowDangerousActions: false, requireTwoStep: true });
       }
     } catch (err) {

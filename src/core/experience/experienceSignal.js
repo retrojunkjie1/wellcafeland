@@ -8,7 +8,7 @@ export const parseExperienceSignal = (text) => {
   let signal = null;
   try {
     signal = JSON.parse(jsonRaw);
-  } catch (e) {
+  } catch {
     signal = null;
   }
 

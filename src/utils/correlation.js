@@ -9,7 +9,9 @@ export function generateCorrelationId() {
     if (typeof crypto !== "undefined" && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-  } catch (_) {}
+  } catch {
+    // Fall back to the local correlation ID format if secure random UUIDs are unavailable.
+  }
   return `req_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 

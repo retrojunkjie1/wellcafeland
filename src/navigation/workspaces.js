@@ -95,7 +95,8 @@ export function saveWorkspacePreference(userId, workspace) {
 }
 
 export function useWorkspaceSelection(identity = {}, pathname = "") {
-  const available = getAvailableWorkspaces(identity);
+  const availableKey = getAvailableWorkspaces(identity).join("|");
+  const available = React.useMemo(() => availableKey ? availableKey.split("|") : [], [availableKey]);
   const fallback = getDefaultWorkspace(identity, available);
   const routeWorkspace = getWorkspaceForPath(pathname);
   const routeSelection = available.includes(routeWorkspace) ? routeWorkspace : null;
@@ -114,7 +115,7 @@ export function useWorkspaceSelection(identity = {}, pathname = "") {
     }
     const stored = readWorkspacePreference(userId);
     setActiveWorkspace(stored && available.includes(stored) ? stored : fallback);
-  }, [userId, fallback, routeSelection, available.join("|")]);
+  }, [userId, fallback, routeSelection, available]);
 
   React.useEffect(() => {
     const sync = (event) => {
@@ -137,7 +138,7 @@ export function useWorkspaceSelection(identity = {}, pathname = "") {
       window.removeEventListener("wc_workspace_change", sync);
       window.removeEventListener("storage", syncStorage);
     };
-  }, [userId, fallback, routeSelection, available.join("|")]);
+  }, [userId, fallback, routeSelection, available]);
 
   const selectWorkspace = (workspace) => {
     if (!available.includes(workspace)) return false;

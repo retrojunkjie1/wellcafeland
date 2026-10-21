@@ -7,7 +7,8 @@ import { ensureDevAuth } from "@/dev/ensureAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { WcOsProvider } from "./core/WcOsProvider";
 import { initTheme } from "@/theme/themeStore";
-import { validateEnv, EnvErrorScreen } from "./config/envGuard.jsx";
+import { validateEnv } from "./config/envValidation.js";
+import { EnvErrorScreen } from "./config/envGuard.jsx";
 import { logDebug } from "@/lib/debug";
 
 // Boot sequence: UI shell mounts FIRST, services initialize LAST

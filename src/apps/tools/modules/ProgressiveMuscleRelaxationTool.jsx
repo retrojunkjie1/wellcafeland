@@ -87,11 +87,12 @@ function PmrFrameSequence({ guideId, regionId, kind, motion, paused, releaseOnly
   const currentFrameRef = useRef(0);
   const lastMotionRef = useRef("rest");
   const canReleaseRef = useRef(false);
-  const [ready, setReady] = useState(false);
+  const assetKey = `${kind}:${guideId}:${regionId}`;
+  const [readyAssetKey, setReadyAssetKey] = useState(null);
+  const ready = readyAssetKey === assetKey;
 
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
     framesRef.current = [];
     currentFrameRef.current = 0;
     const frames = Array.from({ length: 8 }, (_, frame) => {
@@ -104,10 +105,10 @@ function PmrFrameSequence({ guideId, regionId, kind, motion, paused, releaseOnly
       if (cancelled) return;
       const loadedFrames = frames.filter((image) => image.complete && image.naturalWidth > 0);
       framesRef.current = loadedFrames.length === frames.length ? frames : [];
-      setReady(loadedFrames.length === frames.length);
+      if (loadedFrames.length === frames.length) setReadyAssetKey(assetKey);
     });
     return () => { cancelled = true; };
-  }, [guideId, kind, regionId]);
+  }, [assetKey, guideId, kind, regionId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -158,7 +159,7 @@ function PmrFrameSequence({ guideId, regionId, kind, motion, paused, releaseOnly
     };
     timer = window.setTimeout(advance, PMR_FRAME_DELAY);
     return () => window.clearTimeout(timer);
-  }, [motion, paused, ready]);
+  }, [motion, paused, ready, releaseOnly]);
 
   return (
     <div className="absolute inset-0">
@@ -247,8 +248,8 @@ export default function ProgressiveMuscleRelaxationTool({ onComplete, onCancel }
   }, [releasePrefetchedCues]);
 
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      const audio = audioRef.current;
       audio.cancelled = true;
       audio.requestId += 1;
       window.clearTimeout(audio.timer);
@@ -383,6 +384,7 @@ export default function ProgressiveMuscleRelaxationTool({ onComplete, onCancel }
       const wasPrimed = audio.primed && audio.player;
       const player = wasPrimed ? audio.player : new Audio();
       if (!wasPrimed) player.pause();
+      // HTMLAudioElement is intentionally configured through the imperative audio ref here.
       player.loop = false;
       player.src = result.audioUrl;
       player.preload = "auto";
@@ -458,7 +460,7 @@ export default function ProgressiveMuscleRelaxationTool({ onComplete, onCancel }
     }, delay);
   }, []);
 
-  const speakGroup = useCallback((index, stage) => {
+  const speakGroup = useCallback(function runGroup(index, stage) {
     if (index >= GROUPS.length) {
       finishPractice();
       return;
@@ -476,11 +478,11 @@ export default function ProgressiveMuscleRelaxationTool({ onComplete, onCancel }
         : null;
     if (nextCue) prefetchCue(nextCue);
     if (stage === "tensing") {
-      speak(group.audioTense, () => scheduleAudio(() => speakGroup(index, "releasing"), TENSE_PAUSE_MS), stage);
+      speak(group.audioTense, () => scheduleAudio(() => runGroup(index, "releasing"), TENSE_PAUSE_MS), stage);
     } else {
       speak(releaseLine, () => {
         setBodyMotion("rest");
-        scheduleAudio(() => speakGroup(index + 1, mode === "release-only" ? "releasing" : "tensing"), RELEASE_PAUSE_MS);
+        scheduleAudio(() => runGroup(index + 1, mode === "release-only" ? "releasing" : "tensing"), RELEASE_PAUSE_MS);
       }, stage);
     }
   }, [finishPractice, mode, prefetchCue, scheduleAudio, speak]);

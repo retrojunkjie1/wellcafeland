@@ -72,7 +72,7 @@ export async function runIntervention({ sessionId, intent, context = {} }) {
       if (isValidPayload(parsed)) {
         payload = normalizePayload(parsed, `ai-${intent}-${level}-${now}`);
       }
-    } catch (_) {
+    } catch {
       // AI unavailable or invalid — use library
     }
   }
@@ -90,7 +90,9 @@ export async function runIntervention({ sessionId, intent, context = {} }) {
   try {
     const plan = await planResponse({ userText: intent, requestedDepth: "brief", requestedRole: "default" });
     reasoning = plan.reasoning;
-  } catch (_) {}
+  } catch {
+    // Keep the deterministic support plan when optional reasoning is unavailable.
+  }
 
   if (import.meta.env.DEV) {
     console.debug("[liveIntervention]", { sessionId, intent, variantId: payload.variantId, level, stepLabel });

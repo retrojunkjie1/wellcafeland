@@ -192,7 +192,7 @@ function MotionFrame({ guideId, regionId, kind, motion, label, fallbackSrc, fit 
 
     frameId = window.requestAnimationFrame(tick);
     return () => window.cancelAnimationFrame(frameId);
-  }, [motion, ready]);
+  }, [guideId, kind, motion, ready, regionId]);
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#18211d]">

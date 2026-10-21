@@ -93,9 +93,9 @@ export function AdminWarRoom() {
   </main>;
 }
 
-function Metric({ icon: Icon, label, value, detail }) {
+function Metric({ icon: _Icon, label, value, detail }) {
   return <article className="rounded-2xl border border-white/10 bg-white/[0.025] p-4">
-    <div className="flex items-center gap-2 text-xs text-white/50"><Icon className="h-4 w-4 text-amber-200/80" />{label}</div>
+    <div className="flex items-center gap-2 text-xs text-white/50"><_Icon className="h-4 w-4 text-amber-200/80" />{label}</div>
     <div className="mt-3 text-2xl font-semibold tabular-nums text-white">{value}</div>
     {detail && <p className="mt-1 text-xs capitalize text-white/45">{detail.replaceAll("_", " ")}</p>}
   </article>;

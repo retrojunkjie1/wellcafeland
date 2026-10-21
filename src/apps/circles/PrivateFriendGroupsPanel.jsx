@@ -57,13 +57,13 @@ export default function PrivateFriendGroupsPanel() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || user.isAnonymous || !user.emailVerified) {
+    if (!canManageGroups) {
       setGroups([]);
       setLoading(false);
       return;
     }
     refresh();
-  }, [authLoading, user?.uid, user?.isAnonymous, user?.emailVerified, refresh]);
+  }, [authLoading, canManageGroups, refresh]);
   useEffect(() => {
     if (location.state?.joinedFriendGroup) setStatus(`You joined ${location.state.joinedFriendGroup}. Group membership does not share your private account activity.`);
   }, [location.state]);

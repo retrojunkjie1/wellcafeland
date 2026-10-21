@@ -66,7 +66,7 @@ export default function AdminWorkspaceAccessPage() {
       const result = await listAdminWorkspaceAccessEvents();
       setEvents(Array.isArray(result.events) ? result.events : []);
       setEventsLoaded(true);
-    } catch (err) {
+    } catch {
       setEventsError("Recent access changes could not be loaded. Please try again.");
     } finally {
       setEventsLoading(false);
@@ -88,7 +88,7 @@ export default function AdminWorkspaceAccessPage() {
         setAccount(result.account);
         setProviderType(result.account.providerType || "");
       }
-    } catch (err) {
+    } catch {
       setError("We couldn’t find that account right now. Check the email and try again.");
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function AdminWorkspaceAccessPage() {
       setAccount(result.account || account);
       setAssignedAccount(result.account || account);
       setNotice(`${typeLabel} workspace access is active. The person must sign in again or refresh their sign-in before the new access appears.`);
-    } catch (err) {
+    } catch {
       setError("Practitioner access could not be added. Please try again or contact support.");
     } finally {
       setAssigning(false);
@@ -124,7 +124,7 @@ export default function AdminWorkspaceAccessPage() {
       setConfirmRevoke(false);
       setNotice("Practitioner workspace access is revoked. Admin and client workspaces, profile review, directory status, and client connection records are unchanged. The account holder must refresh their sign-in.");
       if (eventsLoaded) loadEvents();
-    } catch (err) {
+    } catch {
       setError("Practitioner access could not be removed. Please try again or contact support.");
     } finally {
       setRevoking(false);

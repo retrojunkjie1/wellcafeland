@@ -3,7 +3,7 @@
 
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import { useNavigation } from "../../navigation/NavigationContext";
+import { useNavigation } from "../../navigation/useNavigation";
 import { getRouteMeta, resolveParentPath } from "../../navigation/routeMeta";
 
 export function BackButton({ className = "" }) {

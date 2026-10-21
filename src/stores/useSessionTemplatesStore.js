@@ -24,7 +24,7 @@ export const useSessionTemplatesStore = create((set, get) => ({
           selectedId: loaded.some((item) => item.id === state.selectedId) ? state.selectedId : loaded[0].id,
         }));
       }
-    } catch (error) {
+    } catch {
       set({ error: "Saved sessions couldn't be loaded. Check your admin access and try again." });
     } finally {
       set({ isLoading: false });

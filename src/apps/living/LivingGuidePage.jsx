@@ -62,7 +62,7 @@ const modules = [
 ];
 
 export default function LivingGuidePage() {
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline] = useState(true);
   const [systemMessage, setSystemMessage] = useState("");
   const [ritualOpen, setRitualOpen] = useState(false);
   const lastToolSession = useMemoryStore((state) => state.lastToolSession);

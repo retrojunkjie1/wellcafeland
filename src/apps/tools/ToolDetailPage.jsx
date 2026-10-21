@@ -152,7 +152,7 @@ const ToolDetailPage = () => {
   const [completedToolId, setCompletedToolId] = useState(null);
   const [practiceCompleted, setPracticeCompleted] = useState(false);
   const moduleCompleted = completedToolId === decodedId;
-  const [cycles, setCycles] = useState(0);
+  const [, setCycles] = useState(0);
   const [breathingPattern, setBreathingPattern] = useState([4, 0, 6, 0]);
   const [breathkeeperCue, setBreathkeeperCue] = useState("");
   const [breathkeeperLoading, setBreathkeeperLoading] = useState(false);

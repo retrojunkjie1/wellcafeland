@@ -36,11 +36,11 @@ function SharingFlowVisual({ share, scopes, isDirty = false, sharingPaused = fal
         </div>
         <ArrowRight aria-hidden="true" className="mx-auto h-5 w-5 rotate-90 text-slate-500 md:rotate-0" />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Sharing categories">
-          {SCOPE_OPTIONS.map(([key, title, , Icon]) => {
+          {SCOPE_OPTIONS.map(([key, title, , _Icon]) => {
             const selected = scopes?.[key] === true;
             const showLock = !selected || sharingPaused;
             return <div key={key} title={title} className={`flex min-h-[3.5rem] items-center gap-2 rounded-xl border px-2.5 py-2 ${selected && !sharingPaused ? "border-amber-200/45 bg-amber-100/[0.09] text-amber-50" : "border-white/10 bg-black/15 text-slate-300"}`}>
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.05]"><Icon className="h-4 w-4" /></span>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/[0.05]"><_Icon className="h-4 w-4" /></span>
               <span className="min-w-0 flex-1 text-sm leading-snug">{title}</span>
               {showLock && <LockKeyhole aria-label="Private" className="h-3.5 w-3.5 shrink-0 text-slate-400" />}
             </div>;

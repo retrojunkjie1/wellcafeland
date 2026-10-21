@@ -1,7 +1,7 @@
 // src/admin/pages/AdminIncidents.jsx
 // Incidents management
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { collection, query, where, orderBy, getDocs, doc, updateDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 import { getAuth } from "firebase/auth";
@@ -13,11 +13,7 @@ export function AdminIncidents() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState({ status: "all", severity: "all" });
 
-  useEffect(() => {
-    loadIncidents();
-  }, [filter]);
-
-  const loadIncidents = async () => {
+  const loadIncidents = useCallback(async () => {
     try {
       setLoading(true);
       const incidentsRef = collection(db, "incidents", "current");
@@ -38,7 +34,11 @@ export function AdminIncidents() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    loadIncidents();
+  }, [loadIncidents]);
 
   const resolveIncident = async (incidentId) => {
     if (!user || !confirm("Resolve this incident?")) return;

@@ -1,9 +1,8 @@
 // SheetContext — single calm layer: when any sheet is open, dock/composer dim
 // Used by OSLayout, AppDock, ChatComposerBar, EmulatorStatusPill, and sheet components
 
-import React, { createContext, useContext, useState, useCallback } from "react";
-
-const SheetContext = createContext(null);
+import React, { useState, useCallback } from "react";
+import { SheetContext } from "./SheetContextValue.js";
 
 export function SheetProvider({ children }) {
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -16,16 +15,4 @@ export function SheetProvider({ children }) {
       {children}
     </SheetContext.Provider>
   );
-}
-
-export function useSheet() {
-  const ctx = useContext(SheetContext);
-  if (!ctx) {
-    return {
-      sheetOpen: false,
-      openSheet: () => {},
-      closeSheet: () => {},
-    };
-  }
-  return ctx;
 }

@@ -495,13 +495,13 @@ const UrgeSurfingTool = ({ onComplete, onCancel, isEmbedded = false }) => {
               <h4 id="urge-next-step-heading" className="mt-1 text-sm font-medium text-white">What feels possible in the next few minutes?</h4>
               <p className="mt-1 text-[11px] text-white/50">{reflection.values.length ? `You said ${reflection.values.join(" and ")} matter. Choose a move that feels supportive.` : "Choose a move that feels supportive, or skip this step."}</p>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {SUPPORT_MOVES.map(({ id, title, context, Icon }) => {
+                {SUPPORT_MOVES.map(({ id, title, context, Icon: _Icon }) => {
                   const selected = reflection.nextMove === id;
                   return <button key={id} type="button" aria-pressed={selected} onClick={() => {
                     setCompassState({ loading: false, error: "", result: null });
                     setReflection((current) => ({ ...current, nextMove: selected ? "" : id }));
                   }} className={`flex min-h-[4.5rem] items-center gap-3 rounded-xl border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300 ${selected ? "border-amber-100/50 bg-amber-100/[.08]" : "border-white/10 bg-white/[.025] hover:border-white/25"}`}>
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.06] text-amber-100"><Icon aria-hidden="true" className="h-4 w-4" /></span>
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/[.06] text-amber-100"><_Icon aria-hidden="true" className="h-4 w-4" /></span>
                     <span><span className="block text-xs font-medium text-white/90">{title}</span><span className="mt-1 block text-[10px] text-white/50">{context}</span></span>
                     {selected && <span className="ml-auto text-emerald-100" aria-hidden="true">✓</span>}
                   </button>;

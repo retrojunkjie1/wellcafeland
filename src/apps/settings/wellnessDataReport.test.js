@@ -21,7 +21,7 @@ describe("formatWellnessDataReport", () => {
     expect(report).toContain("Take a short walk");
     expect(report).not.toContain("internal-id");
     expect(report).not.toContain("private-user-id");
-    expect(report).not.toMatch(/[{}\[\]]/);
+    expect(report).not.toMatch(/[{}\u005B\u005D]/);
   });
 
   it("provides readable empty sections when the account has no saved records", () => {
