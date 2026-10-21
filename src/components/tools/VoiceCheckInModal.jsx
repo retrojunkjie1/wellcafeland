@@ -316,7 +316,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
         mediaRecorderRef.current = null;
         if (!discardRecordingRef.current && blob.size > 0) {
           setRecordedAudio(blob);
-          setAudioPreviewUrl(URL.createObjectURL(blob));
+          if (mode !== "chat") setAudioPreviewUrl(URL.createObjectURL(blob));
         } else if (!discardRecordingRef.current) {
           setErrorMessage("No audio was captured. Try again or type your message.");
         }
@@ -328,6 +328,9 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
       setIsRecording(true);
       setRecordingTime(0);
     } catch (err) {
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      mediaRecorderRef.current = null;
       console.error("Failed to start recording:", err);
       setErrorMessage(err?.name === "Error" ? err.message : getMicErrorMessage(err));
     }
@@ -348,6 +351,12 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
     setErrorMessage(null);
     await attemptGetUserMedia();
   }, [attemptGetUserMedia]);
+
+  const cancelChatRecording = useCallback(() => {
+    discardRecordingRef.current = true;
+    stopRecording();
+    onClose?.();
+  }, [onClose, stopRecording]);
 
   const goToTextChat = useCallback(() => {
     setErrorMessage(null);
@@ -424,10 +433,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
               )}
               <button
                 type="button"
-                onClick={attemptGetUserMedia}
+                onClick={() => (mode === "chat" && recordedAudio ? handleProcessCheckIn(recordedAudio) : attemptGetUserMedia())}
                 className="px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 transition text-sm"
               >
-                Try again
+                {mode === "chat" && recordedAudio ? "Retry transcription" : "Try again"}
               </button>
               <button
                 type="button"
@@ -444,7 +453,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
           {isRecording ? (
             mode === "chat" ? (
               <div className="flex w-full items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-3 py-2" aria-label="Recording voice message">
-                <button type="button" onClick={() => { discardRecordingRef.current = true; stopRecording(); onClose?.(); }} aria-label="Cancel voice recording" title="Cancel recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
+                <button type="button" onClick={cancelChatRecording} aria-label="Cancel voice recording" title="Cancel recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
                   <X className="h-5 w-5" />
                 </button>
                 <canvas ref={canvasRef} width={600} height={40} className="h-10 min-w-0 flex-1" aria-label="Live voice waveform" />
@@ -510,9 +519,9 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
                 Done
               </button>
             </div>
-          ) : recordedAudio && audioPreviewUrl && mode === "chat" ? (
+          ) : recordedAudio && mode === "chat" ? (
             <div className="flex w-full items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-3 py-2" aria-label="Voice recording ready to send">
-              <button type="button" onClick={discardAndRetake} aria-label="Discard recording" title="Discard recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
+              <button type="button" onClick={cancelChatRecording} aria-label="Discard recording and close" title="Discard recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
                 <X className="h-5 w-5" />
               </button>
               <p className="min-w-0 flex-1 truncate text-sm text-white/70">Recording ready</p>
@@ -535,7 +544,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
               <button
                 type="button"
                 onClick={startRecording}
-                aria-label="Start voice check-in recording"
+                aria-label={mode === "chat" ? "Start voice message recording" : "Start voice check-in recording"}
                 className="mx-auto mt-6 w-20 h-20 rounded-full border border-amber-400/70 bg-amber-400/10 shadow-[0_0_0_6px_rgba(245,158,11,0.10)] flex items-center justify-center active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Mic className="w-7 h-7 text-amber-400 opacity-90" />

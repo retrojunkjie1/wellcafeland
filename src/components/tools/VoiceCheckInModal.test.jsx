@@ -55,7 +55,7 @@ describe("VoiceCheckInModal chat recording", () => {
 
     expect(screen.getByText("Say what’s on your mind. Send when you’re ready.")).toBeInTheDocument();
     expect(screen.queryByText("Listening · 0:00")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Start voice check-in recording" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start voice message recording" }));
 
     expect(await screen.findByLabelText("Recording voice message")).toBeInTheDocument();
     expect(screen.getByLabelText("Live voice waveform")).toBeInTheDocument();
@@ -67,5 +67,26 @@ describe("VoiceCheckInModal chat recording", () => {
     fireEvent.click(send);
     await waitFor(() => expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({ transcript: "I feel overwhelmed", type: "voice_message" })));
     expect(transcribeAudio).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes the voice surface when the person discards a stopped recording", async () => {
+    const onClose = vi.fn();
+    render(<MemoryRouter><VoiceCheckInModal open mode="chat" presentation="inline" onComplete={vi.fn()} onClose={onClose} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Start voice message recording" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Stop voice recording" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Discard recording and close" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries a failed transcription without requesting the microphone again", async () => {
+    transcribeAudio.mockResolvedValueOnce({ ok: false, error: "Try again" });
+    const mediaDevices = navigator.mediaDevices;
+    render(<MemoryRouter><VoiceCheckInModal open mode="chat" presentation="inline" onComplete={vi.fn()} onClose={vi.fn()} /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Start voice message recording" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Stop voice recording" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Send recording for transcription and reply" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Retry transcription" }));
+    expect(mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+    expect(transcribeAudio).toHaveBeenCalledTimes(2);
   });
 });
