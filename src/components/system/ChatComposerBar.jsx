@@ -57,7 +57,7 @@ const ChatComposerBar = ({
   return (
     <div
       data-wc-composer="1"
-      className={`min-w-0 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 shadow-lg backdrop-blur-xl transition-opacity ${sheetOpen ? "pointer-events-none opacity-0" : ""}`}
+      className={`w-full min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 shadow-lg backdrop-blur-xl transition-opacity ${sheetOpen ? "pointer-events-none opacity-0" : ""}`}
     >
       {attachment && (
         <div className="mb-2 flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950/50 p-2">

@@ -1536,13 +1536,12 @@ const ChatPanel = ({ startConversation = false }) => {
   const beginConversation = React.useCallback(() => {
     setConversationReady(true);
     window.requestAnimationFrame(() => {
-      composerRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-      textareaRef.current?.focus();
+      textareaRef.current?.focus({ preventScroll: true });
     });
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950">
+    <div className="flex min-h-0 flex-1 flex-col bg-slate-950">
       {/* Phase 19: Provider Monitor Strip */}
       <ProviderMonitorStrip />
       
@@ -1801,7 +1800,7 @@ const ChatPanel = ({ startConversation = false }) => {
       )}
 
       {!hasStarted && conversationReady && (
-        <main className="flex flex-1 items-center justify-center px-5 pb-32 text-center" aria-label="Start a conversation">
+        <main className="flex min-h-0 flex-1 items-center justify-center px-5 py-6 text-center" aria-label="Start a conversation">
           <div className="max-w-lg">
             <p className="text-xl font-medium text-white sm:text-2xl">I’m here. What would you like to start with?</p>
             <p className="mt-2 text-sm text-white/65">A few words is enough. You can also use the microphone when you’re ready.</p>
@@ -1812,10 +1811,10 @@ const ChatPanel = ({ startConversation = false }) => {
       {/* Messages Area — Phase 55A: bottom padding so content is not hidden behind composer */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: composerH + COMPOSER_MARGIN }}>
+          <div className="mx-auto w-full max-w-3xl px-4 pt-4 sm:px-6" style={{ paddingBottom: composerH + COMPOSER_MARGIN }}>
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
-              <div className="mb-8 text-center animate-fade-in">
+              <div className="mb-4 text-center animate-fade-in">
                 <h2 className="text-2xl font-light text-white mb-2">
                   {greeting}
                 </h2>

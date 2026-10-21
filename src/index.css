@@ -618,9 +618,9 @@ body {
   background: transparent !important;
   backdrop-filter: none;
   box-shadow: none;
-  min-height: var(--wc-chat-dock-h, 88px);
-  padding: 0.75rem 1rem;
-  padding-bottom: 0.75rem;
+  min-height: 0;
+  padding: 0;
+  padding-bottom: 0;
 }
 
 /* Phase 6 foundation: one navigation menu and a coordinated app-wide appearance. */
@@ -867,10 +867,15 @@ button.wc-navigation-link {
 }
 
 .wc-chat-composer-rail {
-  background: color-mix(in srgb, var(--wc-bg-elevated) 92%, transparent);
-  border-color: var(--wc-glass-border);
-  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(20px);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* Keep the chat route sized to the app's available viewport instead of its short content. */
+.wc-chat-page {
+  min-height: calc(100dvh - 188px);
 }
 
 /* Shared Dawn palette: every workspace uses the same sage, cream, and contrast tokens. */

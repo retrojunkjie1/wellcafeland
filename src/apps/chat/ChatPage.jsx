@@ -21,7 +21,7 @@ const ChatPage = () => {
 
   return (
     <RouteGuard ready={true}>
-      <div className="flex flex-1 flex-col min-h-0 animate-fade-in">
+      <div className="wc-chat-page flex flex-1 flex-col min-h-0 animate-fade-in">
         <ChatPanel startConversation={location.state?.startConversation === true} />
       </div>
     </RouteGuard>

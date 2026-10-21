@@ -15,7 +15,7 @@ import { KillSwitchGate } from "@/components/routing/KillSwitchGate";
 import GodEyeDrawer from "@/components/os/GodEyeDrawer";
 import { EmulatorStatusPill } from "@/components/system/EmulatorStatusPill";
 import AppTopBar from "@/components/system/AppTopBar";
-import BottomRail, { railCardClass } from "@/components/layout/BottomRail";
+import BottomRail from "@/components/layout/BottomRail";
 import { AudioProvider } from "@/experience/audio/AudioProvider";
 import { VoiceSessionProvider } from "@/experience/voice/VoiceSessionProvider";
 import { useOSStore } from "@/stores/useOSStore";
@@ -108,7 +108,7 @@ export default function ExperienceShell() {
       {showBottomRail && (
         <BottomRail>
           <BottomRail.Nav>
-            <div className={`${railCardClass} flex flex-col overflow-hidden wc-chat-composer-rail`}>
+            <div className="flex w-full flex-col overflow-hidden wc-chat-composer-rail">
               <div id="wc-composer-dock" data-wc-composer-dock="1" className="w-full wc-composer-in-rail flex-shrink-0" />
             </div>
           </BottomRail.Nav>
