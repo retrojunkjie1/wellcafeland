@@ -46,6 +46,12 @@ Corrected the mic action that had replaced the chat composer with a separate “
 
 Focused chat tests passed (2 files / 5 tests). Fresh `npm run verify:release` passed: 132 UI test files / 557 tests, 58 agent contracts, 11 Auth/Firestore workflow scenarios, the client-practitioner journey, 12 care checks, 8 scheduling checks, 4 messaging checks, 1 workspace lifecycle check, 13 Firestore Rules checks, production build, Firebase predeploy checks, and `git diff --check`. Commit `e890717` was deployed to Firebase Hosting (`wellnesscafelanding`); Hosting reported release complete, then the CLI printed its existing credential/update-config warning. The live `/chat` route returned HTTP 200 and the published chat bundle contains the inline auto-start change. The existing chat tab stayed on `/chat`; no browser tab was opened by the deployed click handler. No live microphone permission or recording was exercised, so device-level capture remains unverified. The broader cross-phase reliability iteration remains open.
 
+### Voice recording ready-state instruction (Hosting deployed 2026-10-21)
+
+Clarified that stopping a recording keeps it temporarily in page memory; it is not yet transcribed or saved to chat. The ready row now tells the person to tap the arrow to transcribe and send, and the arrow has an explicit accessible label. Transcription and chat submission remain behind that explicit action.
+
+Focused chat tests passed (2 files / 5 tests), including the explicit send-to-transcription path. Production build, Firebase predeploy checks, and `git diff --check` passed. Commit `a64fd59` was deployed to Firebase Hosting (`wellnesscafelanding`); the live `/chat` route returned HTTP 200 and the deployed voice bundle contains the ready-state instruction. Hosting reported release complete, then the CLI printed its existing credential/update-config warning. No microphone recording was made in the live browser.
+
 ### Cross-phase reliability and lint cleanup (verified 2026-10-21)
 
 Completed a system-wide reliability cleanup rather than adding a new feature slice. Removed unused/dead bindings, made async hook dependencies explicit, removed state mirrors that could cause cascading renders, made tool/audio controllers stable across renders, and separated provider hooks/context values from Fast Refresh component modules. Existing safety, sharing, and consent behavior remains covered by the existing release suites.
