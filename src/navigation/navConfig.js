@@ -30,7 +30,7 @@ export const ROUTE_META = [
   { pattern: "/explore", title: "Explore", parent: "/home", rootFallback: "/home" },
 
   // Guide & Living
-  { pattern: "/guide", title: "Guide", parent: "/home", rootFallback: "/home" },
+  { pattern: "/guide", title: "Chat", parent: null, rootFallback: "/chat" },
   { pattern: "/living", title: "Living Guide", parent: "/home", rootFallback: "/home" },
   { pattern: "/living/v3", title: "Living Guide", parent: "/home", rootFallback: "/home" },
 

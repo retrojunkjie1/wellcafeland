@@ -25,7 +25,7 @@ export const ROUTE_META = [
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", breadcrumb: true },
 
   // Living / Guide / Sequences
-  { pattern: "/guide", title: "Guide", parent: "/home", breadcrumb: false },
+  { pattern: "/guide", title: "Chat", parent: "/chat", breadcrumb: false },
   { pattern: "/living", title: "Living Guide", parent: "/home", breadcrumb: false },
   { pattern: "/living/v3", title: "Living Guide V3", parent: "/living", breadcrumb: true },
   { pattern: "/sequence/:id", title: "Sequence", parent: "/home", breadcrumb: true },

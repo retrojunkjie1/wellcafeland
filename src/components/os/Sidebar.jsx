@@ -294,7 +294,7 @@ const Sidebar = ({ isMobile = false, onClose }) => {
                 type="button"
                 onClick={() => {
                   openExplore("education");
-                  navigate("/guide");
+                  navigate("/chat", { state: { startConversation: true } });
                   if (isMobile) onClose?.();
                 }}
                 className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-white/60 hover:text-white hover:bg-white/5 rounded transition"

@@ -171,7 +171,7 @@ function PlanBuilder({ story }) {
                 </dl>
               </div>
               <div className="flex shrink-0 flex-col gap-2 sm:min-w-52">
-                <Link to={direction.path} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-200 px-4 text-base font-bold text-slate-950 transition hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{direction.action}<ArrowRight aria-hidden="true" className="h-5 w-5" /></Link>
+                <Link to={direction.path} state={direction.path === "/chat" ? { startConversation: true } : undefined} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-amber-200 px-4 text-base font-bold text-slate-950 transition hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">{direction.action}<ArrowRight aria-hidden="true" className="h-5 w-5" /></Link>
                 <button type="button" onClick={() => downloadPlan(plan)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/20 bg-slate-950/25 px-4 text-base font-semibold text-white transition hover:bg-slate-950/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold"><Download aria-hidden="true" className="h-5 w-5" /> Download my plan</button>
                 <button type="button" onClick={resetPlan} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium text-slate-300 transition hover:text-white"><RotateCcw aria-hidden="true" className="h-4 w-4" /> Start again</button>
               </div>
@@ -201,7 +201,7 @@ export default function RecoveryStoriesPage() {
 
   return (
     <main className="mx-auto min-h-full w-full max-w-5xl px-4 py-5 text-white sm:px-6 sm:py-7">
-      <PageHeader title="Recovery stories" subtitle="Real lives are not recipes. Keep what fits; leave the rest." showBack backTo="/guide" />
+      <PageHeader title="Recovery stories" subtitle="Real lives are not recipes. Keep what fits; leave the rest." showBack backTo="/chat" />
 
       <section className="relative isolate mt-5 min-h-[290px] overflow-hidden rounded-[2rem] border border-white/15 shadow-[0_28px_90px_rgba(0,0,0,0.35)] sm:min-h-[350px]" aria-labelledby="story-hero-title">
         <img src={sunrisePath} alt="A sunlit path winding toward a warm dawn over a calm lake" className="absolute inset-0 -z-20 h-full w-full object-cover object-center" />
@@ -313,7 +313,7 @@ export default function RecoveryStoriesPage() {
         </>
       )}
 
-      <Link to="/guide" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-full px-3 text-base font-medium text-slate-300 transition hover:text-white"><ArrowLeft aria-hidden="true" className="h-5 w-5" />Back to the guide</Link>
+      <Link to="/chat" state={{ startConversation: true }} className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-full px-3 text-base font-medium text-slate-300 transition hover:text-white"><ArrowLeft aria-hidden="true" className="h-5 w-5" />Back to the conversation</Link>
     </main>
   );
 }

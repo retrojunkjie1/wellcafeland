@@ -31,7 +31,6 @@ const HelpDirectoryAdminPage = lazy(() => import("./apps/admin/HelpDirectoryPage
 const MeetingDirectoryPolicyPage = lazy(() => import("./apps/legal/MeetingDirectoryPolicyPage"));
 const CommunityGivingPage = lazy(() => import("./apps/assistance/CommunityGivingPage"));
 const AssistanceHubPage = lazy(() => import("./apps/assistance/AssistanceHubPage"));
-const GuidePage = lazy(() => import("./apps/guide/GuidePage"));
 const ResourcesListPage = lazy(() => import("./apps/resources/ResourcesListPage"));
 const ResourcesDetailPage = lazy(() => import("./apps/resources/ResourcesDetailPage"));
 
@@ -198,7 +197,8 @@ const App = () => {
           <Route path="/directory/:domain/:id" element={<DirectoryRedirect />} />
           <Route path="/resources" element={<ResourcesListPage />} />
           <Route path="/resources/:id" element={<ResourcesDetailPage />} />
-          <Route path="/guide" element={<GuidePage />} />
+          {/* Keep old bookmarks working while sending every guide entry to the canonical chat. */}
+          <Route path="/guide" element={<Navigate to="/chat" replace state={{ startConversation: true }} />} />
           {/* Phase A1: Canonical /living route */}
           <Route path="/living" element={<LivingGuidePageV3 />} />
           <Route path="/living/v3" element={<Navigate to="/living" replace />} />

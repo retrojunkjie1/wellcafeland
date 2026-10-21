@@ -83,7 +83,7 @@ describe("daily check-in next step", () => {
     expect(getCheckInNextStep("Help finding practical resources").path).toBe("/assistance");
     expect(getCheckInNextStep("Professional support").path).toBe("/providers");
     expect(getCheckInNextStep("Quiet time for myself").path).toBe("/tools");
-    expect(getCheckInNextStep("").path).toBe("/guide");
+    expect(getCheckInNextStep("")).toMatchObject({ path: "/chat", action: "Talk it through" });
   });
 
   it("confirms anonymous guest storage truthfully and lets the guest clear it", () => {

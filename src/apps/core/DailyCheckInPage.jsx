@@ -83,7 +83,7 @@ export default function DailyCheckInPage() {
             )}
             <button
               type="button"
-              onClick={() => navigate(recommendedStep.path, { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
+              onClick={() => navigate(recommendedStep.path, { state: { from: "daily-check-in", returnTo: returnToPractice || undefined, ...(recommendedStep.path === "/chat" ? { startConversation: true } : {}) } })}
               className="group mt-4 flex min-h-24 w-full items-center gap-4 rounded-2xl border border-amber-200/35 bg-gradient-to-r from-amber-200/10 to-emerald-200/[0.06] p-4 text-left transition hover:border-amber-200/60 hover:bg-amber-100/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold sm:p-5"
             >
               <span className="rounded-xl bg-amber-100/10 p-3 text-amber-100"><ArrowRight aria-hidden="true" className="h-5 w-5" /></span>
@@ -118,7 +118,7 @@ export default function DailyCheckInPage() {
               <button
                 key={action.path}
                 type="button"
-                onClick={() => navigate(action.path, { state: { from: "daily-check-in", returnTo: returnToPractice || undefined } })}
+                onClick={() => navigate(action.path, { state: { from: "daily-check-in", returnTo: returnToPractice || undefined, ...(action.path === "/chat" ? { startConversation: true } : {}) } })}
                 className={`group flex min-h-36 items-start gap-3 rounded-2xl border bg-slate-800/70 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-wcGold/50 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold ${action.color}`}
               >
                 <span className="rounded-xl bg-white/10 p-2 text-wcGold"><ActionIcon aria-hidden="true" className="h-5 w-5" /></span>

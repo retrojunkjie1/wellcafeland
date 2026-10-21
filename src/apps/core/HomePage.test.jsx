@@ -15,7 +15,7 @@ vi.mock("./ClientWeekProgress", () => ({ default: () => null }));
 
 function CurrentPath() {
   const location = useLocation();
-  return <output data-testid="current-path">{location.pathname}</output>;
+  return <><output data-testid="current-path">{location.pathname}</output><output data-testid="route-state">{JSON.stringify(location.state || null)}</output></>;
 }
 
 function renderHome() {
@@ -23,7 +23,7 @@ function renderHome() {
     <MemoryRouter initialEntries={["/home"]}>
       <Routes>
         <Route path="/home" element={<><HomePage /><CurrentPath /></>} />
-        {["/guide", "/assistance", "/tools", "/check-in", "/tools/breathing", "/tools/grounding", "/tools/recovery.sleep-and-recovery"].map((path) => (
+        {["/chat", "/assistance", "/tools", "/check-in", "/tools/breathing", "/tools/grounding", "/tools/recovery.sleep-and-recovery"].map((path) => (
           <Route key={path} path={path} element={<CurrentPath />} />
         ))}
       </Routes>
@@ -37,12 +37,13 @@ afterEach(() => {
 });
 
 describe("client Home dashboard", () => {
-  it("opens Talk it through in the guide", () => {
+  it("opens the canonical chat with the composer ready from Talk it through", () => {
     mocks.listResources.mockResolvedValue({ items: [] });
     renderHome();
 
     fireEvent.click(screen.getByRole("button", { name: /Talk it through/i }));
-    expect(screen.getByTestId("current-path").textContent).toBe("/guide");
+    expect(screen.getByTestId("current-path").textContent).toBe("/chat");
+    expect(screen.getByTestId("route-state")).toHaveTextContent('"startConversation":true');
   });
 
   it("opens practical help from Home", () => {

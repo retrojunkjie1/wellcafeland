@@ -80,7 +80,7 @@ const HomePage = () => {
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Choose a kind of support">
         <button
           type="button"
-          onClick={() => navigate("/guide")}
+          onClick={() => navigate("/chat", { state: { startConversation: true } })}
           className="wc-home-pathway wc-home-pathway--talk group"
           data-tour="home-guide"
         >

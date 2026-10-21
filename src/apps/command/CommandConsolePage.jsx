@@ -50,7 +50,7 @@ const CommandConsolePage = () => {
           label: "Wellness Guide",
           description: "Get personalized support and guidance",
           icon: Heart,
-          action: () => navigate("/guide"),
+          action: () => navigate("/chat", { state: { startConversation: true } }),
         },
       ],
     },
