@@ -136,6 +136,12 @@ import { AdminGuard } from "./admin/AdminGuard";
 import { AdminShell } from "./admin/AdminShell";
 import { AdminPage } from "./admin/AdminPage";
 import GodEyeConsoleEntry from "./components/routing/GodEyeConsoleEntry";
+import RouteContentBoundary from "./components/routing/RouteContentBoundary";
+
+function RouteContentRecovery({ children }) {
+  const location = useLocation();
+  return <RouteContentBoundary resetKey={location.key}>{children}</RouteContentBoundary>;
+}
 
 // Phase 13: Social & Circles imports
 const CirclesPage = lazy(() => import("./apps/circles/CirclesPage"));
@@ -155,9 +161,10 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loading message="Loading…" /></div>}>
-        <RouteTracker />
-        <Routes>
+      <RouteContentRecovery>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loading message="Loading…" /></div>}>
+          <RouteTracker />
+          <Routes>
           {/* Preview - Standalone page, no layout */}
           <Route path="/preview/:token" element={<SessionPreviewPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -489,8 +496,9 @@ const App = () => {
         </Route>
 
           <Route path="*" element={<UnauthorizedPage />} />
-        </Routes>
-      </Suspense>
+          </Routes>
+        </Suspense>
+      </RouteContentRecovery>
     </BrowserRouter>
   );
 };
