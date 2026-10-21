@@ -57,8 +57,9 @@ function getMicErrorMessage(err) {
   return "Your browser couldn’t use the microphone. Check this site’s microphone permission, then try again.";
 }
 
-export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "reflection", presentation = "modal" }) {
+export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "reflection", presentation = "modal", autoStartOnOpen = false }) {
   const navigate = useNavigate();
+  const [isStarting, setIsStarting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [transcript, setTranscript] = useState("");
@@ -80,6 +81,8 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const cancelStartRef = useRef(false);
+  const autoStartConsumedRef = useRef(false);
 
   const stopRecording = useCallback(() => {
     if (animationFrameRef.current != null) {
@@ -279,7 +282,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
 
   const attemptGetUserMedia = useCallback(async () => {
     setErrorMessage(null);
+    cancelStartRef.current = false;
+    setIsStarting(true);
     if (mode !== "chat" && !serviceConsent) {
+      setIsStarting(false);
       setErrorMessage("Choose whether to send your audio for transcription and response before recording.");
       return;
     }
@@ -288,6 +294,10 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
         throw new Error("Voice recording is not available in this browser. You can still type your message.");
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (cancelStartRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -325,9 +335,11 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
       discardRecordingRef.current = false;
       recordingTimeRef.current = 0;
       mediaRecorder.start(1000);
+      setIsStarting(false);
       setIsRecording(true);
       setRecordingTime(0);
     } catch (err) {
+      setIsStarting(false);
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       mediaRecorderRef.current = null;
@@ -352,7 +364,20 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
     await attemptGetUserMedia();
   }, [attemptGetUserMedia]);
 
+  useEffect(() => {
+    if (!open) {
+      autoStartConsumedRef.current = false;
+      return;
+    }
+    if (autoStartOnOpen && mode === "chat" && !autoStartConsumedRef.current) {
+      autoStartConsumedRef.current = true;
+      void startRecording();
+    }
+  }, [autoStartOnOpen, mode, open, startRecording]);
+
   const cancelChatRecording = useCallback(() => {
+    cancelStartRef.current = true;
+    setIsStarting(false);
     discardRecordingRef.current = true;
     stopRecording();
     onClose?.();
@@ -370,7 +395,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
   }, []);
 
   const showDevLanNote = isDevLanBaseUrl() && isLanHost() && !isSecureContextOk();
-  const compactChatState = mode === "chat" && (isRecording || processing || Boolean(recordedAudio));
+  const compactChatState = mode === "chat" && (isStarting || isRecording || processing || Boolean(recordedAudio));
 
   if (!open) return null;
 
@@ -450,7 +475,17 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
         )}
 
         <div className={`flex flex-col items-center justify-center ${mode === "chat" ? "min-h-[72px]" : "min-h-[180px]"}`}>
-          {isRecording ? (
+          {isStarting && mode === "chat" ? (
+            <div className="flex w-full items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-3 py-2" aria-label="Starting voice recording" role="status">
+              <button type="button" onClick={cancelChatRecording} aria-label="Cancel voice recording" title="Cancel recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">
+                <X className="h-5 w-5" />
+              </button>
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5" aria-label="Connecting microphone">
+                {[8, 14, 20, 12, 24, 15, 9, 18, 11, 22, 13, 8].map((height, index) => <span key={index} className="w-1 rounded-full bg-white/55 animate-pulse" style={{ height, animationDelay: `${index * 55}ms` }} />)}
+              </div>
+              <span className="sr-only">Connecting microphone</span>
+            </div>
+          ) : isRecording ? (
             mode === "chat" ? (
               <div className="flex w-full items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] px-3 py-2" aria-label="Recording voice message">
                 <button type="button" onClick={cancelChatRecording} aria-label="Cancel voice recording" title="Cancel recording" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-black/15 text-white/70 hover:bg-black/25 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">

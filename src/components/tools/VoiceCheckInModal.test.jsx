@@ -69,6 +69,16 @@ describe("VoiceCheckInModal chat recording", () => {
     expect(transcribeAudio).toHaveBeenCalledTimes(1);
   });
 
+  it("starts directly in the inline waveform when the composer mic opens it", async () => {
+    render(<MemoryRouter><VoiceCheckInModal open mode="chat" presentation="inline" autoStartOnOpen onComplete={vi.fn()} onClose={vi.fn()} /></MemoryRouter>);
+
+    expect(await screen.findByLabelText("Recording voice message")).toBeInTheDocument();
+    expect(screen.getByLabelText("Live voice waveform")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Voice message" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start voice message recording" })).not.toBeInTheDocument();
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+  });
+
   it("closes the voice surface when the person discards a stopped recording", async () => {
     const onClose = vi.fn();
     render(<MemoryRouter><VoiceCheckInModal open mode="chat" presentation="inline" onComplete={vi.fn()} onClose={onClose} /></MemoryRouter>);

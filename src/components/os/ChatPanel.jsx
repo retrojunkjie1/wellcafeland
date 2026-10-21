@@ -2040,6 +2040,7 @@ const ChatPanel = ({ startConversation = false }) => {
                   presentation="inline"
                   onClose={() => setVoiceCheckInModalOpen(false)}
                   mode="chat"
+                  autoStartOnOpen
                   onComplete={handleVoiceMessageComplete}
                 />
               ) : (
