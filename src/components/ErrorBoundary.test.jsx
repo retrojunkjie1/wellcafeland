@@ -21,6 +21,8 @@ describe("ErrorBoundary recovery", () => {
 
     render(<ErrorBoundary><CrashingChild shouldCrash message="Failed to fetch dynamically imported module" /></ErrorBoundary>);
     expect(screen.getByRole("button", { name: "Reload page" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Go to Home" }).getAttribute("href")).toBe("/home");
+    expect(screen.getByRole("link", { name: "Get support" }).getAttribute("href")).toBe("/support");
   });
 
   it("lets an ordinary component failure retry locally", () => {

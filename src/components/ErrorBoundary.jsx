@@ -84,6 +84,14 @@ class ErrorBoundary extends React.Component {
               <RefreshCw className="h-4 w-4" />
               {reloadRequired ? "Reload page" : "Try again"}
             </button>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+              <a href="/home" className="text-sm font-medium text-foreground underline underline-offset-4 hover:text-wcGold">
+                Go to Home
+              </a>
+              <a href="/support" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+                Get support
+              </a>
+            </div>
           </div>
         </div>
       );

@@ -26,7 +26,7 @@ const root = createRoot(document.getElementById("root"));
 // Step 3: Render app shell (must always render)
 root.render(
   <StrictMode>
-    <ErrorBoundary showDetails={true}>
+    <ErrorBoundary showDetails={import.meta.env.DEV}>
       <WcOsProvider>
         <AuthProvider>
           <App />

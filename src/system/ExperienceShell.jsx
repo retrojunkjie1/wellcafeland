@@ -20,6 +20,7 @@ import { AudioProvider } from "@/experience/audio/AudioProvider";
 import { VoiceSessionProvider } from "@/experience/voice/VoiceSessionProvider";
 import { useOSStore } from "@/stores/useOSStore";
 import { setTheme } from "@/theme/themeStore";
+import RouteContentBoundary from "@/components/routing/RouteContentBoundary";
 
 const isChatRoute = (path) => path === "/" || path.startsWith("/chat");
 const isToolDetailRoute = (path) =>
@@ -96,7 +97,9 @@ export default function ExperienceShell() {
         <NavigationProvider>
           <OSPageChrome />
           <KillSwitchGate>
-            <Outlet />
+            <RouteContentBoundary resetKey={location.key}>
+              <Outlet />
+            </RouteContentBoundary>
           </KillSwitchGate>
         </NavigationProvider>
       </main>
