@@ -661,7 +661,7 @@ export async function speakText(text, options = {}) {
       }
     }
 
-    return { ok: false, error: "No audio data received" };
+    return { ok: false, code: "TTS_EMPTY_RESPONSE", error: "No audio data received" };
   } catch (err) {
     logDebug("TTS", { error: err.message, endpoint: ENDPOINTS.tts() });
     const isNetworkError = err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError");

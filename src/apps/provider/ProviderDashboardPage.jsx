@@ -11,6 +11,8 @@ import { TOOLS } from "@/apps/tools/toolsRegistry";
 import { getPractitionerWorkspaceContract } from "./practitionerWorkspaceContracts";
 import { callAgent } from "@/ai/agents/agentClient";
 import { getAppCheckToken } from "@/firebase/appCheck";
+import { auth } from "@/firebase";
+import { classifyProviderRequestFailure } from "./providerRequestFailure";
 
 const OUTCOME_LABELS = {
   tried: "Tried it",
@@ -117,10 +119,19 @@ export default function ProviderDashboardPage() {
     if (secureCheckStatus !== "idle") return;
     setSecureCheckStatus("checking");
     try {
-      const token = await getAppCheckToken({ forceRefresh: true });
-      if (!token) {
-        setSecureCheckStatus("unavailable");
-        return;
+      if (errorKind === "auth") {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          setSecureCheckStatus("unavailable");
+          return;
+        }
+        await currentUser.getIdToken(true);
+      } else {
+        const token = await getAppCheckToken({ forceRefresh: true });
+        if (!token) {
+          setSecureCheckStatus("unavailable");
+          return;
+        }
       }
       setSecureCheckStatus("refreshing");
       setDashboardRetry((value) => value + 1);
@@ -229,7 +240,8 @@ export default function ProviderDashboardPage() {
           setAppointments([]);
           setClientsUnavailable(true);
           setAppointmentsUnavailable(true);
-          setError("Your signed-in account could not be confirmed. Sign in again to load this workspace.");
+          setErrorKind("auth");
+          setError("We couldn’t confirm your sign-in. Refresh it once to reload this workspace.");
           setLoadedScope(requestScope);
           return;
         }
@@ -254,15 +266,15 @@ export default function ProviderDashboardPage() {
           if (clientsResult.unavailable) {
             setClients([]);
             setClientsScope(requestScope);
-            const errorCode = String(clientsResult.error?.code || "").toLowerCase();
-            const authFailure = errorCode.includes("unauthenticated") || errorCode.includes("unauthorized");
-            if (authFailure && userId) {
-              setErrorKind("app-check");
-              setError("Your account is still signed in, but some practice information isn’t available right now. Please come back later.");
-            } else {
-              setErrorKind("load");
-              setError("Some practitioner information couldn’t be loaded. You can retry the unavailable section.");
-            }
+            const failureKind = classifyProviderRequestFailure(clientsResult.error);
+            setErrorKind(failureKind);
+            setError(failureKind === "auth"
+              ? "We couldn’t confirm your sign-in. Refresh it once to reload your practice information."
+              : failureKind === "access"
+                ? "Your account doesn’t have permission to load some practice information. Ask your workspace administrator to check your access."
+                : failureKind === "app-check"
+                  ? "Your practice information couldn’t be loaded securely. Check this browser connection to try again."
+                  : "Some practitioner information couldn’t be loaded. You can retry the unavailable section.");
           }
           const configuredTimezone = availabilityResult.value?.timezone;
           setTimezoneFromAvailability(Boolean(configuredTimezone));
@@ -279,18 +291,16 @@ export default function ProviderDashboardPage() {
           setAppointmentsUnavailable(true);
           setTimezoneFromAvailability(false);
           setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-          const errorCode = String(err?.code || "").toLowerCase();
-          const authFailure = errorCode.includes("unauthenticated") || errorCode.includes("unauthorized");
-          const permissionFailure = errorCode.includes("permission-denied");
-          if (permissionFailure) {
+          const failureKind = classifyProviderRequestFailure(err);
+          if (failureKind === "access") {
             setErrorKind("access");
             setError("Your signed-in account does not have permission to load this practitioner workspace. Ask your workspace administrator to check your access.");
-          } else if (authFailure && userId) {
-            setErrorKind("app-check");
-            setError("Your account is still signed in, but some practice information isn’t available right now. Please come back later.");
-          } else if (authFailure) {
+          } else if (failureKind === "auth") {
             setErrorKind("auth");
-            setError("Your session has ended. Sign in to reload your practitioner workspace.");
+            setError("We couldn’t confirm your sign-in. Refresh it once to reload your practice information.");
+          } else if (failureKind === "app-check") {
+            setErrorKind("app-check");
+            setError("Your practice information couldn’t be loaded securely. Check this browser connection to try again.");
           } else {
             setErrorKind("load");
             setError("We couldn’t load your practitioner workspace. Your connection and shared-work queues are unknown until you retry.");
@@ -318,10 +328,35 @@ export default function ProviderDashboardPage() {
   if (identityLoading) return <div className="grid min-h-[45vh] place-items-center text-sm text-white/60" role="status">Checking your workspace…</div>;
   if (!isProvider && !isAdmin) return null;
   const currentScopeLoaded = loadedScope === identityScope;
+  const connectionFailure = errorKind === "auth" || errorKind === "app-check";
+  const connectionErrorMessage = connectionFailure
+    ? secureCheckStatus === "refreshing"
+      ? "We refreshed the connection. We’re checking your practice information again now."
+      : secureCheckStatus === "request-rejected"
+        ? "The connection refreshed, but some practice information is still unavailable. Nothing was changed."
+        : secureCheckStatus === "unavailable"
+          ? "We couldn’t refresh this connection. Your information wasn’t changed."
+          : errorKind === "app-check"
+            ? "Your practice information couldn’t be loaded securely."
+            : error
+    : error;
+  const errorRecovery = connectionFailure
+    ? secureCheckStatus === "idle"
+      ? <button type="button" onClick={checkSecureConnection} className="mt-3 min-h-10 rounded-lg border border-rose-100/25 px-4 text-sm font-medium text-rose-50 hover:bg-rose-100/10">{errorKind === "auth" ? "Refresh sign-in" : "Check connection"}</button>
+      : secureCheckStatus === "checking"
+        ? <p className="mt-3 text-sm text-rose-50/75" role="status">Refreshing your connection…</p>
+        : secureCheckStatus === "refreshing"
+          ? <p className="mt-3 text-sm text-rose-50/75" role="status">Checking your practice information…</p>
+          : errorKind === "auth" && secureCheckStatus === "unavailable"
+            ? <button type="button" onClick={() => navigate("/login", { state: { from: { pathname: "/provider/dashboard" } } })} className="mt-3 min-h-10 rounded-lg bg-amber-200 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-100">Sign in</button>
+            : null
+    : errorKind === "load"
+      ? <button type="button" onClick={() => setDashboardRetry((value) => value + 1)} className="mt-3 min-h-10 rounded-lg border border-rose-100/25 px-4 text-sm font-medium text-rose-50 hover:bg-rose-100/10">Try again</button>
+      : null;
   return <div className="min-h-screen bg-slate-950 text-white"><PageHeader title={workspace.label} subtitle={workspace.focus} />
     <div className="lux-shell space-y-6 py-8">
       <section className="rounded-3xl border border-white/10 bg-gradient-to-r from-amber-100/[0.09] via-white/[0.035] to-emerald-100/[0.04] p-5 sm:p-7"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100/65">{workspace.label}</p><h1 className="mt-2 text-2xl font-semibold sm:text-3xl">{workspace.headline}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/60">{workspace.summary} {workspace.careCoordination ? "Only a client’s active connection and specifically shared practical-help request fields are available here." : workspace.primaryCare ? "Only upcoming appointments and preparation a patient specifically chose to share are available here." : "Connection never opens private check-ins automatically. People can choose what you see and can change those choices at any time."}</p><div className="mt-5 flex flex-wrap gap-2"><button onClick={() => navigate(workspace.primaryAction.path, workspace.primaryAction.path === "/provider/schedule" ? { state: { from: { pathname: "/provider/dashboard" } } } : undefined)} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-amber-200 px-4 text-sm font-semibold text-slate-950">{workspace.primaryAction.path === "/provider/schedule" ? <CalendarDays className="h-4 w-4" /> : <Users className="h-4 w-4" />}{workspace.primaryAction.label}</button><button onClick={() => navigate("/provider/schedule", { state: { from: { pathname: "/provider/dashboard" } } })} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><CalendarDays className="h-4 w-4" />Schedule</button>{!workspace.limitedAccess && <><button onClick={() => navigate("/provider/messages")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><MessageSquare className="h-4 w-4" />Messages</button><button onClick={() => navigate("/assistance/community")} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-white/15 bg-white/[0.04] px-4 text-sm text-white/80"><HandHeart className="h-4 w-4" />Community giving</button></>}</div></section>
-      {error && <section role="alert" className="rounded-2xl border border-rose-200/20 bg-rose-300/[0.06] p-4 sm:p-5"><p className="text-sm leading-relaxed text-rose-50/90">{errorKind === "app-check" && secureCheckStatus === "refreshing" ? "The browser check passed. We’re checking your practice information again now." : errorKind === "app-check" && secureCheckStatus === "request-rejected" ? "The browser connection checked out, but some practice information is still unavailable. Nothing was changed." : errorKind === "app-check" && secureCheckStatus === "unavailable" ? "We couldn’t check this browser connection. Your information wasn’t changed." : errorKind === "app-check" ? "Your account is signed in, but we couldn’t load some practice information." : error}</p>{errorKind === "app-check" ? secureCheckStatus === "idle" ? <button type="button" onClick={checkSecureConnection} className="mt-3 min-h-10 rounded-lg border border-rose-100/25 px-4 text-sm font-medium text-rose-50 hover:bg-rose-100/10">Check connection</button> : secureCheckStatus === "checking" ? <p className="mt-3 text-sm text-rose-50/75" role="status">Checking this browser…</p> : secureCheckStatus === "refreshing" ? <p className="mt-3 text-sm text-rose-50/75" role="status">Refreshing your practice information…</p> : null : <div className="mt-3 flex flex-wrap gap-2">{errorKind === "auth" ? <button type="button" onClick={() => navigate("/login", { state: { from: { pathname: "/provider/dashboard" } } })} className="min-h-10 rounded-lg bg-amber-200 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-100">Sign in</button> : <button type="button" onClick={() => setDashboardRetry((value) => value + 1)} className="min-h-10 rounded-lg border border-rose-100/25 px-4 text-sm font-medium text-rose-50 hover:bg-rose-100/10">Try again</button>}</div>}</section>}
+      {error && <section role="alert" className="rounded-2xl border border-rose-200/20 bg-rose-300/[0.06] p-4 sm:p-5"><p className="text-sm leading-relaxed text-rose-50/90">{connectionErrorMessage}</p>{errorRecovery}</section>}
       {loading || !currentScopeLoaded ? <div className="py-10 text-center text-white/50">Loading your workspace…</div> : <>
         <section aria-label="Your work at a glance" className="grid gap-3 sm:grid-cols-3">{workAtAGlance.map((item) => <a key={item.label} href={item.href} aria-label={`${item.label}: ${item.value}. ${item.detail}`} className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.055] to-white/[0.02] p-4 transition hover:border-amber-100/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-100/70"><span className="block text-sm text-white/60">{item.label}</span><span className="mt-1 block text-3xl font-semibold tabular-nums text-white">{item.value}</span><span className="mt-1 block text-xs leading-relaxed text-white/45">{item.detail}</span></a>)}</section>
         <section className="rounded-2xl border border-violet-200/15 bg-violet-100/[0.025] p-5" aria-labelledby="gatekeeper-heading">

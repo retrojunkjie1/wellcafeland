@@ -235,6 +235,45 @@ test("authenticated client requests reach all six shared workflows using only th
   }
 });
 
+test("authenticated chat with an image reaches the model with image guidance and no server error", async () => {
+  const identity = await createEmulatorIdentity("chat-image");
+  const originalFetch = global.fetch;
+  const captured = [];
+  const imageDataUrl = "data:image/jpeg;base64,/9j/2Q==";
+  global.fetch = (url, options) => String(url).includes("api.openai.com/v1/chat/completions")
+    ? fakeProviderResponse("A warm, appealing description can focus on her towel-wrapped hair, brown ribbed top, and relaxed selfie setting.", captured)(url, options)
+    : originalFetch(url, options);
+
+  try {
+    const response = responseRecorder();
+    await aiBrain.handleSession({
+      method: "POST",
+      headers: { host: "localhost", authorization: `Bearer ${identity.idToken}` },
+      body: {
+        prompt: "How do I describe her in an appealing way?",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: "How do I describe her in an appealing way?" },
+            { type: "image_url", image_url: { url: imageDataUrl, detail: "auto" } },
+          ],
+        }],
+      },
+    }, response);
+
+    assert.equal(response.statusCode, 200, `image chat should return a successful response: ${JSON.stringify(response.body)}`);
+    assert.equal(response.body.ok, true);
+    assert.equal(captured.length, 1);
+    const modelMessages = captured[0].messages;
+    assert.match(modelMessages[0].content, /An image is attached to this conversation/);
+    const userMessage = modelMessages.find((message) => message.role === "user");
+    assert.ok(Array.isArray(userMessage.content));
+    assert.equal(userMessage.content.some((part) => part.type === "image_url" && part.image_url.url === imageDataUrl), true);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test("authenticated client workflows pass the specialist contracts with bounded selected context", async () => {
   const originalFetch = global.fetch;
   const captured = [];

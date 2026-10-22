@@ -19,17 +19,33 @@ describe("MessageBubble", () => {
     expect(document.querySelector("audio")).not.toBeInTheDocument();
   });
 
-  it("renders one playback control for an assistant voice response", () => {
+  it("keeps assistant voice responses in the conversation and exposes read-aloud only on demand", () => {
     render(<MessageBubble message={{
       id: "assistant-audio-1",
       role: "assistant",
       type: "assistant_audio",
       content: "A short spoken response.",
       audioUrl: "blob:assistant-response",
-    }} />);
+    }} onSpeak />);
 
     expect(screen.getByText("A short spoken response.")).toBeInTheDocument();
-    expect(screen.getAllByLabelText("Voice response player")).toHaveLength(1);
+    expect(screen.queryByLabelText("Voice response player")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Read response aloud" })).toBeInTheDocument();
+  });
+
+  it("sizes a portrait attachment to its own dimensions instead of stretching it across the message", () => {
+    render(<MessageBubble message={{
+      id: "user-image-1",
+      role: "user",
+      type: "user_text",
+      content: "Look at this photo.",
+      imageUrl: "data:image/jpeg;base64,test",
+    }} />);
+
+    const image = screen.getByAltText("Image shared in this conversation");
+    expect(image).toHaveClass("w-auto", "max-w-full");
+    expect(image).not.toHaveClass("w-full");
+    expect(image.parentElement).toHaveClass("w-fit");
   });
 
   it("keeps internal response diagnostics out of the client conversation", () => {

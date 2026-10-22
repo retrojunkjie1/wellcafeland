@@ -90,6 +90,17 @@ test("fails closed when the shared quota service is unavailable", async () => {
   assert.equal(res.body.code, "AI_RATE_LIMIT_UNAVAILABLE");
 });
 
+test("classifies speech provider failures without exposing raw provider messages", () => {
+  assert.deepEqual(__test.classifyTtsProviderFailure({ status: 401, code: "invalid_api_key", message: "sensitive provider detail" }), {
+    providerStatus: 401,
+    providerCode: "invalid_api_key",
+    code: "TTS_PROVIDER_AUTH_FAILED",
+  });
+  assert.equal(__test.classifyTtsProviderFailure({ status: 429 }).code, "TTS_PROVIDER_RATE_LIMITED");
+  assert.equal(__test.classifyTtsProviderFailure({ status: 503 }).code, "TTS_PROVIDER_UNAVAILABLE");
+  assert.equal(__test.classifyTtsProviderFailure({ status: 400 }).code, "TTS_PROVIDER_FAILED");
+});
+
 test("rejects missing App Check before Firebase auth or quota", async () => {
   const res = responseMock();
   let authCalled = false;

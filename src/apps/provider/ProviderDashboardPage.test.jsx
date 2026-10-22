@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   listProviderVisitPreparations: vi.fn(),
   callAgent: vi.fn(),
   getAppCheckToken: vi.fn(),
+  refreshAuthToken: vi.fn(),
 }));
 
 vi.mock("react-router-dom", async (importOriginal) => ({ ...(await importOriginal()), useNavigate: () => mocks.navigate, useLocation: () => ({ hash: "" }) }));
@@ -23,6 +24,7 @@ vi.mock("@/services/appointmentService", () => ({ listAppointmentsForProvider: m
 vi.mock("@/services/practitionerRegistry", () => ({ getProviderClientOverview: mocks.getProviderClientOverview, listProviderCareHandoffs: mocks.listProviderCareHandoffs, listProviderVisitPreparations: mocks.listProviderVisitPreparations }));
 vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent }));
 vi.mock("@/firebase/appCheck", () => ({ getAppCheckToken: mocks.getAppCheckToken }));
+vi.mock("@/firebase", () => ({ auth: { currentUser: { getIdToken: mocks.refreshAuthToken } } }));
 vi.mock("@/components/navigation/PageHeader", () => ({ default: ({ title }) => <header>{title}</header> }));
 vi.mock("./components/ConnectionRequestsPanel", () => ({ default: () => <section>Connection requests</section> }));
 
@@ -62,6 +64,17 @@ describe("ProviderDashboardPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Your connected people" })).toBeTruthy();
     expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it("offers sign-in refresh when the verified workspace has no usable account ID", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: null, userId: null });
+
+    render(<ProviderDashboardPage />);
+
+    const message = await screen.findByText(/We couldn’t confirm your sign-in/i);
+    const alert = message.closest('[role="alert"]');
+    expect(within(alert).getByRole("button", { name: "Refresh sign-in" })).toBeInTheDocument();
+    expect(within(alert).queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
   it("shows upcoming appointments in the practitioner's configured time zone", async () => {
@@ -199,7 +212,7 @@ describe("ProviderDashboardPage", () => {
     expect(screen.queryByText(/No appointments in the next two weeks/i)).toBeNull();
   });
 
-  it("does not tell a signed-in practitioner to sign in again when protected data calls fail authentication", async () => {
+  it("classifies an expired sign-in separately from browser verification", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
     mocks.listAssignmentsForProvider.mockRejectedValueOnce(
       Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
@@ -209,20 +222,52 @@ describe("ProviderDashboardPage", () => {
 
     render(<ProviderDashboardPage />);
 
-    expect(await screen.findByText(/Your account is signed in, but we couldn’t load some practice information/i)).toBeInTheDocument();
+    expect(await screen.findByText(/We couldn’t confirm your sign-in/i)).toBeInTheDocument();
     expect(screen.queryByText(/App Check|secure app verification|verification setup/i)).toBeNull();
     expect(screen.queryByRole("button", { name: "Reload WellnessCafe" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Sign in again" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    expect(screen.getByText("Appointments aren’t available right now.")).toBeInTheDocument();
-    expect(screen.getByText("Shared updates aren’t available right now.")).toBeInTheDocument();
-    expect(screen.getByText("Your connected clients aren’t available right now.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh sign-in" })).toBeInTheDocument();
   });
 
-  it("checks for a browser token once, then retries dashboard reads without exposing the token", async () => {
+  it("does not loop a retry for an account that lacks workspace permission", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider.mockRejectedValue(
+      Object.assign(new Error("Missing or insufficient permissions"), { code: "permission-denied" }),
+    );
+    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+
+    render(<ProviderDashboardPage />);
+
+    const accessMessage = await screen.findByText(/doesn’t have permission to load some practice information/i);
+    const accessAlert = accessMessage.closest('[role="alert"]');
+    expect(accessAlert).not.toBeNull();
+    expect(within(accessAlert).queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Refresh sign-in" })).toBeNull();
+  });
+
+  it("refreshes an expired sign-in once, then retries dashboard reads", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
     mocks.listAssignmentsForProvider
       .mockRejectedValueOnce(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }))
+      .mockResolvedValueOnce([]);
+    mocks.listAppointmentsForProvider.mockResolvedValue([]);
+    mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
+    mocks.refreshAuthToken.mockResolvedValue("private-auth-token");
+
+    render(<ProviderDashboardPage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Refresh sign-in" }));
+
+    await waitFor(() => expect(mocks.refreshAuthToken).toHaveBeenCalledWith(true));
+    await waitFor(() => expect(mocks.listAssignmentsForProvider).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/No appointments in the next two weeks/i)).toBeInTheDocument();
+    expect(mocks.getAppCheckToken).not.toHaveBeenCalled();
+  });
+
+  it("refreshes App Check only for an explicit browser-verification failure", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider
+      .mockRejectedValueOnce(Object.assign(new Error("App verification is required"), { code: "APP_CHECK_REQUIRED" }))
       .mockResolvedValueOnce([]);
     mocks.listAppointmentsForProvider.mockResolvedValue([]);
     mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
@@ -234,12 +279,13 @@ describe("ProviderDashboardPage", () => {
     await waitFor(() => expect(mocks.getAppCheckToken).toHaveBeenCalledWith({ forceRefresh: true }));
     await waitFor(() => expect(mocks.listAssignmentsForProvider).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/No appointments in the next two weeks/i)).toBeInTheDocument();
+    expect(mocks.refreshAuthToken).not.toHaveBeenCalled();
     expect(screen.queryByText("private-app-check-token")).toBeNull();
   });
 
-  it("stops after one browser token check when token acquisition fails", async () => {
+  it("stops after one App Check refresh when browser-token acquisition fails", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
-    mocks.listAssignmentsForProvider.mockRejectedValue(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }));
+    mocks.listAssignmentsForProvider.mockRejectedValue(Object.assign(new Error("App verification is required"), { code: "APP_CHECK_REQUIRED" }));
     mocks.listAppointmentsForProvider.mockResolvedValue([]);
     mocks.getMyProviderAvailability.mockResolvedValue({ timezone: "America/Denver" });
     mocks.getAppCheckToken.mockRejectedValue(new Error("token unavailable"));
@@ -247,7 +293,7 @@ describe("ProviderDashboardPage", () => {
     render(<ProviderDashboardPage />);
     fireEvent.click(await screen.findByRole("button", { name: "Check connection" }));
 
-    expect(await screen.findByText(/couldn’t check this browser connection/i)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn’t refresh this connection/i)).toBeInTheDocument();
     expect(mocks.getAppCheckToken).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: "Check connection" })).toBeNull();
   });

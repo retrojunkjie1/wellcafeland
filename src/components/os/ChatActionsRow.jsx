@@ -1,8 +1,8 @@
 // src/components/os/ChatActionsRow.jsx — wired action row (Phase 54L)
 // Only render a button when its handler is provided.
 
-import React, { useState } from "react";
-import { Copy, Volume2, ThumbsUp, ThumbsDown, Share2, Check } from "lucide-react";
+import React, { useCallback, useRef, useState } from "react";
+import { Copy, Volume2, Pause, Square, LoaderCircle, ThumbsUp, ThumbsDown, Share2, Check } from "lucide-react";
 import VoiceResponse from "./VoiceResponse";
 
 export default function ChatActionsRow({
@@ -15,7 +15,9 @@ export default function ChatActionsRow({
 }) {
   const [feedback, setFeedback] = useState(null);
   const [notice, setNotice] = useState("");
-  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [voiceState, setVoiceState] = useState({ status: "idle", error: "" });
+  const voiceRef = useRef(null);
+  const handleVoiceState = useCallback((nextState) => setVoiceState(nextState), []);
   const buttons = [];
   const isServiceError = message?.type === "assistant_error" || message?.meta?.kind === "service_error";
   const actionIds = new Set((Array.isArray(message?.actions) ? message.actions : []).map((action) => action?.action));
@@ -45,11 +47,20 @@ export default function ChatActionsRow({
     );
   }
   if (onSpeak) {
+    const isSpeaking = voiceState.status === "playing";
+    const isLoading = voiceState.status === "loading";
     buttons.push(
-      <button key="speak" type="button" onClick={() => setVoiceOpen((open) => !open)} className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-wcGold ${voiceOpen ? "text-amber-200" : "text-white/55"}`} aria-label={voiceOpen ? "Close voice response player" : "Read response aloud"} aria-expanded={voiceOpen} title="Read response aloud">
-        <Volume2 size={17} aria-hidden="true" />
+      <button key="speak" type="button" onClick={() => voiceRef.current?.togglePlayback()} className={`inline-flex h-9 w-9 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-wcGold ${isSpeaking || voiceState.status === "paused" ? "text-amber-200" : "text-white/55"}`} aria-label={isLoading ? "Preparing spoken response" : isSpeaking ? "Pause spoken response" : voiceState.status === "paused" ? "Resume spoken response" : "Read response aloud"} title={isSpeaking ? "Pause spoken response" : "Read response aloud"}>
+        {isLoading ? <LoaderCircle size={17} className="animate-spin" aria-hidden="true" /> : isSpeaking ? <Pause size={17} aria-hidden="true" /> : <Volume2 size={17} aria-hidden="true" />}
       </button>
     );
+    if (voiceState.status === "playing" || voiceState.status === "paused" || isLoading) {
+      buttons.push(
+        <button key="voice-stop" type="button" onClick={() => voiceRef.current?.stop()} className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-wcGold" aria-label="Stop spoken response" title="Stop spoken response">
+          <Square size={15} aria-hidden="true" />
+        </button>
+      );
+    }
   }
   if (typeof onCopy === "function") {
     buttons.push(
@@ -80,7 +91,8 @@ export default function ChatActionsRow({
         {buttons}
         {notice && <span className="ml-2 text-xs text-white/50" role="status">{notice}</span>}
       </div>
-      {voiceOpen && <VoiceResponse text={typeof message?.content === "string" ? message.content : message?.text || ""} compact />}
+      {onSpeak && <VoiceResponse ref={voiceRef} text={typeof message?.content === "string" ? message.content : message?.text || ""} headless onStateChange={handleVoiceState} />}
+      {voiceState.error && <span className="ml-2 text-xs text-amber-200/90" role="status">{voiceState.error}</span>}
     </div>
   );
 }

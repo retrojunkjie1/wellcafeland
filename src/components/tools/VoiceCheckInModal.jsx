@@ -91,6 +91,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
   const canvasRef = useRef(null);
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
+  const waveformLevelsRef = useRef([]);
   const animationFrameRef = useRef(null);
   const cancelStartRef = useRef(false);
   const autoStartConsumedRef = useRef(false);
@@ -250,16 +251,29 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
     ctx.clearRect(0, 0, w, h);
     if (mode === "chat") {
       ctx.fillStyle = "rgba(255,255,255,0.48)";
-      const stride = 12;
-      for (let i = 0; i < data.length; i += stride) {
-        let amplitude = 0;
-        for (let j = i; j < Math.min(i + stride, data.length); j++) {
-          amplitude = Math.max(amplitude, Math.abs(data[j] - 128));
+      const barCount = Math.max(32, Math.min(112, Math.floor(w / 5)));
+      const samplesPerBar = Math.max(1, Math.floor(data.length / barCount));
+      const slotWidth = w / barCount;
+      const barWidth = Math.max(1.5, slotWidth * 0.55);
+      const nextLevels = [];
+      for (let bar = 0; bar < barCount; bar++) {
+        const start = bar * samplesPerBar;
+        const end = Math.min(data.length, start + samplesPerBar);
+        let squareSum = 0;
+        for (let sample = start; sample < end; sample++) {
+          const amplitude = data[sample] - 128;
+          squareSum += amplitude * amplitude;
         }
-        const barHeight = Math.max(2, Math.min(28, (amplitude / 128) * 30));
-        const x = (i / data.length) * w;
-        ctx.fillRect(x, mid - barHeight / 2, 2.5, barHeight);
+        const rms = end > start ? Math.sqrt(squareSum / (end - start)) : 0;
+        const targetHeight = Math.max(2, Math.min(h * 0.88, (rms / 30) * h * 0.88));
+        const previousHeight = waveformLevelsRef.current[bar] || 2;
+        const smoothing = targetHeight > previousHeight ? 0.38 : 0.2;
+        const barHeight = previousHeight + (targetHeight - previousHeight) * smoothing;
+        nextLevels.push(barHeight);
+        const x = bar * slotWidth + (slotWidth - barWidth) / 2;
+        ctx.fillRect(x, mid - barHeight / 2, barWidth, barHeight);
       }
+      waveformLevelsRef.current = nextLevels;
     } else {
       ctx.fillStyle = "rgba(15,23,42,0.6)";
       ctx.fillRect(0, 0, w, h);
@@ -317,6 +331,7 @@ export default function VoiceCheckInModal({ open, onClose, onComplete, mode = "r
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.82;
       source.connect(analyser);
       analyserRef.current = analyser;
 

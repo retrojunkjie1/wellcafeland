@@ -2,9 +2,8 @@
 // Animated message bubbles with human pacing and guide avatar
 
 import React from "react";
-import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, ChevronDown, Loader2 } from "lucide-react";
 import MarkdownLite from "@/components/system/MarkdownLite";
 import ChatActionsRow from "./ChatActionsRow";
 import MicroVideoCard from "../presence/MicroVideoCard";
@@ -21,6 +20,21 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
       ? "No internet connection"
       : "Connection issue";
   const isMultimodal = message.type === "assistant_audio" || message.type === "assistant_video" || message.type === "voice_session";
+  const startedAt = Number(message.meta?.startMs);
+  const completedAt = Number(message.meta?.doneMs);
+  const measuredResponseMs = typeof message.meta?.responseDurationMs === "number"
+    ? message.meta.responseDurationMs
+    : Number.NaN;
+  const responseDurationMs = Number.isFinite(measuredResponseMs) && measuredResponseMs >= 0
+    ? measuredResponseMs
+    : Number.isFinite(startedAt) && startedAt > 0 && Number.isFinite(completedAt) && completedAt >= startedAt
+      ? completedAt - startedAt
+      : null;
+  const hasResponseSummary = !isPending && !isServiceError && message.type === "assistant_text" && responseDurationMs != null;
+  const roundedSeconds = responseDurationMs == null ? 0 : Math.round(responseDurationMs / 1000);
+  const responseDurationLabel = responseDurationMs < 1000
+    ? "under 1 second"
+    : `${Math.max(1, roundedSeconds)} ${roundedSeconds === 1 ? "second" : "seconds"}`;
 
   return (
     <>
@@ -39,15 +53,10 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
           <MarkdownLite text={displayContent} />
         )}
         {message.imageUrl && !isPending && (
-          <figure className="mt-3 max-w-sm overflow-hidden rounded-xl border border-white/10 bg-black/20">
-            <img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" />
+          <figure className="mt-3 inline-flex w-fit max-w-full flex-col items-start overflow-hidden rounded-xl border border-white/10 bg-black/20">
+            <img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="block h-auto max-h-80 max-w-full w-auto object-contain" />
             <figcaption className="px-3 py-2 text-xs text-white/55">Image attached to your message</figcaption>
           </figure>
-        )}
-        {(message.type === "assistant_audio" || message.audioUrl) && !isServiceError && (
-          <div className="mt-3">
-            <VoiceResponse audioUrl={message.audioUrl} text={content} />
-          </div>
         )}
         {(message.type === "assistant_video" || message.videoUrl) && (
           <div className="mt-3">
@@ -124,6 +133,19 @@ function AssistantBubbleContent({ message, onAction, showSignals = false, onCopy
               </div>
             )}
           </div>
+        )}
+        {hasResponseSummary && (
+          <details className="mt-3 max-w-full text-sm text-white/55">
+            <summary className="inline-flex min-h-8 cursor-pointer list-none items-center gap-2 rounded-lg py-1 transition hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-wcGold [&::-webkit-details-marker]:hidden">
+              <span>Reply took {responseDurationLabel}</span>
+              <span className="text-white/30" aria-hidden="true">·</span>
+              <span>What informed this reply</span>
+              <ChevronDown className="h-4 w-4" aria-hidden="true" />
+            </summary>
+            <p className="mt-1 max-w-prose pl-1 leading-relaxed text-white/60">
+              I used your message and the context of this conversation to prepare this reply.
+            </p>
+          </details>
         )}
         {!isPending && message.actions?.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -224,7 +246,7 @@ const MessageBubble = React.memo(({ message, onAction, showSignals: showSignalsP
       <div className="flex-1 flex justify-end min-w-0">
         <div className="inline-block w-full sm:max-w-[90%] rounded-2xl bg-indigo-200/[0.075] px-3 sm:px-4 py-2.5 sm:py-3 text-[15px] sm:text-[16px] leading-relaxed text-white/95 break-words whitespace-pre-wrap border border-white/[0.035]">
           {userContent}
-          {message.imageUrl && <figure className="mt-2 max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/20"><img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="max-h-80 w-full object-contain" /><figcaption className="px-2 py-1 text-xs text-white/55">Image attached</figcaption></figure>}
+          {message.imageUrl && <figure className="mt-2 inline-flex w-fit max-w-full flex-col items-start overflow-hidden rounded-lg border border-white/10 bg-black/20"><img src={message.imageUrl} alt={message.imageName ? `Image shared: ${message.imageName}` : "Image shared in this conversation"} className="block h-auto max-h-80 max-w-full w-auto object-contain" /><figcaption className="px-2 py-1 text-xs text-white/55">Image attached</figcaption></figure>}
         </div>
       </div>
     </div>

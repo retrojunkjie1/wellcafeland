@@ -7,18 +7,18 @@ describe("ThinkingStatus", () => {
   it("keeps the response-process summary optional while a reply is pending", () => {
     render(<ThinkingStatus />);
 
-    const disclosure = screen.getByRole("button", { name: /Preparing a reply/ });
+    const disclosure = screen.getByRole("button", { name: /Reviewing your request/ });
     expect(disclosure).toHaveAttribute("aria-expanded", "false");
-    expect(screen.queryByText(/reviewing what you asked/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/using your message and the context/i)).not.toBeInTheDocument();
 
     fireEvent.click(disclosure);
     expect(disclosure).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByText(/reviewing what you asked/i)).toBeInTheDocument();
+    expect(screen.getByText(/using your message and the context/i)).toBeInTheDocument();
   });
 
   it("uses resource-specific progress copy for directory searches", () => {
     render(<ThinkingStatus intent="directory" />);
-    fireEvent.click(screen.getByRole("button", { name: /Finding resources/ }));
-    expect(screen.getByText(/checking for relevant public resources/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Searching public resources/ }));
+    expect(screen.getByText(/checking public resources for this request/i)).toBeInTheDocument();
   });
 });

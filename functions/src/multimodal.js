@@ -163,6 +163,19 @@ function getOpenAI() {
   return _openai
 }
 
+function classifyTtsProviderFailure(error) {
+  const providerStatus = Number(error?.status) || 0;
+  const providerCode = typeof error?.code === "string" ? error.code.slice(0, 80) : "UNKNOWN";
+  const code = providerStatus === 401 || providerStatus === 403
+    ? "TTS_PROVIDER_AUTH_FAILED"
+    : providerStatus === 429
+      ? "TTS_PROVIDER_RATE_LIMITED"
+      : providerStatus >= 500
+        ? "TTS_PROVIDER_UNAVAILABLE"
+        : "TTS_PROVIDER_FAILED";
+  return { providerStatus, providerCode, code };
+}
+
 // ===== SYSTEM PROMPT =====
 const SYSTEM_PROMPT = `
 You are a compassionate, trauma-informed wellness guide.
@@ -319,7 +332,11 @@ exports.tts = onRequest(
     const openai = getOpenAI()
     if (!openai) {
       logger.warn("OPENAI_API_KEY not set. Multimodal features disabled.")
-      return res.status(503).json({ error: "OpenAI not configured" })
+      return res.status(503).json({
+        ok: false,
+        code: "TTS_NOT_CONFIGURED",
+        error: "Voice playback is unavailable right now. You can still read the reply.",
+      })
     }
 
     try {
@@ -346,8 +363,15 @@ exports.tts = onRequest(
         mimeType: "audio/mp3",
       });
     } catch (err) {
-      logger.error("TTS error:", err);
-      res.status(500).json({ error: "TTS failed" });
+      // Keep provider errors useful for operations without logging request text or
+      // returning provider details to the client.
+      const { providerStatus, providerCode, code } = classifyTtsProviderFailure(err);
+      logger.error("TTS provider request failed", { providerStatus, providerCode, code });
+      res.status(502).json({
+        ok: false,
+        code,
+        error: "Voice playback is temporarily unavailable. You can still read the reply.",
+      });
     }
   }
 );
@@ -386,6 +410,7 @@ exports.stt = onRequest(
 
 exports.__test = {
   authorizeAICall,
+  classifyTtsProviderFailure,
   resolveTranscriptionAudioType,
   transcribeAudioPayload,
   MAX_AUDIO_BASE64_CHARACTERS,

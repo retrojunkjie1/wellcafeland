@@ -79,4 +79,20 @@ describe("ChatActionsRow", () => {
     expect(share).toHaveBeenCalledWith(message);
     expect(await screen.findByText("Share options opened")).toBeInTheDocument();
   });
+
+  it("starts speaking from the speaker action without opening a second player", () => {
+    const speechSynthesis = { speak: vi.fn(), cancel: vi.fn(), pause: vi.fn(), resume: vi.fn() };
+    class MockUtterance {
+      constructor(text) { this.text = text; }
+    }
+    vi.stubGlobal("speechSynthesis", speechSynthesis);
+    vi.stubGlobal("SpeechSynthesisUtterance", MockUtterance);
+
+    render(<ChatActionsRow message={{ role: "assistant", content: "A short reply" }} onSpeak />);
+    fireEvent.click(screen.getByRole("button", { name: "Read response aloud" }));
+
+    expect(speechSynthesis.speak).toHaveBeenCalledOnce();
+    expect(speechSynthesis.speak.mock.calls[0][0].text).toBe("A short reply");
+    expect(screen.queryByLabelText("Voice response player")).not.toBeInTheDocument();
+  });
 });

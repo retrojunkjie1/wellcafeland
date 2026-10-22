@@ -647,7 +647,6 @@ const ChatPanel = ({ startConversation = false }) => {
             avoidRepeat: true,
             lastUserTextHash: textHash,
             ...nudgeMeta,
-            thoughtMs: livingMeta.thoughtMs,
             role: livingMeta.role,
             variationKey: livingMeta.variationKey,
             ...(routeIntent === "ALWAYS_ON_SUPPORT"
@@ -785,8 +784,10 @@ const ChatPanel = ({ startConversation = false }) => {
         const lastMsgIntent = res.intent && typeof res.intent === "object" ? res.intent : null;
         const lastMsgLinks = Array.isArray(res.links) ? res.links : [];
         const doneMs = Date.now();
-        // Phase 55A: truthful thinking — MessageBubble shows "Thought for Xs" only when thoughtMs>=250
-        const thoughtMsRes = res.meta?.thoughtMs ?? livingMeta.thoughtMs ?? (pendingStartMsRef.current != null ? doneMs - pendingStartMsRef.current : null);
+        // Measure the visible request-to-reply time; generated metadata is not thinking time.
+        const responseDurationMs = pendingStartMsRef.current != null
+          ? Math.max(0, doneMs - pendingStartMsRef.current)
+          : null;
         const patch = {
           role: "assistant",
           type: "assistant_text",
@@ -799,7 +800,7 @@ const ChatPanel = ({ startConversation = false }) => {
             pending: false,
             startMs: pendingStartMsRef.current,
             doneMs,
-            thoughtMs: thoughtMsRes,
+            responseDurationMs,
             ...nextMetaFromSignal,
           },
         };
@@ -1949,7 +1950,7 @@ const ChatPanel = ({ startConversation = false }) => {
                 <div className="flex items-start gap-3 animate-fade-in">
                   <div className="flex-1">
                     <div className="inline-block max-w-[85%] rounded-2xl bg-white/5 p-4">
-                      <ThinkingStatus intent={pending.intent} />
+                      <ThinkingStatus intent={pending.intent} startedAt={pending.startedAt} />
                     </div>
                   </div>
                 </div>
