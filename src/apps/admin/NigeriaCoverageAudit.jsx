@@ -53,21 +53,27 @@ export default function NigeriaCoverageAudit() {
               </select>
             </label>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-[820px] w-full border-collapse text-left text-xs">
-              <caption className="sr-only">Select a state/category count to review its saved Nigeria support records</caption>
-              <thead className="bg-white/[0.035] text-white/55"><tr><th scope="col" className="px-3 py-2.5 font-medium">State</th>{NIGERIA_DIRECTORY_CATEGORIES.map((category) => <th key={category.id} scope="col" className="min-w-28 px-2 py-2.5 font-medium">{category.label}</th>)}</tr></thead>
-              <tbody>{NIGERIA_DIRECTORY_COVERAGE.map((item) => <tr key={item.state} className={`border-t border-white/[0.07] ${item.state === state ? "bg-amber-100/[0.07]" : "hover:bg-white/[0.025]"}`}>
-                <th scope="row" className="whitespace-nowrap px-2 py-1.5 font-medium text-white/80"><button type="button" onClick={() => selectState(item.state)} aria-pressed={item.state === state && !activeCategory} className="min-h-9 rounded-md px-1.5 text-left underline-offset-2 hover:text-amber-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200">{item.state}</button></th>
-                {item.categories.map((category) => <td key={category.id} className="px-1.5 py-1.5">
-                  <button type="button" onClick={() => selectState(item.state, category.id)} aria-pressed={item.state === state && activeCategory === category.id} aria-label={`${item.state}, ${category.label}: ${category.localContacts.length} local records, ${category.referralRoutes.length} referrals, ${category.nationalRoutes.length} nationwide routes. Show evidence.`} className={`min-h-10 w-full rounded-lg px-2 py-1.5 text-left hover:bg-amber-100/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 ${item.state === state && activeCategory === category.id ? "bg-amber-100/[0.1] text-white" : "text-white/65"}`}>
-                    <span className="block">{category.localContacts.length} local · {category.referralRoutes.length} referrals</span>
-                    {category.nationalRoutes.length > 0 && <span className="mt-0.5 block text-[10px] text-emerald-100/55">+ {category.nationalRoutes.length} nationwide</span>}
-                  </button>
-                </td>)}
-              </tr>)}</tbody>
-            </table>
-          </div>
+          <details className="group border-t border-white/10">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 text-xs text-white/70 outline-none hover:bg-white/[0.025] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-200 [&::-webkit-details-marker]:hidden">
+              <span>Open state-by-state table <span className="text-white/45">· {NIGERIA_DIRECTORY_COVERAGE.length} jurisdictions × {NIGERIA_DIRECTORY_CATEGORIES.length} categories</span></span>
+              <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-white/45 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="overflow-x-auto border-t border-white/[0.07]">
+              <table className="min-w-[820px] w-full border-collapse text-left text-xs">
+                <caption className="sr-only">Select a state/category count to review its saved Nigeria support records</caption>
+                <thead className="bg-white/[0.035] text-white/55"><tr><th scope="col" className="px-3 py-2.5 font-medium">State</th>{NIGERIA_DIRECTORY_CATEGORIES.map((category) => <th key={category.id} scope="col" className="min-w-28 px-2 py-2.5 font-medium">{category.label}</th>)}</tr></thead>
+                <tbody>{NIGERIA_DIRECTORY_COVERAGE.map((item) => <tr key={item.state} className={`border-t border-white/[0.07] ${item.state === state ? "bg-amber-100/[0.07]" : "hover:bg-white/[0.025]"}`}>
+                  <th scope="row" className="whitespace-nowrap px-2 py-1.5 font-medium text-white/80"><button type="button" onClick={() => selectState(item.state)} aria-pressed={item.state === state && !activeCategory} className="min-h-9 rounded-md px-1.5 text-left underline-offset-2 hover:text-amber-100 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200">{item.state}</button></th>
+                  {item.categories.map((category) => <td key={category.id} className="px-1.5 py-1.5">
+                    <button type="button" onClick={() => selectState(item.state, category.id)} aria-pressed={item.state === state && activeCategory === category.id} aria-label={`${item.state}, ${category.label}: ${category.localContacts.length} local records, ${category.referralRoutes.length} referrals, ${category.nationalRoutes.length} nationwide routes. Show evidence.`} className={`min-h-10 w-full rounded-lg px-2 py-1.5 text-left hover:bg-amber-100/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 ${item.state === state && activeCategory === category.id ? "bg-amber-100/[0.1] text-white" : "text-white/65"}`}>
+                      <span className="block">{category.localContacts.length} local · {category.referralRoutes.length} referrals</span>
+                      {category.nationalRoutes.length > 0 && <span className="mt-0.5 block text-[10px] text-emerald-100/55">+ {category.nationalRoutes.length} nationwide</span>}
+                    </button>
+                  </td>)}
+                </tr>)}</tbody>
+              </table>
+            </div>
+          </details>
         </div>
 
         <div className="mt-3 rounded-2xl border border-white/10 bg-black/10 p-3 sm:p-4" aria-live="polite">
