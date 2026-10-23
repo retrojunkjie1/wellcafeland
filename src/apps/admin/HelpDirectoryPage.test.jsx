@@ -3,13 +3,28 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), save: vi.fn(), status: vi.fn(), reviewCorrection: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), save: vi.fn(), status: vi.fn(), reviewCorrection: vi.fn(), refreshClaims: vi.fn() }));
 vi.mock("@/services/helpDirectory", () => ({ listHelpDirectoryForAdmin: mocks.list, saveHelpDirectoryDraft: mocks.save, setHelpDirectoryStatus: mocks.status, reviewHelpDirectoryCorrection: mocks.reviewCorrection }));
+vi.mock("@/hooks/useAdminClaim", () => ({ useAdminClaim: () => ({ refreshClaims: mocks.refreshClaims }) }));
 import HelpDirectoryPage from "./HelpDirectoryPage";
 
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("HelpDirectoryPage", () => {
+  it("refreshes the signed-in admin claim before retrying a rejected directory read", async () => {
+    mocks.list.mockRejectedValueOnce({ code: "functions/unauthenticated" }).mockResolvedValueOnce({ listings: [] });
+    mocks.refreshClaims.mockResolvedValue(undefined);
+    render(<MemoryRouter><HelpDirectoryPage /></MemoryRouter>);
+
+    expect(await screen.findByRole("heading", { name: "Directory records weren’t loaded" })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Refresh access and services" }).at(-1));
+
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+    expect(mocks.refreshClaims).toHaveBeenCalledTimes(1);
+    expect(mocks.refreshClaims.mock.invocationCallOrder[0]).toBeLessThan(mocks.list.mock.invocationCallOrder[1]);
+    expect(await screen.findByRole("heading", { name: "No draft resources in this view" })).toBeInTheDocument();
+  });
+
   it("creates a private draft and communicates that publishing is a separate step", async () => {
     mocks.list.mockResolvedValue({ listings: [] });
     mocks.save.mockResolvedValue({ id: "help-1", status: "draft" });

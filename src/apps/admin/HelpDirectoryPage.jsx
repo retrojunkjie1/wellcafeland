@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Archive, Check, ChevronDown, MapPin, Pause, RefreshCw, Save, ShieldCheck, Flag, Search, Plus, Globe2, Layers3 } from "lucide-react";
+import { useAdminClaim } from "@/hooks/useAdminClaim";
 import { listHelpDirectoryForAdmin, reviewHelpDirectoryCorrection, saveHelpDirectoryDraft, setHelpDirectoryStatus } from "@/services/helpDirectory";
 import NigeriaCoverageAudit from "./NigeriaCoverageAudit";
 
@@ -11,6 +12,7 @@ const ISSUE_LABELS = { wrong_address: "Address may be wrong", wrong_phone: "Phon
 const dateLabel = (value) => value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "Not recorded";
 
 export default function HelpDirectoryPage() {
+  const { refreshClaims } = useAdminClaim();
   const [filter, setFilter] = useState("draft");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [listingSearch, setListingSearch] = useState("");
@@ -25,6 +27,7 @@ export default function HelpDirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [refreshingAccess, setRefreshingAccess] = useState(false);
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -57,6 +60,16 @@ export default function HelpDirectoryPage() {
     finally { setLoading(false); }
   }, [filter]);
   useEffect(() => { load(); }, [load]);
+
+  const refreshAccessAndDirectory = async () => {
+    setRefreshingAccess(true);
+    try {
+      await refreshClaims();
+      await load(true);
+    } finally {
+      setRefreshingAccess(false);
+    }
+  };
 
   const change = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const isUSListing = String(form.countryCode || "").trim().toUpperCase() === "US";
@@ -127,7 +140,7 @@ export default function HelpDirectoryPage() {
     <div className="mx-auto max-w-6xl">
       <Link to="/admin/console" className="inline-flex min-h-10 items-center gap-2 rounded-lg text-sm text-white/65 hover:text-white"><ArrowLeft className="h-4 w-4" />Back to God-Eye</Link>
       <header className="mt-4 rounded-3xl border border-emerald-100/15 bg-gradient-to-br from-emerald-100/[0.08] via-slate-900/80 to-slate-950 p-5 sm:p-7">
-        <div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-emerald-100/20 bg-emerald-100/[0.08] text-emerald-100"><MapPin className="h-5 w-5" /></span><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100/65">God-Eye · global support records</p><h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Help directory</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/65">Add a source-backed service in any country and any support category. A private draft becomes searchable across WellnessCafe only after a reviewer checks and publishes it.</p></div><button type="button" onClick={() => load(true)} className="ml-auto inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/70"><RefreshCw className="h-4 w-4" />Refresh</button></div>
+        <div className="flex items-start gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-emerald-100/20 bg-emerald-100/[0.08] text-emerald-100"><MapPin className="h-5 w-5" /></span><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100/65">God-Eye · global support records</p><h1 className="mt-1 text-2xl font-semibold sm:text-3xl">Help directory</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/65">Add a source-backed service in any country and any support category. A private draft becomes searchable across WellnessCafe only after a reviewer checks and publishes it.</p></div><button type="button" onClick={refreshAccessAndDirectory} disabled={refreshingAccess} className="ml-auto inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-white/15 px-3 text-sm text-white/70 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshingAccess ? "animate-spin" : ""}`} />{refreshingAccess ? "Refreshing access…" : "Refresh access and services"}</button></div>
         <div className="mt-5 flex items-start gap-3 rounded-2xl border border-amber-100/15 bg-amber-100/[0.04] p-3 text-sm text-white/70"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-100" /><p>Publish with an official or provider source, documented permission to display its public details, and a check from the last 90 days. Client searches can then show its address, phone, email, website, and source.</p></div>
       </header>
 
@@ -139,7 +152,7 @@ export default function HelpDirectoryPage() {
 
       <NigeriaCoverageAudit />
 
-      {error && !loadFailed && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200/20 bg-rose-950/25 p-4 text-sm text-rose-50"><p className="max-w-2xl leading-relaxed">{error}</p><button type="button" onClick={() => load()} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-100/20 px-3 text-sm text-rose-50 hover:bg-rose-100/5"><RefreshCw className="h-4 w-4" />Try again</button></div>}
+      {error && !loadFailed && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200/20 bg-rose-950/25 p-4 text-sm text-rose-50"><p className="max-w-2xl leading-relaxed">{error}</p><button type="button" onClick={refreshAccessAndDirectory} disabled={refreshingAccess} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-100/20 px-3 text-sm text-rose-50 hover:bg-rose-100/5 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshingAccess ? "animate-spin" : ""}`} />{refreshingAccess ? "Refreshing access…" : "Refresh access and services"}</button></div>}
       {notice && <p role="status" className="mt-4 rounded-xl border border-emerald-200/20 bg-emerald-950/20 p-3 text-sm text-emerald-100">{notice}</p>}
 
       <details id="help-directory-editor" open={selectedId ? true : undefined} className="mt-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4 sm:p-6">
@@ -188,7 +201,7 @@ export default function HelpDirectoryPage() {
           <label className="sr-only" htmlFor="help-directory-category">Filter by support category</label><select id="help-directory-category" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="min-h-11 rounded-xl border border-white/10 bg-slate-900/80 px-3 text-sm text-white"><option value="all">All categories</option>{Object.entries(CATEGORY_LABELS).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
         </div>
         {loading && <p role="status" className="py-8 text-center text-sm text-white/50">Loading directory records…</p>}
-        {!loading && loadFailed && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200/15 bg-rose-950/10 p-4"><div><h3 className="font-medium text-white/85">Directory records weren’t loaded</h3><p className="mt-1 text-sm leading-relaxed text-white/55">{error} No records were removed or changed.</p></div><button type="button" onClick={() => load()} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-rose-100/20 px-3 text-sm text-rose-50 hover:bg-rose-100/5"><RefreshCw className="h-4 w-4" />Try again</button></div>}
+        {!loading && loadFailed && <div role="alert" className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200/15 bg-rose-950/10 p-4"><div><h3 className="font-medium text-white/85">Directory records weren’t loaded</h3><p className="mt-1 text-sm leading-relaxed text-white/55">{error} No records were removed or changed.</p></div><button type="button" onClick={refreshAccessAndDirectory} disabled={refreshingAccess} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-rose-100/20 px-3 text-sm text-rose-50 hover:bg-rose-100/5 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshingAccess ? "animate-spin" : ""}`} />{refreshingAccess ? "Refreshing access…" : "Refresh access and services"}</button></div>}
         {!loading && !loadFailed && listings.length === 0 && <div className="mt-3 overflow-hidden rounded-3xl border border-emerald-100/15 bg-gradient-to-br from-emerald-100/[0.06] via-slate-900/75 to-slate-950 p-5 sm:p-7"><div className="flex flex-wrap items-start justify-between gap-4"><div className="max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-100/60">Directory status · {titleCase(filter)}</p><h3 className="mt-2 text-xl font-semibold">{filter === "all" ? "No resource records have been added yet" : `No ${filter} resources in this view`}</h3><p className="mt-2 text-sm leading-relaxed text-white/60">This view is empty because there are no matching saved records yet. Add a real service with its location, public contact details, and source evidence; a reviewer can then publish it for clients to find.</p></div><button type="button" onClick={openEditor} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-amber-200 px-4 text-sm font-semibold text-slate-950"><Plus className="h-4 w-4" />Add first resource</button></div><div className="mt-5 grid gap-2 border-t border-white/10 pt-4 text-xs text-white/55 sm:grid-cols-3"><p>01 · Confirm the organization and service location</p><p>02 · Add published contact details and source</p><p>03 · Review evidence before public listing</p></div></div>}
         {!loading && listings.length > 0 && visibleListings.length === 0 && <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.025] p-5 text-sm text-white/55">No records match these search and category filters. Clear the search or choose another category.</p>}
         <div className="mt-3 space-y-3">{visibleListings.map((listing) => <article key={listing.id} className="rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-5">

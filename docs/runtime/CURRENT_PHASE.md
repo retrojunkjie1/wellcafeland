@@ -1,5 +1,11 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-10-23 — Help Directory admin-session recovery
+
+The Help Directory refresh and failed-load recovery controls now force-refresh the signed-in administrator's ID-token claims through the shared `useAdminClaim` flow before retrying the directory service. Server-side authorization checks remain in place on every callable request. This addresses stale client claims as a recoverable case; it does not grant or widen directory permissions.
+
+Verification: the focused Help Directory UI suite passed (7/7), including a regression proving the claim refresh happens before retrying an unauthenticated directory read. `npm run verify:release` passed: UI 140 files / 601 tests; agent contracts 58; authenticated client/admin workflows 12; client-practitioner journey 1; practitioner care 12; scheduling 8; messaging 4; workspace lifecycle 1; help-directory emulator 7; meeting-source emulator 9; food-directory 4; Firestore Rules 13; production build; predeploy checks; and `git diff --check`. Production deployment and live authenticated admin verification are pending.
+
 ## Current release state (2026-10-21)
 
 **Roadmap position:** Cross-phase integration, with the Phase 4 Practitioner Experience capability track active. The supplied Phase 3 / Iteration 1 excerpt is an older snapshot; see the current roadmap position below and the living Master Blueprint.
