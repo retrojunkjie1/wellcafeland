@@ -44,7 +44,7 @@ vi.mock("@/lib/directoryCuratedFallback", async () => {
   return {
     ...actual,
     getCuratedFallback: mocks.getCuratedFallback,
-    isUSLocation: (value = "") => /\b(?:united states|usa|denver|dallas|aurora|colorado|texas|california|oklahoma)\b|,\s*(?:CO|TX|CA|OK)$/i.test(value),
+    isUSLocation: (value = "") => /\b(?:united states|usa|denver|dallas|aurora|colorado|texas|california|oklahoma|louisiana)\b|,\s*(?:CO|TX|CA|OK)$/i.test(value),
   };
 });
 vi.mock("@/utils/normalizeUrl", () => ({ normalizeExternalUrl: (value) => value || null }));
@@ -149,7 +149,7 @@ describe("real-world assistance search states", () => {
     fireEvent.change(supportType, { target: { value: "programs" } });
     await waitFor(() => expect(screen.getByLabelText("Current search URL")).toHaveTextContent("priority=programs"));
     expect(screen.getByRole("combobox", { name: "Support type" })).toHaveValue("programs");
-    expect(screen.getByPlaceholderText("City, region, or country")).toHaveValue("Dallas, TX");
+    expect(screen.getByPlaceholderText("City, region, or country (e.g. Toronto, Canada)")).toHaveValue("Dallas, TX");
     expect(screen.getByLabelText("Search support")).toHaveValue("");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to previous search" }));
