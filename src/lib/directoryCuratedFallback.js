@@ -4,6 +4,7 @@
  */
 
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
+import { getCountrySupportResources, resolveSupportCountry } from "@/data/internationalSupportDirectory";
 import {
   NIGERIA_CITIES,
   NIGERIA_STATES,
@@ -263,6 +264,7 @@ export function getCuratedFallback(domain, query, region = "") {
   if (String(region).trim() && !isUSLocation(region)) {
     const normalizedRegion = String(region).toLowerCase();
     const nigeriaSearch = isNigeriaLocation(region);
+    const internationalCountry = !nigeriaSearch ? resolveSupportCountry(region) : null;
     const nigeriaDirectory = nigeriaSearch
       ? [
           ...NIGERIA_LOCAL_RECOVERY_RESOURCES,
@@ -282,6 +284,9 @@ export function getCuratedFallback(domain, query, region = "") {
     const nigeriaLocal = nigeriaDirectory.filter((item) => matchesHelpLocation(item, region));
     const countryOnlySearch = /\bnigeria\b|\bng\b/.test(normalizedRegion) && !NIGERIA_CITIES.some((city) => normalizedRegion.includes(city.toLowerCase())) && !NIGERIA_STATES.some((state) => normalizedRegion.includes(state.toLowerCase()));
     const localMatches = (items) => items.filter((item) => matchesHelpLocation(item, region));
+    if (internationalCountry) {
+      return getCountrySupportResources(internationalCountry, domainKey);
+    }
     if (domainKey === "peer") {
       if (nigeriaSearch) return [
         ...localMatches(NIGERIA_PEER_RESOURCES),

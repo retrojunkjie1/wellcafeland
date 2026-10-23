@@ -90,6 +90,7 @@ function toDirectoryWorkspaceResource(item, domain) {
     locationLine: item.locationLine,
     region: item.state || item.country || item.address || item.locationLine,
     locationLabel: item.locationLabel,
+    checkedAt: item.checkedAt || null,
     updatedAt: item.updatedAt,
     source: item.source,
     resourceType: item.type,
@@ -391,9 +392,9 @@ const RealHelpWorkspace = () => {
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (activeTab === "food") {
-      if (isNigeriaLocation(region)) {
-        // A Nigeria area immediately loads Nigeria-specific food contacts;
-        // it does not require a second selection or hit the U.S. food API.
+      if (isNigeriaLocation(region) || (region.trim() && !isUSLocation(region))) {
+        // International food searches use the saved city and country contacts
+        // directly; the explicit place picker is reserved for the U.S. feed.
         abortControllerRef.current?.abort();
         setSelectedFoodLocation(null);
         setFoodLocationOptions([]);
@@ -636,14 +637,14 @@ const RealHelpWorkspace = () => {
   const visibleResults = localFoodResults.length && !showAllFoodResults
     ? orderedResults.slice(0, 6)
     : orderedResults;
-  const requiresLocationProof = (activeTab !== "food" || isNigeriaLocation(region)) && Boolean(region.trim());
+  const requiresLocationProof = Boolean(region.trim()) && (activeTab !== "food" || !isUSLocation(region));
   const locatedResults = requiresLocationProof
     ? allResults.filter((item) => matchesHelpLocation(item, region))
     : visibleResults;
   const broaderLocationResults = requiresLocationProof
     ? allResults.filter((item) => !matchesHelpLocation(item, region))
     : [];
-  const showBroaderWhenNoLocalMatch = requiresLocationProof && locatedResults.length === 0 && (["funding", "emergency", "circles", "programs", "housing"].includes(activeTab) || (activeTab === "food" && isNigeriaLocation(region)));
+  const showBroaderWhenNoLocalMatch = requiresLocationProof && locatedResults.length === 0 && (["funding", "emergency", "circles", "programs", "housing"].includes(activeTab) || activeTab === "food");
   const hasSearchIntent = Boolean(query.trim() || region.trim());
   const showingFallback = Boolean(searchResponse?.fallback || searchResponse?.meta?.fallback);
   const liveSearchUnavailable = Boolean(
@@ -711,7 +712,7 @@ const RealHelpWorkspace = () => {
 
           {/* Search - debounced (450ms), Enter triggers immediate search */}
           <div className={`grid grid-cols-1 gap-3 ${activeTab === "food" ? "sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end" : "sm:grid-cols-[minmax(0,1fr)_16rem]"}`}>
-            {activeTab !== "food" && (
+            {(activeTab !== "food" || internationalSearch) && (
               <label className="block min-w-0 text-sm font-medium text-white/70">
                 Search support
                 <input
@@ -758,11 +759,11 @@ const RealHelpWorkspace = () => {
                   setFoodLocationOptions([]);
                   setFoodLocationMessage("");
                 }}
-                placeholder={activeTab === "food" ? "City, state, ZIP or place" : "City, region, or country"}
+                placeholder={activeTab === "food" && !internationalSearch ? "City, state, ZIP or place" : "City, region, or country (e.g. Toronto, Canada)"}
                 className="mt-1.5 min-h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder-white/40 transition focus:outline-none focus:ring-2 focus:ring-wcGold/50"
               />
             </label>
-            {activeTab === "food" && !isNigeriaLocation(region) && (
+            {activeTab === "food" && !internationalSearch && (
               <button
                 type="button"
                 onClick={handleFoodLocationAction}
@@ -793,10 +794,13 @@ const RealHelpWorkspace = () => {
           {activeTab === "food" && region.trim() && isNigeriaLocation(region) && (
             <p className="text-xs leading-relaxed text-white/50">Nigeria food support · contact each organization to confirm its current service area, eligibility, and distribution before travelling. Nationwide referrals are separate from local food-relief contacts.</p>
           )}
-          {activeTab === "food" && region.trim() && !isNigeriaLocation(region) && (
+          {activeTab === "food" && region.trim() && !internationalSearch && (
             <p className="text-xs leading-relaxed text-white/50">Your place is sent to Feed America only when you choose Find a place. Nearby results use the place you select.</p>
           )}
-          {activeTab === "food" && foodLocationOptions.length > 0 && (
+          {activeTab === "food" && internationalSearch && (
+            <p className="text-xs leading-relaxed text-white/50">Food and essential support for {region}. Local contacts are shown first when their service area is confirmed; wider-area organizations appear below.</p>
+          )}
+          {activeTab === "food" && !internationalSearch && foodLocationOptions.length > 0 && (
             <section aria-label="Choose a place" className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
               <h2 className="text-sm font-semibold text-white">Choose a place</h2>
               {foodLocationMessage && <p className="mt-1 text-sm text-white/60">{foodLocationMessage}</p>}
@@ -809,7 +813,7 @@ const RealHelpWorkspace = () => {
               </div>
             </section>
           )}
-          {activeTab === "food" && foodLocationMessage && foodLocationOptions.length === 0 && !loading && (
+          {activeTab === "food" && !internationalSearch && foodLocationMessage && foodLocationOptions.length === 0 && !loading && (
             <p role="status" className="rounded-xl border border-amber-200/15 bg-amber-100/[0.04] px-4 py-3 text-sm text-amber-50/80">{foodLocationMessage}</p>
           )}
           {(searchResponse?.error || searchResponse?.directoryError) && !loading && !liveSearchUnavailable && (
@@ -827,7 +831,7 @@ const RealHelpWorkspace = () => {
           )}
 
           {/* Results */}
-          {activeTab === "food" && foodLocationOptions.length > 0 ? null : loading && allResults.length === 0 ? (
+          {activeTab === "food" && !internationalSearch && foodLocationOptions.length > 0 ? null : loading && allResults.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 gap-3">
               <div className="w-8 h-8 border-2 border-wcGold/30 border-t-wcGold rounded-full animate-spin"></div>
               <div className="text-sm text-white/50">Finding resources...</div>
@@ -846,7 +850,7 @@ const RealHelpWorkspace = () => {
                 </div>
               </section>
             ) : (
-            activeTab === "food" && foodLocationOptions.length === 0 ? (
+            activeTab === "food" && !internationalSearch && foodLocationOptions.length === 0 ? (
               <section role="status" className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-6 text-center">
                 <MapPin className="h-8 w-8 text-wcGold/80" aria-hidden="true" />
                 <h2 className="text-base font-semibold text-white">
@@ -961,8 +965,17 @@ const RealHelpWorkspace = () => {
                           )}
                           </div>
                         </div>
+                        {internationalSearch && item.phone && (
+                          <p className="mt-1 text-sm text-white/70">
+                            Phone: <a className="font-medium text-white underline decoration-white/30 underline-offset-2" href={`tel:${String(item.phone).replace(/[^+\d]/g, "")}`}>{item.phone}</a>
+                          </p>
+                        )}
                         {(item.description || item.summary) && <p className="mt-2 max-w-3xl text-sm leading-relaxed text-white/70">{item.description || item.summary}</p>}
-                        {activeTab !== "food" && getPublicSourceLabel(item.source) && <p className="mt-1 text-xs text-white/40">Listed by {getPublicSourceLabel(item.source)}</p>}
+                        {((activeTab !== "food" || internationalSearch) && getPublicSourceLabel(item.source)) && (
+                          <p className="mt-1 text-xs text-white/40">
+                            Source: {getPublicSourceLabel(item.source)}{internationalSearch && item.checkedAt ? ` · source reviewed ${new Date(`${item.checkedAt}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:justify-end">
@@ -1073,11 +1086,11 @@ const RealHelpWorkspace = () => {
       {selectedDetail && (
         <div className="fixed inset-0 z-[130] grid place-items-center bg-slate-950/85 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedDetail(null); }}>
           <section role="dialog" aria-modal="true" aria-labelledby="resource-detail-title" className="max-h-[88vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/10 bg-slate-900 p-5 shadow-2xl sm:p-7">
-            <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-5 flex items-center justify-between border-b border-white/10 bg-slate-900/95 px-5 py-3 backdrop-blur sm:-mx-7 sm:-mt-7 sm:px-7">
+            <div className="sticky top-0 z-10 -mx-5 -mt-5 mb-5 flex items-center justify-between border-b border-white/10 bg-slate-900 px-5 py-3 shadow-lg sm:-mx-7 sm:-mt-7 sm:px-7">
               <button type="button" onClick={() => setSelectedDetail(null)} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 px-3 text-sm font-medium text-white/85 hover:bg-white/10"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back to results</button>
               <button type="button" onClick={() => setSelectedDetail(null)} aria-label="Close resource details" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white/70 hover:bg-white/10"><X className="h-5 w-5" /></button>
             </div>
-            <div className="flex items-start justify-between gap-4">
+            <div className="relative z-0 flex items-start justify-between gap-4 pt-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-wcGold/80">{selectedDetail.curated ? "WellnessCafe resource guide" : "Resource details"}</p>
                 <h2 id="resource-detail-title" className="mt-2 text-2xl font-semibold text-white">{selectedDetail.name || selectedDetail.title}</h2>
