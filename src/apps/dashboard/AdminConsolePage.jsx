@@ -1449,7 +1449,7 @@ const AdminConsolePage = () => {
           </p>
 
           <nav role="tablist" aria-label="System settings categories" className="god-eye-tabs flex gap-2 overflow-x-auto border-b border-white/[0.07] pb-3">
-            {[["features", "Features", Sliders], ["thresholds", "Risk thresholds", TrendingUp], ["notifications", "Notifications", Bell], ["copy", "Home page copy", Database]].map(([id, label, _Icon]) => (
+            {[["features", "Features", Sliders], ["thresholds", "Risk thresholds", TrendingUp], ["notifications", "Notifications", Bell], ["copy", "Home page copy", Database]].map(([id, label, Icon]) => (
               <button key={id} id={`god-eye-settings-tab-${id}`} type="button" role="tab" aria-selected={activeSettingsTab === id} aria-controls={`god-eye-settings-panel-${id}`} tabIndex={activeSettingsTab === id ? 0 : -1} onClick={() => setActiveSettingsTab(id)} className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-white/[0.08] px-4 text-sm text-white/65 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-100">
                 <Icon className="h-4 w-4" aria-hidden="true" />{label}
               </button>

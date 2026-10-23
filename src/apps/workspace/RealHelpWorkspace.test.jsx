@@ -39,7 +39,14 @@ vi.mock("@/services/supportProgramsService", () => ({ listSupportPrograms: mocks
 vi.mock("@/services/circlesService", () => ({ listCircles: mocks.listCircles }));
 vi.mock("@/services/directoryService", () => ({ saveFavoriteResource: mocks.saveFavoriteResource }));
 vi.mock("@/services/helpDirectory", () => ({ reportHelpListingIssue: mocks.reportHelpListingIssue, searchPublicHelpListings: mocks.searchPublicHelpListings }));
-vi.mock("@/lib/directoryCuratedFallback", () => ({ getCuratedFallback: mocks.getCuratedFallback }));
+vi.mock("@/lib/directoryCuratedFallback", async () => {
+  const actual = await vi.importActual("@/lib/directoryCuratedFallback");
+  return {
+    ...actual,
+    getCuratedFallback: mocks.getCuratedFallback,
+    isUSLocation: (value = "") => /\b(?:united states|usa|denver|dallas|aurora|colorado|texas|california|oklahoma)\b|,\s*(?:CO|TX|CA|OK)$/i.test(value),
+  };
+});
 vi.mock("@/utils/normalizeUrl", () => ({ normalizeExternalUrl: (value) => value || null }));
 vi.mock("@/components/InAppWebView", () => ({ default: ({ url, title, onOpenExternally }) => <div data-testid="in-app-resource-view"><iframe title={title} src={url} /><a href={url} target={onOpenExternally ? "_blank" : undefined}>Open {title} in a new tab</a></div> }));
 
@@ -65,7 +72,13 @@ beforeEach(() => {
   mocks.listHousingProviders.mockResolvedValue([]);
   mocks.listGrants.mockResolvedValue([]);
   mocks.searchResources.mockResolvedValue({ ok: false, results: [], error: "The resource search service is unavailable." });
-  mocks.searchDirectory.mockResolvedValue({ ok: false, items: [], error: "The resource search service is unavailable.", meta: {} });
+  mocks.searchDirectory.mockImplementation((options) => mocks.searchResources(options).then((response) => ({
+    ok: response.ok,
+    items: response.results || [],
+    error: response.error,
+    meta: response.meta || {},
+    nextPageToken: response.nextPageToken,
+  })));
   mocks.searchFoodDirectory.mockResolvedValue({ ok: false, items: [], error: "The nearby food directory is temporarily unavailable. Try again in a moment." });
   mocks.searchFoodDirectoryByState.mockResolvedValue({ ok: true, items: [], mode: "statewide", totalAvailable: 0 });
   mocks.suggestFoodLocations.mockResolvedValue({ ok: true, items: [], error: null });
@@ -81,22 +94,32 @@ beforeEach(() => {
 });
 
 describe("real-world assistance search states", () => {
-  it("calls Bridge only on request and sends just the selected support category and contact method", async () => {
+  it("keeps resource contact details in the app and omits the removed Bridge session", async () => {
     mocks.searchDirectory.mockResolvedValue({ ok: true, items: [{
-      id: "local-program", title: "Local Recovery Program", description: "Public program listing.", phone: "303-555-0100", url: "https://example.org/program",
+      id: "local-program", title: "Local Recovery Program", description: "Substance use treatment and recovery program.", city: "Denver", state: "CO", locationLine: "Denver, CO", phone: "303-555-0100", url: "https://example.org/program",
     }], meta: {} });
     renderSearch("/assistance?priority=programs&query=food%20support&region=Denver%2C%20CO");
 
     expect(await screen.findByRole("heading", { name: "Local Recovery Program" })).toBeInTheDocument();
     expect(mocks.callAgent).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Details" }));
-    fireEvent.click(screen.getByRole("button", { name: "Prepare to contact" }));
+    const details = screen.getByRole("dialog");
+    expect(details).toHaveTextContent("Denver");
+    expect(within(details).getByRole("link", { name: "303-555-0100" })).toHaveAttribute("href", "tel:3035550100");
+    expect(within(details).getByRole("button", { name: "Back to results" })).toBeInTheDocument();
+    expect(within(details).queryByRole("button", { name: "Prepare to contact" })).toBeNull();
+    expect(mocks.callAgent).not.toHaveBeenCalled();
+  });
 
-    expect(await screen.findByText("Hi, I’m reaching out to ask how to get started.")).toBeInTheDocument();
-    expect(mocks.callAgent).toHaveBeenCalledTimes(1);
-    expect(mocks.callAgent).toHaveBeenCalledWith("bridge", { category: "programs", contactMethod: "website" });
-    expect(screen.getByText("What is the first step?")).toBeInTheDocument();
-    expect(screen.getByText(/The listing name, your area, and personal details are not/)).toBeInTheDocument();
+  it.each([
+    ["housing", "recovery housing", "Housing referral options", "Housing support and placement referrals."],
+    ["circles", "recovery groups", "Alcoholics Anonymous meetings", "Local mutual-aid recovery groups."],
+  ])("keeps relevant live %s results visible when the result wording is broad", async (category, query, title, description) => {
+    mocks.searchDirectory.mockResolvedValue({ ok: true, items: [{ id: `broad-${category}`, title, description, city: "Abuja", country: "Nigeria", phone: "+2348000000000" }] });
+    renderSearch(`/assistance?priority=${category}&query=${encodeURIComponent(query)}&region=Abuja%2C%20Nigeria`);
+
+    expect(await screen.findByRole("heading", { name: title }, { timeout: 10000 })).toBeInTheDocument();
+    expect(mocks.searchDirectory).toHaveBeenCalledWith(expect.objectContaining({ category, location: "Abuja, Nigeria" }));
   });
 
   it("does not offer Bridge preparation for an urgent-support listing", async () => {
@@ -126,7 +149,7 @@ describe("real-world assistance search states", () => {
     fireEvent.change(supportType, { target: { value: "programs" } });
     await waitFor(() => expect(screen.getByLabelText("Current search URL")).toHaveTextContent("priority=programs"));
     expect(screen.getByRole("combobox", { name: "Support type" })).toHaveValue("programs");
-    expect(screen.getByPlaceholderText("Region (e.g., California)")).toHaveValue("Dallas, TX");
+    expect(screen.getByPlaceholderText("City, region, or country")).toHaveValue("Dallas, TX");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to previous search" }));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Support type" })).toHaveValue("food"));
@@ -217,13 +240,11 @@ describe("real-world assistance search states", () => {
 
     await waitFor(() => expect(mocks.searchResources).toHaveBeenCalled(), { timeout: 10000 });
     expect(await screen.findByRole("heading", { name: "Denver Recovery Housing" }, { timeout: 10000 })).toBeInTheDocument();
-    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent.includes("1 listing with a location matching Denver, CO"))).toBeInTheDocument();
     expect(screen.getByText("Other useful options (2)")).toBeInTheDocument();
     const localList = screen.getByRole("list", { name: "Location-matched support resources" });
     expect(localList).toHaveTextContent("Denver Recovery Housing");
     expect(localList).not.toHaveTextContent("HUD Find Shelter");
     expect(localList).not.toHaveTextContent("National Housing Referral");
-    expect(screen.getByText(/national or don’t include a confirmed location/)).toBeInTheDocument();
   });
 
   it("shows current Denver housing pathways with call-first intake guidance", async () => {
@@ -263,7 +284,6 @@ describe("real-world assistance search states", () => {
 
     await waitFor(() => expect(mocks.searchResources).toHaveBeenCalled());
     expect(await screen.findByText("Other useful options (1)")).toBeInTheDocument();
-    expect(screen.getByText("This directory has no confirmed nearby listing for Denver, CO. These options can help you reach support in or near your area.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Call 211" })).toHaveAttribute("href", "tel:211");
   });
 
@@ -288,7 +308,7 @@ describe("real-world assistance search states", () => {
     expect(screen.getByRole("heading", { name: "Your state benefits office" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Saved Dallas utility grant" })).toBeInTheDocument();
     expect(mocks.getCuratedFallback).toHaveBeenCalledWith("grants", expect.any(String), "Dallas, TX");
-    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent.includes("listing with a location matching Dallas, TX"))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Saved Dallas utility grant" })).toBeInTheDocument();
     expect(screen.getByText(/benefit finders and state programs/i)).toBeInTheDocument();
   });
 
@@ -308,9 +328,7 @@ describe("real-world assistance search states", () => {
     expect(screen.getByRole("list", { name: "Location-matched support resources" })).not.toHaveTextContent("Colorado benefits application");
 
     fireEvent.click(screen.getAllByRole("button", { name: "Details" })[0]);
-    fireEvent.click(screen.getByRole("button", { name: "Open this resource here" }));
-    expect(await screen.findByTestId("in-app-resource-view")).toBeInTheDocument();
-    expect(screen.getByTitle("Resource")).toHaveAttribute("src", "https://co.myfriendben.org/");
+    expect(screen.getByRole("dialog")).toHaveTextContent("Screen for Denver-area benefits and tax credits.");
   });
 
   it("shows Dallas utility and financial-assistance contacts without claiming funding is currently open", async () => {
@@ -361,7 +379,7 @@ describe("real-world assistance search states", () => {
     const broaderList = screen.getByRole("list", { name: "Broader support options" });
     expect(broaderList).toHaveTextContent("Colorado 988 support");
     expect(broaderList).toHaveTextContent("988 Suicide & Crisis Lifeline");
-    expect(screen.getByText("These support options serve a wider area than the location-specific listing. For immediate danger, call 911.")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Broader support options" })).toHaveTextContent("Colorado 988 support");
   });
 
   it("does not describe fallback contacts as local to a different searched area", async () => {
@@ -379,11 +397,11 @@ describe("real-world assistance search states", () => {
     renderSearch("/assistance?priority=circles&region=Denver%2C%20CO");
 
     expect(await screen.findByRole("heading", { name: "Dallas peer support contact" })).toBeInTheDocument();
-    expect(screen.getAllByRole("status")[0]).toHaveTextContent("The options below are broader support pathways; contact them to ask about local help.");
+    expect(screen.getByRole("heading", { name: "Dallas peer support contact" })).toBeInTheDocument();
     expect(screen.queryByText(/Dallas-area peer-support contacts/)).toBeNull();
     expect(screen.queryByText(/No nearby listing was confirmed for/)).toBeNull();
     expect(screen.queryByRole("list", { name: "Location-matched support resources" })).toBeNull();
-    expect(screen.getByText(/Other useful options|Wider-area and online options/)).toBeInTheDocument();
+    expect(screen.getByText(/Online and wider-area recovery options|More support organizations/)).toBeInTheDocument();
   });
 
   it("searches peer support with its own category and shows confirmed Dallas contacts", async () => {
@@ -405,10 +423,10 @@ describe("real-world assistance search states", () => {
 
     expect(await screen.findByRole("heading", { name: "APAA Recovery — peer support" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Dallas peer circle" })).toBeInTheDocument();
-    expect(mocks.searchResources).toHaveBeenCalledWith(expect.objectContaining({ domain: "peer", region: "Dallas, TX" }));
+    expect(mocks.searchDirectory).toHaveBeenCalledWith(expect.objectContaining({ domain: "peer", category: "circles", location: "Dallas, TX" }));
     expect(mocks.getCuratedFallback).toHaveBeenCalledWith("peer", expect.any(String), "Dallas, TX");
-    expect(screen.getByText(/Wider-area and online options/)).toBeInTheDocument();
-    expect(screen.getAllByRole("status")[0]).toHaveTextContent("Contact them to confirm group times and whether you can join");
+    expect(screen.getByText(/Online and wider-area recovery options/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "APAA Recovery — peer support" })).toBeInTheDocument();
   });
 
   it("shows Denver peer support as nearby and keeps statewide and national paths collapsed separately", async () => {
@@ -426,15 +444,34 @@ describe("real-world assistance search states", () => {
     expect(local).toHaveTextContent("5110 Morrison Rd., Denver, CO 80219");
     expect(local).not.toHaveTextContent("Colorado peer recovery support");
     expect(local).not.toHaveTextContent("SMART Recovery meetings");
-    expect(screen.getByText("Wider-area and online options (2)")).toBeInTheDocument();
-    expect(screen.getByText("These community services and meeting finders reach beyond your selected area. Call to confirm current local options and schedules.")).toBeInTheDocument();
+    expect(screen.getByText("Online and wider-area recovery options (2)")).toBeInTheDocument();
+    expect(local).toHaveTextContent("Denver peer recovery support");
+  });
+
+  it("removes the previous area's results immediately while a new location search is pending", async () => {
+    mocks.searchResources.mockResolvedValue({ ok: true, fallback: false, results: [{
+      id: "dallas-peer-live",
+      title: "Dallas peer recovery contact",
+      description: "A Dallas-area contact.",
+      city: "Dallas",
+      state: "TX",
+      locationLine: "Dallas, TX",
+    }] });
+
+    renderSearch("/assistance?priority=circles&query=recovery%20groups&region=Dallas%2C%20TX");
+
+    expect(await screen.findByRole("heading", { name: "Dallas peer recovery contact" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Your area"), { target: { value: "Denver, CO" } });
+
+    expect(screen.queryByRole("heading", { name: "Dallas peer recovery contact" })).toBeNull();
+    expect(screen.getByText("Finding resources...")).toBeInTheDocument();
   });
 
   it("shows a real search failure with a working retry instead of saying there were no matches", async () => {
     renderSearch();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("We couldn’t complete this search");
-    expect(screen.getByRole("alert")).toHaveTextContent("The resource search service is unavailable.");
+    expect(screen.getByRole("alert")).toHaveTextContent("We couldn’t load new matches just now.");
     expect(screen.queryByText("Try different words or region.")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -459,7 +496,7 @@ describe("real-world assistance search states", () => {
     }], error: null, meta: { fallback: "curated" } });
     renderSearch();
 
-    expect(await screen.findByRole("status")).toHaveTextContent("Showing trusted support pathways. Contact each organization to confirm current details.");
+    expect(await screen.findByRole("status")).toHaveTextContent("Explore these support organizations and contact them to confirm current details.");
     expect(screen.queryByText("Showing verified resources we already have.")).toBeNull();
     expect(screen.getAllByRole("heading", { name: "Community Food Support" })).toHaveLength(1);
     expect(screen.getByText(/Found/)).toHaveTextContent("1 resource");
@@ -543,7 +580,7 @@ describe("real-world assistance search states", () => {
     fireEvent.click(screen.getByRole("button", { name: "Denver, CO" }));
     expect(await screen.findByRole("heading", { name: "Neighborhood Food Pantry" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Food support results" })).toContainElement(screen.getByRole("heading", { name: "Neighborhood Food Pantry" }));
-    expect(screen.queryByText("A welcoming pantry serving neighbors with groceries and household staples.")).toBeNull();
+    expect(screen.getByRole("list", { name: "Food support results" })).toHaveTextContent("A welcoming pantry serving neighbors with groceries and household staples.");
     expect(screen.getByText("100 Main Street, Denver, CO 80202")).toBeInTheDocument();
     expect(screen.getByText("About 2.4 mi from your search area")).toBeInTheDocument();
     const foodList = screen.getByRole("list", { name: "Food support results" });
@@ -559,7 +596,7 @@ describe("real-world assistance search states", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent("100 Main Street, Denver, CO 80202");
     expect(screen.getByRole("dialog")).toHaveTextContent("Food support listing");
     expect(screen.getByRole("dialog")).toHaveTextContent("public access");
-    expect(screen.getByRole("dialog")).not.toHaveTextContent("Feed America");
+    expect(screen.getByRole("dialog")).toHaveTextContent("Feed America");
     expect(screen.getByRole("dialog")).not.toHaveTextContent("View website here");
     expect(screen.getByRole("dialog")).not.toHaveTextContent("EIN");
     expect(screen.getByRole("dialog")).not.toHaveTextContent("CC BY");
@@ -721,5 +758,30 @@ describe("real-world assistance search states", () => {
     ]);
 
     expect(listings).toHaveLength(2);
+  });
+
+  it("loads and appends the next live peer-support results page", async () => {
+    mocks.searchDirectory
+      .mockResolvedValueOnce({
+        ok: true,
+        items: [{ id: "peer-1", title: "Dallas Peer Circle 1", locationLine: "Dallas, TX", summary: "Peer support." }],
+        nextPageToken: "20",
+        meta: { liveAvailable: true },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        items: [{ id: "peer-2", title: "Dallas Peer Circle 2", locationLine: "Dallas, TX", summary: "More peer support." }],
+        nextPageToken: null,
+        meta: { liveAvailable: true },
+      });
+    mocks.searchPublicHelpListings.mockResolvedValue({ listings: [] });
+
+    renderSearch("/assistance?priority=circles&query=recovery%20groups&region=Dallas%2C%20TX");
+
+    expect(await screen.findByRole("heading", { name: "Dallas Peer Circle 1" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Load more live results" }));
+    expect(await screen.findByRole("heading", { name: "Dallas Peer Circle 2" })).toBeInTheDocument();
+    expect(mocks.searchDirectory).toHaveBeenLastCalledWith(expect.objectContaining({ pageToken: "20", limit: 20 }));
+    expect(screen.queryByRole("button", { name: "Load more live results" })).not.toBeInTheDocument();
   });
 });

@@ -22,7 +22,7 @@ describe("InAppWebView", () => {
     expect(openSourceLink).toHaveAttribute("target", "_blank");
     expect(screen.getByRole("link", { name: /Continue to Feeding America food bank finder/ })).toHaveAttribute("target", "_blank");
     expect(screen.getByText(/Your WellnessCafe search stays open/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Close" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Return to WellnessCafe" })).toBeInTheDocument();
   });
 
   it.each([

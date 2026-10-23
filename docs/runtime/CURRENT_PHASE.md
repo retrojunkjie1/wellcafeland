@@ -765,8 +765,8 @@ Current objective: The older Phase 55 record below is retained as verification h
 --------------------------------------------------
 
 ## Verification expectations
-- Phase verification scripts (e.g. phase55a:chatActions:verify, phase56.verify) must pass
-- npm run dev must run without error
+- Run maintained behavioral tests for the changed code
+- `npm run verify:release` must pass before release readiness is claimed
 - Manual UI checklist in this file must pass before phase closeout
 
 --------------------------------------------------
@@ -779,8 +779,8 @@ Current objective: The older Phase 55 record below is retained as verification h
 --------------------------------------------------
 
 ## Verification
-- npm run phase55a:chatActions:verify
-- npm run dev
+- Run focused maintained behavioral tests for changed code
+- npm run verify:release before release readiness
 
 --------------------------------------------------
 
@@ -792,7 +792,7 @@ Current objective: The older Phase 55 record below is retained as verification h
 --------------------------------------------------
 
 ## Completion Evidence (Phase 55A.2 closeout)
-- **Verification scripts:** `npm run phase55a:chatActions:verify` — PASS (all 11 checks: verify_script_exists, messagebubble_safe_handlers, truthful_thinking_timing_and_no_placeholders, safeLocalStorage_exists, grounding_suppression_storage_exists, support_fallback_exists, grounding_modal_exists, no_duplicate_dock, composer_presence_controls_present, experience_signal_parser_present, message_meta_video_referenced).
+- **Verification scripts:** Historical phase verifier result retained as closeout evidence; phase-era source scanners are retired and are not current quality gates.
 - **Manual checklist:** Confirmed in code: `/` and `/chat` use single bottom card (composer + nav), no UnifiedInteractionDock; `/home`, `/explore`, `/tools` show BottomRail with dock + nav aligned; `/tools/:toolId` has toolDetailRoute → no rail/nav/dock; Support routes to `/assistance` with no auth requirement.
 - **Routes validated:** ExperienceShell gating (chatRoute, toolDetailRoute, showUnifiedDock, showBottomNav) and App.jsx routes for assistance, tools list, and tool detail.
 
@@ -1674,8 +1674,8 @@ Verification complete for this source iteration: focused UI tests passed (3/3); 
 
 - Fixed the client Chat welcome pathways: **Talk it through** now leaves the choice screen, shows one concise conversation prompt, and focuses the composer. It does not submit canned text, trigger an AI response, start voice capture, or speak automatically. The continuity cue is hidden until the person enters chat, removing duplicated instruction from the initial screen.
 - Changed **Get through an urge** to open the existing Urge Support practice directly. The older `/session/cravings` entry now forwards there as well, with its return action landing in chat rather than reopening the duplicate chooser. The Process guided-entry card starts chat directly.
-- Corrected `phase55a:chatActions:verify`: it expected a removed `onOpenTools` handler name, while `MessageBubble` safely uses `onOpenToolRoute?.(...)`. The verifier now checks the current guarded handler, and the gate passes.
-- Focused navigation tests passed (2 files / 5 tests). Fresh `npm run verify:release` passed: UI (128 files / 548 tests), agent contracts (58), authenticated agent workflows (11), client-practitioner journey (1), practitioner care (12), scheduling (8), messaging (4), workspace lifecycle (1), Firestore Rules (13), production build, Firebase predeploy checks, and `git diff --check`. The Phase 55A chat-action and Phase UX chat verifiers also pass.
+- Historical note: this closeout originally used a phase-era source scanner; that scanner has since been retired because it asserted superseded implementation details. Current chat behavior is covered by maintained behavioral tests and the release gate.
+- Focused navigation tests passed (2 files / 5 tests). Fresh `npm run verify:release` passed: UI (128 files / 548 tests), agent contracts (58), authenticated agent workflows (11), client-practitioner journey (1), practitioner care (12), scheduling (8), messaging (4), workspace lifecycle (1), Firestore Rules (13), production build, Firebase predeploy checks, and `git diff --check`.
 - Commit `06bc2cb` was deployed to Firebase Hosting for `wellnesscafelanding`. In a clean guest browser tab, clicking **Talk it through** changed the screen to the conversation prompt and focused the composer. Clicking **Get through an urge** opened `/tools/urge-surfing`, where the Urge Support choice flow was visible. No text was submitted and no AI request or production smoke was performed.
 - This completes the reported pathway correction, not the wider reliability iteration or full system DoD. Live signed-in journeys, all-role production data behavior, and the deferred synthetic-account production smoke remain open.
 
@@ -1719,3 +1719,41 @@ Verification complete for this source iteration: focused UI tests passed (3/3); 
 - Focused regression tests passed (3 files / 11 tests). Fresh `npm run verify:release` passed: UI (138 files / 586 tests), agent contracts (58), authenticated workflows (12), client-practitioner journey (1), practitioner care (12), scheduling (8), messaging (4), workspace lifecycle (1), Firestore Rules (13), production build, Firebase predeploy checks, and `git diff --check`.
 - Firebase Hosting output reported `release complete` for `wellnesscafelanding` and `Deploy complete`. The CLI then exited with an unexpected error after reporting that Firebase credentials were no longer valid and it could not update its local config; reauthenticate before the next CLI deployment. A fresh live `/chat` tab first showed an import-load recovery screen; using its **Reload this screen** action opened the chat chooser successfully. No message was submitted or production AI request made.
 - **Evidence limit:** live iOS spoken playback was not exercised, so device speech support and voice quality remain unverified. The full Definition of Done remains open.
+
+## 2026-10-22 — Assistance directory results distinguish saved entries from total local support
+
+- Updated peer/community search to avoid implying that the small number of directory entries shown is the total number of recovery groups or meetings in a city. Circle results now identify each listing's description and public directory source, and wider-area/online meeting finders are visible without opening a separate details view.
+- When live search falls back to saved records, the page says that fresh matches were not returned and that saved pathways are not a complete list; it offers a retry. Internal API/provider labels are not shown as user-facing sources. Other categories retain their compact result rows.
+- Added Denver A.A. and Colorado N.A. meeting-finder pathways to the curated circle fallback, with instructions to confirm current schedules with the directory.
+- Updated the release-gate UI worker count from two to one after the full suite timed out one Cartographer case and failed to start three workers under contention; the same case passed alone, and the full UI suite passed serially. This changes test execution only.
+- Verification: `npm run verify:release` passed: UI (138 files / 586 tests), agent contracts (58), authenticated workflows (12), client-practitioner journey (1), practitioner care (12), scheduling (8), practitioner messaging (4), workspace lifecycle (1), Firestore Rules (13), production build, Firebase predeploy checks, and `git diff --check`. The focused help-directory emulator suite also passed (7/7); both changed Functions files passed `node --check`.
+- Release: Firebase Hosting plus `globalResourceSearch` and `searchPublicHelpListings` deployed to `wellnesscafelanding`; Firebase reported successful updates for both functions and Hosting. After refresh, the live `/assistance?priority=circles` page loaded and exposed the circle meeting-finder entries, descriptions, and public source domains. The live account was Guest, so no authenticated workflow was exercised.
+- **Evidence limit:** a fresh live search for a particular city and a current meeting schedule were not verified in this release. The earlier RapidAPI 403 showed a subscription/access rejection; the new function sanitizes formatting in the configured key and gives clearer diagnostics, but this release did not confirm that RapidAPI now returns fresh results. No current local result count is a complete census. The overall DoD remains open, and this is not clinical, HIPAA, or 42 CFR Part 2 certification.
+
+## 2026-10-22 — Assistance search clears stale-area results during edits
+
+- The assistance search previously left the last result set visible while a user changed search words or area and while the debounced request was pending. That could make results from the prior search look current, especially when switching cities.
+- Search edits now immediately cancel/invalidate the old request, clear location-specific results and any open result detail, and show the existing loading state while fresh results are collected. Route changes also cancel stale requests; the intentional food-location history transition keeps its existing behavior.
+- Added a Dallas-to-Denver regression case. Focused assistance tests passed (1 file / 32 tests). Fresh `npm run verify:release` passed: 138 UI files / 587 tests, 58 agent contracts, 12 authenticated workflow scenarios, client-practitioner journey, practitioner care, scheduling, messaging, workspace lifecycle, 13 Firestore Rules tests, production build, Firebase predeploy checks, and `git diff --check`.
+- **Release:** local source only; no deployment or live search was performed. Live directory-provider availability and current local listing coverage remain unverified; saved listing counts are not a census of all groups or meetings.
+
+## 2026-10-22 — Resource search uses a single server-owned upstream path (local only)
+
+- Removed the duplicate browser-side RapidAPI fallback from the shared resource-search client. External search now uses the Firebase Function; if that source is unavailable, the app returns reviewed and curated pathways with explicit fallback metadata and an honest availability message.
+- Removed the unused `searchService.js` implementation that read `VITE_RAPIDAPI_KEY` and issued direct browser requests. Resource searches can now forward the assistance page's abort signal to the Function request so superseded searches stop instead of continuing upstream.
+- Changed the admin RapidAPI connectivity probe to go through the Firebase Function and its Secret Manager credential. The status panel reuses that response for function reachability and live-provider availability, avoiding a duplicate quota-consuming request. Removed frontend environment inspection of RapidAPI and OpenAI secrets. Marked two stale diagnostic reports as historical so their old “all configured” claims and `VITE_*` setup steps are not mistaken for current release evidence.
+- The assistance directory now exposes the live provider continuation token and lets users load the next page for peer-support and treatment-program searches. Saved and reviewed records remain in their existing groups; a provider fallback response cannot be appended as if it were a fresh live page. A behavioral regression case covers appending a peer-support page and stopping when pagination is exhausted.
+- **Verification:** focused assistance suite passed (1 file / 33 tests). Fresh `npm run verify:release` passed: 138 UI files / 588 tests, 58 agent contracts, 12 authenticated workflow scenarios, client-practitioner journey, practitioner care (12), scheduling (8), messaging (4), workspace lifecycle (1), Firestore Rules (13), production build, Firebase predeploy checks, and `git diff --check`. Static source review confirms no active source references to `VITE_RAPIDAPI_KEY`, `VITE_RAPIDAPI_HOST`, or the removed browser search module.
+- **Validation boundary:** local source only; no live provider request or deployment was performed. Provider availability and current local listing coverage remain unverified, and the full Definition of Done remains open.
+
+## 2026-10-22 — Release gate now covers assistance source boundaries (local only)
+
+- Added the existing help-directory Firestore emulator suite, recovery-meeting source emulator suite, and food-directory contract suite to `npm run verify:release`. The DoD checklist now names these suites so release evidence continuously covers directory review/publication, source import boundaries, and food lookup behavior alongside the UI and broader server suites.
+- **Verification:** fresh `npm run verify:release` passed: UI 138 files / 588 tests; agent contracts 58; authenticated workflows 12; client-practitioner journey 1; practitioner care 12; scheduling 8; messaging 4; workspace lifecycle 1; help-directory emulator 7; recovery-source emulator 9; food-directory 4; Firestore Rules 13; production build (2,577 modules); Firebase predeploy checks; and `git diff --check`.
+- **Release boundary:** local verification only. No deployment, authenticated production operation, live RapidAPI request, or current provider-catalogue audit was performed. Full-system DoD remains open.
+
+## 2026-10-23 — Nigeria assistance expansion and system reliability release (verification passed)
+
+- Integrated the Nigeria coverage audit and city/state directory data with assistance categories; improved resource-search normalization, pagination and fallback behavior; completed the corresponding admin, practitioner, external-resource navigation, and plain-language failure-state work. Removed obsolete phase-specific verification scripts after consolidating the active release gate.
+- **Fresh verification:** `npm run verify:release` passed: UI 138 files / 593 tests; agent contracts; authenticated client-agent workflows; client-practitioner journey; practitioner care; provider scheduling; practitioner messaging; workspace lifecycle; help-directory emulator (7); recovery-source emulator (9); food-directory (4); Firestore Rules (13); production build (2,580 modules); Firebase predeploy checks; and `git diff --check`.
+- This release has not yet been deployed at the time of this entry. Production acceptance of signed-in admin/practitioner data, live upstream resource results, a state-by-state independent Nigeria verification census, and full HIPAA / 42 CFR Part 2 readiness remain open. Do not call the Nigerian directory exhaustive or the full-system DoD complete based on coverage projections or local tests.

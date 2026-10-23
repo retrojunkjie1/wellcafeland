@@ -6,7 +6,7 @@
  */
 
 import { logDebug } from "@/lib/debug";
-import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
+import { getCuratedFallback, isUSLocation } from "@/lib/directoryCuratedFallback";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAuthHeaders } from "@/services/aiSessionClient";
 import { listResources } from "@/data/resources";
@@ -60,9 +60,13 @@ export function normalizeResult(raw) {
     type: raw.type || raw.category || "resource",
     phone: raw.phone || null,
     website: url || null,
-    address: raw.address || raw.location || null,
+    address: typeof raw.address === "string" ? raw.address : raw.address?.formattedAddress || raw.address?.streetAddress || raw.address?.street || raw.location || null,
     city: raw.city || null,
     state: raw.state || raw.region || null,
+    country: raw.country || null,
+    postalCode: raw.postalCode || raw.zip || null,
+    locationLine: raw.locationLine || null,
+    locationLabel: raw.locationLabel || (raw.address ? "Address" : "Service area"),
     distance: raw.distance ?? null,
     verified: raw.verified === true || isVerifiedSource(source),
     tags: Array.isArray(raw.tags) ? raw.tags : [],
@@ -85,6 +89,7 @@ export function normalizeResponse(raw) {
     items,
     nextPageToken: raw.nextPageToken || null,
     meta: {
+      ...(raw.meta && typeof raw.meta === "object" ? raw.meta : {}),
       sourceCount: items.length,
       tookMs: raw.meta?.tookMs ?? 0,
     },
@@ -165,7 +170,7 @@ function setClientCached(key, data) {
 function buildFallbackMeta(fallback, sourceCount, code) {
   const meta = { fallback, sourceCount }
   if (code === "RATE_LIMITED" || code === "UPSTREAM_RATE_LIMITED") meta.rateLimited = true
-  if (code === "UPSTREAM_NOT_ENABLED") meta.subscriptionBlocked = true
+  if (code === "UPSTREAM_NOT_ENABLED" || code === "PROVIDER_NOT_SUBSCRIBED") meta.subscriptionBlocked = true
   return meta
 }
 
@@ -183,10 +188,11 @@ function fallbackFailureMessage(code, error) {
 }
 
 async function buildFallbackResponse({ query, domain, category, location, limit, code, error }) {
-  let items = await firestoreFallback({ query, category, location, limit })
-  let fallbackSource = "firestore"
+  const internationalSearch = Boolean(String(location || "").trim() && !isUSLocation(location));
+  let items = internationalSearch ? [] : await firestoreFallback({ query, category, location, limit });
+  let fallbackSource = internationalSearch ? "global-directory" : "firestore"
   if (!items.length) {
-    const curated = getCuratedFallback(domain, query)
+    const curated = getCuratedFallback(domain, query, location || "")
     items = curated.map((resource) => normalizeResult({
       ...resource,
       url: resource.link,
@@ -199,6 +205,13 @@ async function buildFallbackResponse({ query, domain, category, location, limit,
     fallbackSource = "curated"
   }
   const meta = buildFallbackMeta(fallbackSource, items.length, code)
+  // Saved entries can keep the page useful, but they do not mean the live
+  // search succeeded. Preserve that state so the UI never presents a failed
+  // provider request as an empty local directory.
+  if (error) {
+    meta.unavailable = true
+    meta.liveAvailable = false
+  }
   if (!items.length) {
     return { ok: false, items: [], nextPageToken: null, meta: { ...meta, unavailable: true }, error: fallbackFailureMessage(code, error) }
   }
@@ -277,7 +290,7 @@ async function searchDirectoryImpl({
         const code = data?.code
         const isRateLimited = res.status === 429 || res.status === 403 || NO_RETRY_CODES.includes(code)
         if (isRateLimited) {
-          const effectiveCode = code || (res.status === 429 || res.status === 403 ? "RATE_LIMITED" : undefined)
+          const effectiveCode = code || (res.status === 429 ? "RATE_LIMITED" : res.status === 403 ? "PROVIDER_NOT_SUBSCRIBED" : undefined)
           const out = await buildFallbackResponse({ query: String(query).trim(), domain, category, location, limit, code: effectiveCode, error: lastError })
           if (!pageToken && out.ok) setClientCached(cacheKey, out)
           return out

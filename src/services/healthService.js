@@ -61,10 +61,23 @@ export async function checkFunctions() {
     ]);
 
     const latencyMs = Date.now() - startTime;
-    
-    // Even if it returns an error, if we got a response, the service is reachable
-    if (response.status === 400 || response.status === 200) {
-      return { ok: true, latencyMs };
+
+    // The Function response also tells us whether its upstream search provider
+    // returned live data or a saved-pathway fallback.
+    const payload = response.status === 200 ? await response.json().catch(() => null) : null;
+    const functionReachable = response.status === 400 || response.status === 200;
+    const fallback = payload?.provider === "fallback" || payload?.meta?.fallback === true;
+    const resourceSearch = response.status === 200
+      ? {
+          ok: payload?.ok === true && !fallback,
+          latencyMs,
+          ...((payload?.ok !== true || fallback) && {
+            warning: payload?.message || "Live search is unavailable; saved support pathways may still be shown.",
+          }),
+        }
+      : null;
+    if (functionReachable) {
+      return { ok: true, latencyMs, resourceSearch };
     }
     
     return { 
@@ -78,58 +91,6 @@ export async function checkFunctions() {
     return { 
       ok: false, 
       error: err.message || "Functions check failed",
-      latencyMs,
-    };
-  }
-}
-
-/**
- * Check RapidAPI connectivity
- */
-export async function checkRapidAPI() {
-  const rapidApiKey = import.meta.env.VITE_RAPIDAPI_KEY;
-  const rapidApiHost = import.meta.env.VITE_RAPIDAPI_HOST || 
-                      "real-time-web-search.p.rapidapi.com";
-  const searchUrl = import.meta.env.VITE_RAPIDAPI_SEARCH_URL ||
-                    "https://real-time-web-search.p.rapidapi.com/search";
-
-  if (!rapidApiKey) {
-    return { ok: false, error: "RapidAPI key not configured", latencyMs: null };
-  }
-
-  const startTime = Date.now();
-  try {
-    const response = await Promise.race([
-      fetch(`${searchUrl}?q=test&limit=1`, {
-        method: "GET",
-        headers: {
-          "x-rapidapi-key": rapidApiKey,
-          "x-rapidapi-host": rapidApiHost,
-        },
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout")), HEALTH_CHECK_TIMEOUT)
-      ),
-    ]);
-
-    const latencyMs = Date.now() - startTime;
-    
-    if (response.ok || response.status === 429) {
-      // 429 means rate limited but service is up
-      return { ok: true, latencyMs, warning: "Rate limited" };
-    }
-    
-    return { 
-      ok: false, 
-      error: `RapidAPI returned status ${response.status}`,
-      latencyMs,
-    };
-  } catch (err) {
-    const latencyMs = Date.now() - startTime;
-    logError("healthService", err, { check: "rapidapi" });
-    return { 
-      ok: false, 
-      error: err.message || "RapidAPI check failed",
       latencyMs,
     };
   }
@@ -192,12 +153,18 @@ export async function checkOpenAI() {
 export async function runAllHealthChecks() {
   logInfo("healthService", "Running all health checks");
   
-  const [firestore, functions, rapidapi, openai] = await Promise.all([
+  const [firestore, functions, openai] = await Promise.all([
     checkFirestore(),
     checkFunctions(),
-    checkRapidAPI(),
     checkOpenAI(),
   ]);
+  // Reuse the Function connectivity response so the admin panel makes one
+  // upstream probe, not a second quota-consuming request.
+  const rapidapi = functions.resourceSearch || {
+    ok: false,
+    error: "Live search status could not be confirmed through Firebase Functions.",
+    latencyMs: null,
+  };
 
   const allHealthy = firestore.ok && functions.ok && rapidapi.ok && openai.ok;
   
@@ -216,7 +183,6 @@ export async function runAllHealthChecks() {
 export default {
   checkFirestore,
   checkFunctions,
-  checkRapidAPI,
   checkOpenAI,
   runAllHealthChecks,
 };

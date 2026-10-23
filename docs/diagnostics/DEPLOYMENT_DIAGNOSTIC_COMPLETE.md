@@ -1,4 +1,7 @@
 # Deployment Diagnostic Plan - Completion Report
+
+> **Historical snapshot from 2025-12-28.** Its checkmarks, environment findings, and deployment status are not current evidence. Re-run the repository release gate and inspect the current Firebase deployment before relying on this report.
+
 **Date**: December 28, 2025  
 **Status**: ✅ **ALL TASKS COMPLETE**
 

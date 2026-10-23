@@ -3,6 +3,22 @@
  * Verified, official sources for recovery and crisis support.
  */
 
+import { matchesHelpLocation } from "@/services/helpLocationMatch";
+import {
+  NIGERIA_CITIES,
+  NIGERIA_STATES,
+  NIGERIA_LOCAL_RECOVERY_RESOURCES,
+  NIGERIA_STATE_RECOVERY_SERVICES,
+  NIGERIA_HOUSING_RESOURCES,
+  NIGERIA_FOOD_RESOURCES,
+  NIGERIA_FOOD_STATE_REFERRALS,
+  NIGERIA_FUNDING_RESOURCES,
+  NIGERIA_STATE_BENEFIT_CONTACTS,
+  NIGERIA_CURRENT_RELIEF_RESOURCES,
+  NIGERIA_URGENT_RESOURCES,
+  NIGERIA_PEER_RESOURCES,
+} from "@/data/nigeriaRecoveryDirectory";
+
 export const CURATED_BY_DOMAIN = {
   hotlines: [
     { id: "911", name: "Emergency services", description: "If someone is in immediate danger or needs urgent medical help, call 911 now.", phone: "911", link: null, source: "Emergency services", verified: true },
@@ -70,6 +86,87 @@ export const CURATED_BY_DOMAIN = {
   ],
 };
 
+// International recovery meeting pathways. These are not counts or verified
+// local service claims; each organization maintains its own schedules.
+const GLOBAL_RECOVERY_RESOURCES = [
+  { id: "aa-world-local-services", name: "Alcoholics Anonymous (A.A.) meetings", description: "Find local A.A. service offices by country, province, or city. Local offices maintain current meeting information; online groups are listed through Online Intergroup.", phone: null, link: "https://www.aa.org/find-aa/world", source: "Alcoholics Anonymous World Services", verified: true, locationLine: "Find local groups by country or city" },
+  { id: "na-virtual-meetings", name: "Narcotics Anonymous (N.A.) online meetings", description: "Explore online N.A. meetings by language and time. Check each group’s listing for current schedule and how to join.", phone: null, link: "https://na.org/meetingsearch/virtual-meeting-search/", source: "Narcotics Anonymous World Services", verified: true, locationLine: "Online groups · languages and times vary" },
+  { id: "smart-global-meetings", name: "SMART Recovery meetings", description: "Peer-led support for substance and other addictive behaviors. Find free online and in-person groups and check the listing for the current time, language, and joining instructions.", phone: null, link: "https://meetings.smartrecoveryglobal.org/", source: "SMART Recovery Global", verified: true, locationLine: "Online and in-person groups · worldwide listings" },
+  { id: "aa-online-intergroup", name: "Online Intergroup of A.A.", description: "Explore phone and online A.A. meetings around the world. Confirm each group’s time zone, format, and access details on its listing.", phone: null, link: "https://aa-intergroup.org/", source: "Online Intergroup of Alcoholics Anonymous", verified: true, locationLine: "Online meetings worldwide · schedules vary" },
+  { id: "lifering-online-meetings", name: "LifeRing online recovery meetings", description: "Find secular, peer-led online recovery meetings. The official calendar includes meeting times and access details.", phone: null, link: "https://lifering.org/meeting-menu/online-meetings/", source: "LifeRing Secular Recovery", verified: true, locationLine: "Online meetings · worldwide access" },
+  { id: "refuge-recovery-meetings", name: "Refuge Recovery meetings", description: "Explore peer-led recovery meetings, including online groups. Check the meeting listing for time, format, and joining details.", phone: null, link: "https://www.refugerecovery.org/", source: "Refuge Recovery World Services", verified: true, locationLine: "Online and in-person groups · worldwide listings" },
+  { id: "women-for-sobriety", name: "Women for Sobriety", description: "Free online and in-person peer groups for women seeking recovery from alcohol and other substances. The official site lists meetings and community options.", phone: null, link: "https://womenforsobriety.org/", source: "Women for Sobriety", verified: true, locationLine: "Online and in-person groups · location varies" },
+];
+
+// Current peer meetings specifically listed for Lagos by the organizations
+// that host them. These are online meetings, so no street address or local
+// phone is published for joining. Confirm the schedule on the source page.
+const LAGOS_PEER_MEETINGS = [
+  { id: "na-lagos-friday-online", name: "NA Lagos Group — Friday meeting", description: "Online peer meeting · Fridays at 8:00 PM Nigeria time · Just for Today. View the official listing for current joining details.", phone: null, link: "https://nanigeria.com/meetings", source: "Narcotics Anonymous Nigeria", verified: true, city: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", locationLine: "Online · Lagos, Nigeria", checkedAt: "2026-10-22" },
+  { id: "na-lagos-tuesday-online", name: "NA Lagos Group — Steps & Traditions", description: "Online peer meeting · Tuesdays at 12:00 PM Nigeria time · literature meeting. View the official listing for current joining details.", phone: null, link: "https://nanigeria.com/meetings", source: "Narcotics Anonymous Nigeria", verified: true, city: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", locationLine: "Online · Lagos, Nigeria", checkedAt: "2026-10-22" },
+  { id: "smart-lagos-global-online", name: "SMART Recovery Global — Lagos meeting", description: "Free, online peer-support meeting · Saturdays, 7:00–8:00 PM Lagos time · English · open to all. The listing includes meeting details and joining instructions.", phone: null, link: "https://meetings.smartrecoveryglobal.org/meetings/1126/", source: "SMART Recovery Global", verified: true, city: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", locationLine: "Online · Lagos, Nigeria", checkedAt: "2026-10-22" },
+];
+
+// Abuja recovery groups and services with details published by the
+// organizations themselves. Schedules that are not published are called out
+// so people can contact the provider without being sent to another finder.
+const ABUJA_PEER_RESOURCES = [
+  { id: "aa-newcomers-online-global", resourceType: "Alcoholics Anonymous · online newcomer meeting", name: "A.A. Newcomers Keep It Simple Daily", description: "Daily online Alcoholics Anonymous newcomer meeting. The directory lists 9:00 PM UK time; check the official listing for the current Abuja time and meeting access. Published Zoom ID: 365 151 3333 · passcode: 365.", phone: null, link: "https://aa-intergroup.org/meetings/newcomers-keep-it-simple-daily-3/", source: "Online Intergroup of Alcoholics Anonymous", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", locationLine: "Online from Abuja · daily, 9:00 PM UK time", checkedAt: "2026-10-22" },
+  { id: "na-abuja-tuesday-online", resourceType: "Peer meeting · online", name: "Narcotics Anonymous Abuja — Tuesday meeting", description: "Online Narcotics Anonymous meeting every Tuesday, 5:30–6:30 PM Nigeria time. Listed as a Basic Text / newcomer meeting and marked closed. The Nigeria listing publishes Zoom Meeting ID 224 274 7473 and passcode nalagos; confirm the listing before joining in case details change.", phone: null, link: "https://nanigeria.com/meetings", source: "Narcotics Anonymous Nigeria", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", locationLine: "Online · Tuesdays, 5:30–6:30 PM WAT", checkedAt: "2026-10-22" },
+  { id: "reconnect-abuja-club14", resourceType: "Peer support groups", name: "Reconnect HDI — recovery support groups", description: "Lists The Circle (monthly, open to everyone), The Slice (groups for specific challenges), and Club14 for drug addiction. Groups are facilitated by mental-health professionals. The site does not show the next session date; call to ask about the group that fits and how to register.", phone: "+2348113943197", link: "https://www.reconnecthdi.org/rss.html", source: "Reconnect HDI Support Service", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", address: "Plot 220, E. Momoh Avenue, Kado District, Abuja, Nigeria", locationLine: "Kado District, Abuja", checkedAt: "2026-10-22" },
+  { id: "vgada-abuja-group-therapy", resourceType: "Group therapy · online and in person", name: "VGADA — addiction group therapy", description: "Offers group therapy for addiction recovery and describes a free online WhatsApp group-therapy option. Call or email to confirm the next session and how to join; the provider lists Galadinmawa, Abuja, but no street address.", phone: "+2347063222217", email: "vgadanigeria@gmail.com", link: "https://www.vgadanigeria.com/services/group-therapy", source: "VGADA Detox Center", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", locationLine: "Galadinmawa, Abuja", checkedAt: "2026-10-22" },
+  { id: "olive-prime-abuja-recovery", resourceType: "Addiction treatment · group and family support", name: "The Olive Prime — Abuja recovery programs", description: "Provides addiction recovery programs that include group therapy, 12-step mutual support, family sessions, and outpatient or residential care. The provider’s page lists weekday program hours; call to ask about the right service, current availability, cost, and admission requirements. Its network also lists a women-only addiction-recovery center.", phone: "+2349096965483", email: "info@theoliveprime.com", link: "https://www.theoliveprime.com/olive-abuja.html", source: "The Olive Prime", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", address: "Plot B42, Gwarimpa Cadastral District A1, Life Camp, Abuja, Nigeria", locationLine: "Life Camp, Abuja", checkedAt: "2026-10-22" },
+  { id: "synapse-azalea-abuja", resourceType: "Addiction treatment · outpatient and residential", name: "Synapse Azalea — substance-use care", description: "Abuja mental-health center offering treatment for substance-use disorders and addiction, plus counseling and psychotherapy. Call to ask whether group support is available for your needs, along with current intake, costs, and eligibility.", phone: "+2348111695982", email: "info@azaleaservices.org", link: "https://azaleaservices.org/index.html", source: "Synapse Azalea", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", address: "Plot 238, off Norbert E. Offor Street, Kado Cadastral Zone B09, Abuja, Nigeria", locationLine: "Kado, Abuja", checkedAt: "2026-10-22" },
+  { id: "rahama-abuja-recovery", resourceType: "Addiction treatment · individual and family care", name: "Rahama Wellness Center — addiction recovery", description: "Abuja mental-health and rehabilitation center providing care for substance-use conditions, including alcohol. Call for a confidential first assessment and ask about available group or family support, costs, and intake.", phone: "+2347010841311", email: "info@rahamawellness.com", link: "https://rahamawellness.com/", source: "Rahama Wellness Center", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", address: "Plot 28, House 1, Okin Saeed Street, Sabon Lugbe, Airport Road, Abuja, FCT, Nigeria", locationLine: "Sabon Lugbe, Abuja", checkedAt: "2026-10-22" },
+  { id: "serenity-royale-abuja", resourceType: "Addiction treatment · rehabilitation and family support", name: "Serenity Royale — recovery counseling and rehabilitation", description: "Abuja provider listing addiction-recovery counseling, rehabilitation, and family support. Contact the team to ask about outpatient versus residential care, current openings, and costs.", phone: "+2348062197384", email: "info@serenityroyalehospital.com", link: "https://www.serenityroyalehospital.com/", source: "Serenity Royale Hospital", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", address: "No. 17 Royal Homes Estate, Galadimawa, Abuja, Nigeria", locationLine: "Galadimawa, Abuja", checkedAt: "2026-10-22" },
+  { id: "ndlea-wada-counseling", resourceType: "Free counseling · phone support", name: "War Against Drug Abuse — 24/7 counseling line", description: "The service describes free, around-the-clock counseling for people affected by substance use and their families. Call 0800 1020 3040 to speak with the service and ask about next steps or nearby support. The published page lists Abuja as its location, not a walk-in street address.", phone: "080010203040", email: "info@ndleahelpline.com.ng", link: "https://www.ndleahelpline.com.ng/quote.html", source: "War Against Drug Abuse (WADA) / Primly Services", verified: true, city: "Abuja", country: "Nigeria", region: "Abuja, Nigeria", locationLine: "Abuja · phone counseling listed as available 24/7", checkedAt: "2026-10-22" },
+];
+// Global treatment resources are deliberately separate from peer meeting
+// finders. WHO's country data describes treatment systems; the standards are
+// guidance. Neither is presented as a live clinic locator.
+const GLOBAL_TREATMENT_RESOURCES = [
+  { id: "who-treatment-systems", name: "WHO: treatment services by country", description: "Explore WHO country-level information about treatment sectors and providers for substance-use disorders. This describes national service systems; it does not provide a current list of individual clinics.", phone: null, link: "https://www.who.int/data/gho/data/themes/topics/indicator-groups/indicator-group-details/GHO/treatment-sectors-and-providers", source: "World Health Organization · Global Health Observatory", verified: true, locationLine: "Country-level health-system information · not a clinic locator" },
+  { id: "who-unodc-treatment-standards", name: "WHO and UNODC treatment standards", description: "Read international standards for evidence-informed and ethical treatment of drug-use disorders. Use these as questions for a local health authority or provider; the standards do not identify local services.", phone: null, link: "https://www.who.int/publications-detail-redirect/international-standards-for-the-treatment-of-drug-use-disorders", source: "World Health Organization and UN Office on Drugs and Crime", verified: true, locationLine: "International clinical guidance · published 2020" },
+];
+// Lagos providers with contact information published by the providers
+// themselves. Keep them separate from country-level WHO guidance.
+const LAGOS_TREATMENT_RESOURCES = [
+  { id: "fnph-yaba-addiction-clinic", name: "Federal Neuro-Psychiatric Hospital, Yaba — substance-use clinic", description: "Public specialist hospital offering substance-use and addiction care. Its clinic schedule lists the substance-use clinic on Tuesdays; call the hospital to confirm intake, hours, eligibility, and current services before traveling.", phone: "+2348155170000", link: "https://fnphyaba.gov.ng/our-clinic-days/", source: "Federal Neuro-Psychiatric Hospital, Yaba", verified: true, city: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", address: "8 Harvey Road, Yaba, Lagos, Nigeria", locationLine: "Yaba, Lagos · clinic schedule and intake should be confirmed by phone", checkedAt: "2026-10-22" },
+  { id: "greyhub-ikeja-addiction-care", name: "GreyHub — addiction assessment and treatment", description: "Lagos-based behavioral-health provider offering addiction prevention, assessment, and treatment. Call to ask about services, cost, intake, and current availability.", phone: "+2349130000124", link: "https://greyhubng.org/contact-us/", source: "GreyHub", verified: true, city: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", address: "5B Jo-Babs Dare Close, off Adeyeri Close, Opebi, Ikeja, Lagos, Nigeria", locationLine: "Opebi, Ikeja, Lagos · call to confirm intake and availability", checkedAt: "2026-10-22" },
+];
+const GLOBAL_HOUSING_RESOURCES = [
+  { id: "lila-global-safe-shelter-network", name: "Lila.help — country-based violence support and shelter network", description: "Find vetted helplines and organizations supporting people affected by gender-based violence in countries around the world. This network can help identify a local safe referral; it does not publish confidential shelter addresses or guarantee a bed.", phone: null, link: "https://lila.help/", source: "Lila.help · Global Network of Women’s Shelters", verified: true, locationLine: "Country-based safety and shelter referrals · contact the local organization for a confidential referral" },
+];
+const GLOBAL_FOOD_RESOURCES = [
+  { id: "global-foodbanking-network-directory", name: "The Global FoodBanking Network — country food-bank partners", description: "Explore the network’s locally led food banks across countries and regions. Each partner sets its own service areas and intake; contact the local food bank to ask about current food access and eligibility.", phone: null, link: "https://www.foodbanking.org/global-reach/", source: "The Global FoodBanking Network", verified: true, locationLine: "International network · local food-bank availability varies by country and city" },
+];
+const GLOBAL_BENEFIT_RESOURCES = [
+  { id: "issa-country-social-protection-profiles", name: "ISSA — social security programs by country", description: "Compare country-level social protection programs by benefit area, then follow the responsible national agency for current applications and eligibility. This is a program reference, not a grant application or eligibility decision.", phone: null, link: "https://www.issa.int/databases/country-profiles/programmes-by-branch", source: "International Social Security Association", verified: true, locationLine: "Country-level benefit reference · local application routes vary" },
+  { id: "world-bank-aspire-social-assistance", name: "World Bank ASPIRE — social assistance programs", description: "Review country-level information about social assistance programs and coverage, then confirm current access and eligibility with the responsible government agency. This database is not a live benefit application service.", phone: null, link: "https://www.worldbank.org/en/data/datatopics/aspire/indicator/social-assistance", source: "World Bank ASPIRE", verified: true, locationLine: "International program data · confirm current applications with the country agency" },
+];
+const GLOBAL_CRISIS_RESOURCES = [
+  { id: "iasp-global-crisis-centres", name: "Find crisis support in your country", description: "Use the International Association for Suicide Prevention’s country directory to look for crisis centres and helplines. Service coverage, languages, hours, and contact methods vary by location; confirm details with the service.", phone: null, link: "https://www.iasp.info/crisis-centres-helplines/", source: "International Association for Suicide Prevention", verified: true, locationLine: "International directory · local availability varies" },
+  { id: "befrienders-worldwide", name: "Befrienders Worldwide support directory", description: "Find emotional-support centres by country through the Befrienders Worldwide network. Check the centre’s own page for current opening hours, languages, and ways to make contact.", phone: null, link: "https://befrienders.org/find-support-now/", source: "Befrienders Worldwide", verified: true, locationLine: "Country-based support directory · confirm service details" },
+];
+
+const US_STATES_AND_TERRITORIES = ["alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming", "district of columbia", "puerto rico", "guam", "american samoa", "u.s. virgin islands", "northern mariana islands"];
+
+export function isUSLocation(region = "") {
+  const normalized = String(region).trim().toLowerCase();
+  if (!normalized) return false;
+  if (/\b(?:united states|u\.?s\.?a?\.?|usa)\b/.test(normalized) || /\b\d{5}(?:-\d{4})?\b/.test(normalized)) return true;
+  if (US_STATES_AND_TERRITORIES.some((state) => normalized.includes(state))) return true;
+  if (/(?:,\s*|\s)(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|PR|GU|AS|VI|MP)$/i.test(String(region).trim())) return true;
+  return /\b(?:denver|dallas|aurora)\b/i.test(normalized);
+}
+
+export function isNigeriaLocation(region = "") {
+  const normalized = String(region).trim().toLowerCase();
+  return /\bnigeria\b|\bng\b/.test(normalized) ||
+    NIGERIA_CITIES.some((city) => normalized.includes(city.toLowerCase())) ||
+    NIGERIA_STATES.some((state) => normalized.includes(state.toLowerCase()));
+}
+
 // Public Dallas-area peer supports, checked against the organizations' own
 // pages and the North Texas Behavioral Health Authority directory on 2026-09-29.
 // These are contact paths, not a promise that a group is meeting today.
@@ -87,6 +184,8 @@ const COLORADO_PEER_RESOURCES = [
 
 const DENVER_PEER_RESOURCES = [
   { id: "denver-afrc-peer-support", name: "Denver peer recovery support", description: "Peer recovery coaching, all-pathways meetings, and community events. Call to ask about coaching and confirm current meeting times before you go.", phone: "720-389-6393", link: "https://www.advocatesforrecovery.org/denver", source: "Advocates for Recovery Colorado", verified: true, city: "Denver", state: "CO", postalCode: "80219", address: "5110 Morrison Rd., Denver, CO 80219", locationLine: "Denver, CO" },
+  { id: "denver-aa-meeting-finder", name: "Denver-area A.A. meeting finder", description: "Search current in-person, online, phone, and hybrid Alcoholics Anonymous meetings across the Denver metro area. Check the listing for access details before attending.", phone: "303-322-4440", link: "https://daccaa.org/", source: "Denver Area Central Committee of A.A.", verified: true, city: "Denver", state: "CO", locationLabel: "Meeting finder", locationLine: "Denver metro area · in-person, online, phone, and hybrid meetings" },
+  { id: "denver-na-meeting-finder", name: "Colorado N.A. meeting finder", description: "Search the Colorado regional Narcotics Anonymous directory for Denver-area groups and meetings. The local N.A. service committee maintains meeting information; confirm current details before traveling.", phone: null, link: "https://nacolorado.org/meetings/", source: "Narcotics Anonymous Colorado Region", verified: true, city: "Denver", state: "CO", locationLabel: "Regional meeting finder", locationLine: "Colorado directory with Denver-area meetings" },
 ];
 
 const AURORA_PEER_RESOURCES = [
@@ -159,7 +258,71 @@ function filterByQuery(items, query) {
  * Get curated fallback results when API fails
  */
 export function getCuratedFallback(domain, query, region = "") {
-  const domainKey = domain || "hotlines";
+  const requestedDomain = domain || "hotlines";
+  const domainKey = requestedDomain === "assistance" ? "programs" : requestedDomain;
+  if (String(region).trim() && !isUSLocation(region)) {
+    const normalizedRegion = String(region).toLowerCase();
+    const nigeriaSearch = isNigeriaLocation(region);
+    const nigeriaDirectory = nigeriaSearch
+      ? [
+          ...NIGERIA_LOCAL_RECOVERY_RESOURCES,
+          ...NIGERIA_HOUSING_RESOURCES,
+          ...NIGERIA_FOOD_RESOURCES,
+          ...NIGERIA_FOOD_STATE_REFERRALS,
+          ...NIGERIA_FUNDING_RESOURCES,
+          ...NIGERIA_STATE_BENEFIT_CONTACTS,
+          ...NIGERIA_CURRENT_RELIEF_RESOURCES,
+          ...NIGERIA_URGENT_RESOURCES,
+          ...NIGERIA_PEER_RESOURCES,
+          ...ABUJA_PEER_RESOURCES,
+          ...LAGOS_PEER_MEETINGS,
+          ...LAGOS_TREATMENT_RESOURCES,
+        ]
+      : [];
+    const nigeriaLocal = nigeriaDirectory.filter((item) => matchesHelpLocation(item, region));
+    const countryOnlySearch = /\bnigeria\b|\bng\b/.test(normalizedRegion) && !NIGERIA_CITIES.some((city) => normalizedRegion.includes(city.toLowerCase())) && !NIGERIA_STATES.some((state) => normalizedRegion.includes(state.toLowerCase()));
+    const localMatches = (items) => items.filter((item) => matchesHelpLocation(item, region));
+    if (domainKey === "peer") {
+      if (nigeriaSearch) return [
+        ...localMatches(NIGERIA_PEER_RESOURCES),
+        ...localMatches(ABUJA_PEER_RESOURCES),
+        ...localMatches(LAGOS_PEER_MEETINGS),
+        ...NIGERIA_PEER_RESOURCES,
+        ...ABUJA_PEER_RESOURCES,
+        ...LAGOS_PEER_MEETINGS,
+        ...GLOBAL_RECOVERY_RESOURCES,
+      ];
+      return GLOBAL_RECOVERY_RESOURCES;
+    }
+    if (domainKey === "programs" || domainKey === "providers") {
+      if (nigeriaSearch) {
+        const treatmentResources = [
+          ...localMatches(NIGERIA_LOCAL_RECOVERY_RESOURCES),
+          ...(countryOnlySearch ? NIGERIA_STATE_RECOVERY_SERVICES : []),
+        ].filter((item) => /treatment|counsel|rehabilitation|addiction|detox|clinic|therapy/i.test(`${item.resourceType || ""} ${item.name || ""}`) && !/meeting|peer support|mutual support/i.test(item.resourceType || ""));
+        return [...treatmentResources, ...GLOBAL_TREATMENT_RESOURCES];
+      }
+      return GLOBAL_TREATMENT_RESOURCES;
+    }
+    if (domainKey === "housing") return nigeriaSearch ? NIGERIA_HOUSING_RESOURCES : GLOBAL_HOUSING_RESOURCES;
+    if (domainKey === "food.essentials") return nigeriaSearch ? [
+      ...localMatches(NIGERIA_FOOD_RESOURCES),
+      ...localMatches(NIGERIA_FOOD_STATE_REFERRALS),
+      ...NIGERIA_FOOD_RESOURCES,
+      ...NIGERIA_FOOD_STATE_REFERRALS,
+    ] : GLOBAL_FOOD_RESOURCES;
+    if (domainKey === "grants" || domainKey === "government_assistance") return nigeriaSearch ? [
+      ...localMatches(NIGERIA_FUNDING_RESOURCES),
+      ...localMatches(NIGERIA_STATE_BENEFIT_CONTACTS),
+      ...NIGERIA_FUNDING_RESOURCES,
+      ...NIGERIA_STATE_BENEFIT_CONTACTS,
+      ...NIGERIA_CURRENT_RELIEF_RESOURCES,
+    ] : GLOBAL_BENEFIT_RESOURCES;
+    if (domainKey === "hotlines") return nigeriaSearch ? [...NIGERIA_URGENT_RESOURCES, ...GLOBAL_CRISIS_RESOURCES] : GLOBAL_CRISIS_RESOURCES;
+    // Do not show U.S.-only numbers, benefits, or local organizations for an
+    // international area when the live directory has no confirmed result.
+    return [];
+  }
   const items = CURATED_BY_DOMAIN[domainKey] || CURATED_BY_DOMAIN.hotlines;
   const filtered = filterByQuery(items, query);
   const selected = filtered.length > 0 ? filtered : items;

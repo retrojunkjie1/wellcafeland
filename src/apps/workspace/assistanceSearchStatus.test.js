@@ -9,8 +9,8 @@ describe("assistance search status", () => {
 
   it("does not claim broader contacts are local to the searched area", () => {
     const status = getAssistanceSearchStatus({ category: "circles", region: "Denver, CO", localCount: 0 });
-    expect(status).toContain("No peer support listing with a confirmed location in Denver, CO is available yet.");
-    expect(status).toContain("The options below are broader support pathways; contact them to ask about local help.");
+    expect(status).toBe("Explore the organizations below and contact them to ask about services available in Denver, CO.");
+    expect(status).not.toContain("complete list");
     expect(status).not.toContain("Dallas");
   });
 
@@ -21,6 +21,6 @@ describe("assistance search status", () => {
 
   it("labels curated-only results as listed pathways, not real-time availability", () => {
     expect(getCuratedSearchStatus({ category: "funding", region: "Denver, CO", localCount: 0 }))
-      .toBe("No listing with a confirmed location in Denver, CO is available for financial assistance and benefits. Broader options are shown below.");
+      .toBe("Explore the organizations below and ask which services are available in Denver, CO.");
   });
 });

@@ -36,7 +36,7 @@
         "scripts": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "e.g. ['npm run phase55a:chatActions:verify', 'npm run phase56.verify']"
+          "description": "Current maintained test and release-gate commands required for this task; avoid retired phase-era verifier commands."
         },
         "manual_checklist": {
           "type": "array",

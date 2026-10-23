@@ -29,6 +29,17 @@ const RAPIDAPI_KEY_SECRET = defineSecret("RAPIDAPI_KEY");
 
 const safeText = (value, max) => ((value || "").length > max ? `${(value || "").slice(0, max)}…` : (value || ""));
 
+// HTTP header values must be visible ASCII. Secrets copied from a terminal or
+// password manager can contain invisible Unicode whitespace that survives a
+// CR/LF-only trim and causes Node to reject the request before it reaches the
+// provider. RapidAPI keys are opaque ASCII tokens, so remove formatting bytes
+// and controls before constructing the header.
+function sanitizeHeaderValue(value) {
+  const original = String(value || "");
+  const sanitized = original.replace(/[^\x21-\x7E]/g, "");
+  return { value: sanitized, changed: sanitized !== original };
+}
+
 function maskForLog(val, prefixLen = 3, suffixLen = 2) {
   if (!val || typeof val !== "string") return "****";
   if (val.length < prefixLen + suffixLen) return "****";
@@ -126,15 +137,15 @@ function buildFallbackResponse(query, domain, reason) {
   };
 }
 
-function buildProviderNotSubscribedResponse(query, domain) {
+function buildProviderNotSubscribedResponse(query, domain, status) {
   const retryAt = Date.now() + CIRCUIT_OPEN_MS;
   return {
     ok: false,
     code: "PROVIDER_NOT_SUBSCRIBED",
-    message: "Provider not enabled",
+    message: `Live search is unavailable because the connected search provider rejected access (HTTP ${status}). Check that your RapidAPI app is subscribed to the API for this host, that RAPIDAPI_KEY belongs to that same subscribed app, and that RAPIDAPI_HOST matches the API. The entries below are saved directory records, not a complete list of local groups.`,
     provider: "RapidAPI",
     retryAt,
-    nextSteps: ["Subscribe in RapidAPI", "Set RAPIDAPI_KEY", "Set RAPIDAPI_HOST"],
+    nextSteps: ["Confirm the API subscription is active", "Confirm RAPIDAPI_KEY is from the subscribed RapidAPI app", "Confirm RAPIDAPI_HOST matches the subscribed API"],
     query: (query || "").trim(),
     results: [],
     meta: { fallback: true, retryAt, provider: "RapidAPI" },
@@ -189,7 +200,17 @@ function normalizeResults(rawResults) {
     return [];
   }
 
+  const asText = (value) => typeof value === "string" || typeof value === "number" ? String(value).trim() : "";
+  const firstText = (...values) => values.map(asText).find(Boolean) || "";
+  const addressText = (value) => {
+    if (typeof value === "string" || typeof value === "number") return String(value).trim();
+    if (!value || typeof value !== "object") return "";
+    return [value.streetAddress, value.street, value.address1, value.address, value.city, value.state, value.region, value.postalCode, value.zip, value.country]
+      .map(asText).filter(Boolean).join(", ");
+  };
+
   return rawResults.map((item, index) => {
+    if (!item || typeof item !== "object") return null;
     // Extract domain from URL for source
     let source = "Web";
     try {
@@ -201,6 +222,10 @@ function normalizeResults(rawResults) {
       // Invalid URL, use default
     }
 
+    const address = addressText(item.address || item.location || item.locationLine || item.formattedAddress);
+    const city = firstText(item.city, item.location?.city, item.address?.city);
+    const state = firstText(item.state, item.province, item.regionCode, item.location?.state, item.address?.state);
+    const country = firstText(item.country, item.countryName, item.location?.country, item.address?.country);
     return {
       id: item.url || item.link || item.uri || `result-${Date.now()}-${index}`,
       title: item.title || item.name || item.headline || "Untitled Resource",
@@ -208,8 +233,19 @@ function normalizeResults(rawResults) {
       url: item.url || item.link || item.uri || "",
       source,
       snippet: item.snippet || item.description || item.abstract || "",
+      // Preserve only contact/location fields explicitly structured by the
+      // provider. Search snippets are not reliable enough to infer phone
+      // numbers or street addresses from prose.
+      phone: firstText(item.phone, item.telephone, item.contact?.phone, item.contact?.telephone),
+      address,
+      locationLine: firstText(item.locationLine, item.formattedAddress, address),
+      city,
+      state,
+      country,
+      postalCode: firstText(item.postalCode, item.zip, item.zipCode, item.address?.postalCode, item.location?.postalCode),
+      updatedAt: firstText(item.updatedAt, item.lastUpdated, item.modifiedAt),
     };
-  });
+  }).filter(Boolean);
 }
 
 /**
@@ -238,15 +274,21 @@ exports.globalResourceSearch = onRequest(
 
     let RAPIDAPI_KEY;
     let keySource = "none";
+    let rapidApiKeySanitized = false;
     try {
-      RAPIDAPI_KEY = RAPIDAPI_KEY_SECRET.value();
+      const configuredKey = RAPIDAPI_KEY_SECRET.value();
+      const normalizedKey = sanitizeHeaderValue(configuredKey);
+      RAPIDAPI_KEY = normalizedKey.value;
+      rapidApiKeySanitized = normalizedKey.changed;
       if (RAPIDAPI_KEY) keySource = "Secret Manager";
     } catch {
       RAPIDAPI_KEY = null;
     }
     // Local dev: set RAPIDAPI_KEY and RAPIDAPI_HOST in functions/.env for emulator fallback.
     if (!RAPIDAPI_KEY && process.env.RAPIDAPI_KEY) {
-      RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+      const normalizedKey = sanitizeHeaderValue(process.env.RAPIDAPI_KEY);
+      RAPIDAPI_KEY = normalizedKey.value;
+      rapidApiKeySanitized = normalizedKey.changed;
       keySource = "RAPIDAPI_KEY";
     }
 
@@ -262,8 +304,8 @@ exports.globalResourceSearch = onRequest(
       return res.status(200).json(fallback);
     }
 
-    const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || RAPIDAPI_HOST_DEFAULT;
-    const RAPIDAPI_URL = process.env.RAPIDAPI_URL || `https://${RAPIDAPI_HOST}/search`;
+    const RAPIDAPI_HOST = sanitizeHeaderValue(process.env.RAPIDAPI_HOST || RAPIDAPI_HOST_DEFAULT).value;
+    const RAPIDAPI_URL = String(process.env.RAPIDAPI_URL || `https://${RAPIDAPI_HOST}/search`).replace(/[\r\n]/g, "").trim();
 
     const startTime = Date.now();
     try {
@@ -382,7 +424,7 @@ exports.globalResourceSearch = onRequest(
             }
             // 401/403/404 = config/subscription mismatch — do NOT open circuit
             if (status === 401 || status === 403 || status === 404) {
-              return buildProviderNotSubscribedResponse(normalizedQuery, domain || "");
+              return buildProviderNotSubscribedResponse(normalizedQuery, domain || "", status);
             }
             // Circuit only for 429 / >=500 / timeout / network
             if (status === 429) {
@@ -433,7 +475,12 @@ exports.globalResourceSearch = onRequest(
       }
       return res.json(result);
     } catch (err) {
-      logger.error("[globalResourceSearch] Error:", { message: err.message, code: err.code });
+      logger.error("[globalResourceSearch] Request failed", {
+        code: err.code || null,
+        upstreamStatus: err.response?.status || null,
+        invalidHeader: err.code === "ERR_INVALID_CHAR",
+        rapidApiKeySanitized,
+      });
       const { query, domain } = req.body || {};
       const fallback = buildFallbackResponse(query || "", domain, "ERROR");
       return res.status(200).json(fallback);

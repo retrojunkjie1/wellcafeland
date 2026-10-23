@@ -30,10 +30,11 @@ Use this checklist for every new feature, bug fix, and correction. A task is com
 Run `npm run verify:release`. It must pass:
 
 1. Full frontend/unit regression suite (`npm test`).
-2. Firestore Rules emulator suite (`npm run test:rules`).
-3. Production Vite build (`npm run build`).
-4. Firebase project/configuration preflight (`npm run predeploy:check`).
-5. `git diff --check`.
+2. Server-side agent, client/practitioner, lifecycle, and assistance-directory contract suites. Assistance includes help-directory and recovery-source Firestore emulator suites plus the food-directory suite.
+3. Firestore Rules emulator suite (`npm run test:rules`).
+4. Production Vite build (`npm run build`).
+5. Firebase project/configuration preflight (`npm run predeploy:check`).
+6. `git diff --check`.
 
 Also run the focused tests that cover the changed behavior. For Functions, use the matching emulator scripts in `functions/package.json`; for auth, access control, consent, or data-sharing work, include positive and negative authorization cases. If no focused test exists, add one as part of the change.
 

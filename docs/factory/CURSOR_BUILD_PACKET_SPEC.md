@@ -54,7 +54,7 @@ Canonical format for the build packet produced by the Work Packet Generator and 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| scripts | string[] | Commands to run (e.g. npm run phase56.verify). |
+| scripts | string[] | Maintained behavior-test and release-gate commands appropriate to the task. |
 | manual_checklist | string[] | Human checklist items. |
 
 --------------------------------------------------
@@ -115,9 +115,7 @@ Canonical format for the build packet produced by the Work Packet Generator and 
   },
   "verification": {
     "scripts": [
-      "npm run phase55a:chatActions:verify",
-      "npm run phase56.verify",
-      "npm run dev"
+      "npm run verify:release"
     ],
     "manual_checklist": [
       "Home dock mic visually changes when starting/stopping voice",

@@ -64,7 +64,7 @@ WellnessCafe is the first reusable autonomous pod pattern for the AI App Factory
 
 ### 2.4 Post-execution
 
-1. **QA Sentinel:** Run npm run phase55a:chatActions:verify, npm run phase56.verify, npm run dev. **All pass.**
+1. **QA Sentinel:** Run the focused maintained tests for changed behavior, then `npm run verify:release` before claiming release readiness. Do not use retired phase-era source scanners as gates.
 2. **Memory:** Update only focus/notes if needed; no phase/status change. **No approval needed.** Apply allowed updates.
 3. **Queue and tracker:** Set task status DONE; completed_at, verification_status = PASS. Build Tracker row: status = PASSED, memory_updated = true.
 

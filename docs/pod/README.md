@@ -16,7 +16,7 @@ Reference implementation for app pods in a multi-app AI production company. The 
 | **Governance rules** | `docs/automation/STEWARD_CONTEXT_RULES.md` | Stale/invalid handling; n8n and pod must fail closed. |
 | **Vision & architecture** | `docs/architecture/MASTER_VISION_BLUEPRINT.md`, `CURSOR_MEMORY.md`, `DEFINITION_OF_DONE.md` | Company Brain / App Architect inputs (via steward context). |
 | **Phase & roadmap** | `docs/runtime/CURRENT_PHASE.md`, `docs/roadmap/PHASE_ROADMAP.md`, `docs/runtime/TODAY.json` | Current phase, allowed/prohibited work, next valid scope. |
-| **Phase verification** | `scripts/phase55.verify.mjs`, `phase55a.chatActions.verify.mjs`, `phase56.verify.mjs`, etc. | QA Sentinel and gate checks; must pass before phase closeout. |
+| **Behavioral verification** | Maintained Vitest suites, Firebase Rules emulator checks, and `npm run verify:release` | QA Sentinel selects focused tests for changed behavior; the release gate runs the maintained full suite. |
 | **Phase doc generator** | `scripts/currentPhase.generate.mjs` | Can be used by Memory Updater to sync TODAY → CURRENT_PHASE. |
 
 ### What is missing
@@ -70,7 +70,7 @@ The orchestration spine (e.g. n8n) lives outside the app repo; it calls into the
 | **App Architect** | Steward context, CURRENT_PHASE, PHASE_ROADMAP | Allowed vs prohibited work; next valid scope |
 | **Build Planner** | Current phase, TODAY.focus, verification list | Ordered list of verification steps; build packet prerequisites |
 | **Work Packet Generator** | Task + context slice + verification list | One TASK_PACKET (see schema) |
-| **QA Sentinel** | Task packet, phase verification scripts | Pass/fail; blocks completion if fail |
+| **QA Sentinel** | Task packet, focused behavioral tests, release gate when required | Pass/fail; blocks completion if fail |
 | **Memory Updater** | Execution result, memory contract | Proposed edits to TODAY.json / CURRENT_PHASE (only per contract) |
 | **Approval Gate** | Gate rules, task type, risk flags | Pause and request human approval when required |
 
@@ -83,7 +83,7 @@ Inputs are read from the repo (or from steward context compiled from repo). Outp
 See **docs/pod/APPROVAL_GATE.md**. Summary:
 
 - **Always pause for:** Phase advance, release/deploy, any change to crisis or auth-related behavior, first-time automation of a previously manual action.
-- **No pause required for:** Reading context, running verification scripts, generating a task packet for human review, updating TODAY.notes or focus when contract allows.
+- **No pause required for:** Reading context, running maintained tests, generating a task packet for human review, updating TODAY.notes or focus when contract allows.
 - **Fail closed:** If context is stale or invalid, do not proceed; do not approve.
 
 --------------------------------------------------
@@ -104,7 +104,7 @@ See **docs/pod/MEMORY_CONTRACT.md**. Summary:
 1. **Copy pod docs:** Clone `docs/pod/` (README, POD_CONTRACT, MEMORY_CONTRACT, TASK_PACKET_SCHEMA, APPROVAL_GATE) into the new app repo.
 2. **Copy automation pattern:** Create `docs/automation/SOURCE_OF_TRUTH_MANIFEST.json` and list that app’s source-of-truth docs; add a `build_steward_context.mjs` equivalent that writes to `docs/runtime/STEWARD_CONTEXT.json`.
 3. **App-specific sources:** Replace WellnessCafe’s MASTER_VISION_BLUEPRINT, CURSOR_MEMORY, DEFINITION_OF_DONE, PHASE_ROADMAP, CURRENT_PHASE, TODAY.json with the new app’s equivalents (same roles: vision, memory, DoD, roadmap, current phase, daily state).
-4. **Verification scripts:** Each app has its own phase/feature verifiers; wire them into the pod’s QA Sentinel and approval gate (run scripts, pass/fail, pause on phase advance).
+4. **Behavior verification:** Each app owns maintained behavioral tests and a release gate; wire those into the pod’s QA Sentinel (pass/fail, pause on phase advance).
 5. **Orchestration spine:** One spine can drive multiple app pods by loading each repo’s STEWARD_CONTEXT (or building it from manifest), then applying the same POD_CONTRACT and APPROVAL_GATE logic per app.
 6. **Company Brain:** Shared standards (luxury, safety, architecture) live outside app repos or in a shared manifest; the spine injects them into context when building packets. The pod stays app-scoped.
 

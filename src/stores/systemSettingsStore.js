@@ -68,6 +68,29 @@ export const defaultSystemSettings = {
   },
 };
 
+function mergeSystemSettings(value = {}) {
+  const remote = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const autoRun = remote.agentAutoRun && typeof remote.agentAutoRun === "object" ? remote.agentAutoRun : {};
+  return {
+    ...defaultSystemSettings,
+    ...remote,
+    features: { ...defaultSystemSettings.features, ...(remote.features || {}) },
+    thresholds: { ...defaultSystemSettings.thresholds, ...(remote.thresholds || {}) },
+    notifications: {
+      ...defaultSystemSettings.notifications,
+      ...(remote.notifications || {}),
+      quietHours: {
+        ...defaultSystemSettings.notifications.quietHours,
+        ...(remote.notifications?.quietHours || {}),
+      },
+    },
+    agentAutoRun: Object.fromEntries(Object.entries({ ...defaultSystemSettings.agentAutoRun, ...autoRun }).map(([id, settings]) => [
+      id,
+      { ...(defaultSystemSettings.agentAutoRun[id] || {}), ...(settings && typeof settings === "object" ? settings : {}) },
+    ])),
+  };
+}
+
 function loadFromStorage() {
   if (typeof window === "undefined") return defaultSystemSettings;
 
@@ -75,7 +98,7 @@ function loadFromStorage() {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultSystemSettings;
     const parsed = JSON.parse(raw);
-    return { ...defaultSystemSettings, ...parsed };
+    return mergeSystemSettings(parsed);
   } catch {
     return defaultSystemSettings;
   }
@@ -177,18 +200,7 @@ export const useSystemSettingsStore = create((set, get) => ({
     const result = await loadAdminSystemSettings();
     if (result.settings) {
       const remote = result.settings;
-      const merged = {
-        ...defaultSystemSettings,
-        ...remote,
-        features: { ...defaultSystemSettings.features, ...remote.features },
-        thresholds: { ...defaultSystemSettings.thresholds, ...remote.thresholds },
-        notifications: {
-          ...defaultSystemSettings.notifications,
-          ...remote.notifications,
-          quietHours: { ...defaultSystemSettings.notifications.quietHours, ...remote.notifications?.quietHours },
-        },
-        agentAutoRun: { ...defaultSystemSettings.agentAutoRun, ...remote.agentAutoRun },
-      };
+      const merged = mergeSystemSettings(remote);
       set({ settings: merged });
       try {
         if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
@@ -203,3 +215,5 @@ export const useSystemSettingsStore = create((set, get) => ({
     return result;
   },
 }));
+
+export { mergeSystemSettings };

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getCuratedFallback } from "./directoryCuratedFallback";
+import { getCuratedFallback, isUSLocation } from "./directoryCuratedFallback";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
 
 vi.mock("@/services/foodDirectory", () => ({
@@ -7,6 +7,24 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("keeps U.S.-only contacts out of international searches and offers global directories", () => {
+    expect(isUSLocation("Dallas, TX")).toBe(true);
+    expect(isUSLocation("Oklahoma")).toBe(true);
+    expect(isUSLocation("Dubai")).toBe(false);
+    const benefits = getCuratedFallback("grants", "recovery groups", "Dubai");
+    expect(benefits.map(({ id }) => id)).toEqual([
+      "issa-country-social-protection-profiles",
+      "world-bank-aspire-social-assistance",
+    ]);
+    const circles = getCuratedFallback("peer", "recovery groups", "Dubai");
+    expect(circles.map(({ id }) => id)).toContain("na-virtual-meetings");
+    expect(circles.map(({ id }) => id)).toContain("aa-world-local-services");
+    expect(getCuratedFallback("hotlines", "", "Lagos, Nigeria")[0]).toMatchObject({
+      id: "nigeria-civil-defence-199",
+      phone: "199",
+    });
+  });
+
   it("offers a broad official benefits navigator instead of only recovery grants", () => {
     const resources = getCuratedFallback("grants", "", "Dallas, TX");
     const ids = new Set(resources.map((resource) => resource.id));

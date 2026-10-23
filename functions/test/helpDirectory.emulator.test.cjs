@@ -19,7 +19,7 @@ const regionalAdminUid = "directory-colorado-reviewer";
 const clientAuth = { uid: "directory-client", token: { role: "client" } };
 const base = {
   name: "Northside Community Pantry", category: "food", description: "Weekly grocery support.",
-  address: "12 Elm Street", city: "Denver", state: "CO", postalCode: "80202", phone: "303-555-0100",
+  address: "12 Elm Street", city: "Denver", state: "CO", country: "United States", countryCode: "US", postalCode: "80202", phone: "303-555-0100",
   sourceName: "Northside Community Pantry", sourceUrl: "https://northside.example.org/locations",
   permissionBasis: "The organization publishes these service details for community use on its public location page.",
   checkedAt: new Date().toISOString(),
@@ -101,7 +101,7 @@ test("public search returns only published location/contact fields and matches c
   assert.equal(byCity.listings[0].name, base.name);
   assert.equal(byCity.listings[0].phone, base.phone);
   assert.equal(byCity.listings[0].sourceManaged, true);
-  assert.equal("sourceUrl" in byCity.listings[0], false);
+  assert.equal(byCity.listings[0].sourceUrl, base.sourceUrl);
   assert.equal("permissionBasis" in byCity.listings[0], false);
   assert.equal("reviewNote" in byCity.listings[0], false);
   assert.equal("distanceMiles" in byCity.listings[0], false);

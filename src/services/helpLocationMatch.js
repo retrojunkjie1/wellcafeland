@@ -26,6 +26,7 @@ function locationFields(record = {}) {
     all: normalize([
       record.city,
       record.state,
+      record.country,
       record.region,
       record.locationLine,
       record.address,

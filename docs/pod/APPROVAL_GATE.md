@@ -17,7 +17,7 @@ Defines when the pod must pause for human approval and when it may proceed autom
 ## No pause required for
 
 1. **Read-only operations:** Loading steward context, reading CURRENT_PHASE, TODAY, roadmap; Vision Reader and App Architect outputs.
-2. **Running verification scripts:** QA Sentinel running phase verify scripts; reporting pass/fail.
+2. **Running verification:** QA Sentinel running maintained behavioral tests and reporting pass/fail.
 3. **Generating a task packet:** Work Packet Generator producing a packet for human or Cursor to use. The packet itself is not an execution; execution or phase change may still require approval.
 4. **Updating TODAY.json focus, notes, blocked_work, valid_today:** When within MEMORY_CONTRACT and no phase/status change.
 5. **Regenerating CURRENT_PHASE.md from TODAY:** When TODAY phase/status is unchanged (e.g. syncing focus and checklist).
@@ -29,7 +29,7 @@ Defines when the pod must pause for human approval and when it may proceed autom
 1. **Stale or invalid steward context:** If STEWARD_CONTEXT.json is missing, invalid, or stale per STEWARD_CONTEXT_RULES.md, do not proceed; do not approve. Rebuild context first and re-validate.
 2. **Prohibited work in task scope:** If the task packet or planned change includes work listed in CURRENT_PHASE “Prohibited work,” reject the packet or pause for human override.
 3. **Memory contract violation:** If a proposed write violates MEMORY_CONTRACT.md (e.g. writing to a prohibited file or field), reject the update.
-4. **Verification failed:** If QA Sentinel reports fail for a required verification script, do not mark task complete and do not advance phase; reject until checks pass or human explicitly overrides (documented).
+4. **Verification failed:** If QA Sentinel reports fail for a required maintained test, do not mark task complete and do not advance phase; reject until checks pass or human explicitly overrides (documented).
 
 --------------------------------------------------
 

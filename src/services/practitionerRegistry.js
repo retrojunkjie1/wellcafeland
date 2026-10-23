@@ -22,8 +22,8 @@ export const listPractitionersForReview = () => call("listPractitionersForReview
 export const listAdminPractitionerNetwork = () => call("listAdminPractitionerNetwork");
 export const reviewPractitionerApplication = (uid, decision, reviewNote = "", confirmPublicDirectoryClaim = false) =>
   call("reviewPractitionerApplication", { uid, decision, reviewNote, confirmPublicDirectoryClaim });
-export const listVerifiedPractitioners = ({ type = "", search = "", serviceFormat = "", accessibilityOption = "", deliveryOption = "", costOption = "", city = "", region = "", acceptingNewClients = false } = {}) =>
-  call("listVerifiedPractitioners", { type, search, serviceFormat, accessibilityOption, deliveryOption, costOption, city, region, acceptingNewClients }, { allowAnonymous: true, allowSignedOut: true });
+export const listVerifiedPractitioners = ({ type = "", search = "", serviceFormat = "", accessibilityOption = "", deliveryOption = "", costOption = "", city = "", region = "", country = "", acceptingNewClients = false } = {}) =>
+  call("listVerifiedPractitioners", { type, search, serviceFormat, accessibilityOption, deliveryOption, costOption, city, region, country, acceptingNewClients }, { allowAnonymous: true, allowSignedOut: true });
 export async function searchPublicPractitionerDirectory({ city = "", region = "", category = "" } = {}) {
   const result = await call("searchPublicPractitionerDirectory", { city, region, category }, { allowAnonymous: true, allowSignedOut: true });
   logTelemetry("directory_search", { hasResults: Array.isArray(result.listings) && result.listings.length > 0 });
