@@ -10,11 +10,13 @@ import { initTheme } from "@/theme/themeStore";
 import { validateEnv } from "./config/envValidation.js";
 import { EnvErrorScreen } from "./config/envGuard.jsx";
 import { logDebug } from "@/lib/debug";
+import { installStaleBuildRecovery } from "@/lib/staleBuildRecovery";
 
 // Boot sequence: UI shell mounts FIRST, services initialize LAST
 // Any failure after UI mounts must NOT crash the app
 
 // Step 1: Initialize theme (must not throw)
+installStaleBuildRecovery();
 try {
   initTheme();
 } catch (err) {

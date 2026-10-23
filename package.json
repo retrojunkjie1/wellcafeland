@@ -32,7 +32,7 @@
     "predeploy:check": "node scripts/check-deploy.js",
     "steward:build": "node scripts/build_steward_context.mjs",
     "pod:verify": "node scripts/pod/verify_pod_context.mjs",
-    "deploy": "npm run predeploy:check && npx --yes firebase-tools@15.31.0 deploy --only hosting --project wellnesscafelanding",
+    "deploy": "npm run predeploy:check && npm_config_cache=/tmp/wellnesscafe-npm-cache FIREBASE_CLI_DISABLE_UPDATE_CHECK=1 npx --yes firebase-tools@15.31.0 deploy --only hosting --project wellnesscafelanding",
     "grant:admin": "node scripts/grantAdmin.cjs",
     "grant:admin:aleggi": "node scripts/grantAdmin.cjs aleggi007@gmail.com",
     "emu:doctor": "node scripts/emu.doctor.mjs",

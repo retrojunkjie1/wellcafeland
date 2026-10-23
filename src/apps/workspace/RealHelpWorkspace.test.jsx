@@ -150,10 +150,25 @@ describe("real-world assistance search states", () => {
     await waitFor(() => expect(screen.getByLabelText("Current search URL")).toHaveTextContent("priority=programs"));
     expect(screen.getByRole("combobox", { name: "Support type" })).toHaveValue("programs");
     expect(screen.getByPlaceholderText("City, region, or country")).toHaveValue("Dallas, TX");
+    expect(screen.getByLabelText("Search support")).toHaveValue("");
 
     fireEvent.click(screen.getByRole("button", { name: "Back to previous search" }));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "Support type" })).toHaveValue("food"));
     expect(screen.getByPlaceholderText("City, state, ZIP or place")).toHaveValue("Dallas, TX");
+  });
+
+  it("clears an unrelated search term when the support category changes", async () => {
+    mocks.searchDirectory.mockResolvedValue({ ok: true, items: [], error: null });
+    render(<MemoryRouter initialEntries={["/assistance?priority=housing&query=shelter&region=Abuja%2C%20NG"]}><SearchRouteControls /><RealHelpWorkspace /></MemoryRouter>);
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Support type" }), { target: { value: "circles" } });
+
+    await waitFor(() => expect(screen.getByLabelText("Current search URL")).toHaveTextContent("priority=circles"));
+    expect(screen.getByLabelText("Search support")).toHaveValue("");
+    await waitFor(() => expect(mocks.searchDirectory).toHaveBeenCalledWith(expect.objectContaining({
+      category: "circles",
+      query: expect.stringContaining("peer recovery community support groups"),
+    })));
   });
 
   it("keeps meetings, community support, and practitioners together under connection paths", () => {

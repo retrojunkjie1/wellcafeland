@@ -607,8 +607,11 @@ const RealHelpWorkspace = () => {
     const params = new URLSearchParams(location.search);
     params.set("priority", nextCategory);
     params.delete("domain");
-    if (query.trim()) params.set("query", query.trim());
-    else params.delete("query");
+    // A category change starts a new search intent. Carrying a category-bound
+    // term such as "shelter" into peer-support results makes the page appear
+    // to return mismatched contacts, so let the new category use its own
+    // default search phrase.
+    params.delete("query");
     if (region.trim()) params.set("region", region.trim());
     else params.delete("region");
     navigate(`${location.pathname}?${params.toString()}`, { state: location.state });
