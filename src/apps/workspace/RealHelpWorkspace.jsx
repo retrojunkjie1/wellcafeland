@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
-import { ExternalLink, Heart, MapPin, PhoneCall, X, UsersRound, Flag, Send, ArrowLeft } from "lucide-react";
+import { ExternalLink, Heart, MapPin, PhoneCall, X, UsersRound, Flag, Send, ArrowLeft, ChevronDown } from "lucide-react";
 import { rememberWorkspace } from "@/engines/memory/workspaceMemoryEngine";
 import { searchResources } from "@/services/resourceSearch";
 import { searchDirectory } from "@/services/directorySearch";
@@ -925,22 +925,25 @@ const RealHelpWorkspace = () => {
                 </section>
               )}
 
-              {locatedResults.length > 0 && <div role="list" aria-label={activeTab === "food" ? "Food support results" : requiresLocationProof ? "Location-matched support resources" : "Nearby support resources"} className="space-y-2.5">
+              {locatedResults.length > 0 && <details open className="rounded-2xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+                <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-medium text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wcGold">
+                  <span className="flex items-center gap-2">{activeTab === "food" ? "Nearby food support" : requiresLocationProof ? "Local and location-matched support" : "Nearby support resources"}<ChevronDown className="h-4 w-4 text-white/50" aria-hidden="true" /></span>
+                  <span className="shrink-0 text-xs text-white/50">{locatedResults.length} listing{locatedResults.length === 1 ? "" : "s"}</span>
+                </summary>
+                <div role="list" aria-label={activeTab === "food" ? "Food support results" : requiresLocationProof ? "Location-matched support resources" : "Nearby support resources"} className="mt-3 space-y-2.5">
                 {locatedResults.map((item, index) => (
                   <article
                     key={item.id || index}
                     role="listitem"
                     className="group rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 transition-colors hover:border-wcGold/30 hover:bg-white/[0.055] sm:px-4"
                   >
-                    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
                       <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-x-2">
-                          <h3 title={item.name || item.title} className="min-w-0 max-w-[75vw] truncate text-[15px] font-semibold leading-snug text-white sm:max-w-[28rem] sm:text-base">
+                          <h3 title={item.name || item.title} className="min-w-0 max-w-[75vw] truncate text-[15px] font-semibold leading-snug text-white sm:max-w-[36rem] sm:text-base">
                             {item.name || item.title}
                           </h3>
                         </div>
-                        {item.resourceType && <p className="mt-1 text-xs font-medium uppercase tracking-wide text-wcGold/80">{item.resourceType}</p>}
-
                         <div className="mt-1 flex min-w-0 items-start gap-1.5 text-sm text-white/60">
                           {(item.address || item.locationLine || item.region) && (
                             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -952,30 +955,12 @@ const RealHelpWorkspace = () => {
                             {item.distance != null && (
                               <div className="mt-0.5 text-xs text-white/45">About {item.distance.toFixed(1)} mi from your search area</div>
                             )}
-                          {item.capacity_status && (
-                            <span className={`rounded-full px-2 py-0.5 font-medium ${
-                              item.capacity_status === "open" ? "bg-green-400/15 text-green-200" :
-                              item.capacity_status === "waitlist" ? "bg-yellow-400/15 text-yellow-200" :
-                              "bg-red-400/15 text-red-200"
-                            }`}>
-                              {item.capacity_status === "open" ? "Currently open" :
-                              item.capacity_status === "waitlist" ? "Waitlist available" :
-                               "Limited availability"}
-                            </span>
-                          )}
                           </div>
                         </div>
-                        {internationalSearch && item.phone && (
-                          <p className="mt-1 text-sm text-white/70">
-                            Phone: <a className="font-medium text-white underline decoration-white/30 underline-offset-2" href={`tel:${String(item.phone).replace(/[^+\d]/g, "")}`}>{item.phone}</a>
-                          </p>
-                        )}
-                        {(item.description || item.summary) && <p className="mt-2 max-w-3xl text-sm leading-relaxed text-white/70">{item.description || item.summary}</p>}
-                        {((activeTab !== "food" || internationalSearch) && getPublicSourceLabel(item.source)) && (
-                          <p className="mt-1 text-xs text-white/40">
-                            Source: {getPublicSourceLabel(item.source)}{internationalSearch && item.checkedAt ? ` · source reviewed ${new Date(`${item.checkedAt}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}
-                          </p>
-                        )}
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          {item.resourceType && <span className="inline-flex rounded-full border border-wcGold/20 bg-wcGold/[0.06] px-2.5 py-1 text-[11px] font-medium text-wcGold/85">{item.resourceType}</span>}
+                          {item.capacity_status && <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${item.capacity_status === "open" ? "bg-green-400/15 text-green-200" : item.capacity_status === "waitlist" ? "bg-yellow-400/15 text-yellow-200" : "bg-red-400/15 text-red-200"}`}>{item.capacity_status === "open" ? "Currently open" : item.capacity_status === "waitlist" ? "Waitlist available" : "Limited availability"}</span>}
+                        </div>
                       </div>
 
                       <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:justify-end">
@@ -1008,9 +993,19 @@ const RealHelpWorkspace = () => {
                       </button>
                       </div>
                     </div>
+                    {(item.source || item.alternatePhone) && (
+                      <details className="mt-2 border-t border-white/[0.07] pt-2">
+                        <summary className="min-h-9 cursor-pointer py-2 text-xs font-medium text-white/60 hover:text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold">Source and additional contact</summary>
+                        <div className="space-y-2 pb-1 text-sm leading-relaxed text-white/70">
+                          {item.alternatePhone && <p>Additional phone: <a className="underline decoration-white/30 underline-offset-2" href={`tel:${String(item.alternatePhone).replace(/[^+\d]/g, "")}`}>{item.alternatePhone}</a></p>}
+                          {item.source && <p className="text-xs text-white/45">Source: {getPublicSourceLabel(item.source)}{item.checkedAt ? ` · reviewed ${new Date(`${item.checkedAt}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}</p>}
+                        </div>
+                      </details>
+                    )}
                   </article>
                 ))}
-              </div>}
+                </div>
+              </details>}
               {requiresLocationProof && broaderLocationResults.length > 0 && (
                 <details open={showBroaderWhenNoLocalMatch || (isNigeriaLocation(region) && broaderLocationResults.length > 0) || (activeTab === "circles" && locatedResults.length === 0)} className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3">
                   <summary className="cursor-pointer text-sm font-medium text-white/75">{activeTab === "circles" ? `Online and wider-area recovery options (${broaderLocationResults.length})` : isNigeriaLocation(region) ? `Statewide, Nigeria-wide and other-city options (${broaderLocationResults.length})` : !hasUSSupportNumbers ? `More support organizations (${broaderLocationResults.length})` : activeTab === "funding" ? `Benefits and referral options (${broaderLocationResults.length})` : activeTab === "emergency" ? `24/7 and wider-area support (${broaderLocationResults.length})` : `Other useful options (${broaderLocationResults.length})`}</summary>
@@ -1022,7 +1017,6 @@ const RealHelpWorkspace = () => {
                           <div className="min-w-0">
                             <h3 className="truncate text-[15px] font-semibold text-white sm:text-base">{item.name || item.title}</h3>
                             <p className="mt-1 text-sm text-white/55">{item.address || item.locationLine || item.region || "Location not listed"}</p>
-                            {(item.description || item.summary) && <p className="mt-1 text-sm leading-relaxed text-white/65">{item.description || item.summary}</p>}
                           </div>
                           <div className="flex shrink-0 items-center gap-1.5">
                             {item.phone && <a href={`tel:${item.phone}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-medium text-white"><PhoneCall className="h-3.5 w-3.5" />Call</a>}

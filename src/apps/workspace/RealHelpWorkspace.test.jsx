@@ -101,9 +101,12 @@ describe("real-world assistance search states", () => {
     renderSearch("/assistance?priority=programs&query=food%20support&region=Denver%2C%20CO");
 
     expect(await screen.findByRole("heading", { name: "Local Recovery Program" })).toBeInTheDocument();
+    expect(screen.queryByText("Substance use treatment and recovery program.")).not.toBeInTheDocument();
+    expect(screen.getByText("Local and location-matched support")).toBeInTheDocument();
     expect(mocks.callAgent).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Details" }));
     const details = screen.getByRole("dialog");
+    expect(within(details).getByText("Substance use treatment and recovery program.")).toBeInTheDocument();
     expect(details).toHaveTextContent("Denver");
     expect(within(details).getByRole("link", { name: "303-555-0100" })).toHaveAttribute("href", "tel:3035550100");
     expect(within(details).getByRole("button", { name: "Back to results" })).toBeInTheDocument();
@@ -595,12 +598,12 @@ describe("real-world assistance search states", () => {
     fireEvent.click(screen.getByRole("button", { name: "Denver, CO" }));
     expect(await screen.findByRole("heading", { name: "Neighborhood Food Pantry" })).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Food support results" })).toContainElement(screen.getByRole("heading", { name: "Neighborhood Food Pantry" }));
-    expect(screen.getByRole("list", { name: "Food support results" })).toHaveTextContent("A welcoming pantry serving neighbors with groceries and household staples.");
+    expect(screen.getByRole("list", { name: "Food support results" })).not.toHaveTextContent("A welcoming pantry serving neighbors with groceries and household staples.");
     expect(screen.getByText("100 Main Street, Denver, CO 80202")).toBeInTheDocument();
     expect(screen.getByText("About 2.4 mi from your search area")).toBeInTheDocument();
     const foodList = screen.getByRole("list", { name: "Food support results" });
     expect(foodList).not.toHaveTextContent("Food support listing");
-    expect(foodList).not.toHaveTextContent("Feed America");
+    expect(within(foodList).getByText("Source: Feed America").closest("details")).not.toHaveAttribute("open");
     expect(foodList).not.toHaveTextContent("hours unconfirmed");
     expect(foodList).not.toHaveTextContent("Information checked");
     expect(within(foodList).queryByRole("button", { name: "Visit Site" })).toBeNull();
