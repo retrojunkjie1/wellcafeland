@@ -1,0 +1,86 @@
+import React, { useMemo, useState } from "react";
+import { ChevronDown, ExternalLink, MapPinned, ShieldAlert } from "lucide-react";
+import { US_COVERAGE_TOTALS, US_DIRECTORY_CATEGORIES, US_DIRECTORY_COVERAGE, getUSStateCoverage } from "@/data/usDirectoryCoverage";
+
+export default function USCoverageAudit() {
+  const [state, setState] = useState("Texas");
+  const [activeCategory, setActiveCategory] = useState("");
+  const selectedCoverage = useMemo(() => getUSStateCoverage(state), [state]);
+  const visibleCategories = activeCategory ? selectedCoverage.filter((category) => category.id === activeCategory) : selectedCoverage;
+  const selectState = (stateName, categoryId = "") => { setState(stateName); setActiveCategory(categoryId); };
+
+  return <section className="mt-4 rounded-3xl border border-sky-100/15 bg-gradient-to-br from-sky-100/[0.04] via-slate-900/75 to-slate-950 p-3 sm:p-4" aria-labelledby="us-coverage-title">
+    <details>
+      <summary className="group flex cursor-pointer list-none items-center gap-3 rounded-2xl p-2 outline-none focus-visible:ring-2 focus-visible:ring-sky-200 [&::-webkit-details-marker]:hidden">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-sky-100/15 bg-sky-100/[0.06] text-sky-100"><MapPinned className="h-5 w-5" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-sky-100/65">United States · coverage review in progress</span>
+          <span id="us-coverage-title" className="mt-0.5 block text-base font-semibold text-white">51 jurisdictions · 6 support categories · {US_COVERAGE_TOTALS.jurisdictionsWithLocalContacts}/51 have a saved local contact</span>
+          <span className="mt-0.5 block text-xs text-white/50">Open state-by-state records and distinguish local contacts from wider referral routes</span>
+        </span>
+        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-white/55 transition-transform group-open:rotate-180" />
+      </summary>
+
+      <div className="mt-3 border-t border-white/10 pt-4">
+        <p className="max-w-4xl text-sm leading-relaxed text-white/65">This ledger measures records in WellnessCafe’s curated U.S. fallback catalog. Local contacts, county access routes, state routes, and national finders are counted separately. The current data does not have a consistent second-source review date for every U.S. record; these numbers do not measure all services in a state and cannot establish exhaustive coverage.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <Metric label="States and District of Columbia" value={US_COVERAGE_TOTALS.jurisdictions} />
+          <Metric label="Saved local contacts" value={US_COVERAGE_TOTALS.localContacts} />
+          <Metric label="Jurisdictions with a local contact" value={`${US_COVERAGE_TOTALS.jurisdictionsWithLocalContacts}/51`} />
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 bg-black/10 p-3">
+            <div><h3 className="text-sm font-semibold">U.S. state coverage snapshot</h3><p className="mt-1 text-xs text-white/50">Select a count to inspect its saved records.</p></div>
+            <label className="min-w-48 text-xs text-white/65">Review a state
+              <select value={state} onChange={(event) => selectState(event.target.value)} className="mt-1 block min-h-10 w-full rounded-lg border border-white/15 bg-slate-950 px-3 text-sm text-white">
+                {US_DIRECTORY_COVERAGE.map((entry) => <option key={entry.code} value={entry.state}>{entry.state}</option>)}
+              </select>
+            </label>
+          </div>
+          <details className="group border-t border-white/[0.08]">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 px-3 text-xs font-medium text-white/65 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200">
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /> Open state-by-state table
+            </summary>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[820px] border-collapse text-left text-xs" aria-label="Saved U.S. support records">
+                <thead className="bg-white/[0.035] text-white/55"><tr><th className="p-2.5">State</th>{US_DIRECTORY_CATEGORIES.map((category) => <th key={category.id} className="p-2.5">{category.label}</th>)}</tr></thead>
+                <tbody>{US_DIRECTORY_COVERAGE.map((entry) => <tr key={entry.code} className={`border-t border-white/[0.07] ${entry.state === state ? "bg-sky-100/[0.05]" : "hover:bg-white/[0.02]"}`}>
+                  <th scope="row" className="p-2.5 font-medium text-white/75">{entry.state}</th>
+                  {entry.categories.map((category) => <td key={category.id} className="p-2.5"><button type="button" onClick={() => selectState(entry.state, category.id)} aria-label={`${entry.state}, ${category.label}: ${category.localContacts.length} local, ${category.countywideRoutes.length} countywide, ${category.statewideRoutes.length} statewide routes`} className="min-h-9 rounded-md px-2 text-left text-white/65 hover:bg-sky-100/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"><span className="block">{category.localContacts.length} local</span><span className="block text-[10px] text-white/40">{category.countywideRoutes.length} county routes</span><span className="text-[10px] text-white/40">{category.statewideRoutes.length} state routes</span></button></td>)}
+                </tr>)}</tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <div className="mt-3 rounded-2xl border border-white/10 bg-black/10 p-3 sm:p-4" aria-live="polite">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div><h3 className="font-semibold text-white">{state}: {activeCategory ? US_DIRECTORY_CATEGORIES.find((category) => category.id === activeCategory)?.label : "saved records by category"}</h3><p className="mt-1 text-xs text-white/50">A county or state access route and a nationwide finder are not a local provider address or an open appointment.</p></div>
+            <div className="flex flex-wrap gap-2"><span className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/60">{selectedCoverage.reduce((sum, category) => sum + category.records.length, 0)} state-linked records</span>{activeCategory && <button type="button" onClick={() => setActiveCategory("")} className="min-h-8 rounded-full border border-white/15 px-3 text-xs text-white/70 hover:bg-white/5">Show all categories</button>}</div>
+          </div>
+          <div className="mt-3 grid gap-2 lg:grid-cols-2">
+            {visibleCategories.map((category) => <article key={category.id} className="rounded-xl border border-white/[0.09] bg-slate-950/40 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2"><h4 className="text-sm font-medium text-white/85">{category.label}</h4><span className="text-[11px] text-white/45">{category.localContacts.length} local · {category.countywideRoutes.length} county · {category.statewideRoutes.length} state · {category.nationwideRoutes.length} national routes</span></div>
+              {category.records.length === 0 ? <p className="mt-2 text-xs text-white/45">No local or area-linked record is saved in this category yet.</p> : <ul className="mt-2 space-y-2">{category.records.map((record) => <Record key={record.id} record={record} local={category.localContacts.includes(record)} />)}</ul>}
+              {category.nationwideRoutes.length > 0 && <div className="mt-3 border-t border-white/[0.08] pt-3"><p className="text-[11px] font-medium uppercase tracking-wide text-emerald-100/60">Nationwide routes · not local listings</p><ul className="mt-2 space-y-2">{category.nationwideRoutes.map((record) => <Record key={record.id} record={record} local={false} />)}</ul></div>}
+            </article>)}
+          </div>
+        </div>
+        <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-white/45"><ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-sky-100/70" />Coverage must be researched, cross-checked, and refreshed state by state and category by category. A listing count is never a count of all services in that place.</p>
+      </div>
+    </details>
+  </section>;
+}
+
+function Record({ record, local }) {
+  return <li className="rounded-lg border border-white/[0.07] p-2.5">
+    <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm text-white/85">{record.name}</p><p className="mt-0.5 text-[11px] text-white/45">{local ? "Location-linked contact · current availability needs confirmation" : record.coverageScope === "county" ? "Countywide access route · not a city provider" : record.coverageScope === "state" ? "Statewide access route · not a local provider" : "Referral route · not a local provider"}</p></div>{record.link && <a href={record.link} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-xs text-amber-100/80 underline underline-offset-2 hover:bg-amber-100/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200">Open source <ExternalLink className="h-3 w-3" /></a>}</div>
+    <p className="mt-1 text-xs leading-relaxed text-white/55">{[record.address, record.city, record.state, record.phone && `Phone: ${record.phone}`, record.email && `Email: ${record.email}`].filter(Boolean).join(" · ") || record.locationLine || "Contact details are not saved."}</p>
+    <p className="mt-1 text-[11px] text-white/40">Source: {record.source || "Not recorded"}</p>
+  </li>;
+}
+
+function Metric({ label, value }) {
+  return <article className="rounded-xl border border-white/10 bg-black/10 p-3"><p className="text-[11px] leading-relaxed text-white/50">{label}</p><p className="mt-1 text-xl font-semibold text-white">{value}</p></article>;
+}

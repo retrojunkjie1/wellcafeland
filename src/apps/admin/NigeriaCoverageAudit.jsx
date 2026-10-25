@@ -23,19 +23,19 @@ export default function NigeriaCoverageAudit() {
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-amber-100/20 bg-amber-100/[0.07] text-amber-100"><MapPinned className="h-5 w-5" /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-amber-100/65">Nigeria · coverage review in progress</span>
-          <span id="nigeria-coverage-title" className="mt-0.5 block text-base font-semibold text-white">37 jurisdictions · 6 support categories · {NIGERIA_COVERAGE_TOTALS.independentlyVerifiedJurisdictions}/37 independently checked</span>
+          <span id="nigeria-coverage-title" className="mt-0.5 block text-base font-semibold text-white">37 jurisdictions · 6 support categories · {NIGERIA_COVERAGE_TOTALS.independentlyVerifiedJurisdictions}/37 with a second-source check</span>
           <span className="mt-0.5 block text-xs text-white/50">Open the state-by-state evidence and source gaps</span>
         </span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-white/55 transition-transform group-open:rotate-180" />
       </summary>
 
       <div className="mt-3 border-t border-white/10 pt-4">
-        <p className="max-w-4xl text-sm leading-relaxed text-white/65">This ledger counts records currently in WellnessCafe’s Nigeria source file across all 36 states and the FCT. State offices and national referrals are not local providers. An independent check requires a second source and a recorded review date; none is recorded here, so this directory cannot be called complete or independently verified.</p>
+        <p className="max-w-4xl text-sm leading-relaxed text-white/65">This ledger counts records currently in WellnessCafe’s Nigeria source file across all 36 states and the FCT. State offices and national referrals are not local providers. A second-source check means a record was cross-checked against another publisher and dated; it does not mean the provider answered a phone call, has an open bed, or that all local services have been found.</p>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
           <Metric label="States and FCT in scope" value={NIGERIA_COVERAGE_TOTALS.jurisdictions} detail="36 states plus the FCT" />
           <Metric label="Support categories" value={NIGERIA_COVERAGE_TOTALS.categories} detail="Treatment, peer, housing, food, benefits, urgent" />
-          <Metric label="Independently checked" value={`${NIGERIA_COVERAGE_TOTALS.independentlyVerifiedJurisdictions}/37`} detail="No second-source checks recorded" />
+          <Metric label="Second-source checks" value={`${NIGERIA_COVERAGE_TOTALS.independentlyVerifiedJurisdictions}/37`} detail="At least one cross-publisher check by jurisdiction" />
           <Metric label="State referral routes" value={NIGERIA_COVERAGE_TOTALS.stateReferralRoutes} detail="Not local-provider counts" />
           <Metric label="NDLEA contacts in source" value={`${NIGERIA_COVERAGE_TOTALS.statesWithNdleaContact}/36`} detail="One government directory" />
         </div>

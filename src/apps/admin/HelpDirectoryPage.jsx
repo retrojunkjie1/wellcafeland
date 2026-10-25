@@ -4,6 +4,7 @@ import { ArrowLeft, Archive, Check, ChevronDown, MapPin, Pause, RefreshCw, Save,
 import { useAdminClaim } from "@/hooks/useAdminClaim";
 import { listHelpDirectoryForAdmin, reviewHelpDirectoryCorrection, saveHelpDirectoryDraft, setHelpDirectoryStatus } from "@/services/helpDirectory";
 import NigeriaCoverageAudit from "./NigeriaCoverageAudit";
+import USCoverageAudit from "./USCoverageAudit";
 
 const FILTERS = ["draft", "published", "paused", "archived", "all"];
 const EMPTY = { name: "", category: "housing", description: "", address: "", city: "", state: "", subdivision: "", postalCode: "", phone: "", alternatePhone: "", email: "", country: "United States", countryCode: "US", sourceName: "", sourceUrl: "", permissionBasis: "", checkedAt: new Date().toISOString().slice(0, 10) };
@@ -150,6 +151,7 @@ export default function HelpDirectoryPage() {
         <Snapshot icon={Flag} label="Support categories represented" value={categoryCount} detail={`${corrections.filter((report) => report.status === "open").length} listing reports need review.`} />
       </section>}
 
+      <USCoverageAudit />
       <NigeriaCoverageAudit />
 
       {error && !loadFailed && <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-rose-200/20 bg-rose-950/25 p-4 text-sm text-rose-50"><p className="max-w-2xl leading-relaxed">{error}</p><button type="button" onClick={refreshAccessAndDirectory} disabled={refreshingAccess} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-rose-100/20 px-3 text-sm text-rose-50 hover:bg-rose-100/5 disabled:opacity-50"><RefreshCw className={`h-4 w-4 ${refreshingAccess ? "animate-spin" : ""}`} />{refreshingAccess ? "Refreshing access…" : "Refresh access and services"}</button></div>}

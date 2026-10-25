@@ -8,6 +8,7 @@
  */
 const NDLEA_DIRECTORY_URL = "https://www.ndlea.gov.ng/rehabilitation";
 const CHECKED_AT = "2026-10-22";
+const FEDERAL_HEALTH_DIRECTORY_URL = "https://health.gov.ng/specialty-hospitals/";
 
 const stateCommands = [
   ["abia", "Aba", "Old Party Secretariat, Ogbor Hill, Aba, Abia State", "08065536820"],
@@ -137,6 +138,52 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
     phone: "+2347056409301", link: "https://synapseservices.org/index.html", source: "Synapse Services",
     verified: true, city: "Awka", state: "Anambra", country: "Nigeria", region: "Awka, Anambra, Nigeria",
     address: "No. 24 Senator Uche Ekwunife Crescent, by Valuation House, Awka, Anambra State, Nigeria", locationLine: "Awka, Anambra", checkedAt: CHECKED_AT,
+  },
+  {
+    id: "fnph-kaduna-mental-health", name: "Federal Neuro-Psychiatric Hospital Kaduna",
+    resourceType: "Public psychiatric hospital · outpatient, inpatient, and addiction care",
+    description: "Federal specialist hospital providing mental-health care in Kaduna. Its public contact page lists an enquiry line and Barnawa location. Call to ask for the patient-intake desk, current assessment process, service costs, and whether the appropriate service is available before travelling. This listing does not confirm a bed or same-day appointment.",
+    phone: "08032722243", email: "info@fnphkaduna.gov.ng", link: "https://fnphkaduna.gov.ng/", source: "Federal Neuro-Psychiatric Hospital Kaduna",
+    verified: true, city: "Kaduna", state: "Kaduna", country: "Nigeria", region: "Kaduna, Nigeria",
+    address: "Opposite Shagari Low Cost, Barnawa, Kaduna, Nigeria", locationLine: "Barnawa, Kaduna · enquiry hours listed 8:00am–4:00pm",
+    independentSourceUrl: FEDERAL_HEALTH_DIRECTORY_URL, independentlyVerifiedAt: "2026-10-24", checkedAt: "2026-10-24",
+  },
+  {
+    id: "fnph-kware-sokoto-mental-health", name: "Federal Neuropsychiatric Hospital Kware",
+    resourceType: "Public psychiatric hospital · emergency and ongoing mental-health care",
+    description: "Federal specialist hospital serving Sokoto and surrounding areas. The hospital publishes its emergency contact and says psychiatric and medical emergency care is available around the clock. Call before travelling when possible; emergency care access and available services should be confirmed directly.",
+    phone: "07068334606", email: "info@fnphkware.gov.ng", link: "https://fnphkware.gov.ng/", source: "Federal Neuropsychiatric Hospital Kware",
+    verified: true, city: "Kware", state: "Sokoto", country: "Nigeria", region: "Kware, Sokoto, Nigeria",
+    address: "Federal Neuropsychiatric Hospital, Kware, Sokoto State, Nigeria", locationLine: "Kware · hospital publishes 24/7 emergency psychiatric and medical care",
+    independentSourceUrl: FEDERAL_HEALTH_DIRECTORY_URL, independentlyVerifiedAt: "2026-10-24", checkedAt: "2026-10-24",
+  },
+  {
+    id: "fnph-benin-mental-health", name: "Federal Neuro-Psychiatric Hospital Benin City",
+    resourceType: "Public psychiatric hospital · rehabilitation and substance-use treatment",
+    description: "The hospital describes psychiatric and rehabilitative care, including substance-use treatment, at its Benin City sites. Call the hospital to confirm the correct clinic, intake steps, costs, and the site for the service you need; its administrative and permanent sites are different.",
+    phone: "+2348032231189", alternatePhone: "+2348151130304", email: "contactus@fnphbenin.gov.ng", link: "https://new2020.fnphbenin.gov.ng/", source: "Federal Neuro-Psychiatric Hospital Benin City",
+    verified: true, city: "Benin City", state: "Edo", country: "Nigeria", region: "Benin City, Edo, Nigeria",
+    address: "Uselu site: #39 Uselu, New Lagos Road, before Medical Junction; permanent site: Urora Road, Benin City, Edo State, Nigeria",
+    locationLine: "Benin City · two hospital sites · call to confirm destination and intake",
+    independentSourceUrl: FEDERAL_HEALTH_DIRECTORY_URL, independentlyVerifiedAt: "2026-10-24", checkedAt: "2026-10-24",
+  },
+  {
+    id: "fnph-calabar-mental-health", name: "Federal Neuro-Psychiatric Hospital Calabar",
+    resourceType: "Public psychiatric hospital · specialist mental-health care",
+    description: "Federal specialist mental-health hospital in Calabar. The hospital publishes a public contact route and address; call to confirm the appropriate clinic, intake, costs, and appointment requirements before travelling.",
+    email: "contact@fnphcalabar.gov.ng", link: "https://fnphcalabar.gov.ng/", source: "Federal Neuro-Psychiatric Hospital Calabar",
+    verified: true, city: "Calabar", state: "Cross River", country: "Nigeria", region: "Calabar, Cross River, Nigeria",
+    address: "123 Calabar Road, Calabar South, Cross River State, Nigeria", locationLine: "Calabar · call to confirm current clinic and patient-intake details",
+    independentSourceUrl: FEDERAL_HEALTH_DIRECTORY_URL, independentlyVerifiedAt: "2026-10-24", checkedAt: "2026-10-24",
+  },
+  {
+    id: "neuropsychiatric-hospital-aro-abeokuta", name: "Neuropsychiatric Hospital Aro, Abeokuta",
+    resourceType: "Public tertiary psychiatric hospital · clinical assessment and treatment",
+    description: "Federal tertiary hospital offering psychiatric and general medical care, clinical services, training, and research. Contact the hospital to ask for outpatient intake, the service that fits your needs, fees, and current access before travelling.",
+    phone: "+2348038422422", alternatePhone: "+2349036380203", email: "provost@neuroaro.gov.ng", link: "https://portal.neuroaro.gov.ng/", source: "Neuropsychiatric Hospital Aro Abeokuta",
+    verified: true, city: "Abeokuta", state: "Ogun", country: "Nigeria", region: "Abeokuta, Ogun, Nigeria",
+    address: "Neuropsychiatric Hospital Aro, Abeokuta, Ogun State, Nigeria", locationLine: "Aro, Abeokuta · contact hospital for the right clinical intake route",
+    independentSourceUrl: FEDERAL_HEALTH_DIRECTORY_URL, independentlyVerifiedAt: "2026-10-24", checkedAt: "2026-10-24",
   },
   {
     id: "emmanuel-alayande-ibadan-rehabilitation", name: "Emmanuel Alayande Rehabilitation Centre",

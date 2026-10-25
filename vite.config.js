@@ -73,6 +73,9 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             "framer-motion": ["framer-motion"],
+            // Keep the growing country-scoped directory data out of the
+            // shared fallback chunk so the two assets stay independently cacheable.
+            "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             "luxury-ui": [
               "./src/components/layout/AmbientOrbs",
               "./src/components/explore/CategoryChips",

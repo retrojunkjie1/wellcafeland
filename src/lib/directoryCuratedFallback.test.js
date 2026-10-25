@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { getCuratedFallback, isUSLocation } from "./directoryCuratedFallback";
+import { getUSStateCoverage } from "@/data/usDirectoryCoverage";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
 
 vi.mock("@/services/foodDirectory", () => ({
@@ -57,6 +58,210 @@ describe("category fallback pathways", () => {
     expect(local.find((resource) => resource.id === "dallas-ceap-utility-assistance")).toMatchObject({
       phone: "214-819-1848",
       address: "2377 N. Stemmons Freeway, Suite 201, Dallas, TX 75207",
+    });
+  });
+
+  it("expands Dallas food, housing, and treatment with named local providers", () => {
+    const food = getCuratedFallback("food.essentials", "food pantry food assistance", "Dallas, TX");
+    expect(food.find((resource) => resource.id === "dallas-crossroads-community-market")).toMatchObject({
+      phone: "469-860-6090",
+      address: "4500 S. Cockrell Hill Road, Dallas, TX 75236",
+    });
+    const housing = getCuratedFallback("housing", "recovery housing shelter", "Dallas, TX");
+    expect(housing.map((resource) => resource.id)).toContain("dallas-housing-crisis-center");
+    const treatment = getCuratedFallback("programs", "recovery support programs", "Dallas, TX");
+    expect(treatment.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "dallas-homeward-bound-recovery",
+      "dallas-metrocare-bridge-sud",
+    ]));
+  });
+
+  it("expands Houston across treatment, peer support, housing, food, benefits, and crisis access", () => {
+    const treatment = getCuratedFallback("programs", "recovery groups", "Houston, TX");
+    expect(treatment.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "houston-menninger-addiction-access",
+      "houston-crwr-outpatient-moud-treatment",
+      "houston-santa-maria-hostel-treatment",
+      "houston-council-on-recovery",
+      "houston-recovery-center",
+      "harris-center-houston-sud",
+    ]));
+    expect(treatment.find((resource) => resource.id === "houston-santa-maria-hostel-treatment")).toMatchObject({
+      phone: "713-691-0900",
+      address: "2605 Parker Road, Houston, TX 77093",
+      email: "admissions@santamariahostel.org",
+    });
+    expect(treatment.find((resource) => resource.id === "houston-crwr-outpatient-moud-treatment")).toMatchObject({
+      phone: "832-373-3050",
+      address: "4014 Market Street, Houston, TX 77020",
+    });
+    expect(treatment.find((resource) => resource.id === "houston-menninger-addiction-access")).toMatchObject({
+      phone: "713-275-5400",
+      address: "12301 S. Main St., Houston, TX 77035",
+    });
+    const peers = getCuratedFallback("peer", "recovery groups", "Houston, TX");
+    expect(peers.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "houston-crwr-recovery-community-center",
+      "houston-health-department-reentry-peer-group",
+      "houston-grace-place-youth-community",
+      "nami-houston-connection-menninger",
+      "nami-houston-family-support-museum-district",
+      "nami-houston-family-support-sunnyside",
+    ]));
+    const housing = getCuratedFallback("housing", "safe place", "Houston, TX");
+    expect(housing.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "houston-daya-survivor-housing-support",
+      "houston-bridge-over-troubled-waters-shelter",
+      "houston-search-homeless-outreach",
+      "houston-lone-star-legal-aid-eviction-defense",
+      "houston-crwr-recovery-housing",
+      "houston-hawc-confidential-shelter-access",
+      "houston-grace-place-youth-housing-navigation",
+      "houston-asias-house-teen-shelter",
+      "houston-magnificat-house-shelter",
+      "houston-covenant-house-youth-shelter",
+      "houston-star-of-hope-men-shelter",
+      "houston-star-of-hope-women-families",
+      "houston-mission-of-yahweh-shelter",
+      "houston-open-door-recovery-housing",
+      "houston-coalition-homeless-navigation",
+    ]));
+    const hawcHousing = housing.find((resource) => resource.id === "houston-hawc-confidential-shelter-access");
+    expect(hawcHousing).toMatchObject({ phone: "713-528-2121", city: "Houston", state: "TX" });
+    expect(hawcHousing.address).toBeUndefined();
+    expect(hawcHousing.description).toMatch(/shelter address is confidential/i);
+    expect(housing.find((resource) => resource.id === "houston-covenant-house-youth-shelter")).toMatchObject({
+      phone: "713-523-2231",
+      address: "1111 Lovett Boulevard, Houston, TX 77006",
+    });
+    expect(housing.find((resource) => resource.id === "houston-asias-house-teen-shelter").address).toBeUndefined();
+    expect(housing.find((resource) => resource.id === "houston-magnificat-house-shelter")).toMatchObject({
+      phone: "713-529-4231",
+      address: "1410 Elgin Street, Houston, TX 77004",
+    });
+    expect(housing.find((resource) => resource.id === "houston-open-door-recovery-housing").description).toMatch(/not a walk-in emergency shelter/i);
+    expect(housing.find((resource) => resource.id === "houston-search-homeless-outreach")).toMatchObject({
+      phone: "713-739-7752",
+      address: "1712 Pease St., Houston, TX 77003",
+    });
+    expect(housing.find((resource) => resource.id === "houston-search-homeless-outreach").description).toMatch(/not a walk-in shelter/i);
+    expect(housing.find((resource) => resource.id === "houston-daya-survivor-housing-support")).toMatchObject({
+      phone: "713-981-7645",
+      city: "Houston",
+      state: "TX",
+    });
+    expect(housing.find((resource) => resource.id === "houston-daya-survivor-housing-support").address).toBeUndefined();
+    expect(housing.find((resource) => resource.id === "houston-bridge-over-troubled-waters-shelter")).toMatchObject({
+      phone: "713-473-2801",
+      address: "Pasadena office: 3811 Allen Genoa Rd., Pasadena, TX 77504",
+    });
+    const food = getCuratedFallback("food.essentials", "food assistance", "Houston, TX");
+    expect(food.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "houston-emergency-aid-coalition-pantry",
+      "houston-food-bank-find-food",
+      "houston-icna-relief-food-pantry",
+      "houston-grace-place-youth-meals",
+      "houston-catholic-charities-guadalupe-market",
+      "houston-wesley-choice-pantry",
+      "houston-wham-food-pantry",
+      "houston-st-charles-food-pantry",
+      "houston-st-maximilian-food-pantry",
+      "houston-st-thomas-more-food-pantry",
+    ]));
+    expect(food.find((resource) => resource.id === "houston-wesley-choice-pantry")).toMatchObject({
+      phone: "713-236-9008",
+      address: "1235 Lorraine Street, Houston, TX 77009",
+    });
+    expect(food.find((resource) => resource.id === "houston-emergency-aid-coalition-pantry")).toMatchObject({
+      phone: "713-528-3663",
+      alternatePhone: "713-343-3061",
+      address: "5401 Fannin Street, Houston, TX 77004",
+    });
+    expect(food.find((resource) => resource.id === "houston-st-thomas-more-food-pantry")).toMatchObject({
+      phone: "713-980-3113",
+      address: "10330 Hillcroft Street, Houston, TX 77096",
+    });
+    const benefits = getCuratedFallback("grants", "rent assistance", "Houston, TX");
+    expect(benefits.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "houston-food-bank-benefit-application-assistance",
+      "houston-bakerripley-utility-assistance",
+      "houston-ccsc-rent-utilities",
+      "houston-harris-county-emergency-assistance",
+    ]));
+    expect(benefits.find((resource) => resource.id === "houston-bakerripley-utility-assistance").description).toMatch(/applications were closed/i);
+    expect(benefits.find((resource) => resource.id === "houston-food-bank-benefit-application-assistance")).toMatchObject({
+      phone: "832-369-9390",
+      address: "Houston Food Bank, 2nd floor, 535 Portwall Street, Houston, TX 77029",
+    });
+    const urgent = getCuratedFallback("hotlines", "crisis support", "Houston, TX");
+    expect(urgent.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "houston-daya-confidential-survivor-helpline",
+      "houston-bridge-survivor-24-hour-line",
+      "houston-search-homeless-intake",
+      "harris-center-houston-crisis-access",
+      "houston-hawc-survivor-hotlines",
+      "houston-covenant-house-youth-help",
+      "houston-asias-house-teen-crisis",
+      "houston-grace-place-youth-support",
+    ]));
+    expect(urgent.find((resource) => resource.id === "houston-hawc-survivor-hotlines")).toMatchObject({
+      phone: "713-528-2121",
+      alternatePhone: "713-528-7273",
+    });
+    expect(urgent.find((resource) => resource.id === "houston-search-homeless-intake")).toMatchObject({
+      phone: "713-739-7752",
+      alternatePhone: "211",
+    });
+    expect(urgent.find((resource) => resource.id === "houston-daya-confidential-survivor-helpline")).toMatchObject({
+      phone: "713-981-7645",
+      city: "Houston",
+      state: "TX",
+    });
+    expect(urgent.find((resource) => resource.id === "houston-bridge-survivor-24-hour-line")).toMatchObject({
+      phone: "713-473-2801",
+      city: "Houston",
+      state: "TX",
+    });
+
+    const dallas = getCuratedFallback("housing", "safe place", "Dallas, TX");
+    expect(dallas.some((resource) => resource.id.startsWith("houston-"))).toBe(false);
+  });
+
+  it("adds source-reviewed California contacts across all six categories and keeps LA addresses local", () => {
+    const categories = ["programs", "peer", "housing", "food.essentials", "grants", "hotlines"];
+    expect(isUSLocation("Los Angeles")).toBe(true);
+    for (const category of categories) {
+      const records = getCuratedFallback(category, "", "Los Angeles, CA");
+      expect(records.some((record) => record.state === "CA"), `${category} should have a California pathway`).toBe(true);
+    }
+
+    const treatment = getCuratedFallback("programs", "recovery groups", "Los Angeles, CA");
+    expect(treatment).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-la-sapc-substance-use-treatment-access", phone: "1-844-804-7500", state: "CA" }),
+      expect.objectContaining({ id: "ca-la-midnight-mission-12-step-recovery", city: "Los Angeles", state: "CA" }),
+    ]));
+    expect(getCuratedFallback("food.essentials", "", "Los Angeles, CA")).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-la-uchc-oneill-food-pantry", address: "O’Neill Clinic, 1919 San Pedro St., Los Angeles, CA 90011" }),
+      expect.objectContaining({ id: "ca-la-regional-food-bank-pantry-finder", description: expect.stringMatching(/food is not distributed at its warehouse/i) }),
+    ]));
+    expect(getCuratedFallback("housing", "", "California").some((record) => record.city === "Los Angeles")).toBe(false);
+
+    const audit = getUSStateCoverage("California");
+    expect(audit).toHaveLength(6);
+    expect(audit.every((category) => category.localContacts.length > 0 || category.countywideRoutes.length > 0 || category.statewideRoutes.length > 0)).toBe(true);
+    expect(audit.find((category) => category.id === "housing").localContacts.map((record) => record.id)).toContain("ca-la-midnight-mission-emergency-shelter");
+    expect(audit.find((category) => category.id === "hotlines").countywideRoutes.map((record) => record.id)).toContain("ca-la-dmh-24-7-help-line");
+  });
+
+  it("shows state-specific Nigeria public hospitals as treatment contacts with independent source dates", () => {
+    const resources = getCuratedFallback("programs", "recovery support programs", "Sokoto, Nigeria");
+    expect(resources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "fnph-kware-sokoto-mental-health", phone: "07068334606", independentlyVerifiedAt: "2026-10-24" }),
+    ]));
+    const crossRiver = getCuratedFallback("programs", "recovery support programs", "Calabar, Nigeria");
+    expect(crossRiver.find((resource) => resource.id === "fnph-calabar-mental-health")).toMatchObject({
+      email: "contact@fnphcalabar.gov.ng",
+      address: "123 Calabar Road, Calabar South, Cross River State, Nigeria",
     });
   });
 
