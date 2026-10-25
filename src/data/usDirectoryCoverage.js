@@ -9,6 +9,14 @@ export const US_DIRECTORY_CATEGORIES = [
   { id: "hotlines", label: "Urgent support" },
 ];
 
+// Planning target for the initial U.S. catalog, not a cap on valid records.
+// Counts are unique, state-tagged resource records across the six categories;
+// nationwide-only pathways are excluded from state progress.
+export const US_DIRECTORY_TARGET = {
+  minimumRecordsPerState: 75,
+  upperPlanningRangePerState: 125,
+};
+
 export const US_JURISDICTIONS = [
   ["Alabama", "AL"], ["Alaska", "AK"], ["Arizona", "AZ"], ["Arkansas", "AR"], ["California", "CA"],
   ["Colorado", "CO"], ["Connecticut", "CT"], ["Delaware", "DE"], ["Florida", "FL"], ["Georgia", "GA"],
@@ -27,7 +35,7 @@ const dedupe = (records) => records.filter((record, index) => records.findIndex(
 export function getUSStateCoverage(stateName) {
   const jurisdiction = US_JURISDICTIONS.find((entry) => entry.state.toLowerCase() === String(stateName).toLowerCase() || entry.code.toLowerCase() === String(stateName).toLowerCase());
   if (!jurisdiction) return [];
-  return US_DIRECTORY_CATEGORIES.map((category) => {
+  const categories = US_DIRECTORY_CATEGORIES.map((category) => {
     const localRecords = dedupe(US_LOCAL_RESOURCE_CATALOG[category.id] || [])
       .filter((record) => record.state === jurisdiction.code);
     const searchRecords = dedupe(getCuratedFallback(category.id, "", jurisdiction.state));
@@ -37,14 +45,26 @@ export function getUSStateCoverage(stateName) {
     const localContacts = localRecords.filter((record) => Boolean(record.city));
     return { ...category, records: dedupe([...localRecords, ...countywideRoutes, ...statewideRoutes]), localContacts, countywideRoutes, statewideRoutes, nationwideRoutes };
   });
+  return categories;
 }
+
+const countStateLinkedRecords = (categories) => dedupe(categories.flatMap((category) => category.records)).length;
 
 export const US_DIRECTORY_COVERAGE = US_JURISDICTIONS.map(({ state, code }) => {
   const categories = getUSStateCoverage(state);
+  const stateLinkedRecordCount = countStateLinkedRecords(categories);
+  const targetStatus = stateLinkedRecordCount < US_DIRECTORY_TARGET.minimumRecordsPerState
+    ? "below-minimum"
+    : stateLinkedRecordCount <= US_DIRECTORY_TARGET.upperPlanningRangePerState
+      ? "in-range"
+      : "above-range";
   return {
     state,
     code,
     categories,
+    stateLinkedRecordCount,
+    targetStatus,
+    meetsMinimum: targetStatus !== "below-minimum",
     localContacts: categories.reduce((sum, category) => sum + category.localContacts.length, 0),
     categoriesWithLocalContacts: categories.filter((category) => category.localContacts.length > 0).length,
   };
@@ -53,6 +73,11 @@ export const US_DIRECTORY_COVERAGE = US_JURISDICTIONS.map(({ state, code }) => {
 export const US_COVERAGE_TOTALS = {
   jurisdictions: US_DIRECTORY_COVERAGE.length,
   categories: US_DIRECTORY_CATEGORIES.length,
+  statesInTargetRange: US_DIRECTORY_COVERAGE.filter((entry) => entry.targetStatus === "in-range").length,
+  statesAboveTargetRange: US_DIRECTORY_COVERAGE.filter((entry) => entry.targetStatus === "above-range").length,
+  statesBelowMinimum: US_DIRECTORY_COVERAGE.filter((entry) => entry.targetStatus === "below-minimum").length,
+  statesAtMinimum: US_DIRECTORY_COVERAGE.filter((entry) => entry.meetsMinimum).length,
+  stateLinkedRecords: US_DIRECTORY_COVERAGE.reduce((sum, entry) => sum + entry.stateLinkedRecordCount, 0),
   jurisdictionsWithLocalContacts: US_DIRECTORY_COVERAGE.filter((entry) => entry.localContacts > 0).length,
   localContacts: US_DIRECTORY_COVERAGE.reduce((sum, entry) => sum + entry.localContacts, 0),
 };

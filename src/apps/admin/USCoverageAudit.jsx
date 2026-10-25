@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { ChevronDown, ExternalLink, MapPinned, ShieldAlert } from "lucide-react";
-import { US_COVERAGE_TOTALS, US_DIRECTORY_CATEGORIES, US_DIRECTORY_COVERAGE, getUSStateCoverage } from "@/data/usDirectoryCoverage";
+import { US_COVERAGE_TOTALS, US_DIRECTORY_CATEGORIES, US_DIRECTORY_COVERAGE, US_DIRECTORY_TARGET, getUSStateCoverage } from "@/data/usDirectoryCoverage";
 
 export default function USCoverageAudit() {
   const [state, setState] = useState("Texas");
   const [activeCategory, setActiveCategory] = useState("");
   const selectedCoverage = useMemo(() => getUSStateCoverage(state), [state]);
+  const selectedStateCoverage = US_DIRECTORY_COVERAGE.find((entry) => entry.state === state);
   const visibleCategories = activeCategory ? selectedCoverage.filter((category) => category.id === activeCategory) : selectedCoverage;
   const selectState = (stateName, categoryId = "") => { setState(stateName); setActiveCategory(categoryId); };
 
@@ -15,18 +16,19 @@ export default function USCoverageAudit() {
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-sky-100/15 bg-sky-100/[0.06] text-sky-100"><MapPinned className="h-5 w-5" /></span>
         <span className="min-w-0 flex-1">
           <span className="block text-xs font-semibold uppercase tracking-[0.16em] text-sky-100/65">United States · coverage review in progress</span>
-          <span id="us-coverage-title" className="mt-0.5 block text-base font-semibold text-white">51 jurisdictions · 6 support categories · {US_COVERAGE_TOTALS.jurisdictionsWithLocalContacts}/51 have a saved local contact</span>
-          <span className="mt-0.5 block text-xs text-white/50">Open state-by-state records and distinguish local contacts from wider referral routes</span>
+          <span id="us-coverage-title" className="mt-0.5 block text-base font-semibold text-white">51 jurisdictions · 6 support categories · {US_COVERAGE_TOTALS.statesInTargetRange}/51 in the {US_DIRECTORY_TARGET.minimumRecordsPerState}–{US_DIRECTORY_TARGET.upperPlanningRangePerState} target range</span>
+          <span className="mt-0.5 block text-xs text-white/50">Initial target: {US_DIRECTORY_TARGET.minimumRecordsPerState}–{US_DIRECTORY_TARGET.upperPlanningRangePerState} unique state-linked records per jurisdiction</span>
         </span>
         <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-white/55 transition-transform group-open:rotate-180" />
       </summary>
 
       <div className="mt-3 border-t border-white/10 pt-4">
-        <p className="max-w-4xl text-sm leading-relaxed text-white/65">This ledger measures records in WellnessCafe’s curated U.S. fallback catalog. Local contacts, county access routes, state routes, and national finders are counted separately. The current data does not have a consistent second-source review date for every U.S. record; these numbers do not measure all services in a state and cannot establish exhaustive coverage.</p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <p className="max-w-4xl text-sm leading-relaxed text-white/65">The initial catalog target is {US_DIRECTORY_TARGET.minimumRecordsPerState}–{US_DIRECTORY_TARGET.upperPlanningRangePerState} distinct records tagged to each state across the six support categories. Counts include local contacts and county or state access routes, deduplicate repeated IDs, and exclude national-only pathways. The target guides directory growth; it is not a count of every service or proof of exhaustive coverage. Confirm current availability with each organization.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
           <Metric label="States and District of Columbia" value={US_COVERAGE_TOTALS.jurisdictions} />
+          <Metric label="States in target range" value={`${US_COVERAGE_TOTALS.statesInTargetRange}/51`} />
+          <Metric label="Unique state-linked records" value={US_COVERAGE_TOTALS.stateLinkedRecords} />
           <Metric label="Saved local contacts" value={US_COVERAGE_TOTALS.localContacts} />
-          <Metric label="Jurisdictions with a local contact" value={`${US_COVERAGE_TOTALS.jurisdictionsWithLocalContacts}/51`} />
         </div>
 
         <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
@@ -43,10 +45,11 @@ export default function USCoverageAudit() {
               <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" /> Open state-by-state table
             </summary>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[820px] border-collapse text-left text-xs" aria-label="Saved U.S. support records">
-                <thead className="bg-white/[0.035] text-white/55"><tr><th className="p-2.5">State</th>{US_DIRECTORY_CATEGORIES.map((category) => <th key={category.id} className="p-2.5">{category.label}</th>)}</tr></thead>
+              <table className="w-full min-w-[940px] border-collapse text-left text-xs" aria-label="Saved U.S. support records">
+                <thead className="bg-white/[0.035] text-white/55"><tr><th className="p-2.5">State</th><th className="p-2.5">Unique records · target {US_DIRECTORY_TARGET.minimumRecordsPerState}–{US_DIRECTORY_TARGET.upperPlanningRangePerState}</th>{US_DIRECTORY_CATEGORIES.map((category) => <th key={category.id} className="p-2.5">{category.label}</th>)}</tr></thead>
                 <tbody>{US_DIRECTORY_COVERAGE.map((entry) => <tr key={entry.code} className={`border-t border-white/[0.07] ${entry.state === state ? "bg-sky-100/[0.05]" : "hover:bg-white/[0.02]"}`}>
                   <th scope="row" className="p-2.5 font-medium text-white/75">{entry.state}</th>
+                  <td className="p-2.5"><button type="button" onClick={() => selectState(entry.state)} aria-label={`${entry.state}: ${entry.stateLinkedRecordCount} unique state-linked records; ${entry.targetStatus}`} className="min-h-9 rounded-md px-2 text-left hover:bg-sky-100/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"><span className="block text-white/75">{entry.stateLinkedRecordCount} records</span><span className={`text-[10px] ${entry.targetStatus === "in-range" ? "text-emerald-100/70" : entry.targetStatus === "above-range" ? "text-sky-100/70" : "text-amber-100/65"}`}>{entry.targetStatus === "in-range" ? "In target range" : entry.targetStatus === "above-range" ? "Above target range" : `Below ${US_DIRECTORY_TARGET.minimumRecordsPerState}`}</span></button></td>
                   {entry.categories.map((category) => <td key={category.id} className="p-2.5"><button type="button" onClick={() => selectState(entry.state, category.id)} aria-label={`${entry.state}, ${category.label}: ${category.localContacts.length} local, ${category.countywideRoutes.length} countywide, ${category.statewideRoutes.length} statewide routes`} className="min-h-9 rounded-md px-2 text-left text-white/65 hover:bg-sky-100/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-200"><span className="block">{category.localContacts.length} local</span><span className="block text-[10px] text-white/40">{category.countywideRoutes.length} county routes</span><span className="text-[10px] text-white/40">{category.statewideRoutes.length} state routes</span></button></td>)}
                 </tr>)}</tbody>
               </table>
@@ -57,7 +60,7 @@ export default function USCoverageAudit() {
         <div className="mt-3 rounded-2xl border border-white/10 bg-black/10 p-3 sm:p-4" aria-live="polite">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div><h3 className="font-semibold text-white">{state}: {activeCategory ? US_DIRECTORY_CATEGORIES.find((category) => category.id === activeCategory)?.label : "saved records by category"}</h3><p className="mt-1 text-xs text-white/50">A county or state access route and a nationwide finder are not a local provider address or an open appointment.</p></div>
-            <div className="flex flex-wrap gap-2"><span className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/60">{selectedCoverage.reduce((sum, category) => sum + category.records.length, 0)} state-linked records</span>{activeCategory && <button type="button" onClick={() => setActiveCategory("")} className="min-h-8 rounded-full border border-white/15 px-3 text-xs text-white/70 hover:bg-white/5">Show all categories</button>}</div>
+            <div className="flex flex-wrap gap-2"><span className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/60">{selectedStateCoverage?.stateLinkedRecordCount || 0} unique records</span><span className={`rounded-full border px-2.5 py-1 text-xs ${selectedStateCoverage?.targetStatus === "in-range" ? "border-emerald-100/20 text-emerald-100/70" : selectedStateCoverage?.targetStatus === "above-range" ? "border-sky-100/20 text-sky-100/70" : "border-amber-100/20 text-amber-100/70"}`}>{selectedStateCoverage?.targetStatus === "in-range" ? "In target range" : selectedStateCoverage?.targetStatus === "above-range" ? "Above target range" : `Below ${US_DIRECTORY_TARGET.minimumRecordsPerState}-record minimum`}</span>{activeCategory && <button type="button" onClick={() => setActiveCategory("")} className="min-h-8 rounded-full border border-white/15 px-3 text-xs text-white/70 hover:bg-white/5">Show all categories</button>}</div>
           </div>
           <div className="mt-3 grid gap-2 lg:grid-cols-2">
             {visibleCategories.map((category) => <article key={category.id} className="rounded-xl border border-white/[0.09] bg-slate-950/40 p-3">

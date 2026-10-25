@@ -1,7 +1,7 @@
 // Chicago and Cook County contacts reviewed against linked provider and
 // government pages on 2026-10-24. Published details are source-reviewed, not
 // phone-confirmed; current intake, eligibility, capacity, and schedules vary.
-const reviewed = (record) => ({ ...record, verified: true, checkedAt: "2026-10-24" });
+const reviewed = (record) => ({ ...record, verified: true, checkedAt: record.checkedAt || "2026-10-24" });
 
 export const ILLINOIS_TREATMENT_RESOURCES = [
   reviewed({
@@ -114,6 +114,58 @@ export const ILLINOIS_TREATMENT_RESOURCES = [
     state: "IL", coverageScope: "county",
     locationLine: "Cook County · treatment referrals by phone · weekdays 8:30 a.m.–5 p.m.",
   }),
+  ...[
+    ["il-alpharus-joliet", "Alpharus Health Joliet — outpatient addiction treatment", "Joliet", "1419 Essington Road, Joliet, IL 60435", "815-515-4733", "Outpatient and virtual services; provider lists therapy, medication-assisted recovery, and support groups."],
+    ["il-alpharus-lake-villa", "Alpharus Health Lake Villa — residential addiction treatment", "Lake Villa", "25480 W. Cedar Crest Lane, Lake Villa, IL 60046", "847-410-9975", "Provider lists residential care, withdrawal management, medication-assisted recovery, therapy, and support groups; call admissions about screening and current availability."],
+    ["il-alpharus-peoria", "Alpharus Health Peoria — outpatient addiction treatment", "Peoria", "4812 N. Sheridan Road, Suite A, Peoria, IL 61614", "309-316-7632", "Provider lists outpatient and virtual care, therapy, medication-assisted recovery, DUI services, and support groups."],
+    ["il-alpharus-springfield-residential", "Alpharus Health Springfield — residential recovery care", "Springfield", "2200 Lake Victoria Drive, Springfield, IL 62703", "217-262-9158", "Provider lists residential care, withdrawal management, medication-assisted recovery, therapy, and support groups."],
+    ["il-alpharus-springfield-outpatient", "Alpharus Health Springfield Outpatient — counseling and recovery", "Springfield", "2323 Stevenson Drive, Springfield, IL 62703", "217-292-1931", "Provider lists outpatient and virtual therapy, medication-assisted recovery, DUI services, and support groups."],
+    ["il-alpharus-swansea", "Alpharus Health Swansea — outpatient addiction treatment", "Swansea", "1 Bronze Point, Suite 1, Swansea, IL 62226", "618-226-4212", "Provider lists outpatient and virtual care, therapy, medication-assisted recovery, and support groups."],
+  ].map(([id, name, city, address, phone, services]) => reviewed({
+    id,
+    checkedAt: "2026-10-25",
+    name,
+    description: `${services} Contact the location to confirm clinical assessment, age and insurance requirements, appointment availability, and the right level of care. A listed program does not guarantee an opening.`,
+    phone,
+    link: "https://alpharushealth.org/locations/",
+    source: "Alpharus Health official Illinois locations directory",
+    city,
+    state: "IL",
+    coverageScope: "city",
+    address,
+    locationLine: `${city} · addiction treatment · call to confirm assessment and current availability`,
+  })),
+  reviewed({
+    id: "il-carle-proctor-addiction-recovery-center",
+    checkedAt: "2026-10-25",
+    name: "Carle Health Proctor Hospital Addiction Recovery Center — Peoria",
+    description: "Carle Health lists medically monitored inpatient withdrawal management, inpatient care, partial hospitalization, intensive outpatient and continuing care, medication-assisted recovery, counseling, and family support. Its team is available around the clock for questions; call to arrange an assessment and discuss insurance coverage, walk-in options, and the level of care that may fit. Emergency medical needs require 911 or an emergency department.",
+    phone: "309-691-1055",
+    link: "https://carle.org/services/addiction-recovery/addiction-recovery-center-in-peoria",
+    source: "Carle Health Addiction Recovery Center at Proctor Hospital",
+    city: "Peoria",
+    state: "IL",
+    coverageScope: "city",
+    address: "5409 N. Knoxville Avenue, Peoria, IL 61614",
+    locationLine: "Peoria · inpatient and outpatient levels of care · assessment by phone",
+  }),
+  ...[
+    ["il-lssi-elgin-addiction-treatment", "Lutheran Social Services of Illinois Addiction Treatment Center — Elgin", "Elgin", "675 Varsity Drive, Elgin, IL 60120", "847-741-2600", "LSSI lists inpatient/residential rehabilitation, outpatient treatment, recovery home, and DUI counseling and education. Call to ask about the first assessment, current admissions, payment, and which services operate at this location."],
+    ["il-lssi-sterling-addiction-treatment", "Lutheran Social Services of Illinois Addiction Treatment Center — Sterling", "Sterling", "1901 1st Avenue, Sterling, IL 61081", "815-626-7333", "LSSI lists this location in its addiction-treatment program directory. Contact the site to confirm which outpatient, residential, recovery-home, or DUI services are currently offered, and ask about intake and payment."],
+  ].map(([id, name, city, address, phone, description]) => reviewed({
+    id,
+    checkedAt: "2026-10-25",
+    name,
+    description,
+    phone,
+    link: "https://www.lssi.org/news-and-resources/find-a-program/",
+    source: "Lutheran Social Services of Illinois Find a Program directory",
+    city,
+    state: "IL",
+    coverageScope: "city",
+    address,
+    locationLine: `${city} · substance-use care · call to confirm current services and intake`,
+  })),
 ];
 
 export const ILLINOIS_PEER_RESOURCES = [
@@ -393,6 +445,39 @@ export const ILLINOIS_FOOD_RESOURCES = [
     city: "Chicago", state: "IL", address: "3334 W. Carroll Ave., Chicago, IL 60624",
     locationLine: "East Garfield Park · pantry and fresh market · call to confirm schedule",
   }),
+  ...[
+    ["il-cook-firman-community-food-pantry", "Firman Community Services Food Pantry", "Chicago", "37 W. 47th Street, Chicago, IL 60609", "773-373-3400", "Chicago South"],
+    ["il-cook-door-of-hope-food-assistance", "Door of Hope — emergency food contact", "Chicago", "5313 S. Indiana Avenue, Chicago, IL 60615", "773-624-0586", "Chicago South"],
+    ["il-cook-common-pantry", "Common Pantry — North Side food assistance", "Chicago", "3744 N. Damen Avenue, Chicago, IL 60618", "773-327-0553", "Chicago North"],
+    ["il-cook-korean-american-community-services-food", "Korean American Community Services — food assistance contact", "Chicago", "4300 N. California Avenue, Chicago, IL 60618", "773-583-5501", "Chicago Northwest"],
+    ["il-cook-south-central-community-services-food", "South Central Community Services — food assistance contact", "Chicago", "8316 S. Ellis Avenue, Chicago, IL 60619", "773-483-0900", "Chicago South"],
+    ["il-cook-will-feed-community-food", "Will Feed Community Organization — emergency food contact", "Chicago", "6401 S. Sangamon Street, Chicago, IL 60621", "773-651-9220", "Chicago South"],
+    ["il-cook-roseland-christian-ministries-food", "Roseland Christian Ministries Center — food assistance contact", "Chicago", "10858 S. Michigan Avenue, Chicago, IL 60628", "773-264-5665", "Chicago South"],
+    ["il-cook-olive-branch-mission-food", "Olive Branch Mission — emergency food contact", "Chicago", "6310 S. Claremont Avenue, Chicago, IL 60636", "773-476-6200", "Chicago South"],
+    ["il-cook-cornerstone-community-outreach-food", "Cornerstone Community Outreach — food assistance contact", "Chicago", "4628 N. Clifton Avenue, Chicago, IL 60640", "773-271-8163", "Chicago North"],
+    ["il-cook-inspiration-cafe-food", "Inspiration Cafe — food assistance and meal contact", "Chicago", "4554 N. Broadway Avenue, Chicago, IL 60640", "773-878-0981", "Chicago North"],
+    ["il-cook-st-augustine-american-indians-food", "St. Augustine’s Center for American Indians — food assistance contact", "Chicago", "4512 N. Sheridan Road, Chicago, IL 60640", "773-784-1050", "Chicago North"],
+    ["il-cook-circle-urban-ministries-food", "Circle Urban Ministries — emergency food contact", "Chicago", "118 N. Central Avenue, Chicago, IL 60644", "773-921-1446", "Chicago West"],
+    ["il-cook-the-ark-food", "The Ark — food assistance contact", "Chicago", "6450 N. California Avenue, Chicago, IL 60645", "773-973-1000", "Chicago North"],
+    ["il-cook-matthew-house-food", "Matthew House — food assistance contact", "Chicago", "3722 S. Indiana Avenue, Chicago, IL 60653", "773-536-6628", "Chicago South"],
+    ["il-cook-marillac-social-center-food", "Marillac Social Center — food assistance contact", "Chicago", "2859 W. Jackson Boulevard, Chicago, IL 60612", "773-584-4539", "Chicago West"],
+    ["il-cook-self-help-closet-pantry-des-plaines", "Self Help Closet and Pantry of Des Plaines", "Des Plaines", "600 E. Algonquin Road, Des Plaines, IL 60016", "847-375-1443", "Suburban Cook Northwest"],
+    ["il-cook-niles-township-food-pantry", "Niles Township Food Pantry", "Skokie", "5255 Lincoln Avenue, Skokie, IL 60077", "847-673-9300", "Suburban Cook North"],
+    ["il-cook-together-we-cope-food", "Together We Cope — South Suburban food assistance", "Tinley Park", "17010 Oak Park Avenue, Tinley Park, IL 60477", "708-633-5040", "Suburban Cook South"],
+  ].map(([id, name, city, address, phone, area]) => reviewed({
+    id,
+    checkedAt: "2026-10-25",
+    name,
+    description: `The Cook County Sheriff’s regularly updated Emergency Food – Pantries directory lists this ${area} contact for food assistance. Call to verify that groceries or a referral are currently available at this address, which households or ZIP codes it serves, and any appointment, documentation, or schedule requirements before traveling.`,
+    phone,
+    link: "https://cookcountysheriffil.gov/evictions/social-services/emergency-food-pantries/",
+    source: "Cook County Sheriff’s Office Emergency Food – Pantries directory",
+    city,
+    state: "IL",
+    coverageScope: city === "Chicago" ? "city" : "region",
+    address,
+    locationLine: `${area} · food assistance contact · call to confirm current service and eligibility`,
+  })),
 ];
 
 export const ILLINOIS_BENEFIT_RESOURCES = [
