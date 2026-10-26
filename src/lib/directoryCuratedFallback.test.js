@@ -8,6 +8,42 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("adds San Diego County clinic, peer, food, benefits, and urgent care contacts without leaking them out of county", () => {
+    const treatment = getCuratedFallback("programs", "behavioral health clinic", "Escondido, CA");
+    expect(treatment).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-sd-treatment-north-inland", city: "Escondido", phone: "760-747-3424" }),
+      expect.objectContaining({ id: "ca-sd-treatment-kinesis-escondido", city: "Escondido", address: "474 W. Vermont Ave., Escondido, CA 92025" }),
+    ]));
+
+    const peer = getCuratedFallback("peer", "peer support clubhouse", "Chula Vista, CA");
+    expect(peer).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-sd-peer-plaza", phone: "619-605-9706" }),
+      expect.objectContaining({ id: "ca-sd-peer-nami-warmline", phone: "619-295-1055" }),
+    ]));
+
+    const food = getCuratedFallback("food.essentials", "food pantry groceries", "Oceanside, CA");
+    expect(food).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-sd-food-salvation-oceanside", address: "3935 Lake Blvd., Oceanside, CA 92056", phone: "760-631-8212" }),
+    ]));
+
+    const benefits = getCuratedFallback("grants", "CalFresh benefits", "San Diego, CA");
+    expect(benefits).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-sd-benefits-access-center", phone: "866-262-9881" }),
+      expect.objectContaining({ id: "ca-sd-benefits-centre-city-frc", address: "1255 Imperial Ave., 5th Floor, San Diego, CA 92101" }),
+    ]));
+
+    const urgent = getCuratedFallback("hotlines", "urgent psychiatric walk in", "San Diego, CA");
+    expect(urgent).toContainEqual(expect.objectContaining({
+      id: "ca-sd-urgent-jane-westin-walk-in",
+      phone: "619-235-2600",
+      address: "1045 9th Ave., San Diego, CA 92101",
+    }));
+
+    const sacramento = getCuratedFallback("food.essentials", "", "Sacramento, CA");
+    expect(sacramento.map(({ id }) => id)).not.toContain("ca-sd-food-salvation-oceanside");
+    expect(sacramento.map(({ id }) => id)).not.toContain("ca-sd-food-pabsd-pantry");
+  });
+
   it("keeps U.S.-only contacts out of international searches and offers global directories", () => {
     expect(isUSLocation("Dallas, TX")).toBe(true);
     expect(isUSLocation("Oklahoma")).toBe(true);
