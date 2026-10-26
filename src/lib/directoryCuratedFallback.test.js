@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { getCuratedFallback, isUSLocation } from "./directoryCuratedFallback";
 import { getUSStateCoverage } from "@/data/usDirectoryCoverage";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
-import { NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
+import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
@@ -48,6 +48,24 @@ describe("category fallback pathways", () => {
 
     expect(getCuratedFallback("hotlines", "psychiatric emergency", "Buffalo, NY").map(({ id }) => id))
       .not.toContain("nyc-cpep-bellevue");
+  });
+
+  it("returns all current NYC HRA Benefits Access Centers with their published borough contacts", () => {
+    const nyc = getCuratedFallback("grants", "benefits access center", "New York City, NY");
+    const centers = nyc.filter(({ id }) => id.startsWith("nyc-hra-bac-"));
+    expect(centers).toHaveLength(17);
+    expect(new Set(centers.map(({ locationLine }) => locationLine.split(" · ")[0]))).toEqual(new Set([
+      "Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island",
+    ]));
+    expect(centers).toContainEqual(expect.objectContaining({
+      id: "nyc-hra-bac-richmond",
+      address: "201 Bay Street, Staten Island, NY 10301",
+      phone: "929-221-7915",
+    }));
+    expect(centers.every(({ description }) => /does not guarantee approval/i.test(description))).toBe(true);
+    expect(NEW_YORK_BENEFIT_RESOURCES.filter(({ id }) => id.startsWith("nyc-hra-bac-")).length).toBe(17);
+    expect(getCuratedFallback("grants", "benefits access center", "Buffalo, NY").map(({ id }) => id))
+      .not.toContain("nyc-hra-bac-richmond");
   });
 
   it("adds San Diego County clinic, peer, food, benefits, and urgent care contacts without leaking them out of county", () => {
