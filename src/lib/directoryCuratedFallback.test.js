@@ -9,6 +9,24 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("returns source-reviewed Corpus Christi contacts across all six support categories", () => {
+    const cases = [
+      ["programs", "addiction treatment", "corpus-christi-cenikor-addiction-treatment"],
+      ["peer", "peer recovery support", "corpus-christi-coastal-bend-wellness-peer-recovery"],
+      ["housing", "transitional housing", "corpus-christi-mother-teresa-transitional-housing-men"],
+      ["food.essentials", "choice pantry food", "corpus-christi-catholic-charities-choice-pantry"],
+      ["grants", "community action assistance", "corpus-christi-nueces-county-community-action-assistance"],
+      ["hotlines", "24-hour mental health crisis", "corpus-christi-ncmhid-24-hour-crisis-support"],
+    ];
+
+    for (const [category, query, expectedId] of cases) {
+      const records = getCuratedFallback(category, query, "Corpus Christi, TX");
+      expect(records, `${category} should include ${expectedId}`).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: expectedId, city: "Corpus Christi", state: "TX", verified: true, link: expect.stringMatching(/^https:\/\//) }),
+      ]));
+    }
+  });
+
   it("surfaces Chicago shelter contacts by household pathway without promising placement", () => {
     const housing = getCuratedFallback("housing", "emergency shelter safe place", "Chicago, IL");
     const expectedIds = [
