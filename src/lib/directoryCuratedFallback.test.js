@@ -355,6 +355,33 @@ describe("category fallback pathways", () => {
     expect(sacramento.some((resource) => resource.id.startsWith("ca-la-food-"))).toBe(false);
   });
 
+  it("adds a substantial source-reviewed LA County cohort across the directory categories", () => {
+    const cases = [
+      ["programs", "substance use treatment", "ca-la-treatment-", 6],
+      ["peer", "peer support", "ca-la-peer-", 2],
+      ["housing", "housing shelter", "ca-la-housing-", 6],
+      ["food.essentials", "food pantry groceries", "ca-la-food-", 9],
+      ["grants", "rent assistance", "ca-la-hopwa-", 1],
+      ["hotlines", "domestic violence crisis", "ca-la-urgent-", 4],
+    ];
+
+    for (const [category, query, idPrefix, minimum] of cases) {
+      const county = getCuratedFallback(category, query, "Los Angeles, CA");
+      const cohort = county.filter((resource) => resource.id.startsWith(idPrefix));
+      expect(cohort.length, `${category} should surface the newly added LA County cohort`).toBeGreaterThanOrEqual(minimum);
+      expect(cohort.every((resource) => resource.state === "CA" && resource.source && resource.link && resource.phone)).toBe(true);
+      expect(getCuratedFallback(category, query, "Sacramento, CA").some((resource) => resource.id.startsWith(idPrefix))).toBe(false);
+    }
+
+    const housing = getCuratedFallback("housing", "domestic violence shelter", "Los Angeles, CA");
+    const confidentialShelter = housing.find((resource) => resource.id === "ca-la-housing-womens-children-crisis-shelter-intake");
+    expect(confidentialShelter.phone).toBe("562-945-3939");
+    expect(confidentialShelter.description).toMatch(/confidential shelter address is not published/i);
+    expect(confidentialShelter).not.toHaveProperty("address");
+    const urgent = getCuratedFallback("hotlines", "domestic violence crisis", "Los Angeles, CA");
+    expect(urgent.find((resource) => resource.id === "ca-la-urgent-1736-family-crisis-hotline").alternatePhone).toMatch(/youth/i);
+  });
+
   it("shows state-specific Nigeria public hospitals as treatment contacts with independent source dates", () => {
     const resources = getCuratedFallback("programs", "recovery support programs", "Sokoto, Nigeria");
     expect(resources).toEqual(expect.arrayContaining([
