@@ -8,6 +8,26 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
+    const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
+    expect(losAngeles).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "ca-la-dmh-clinic-downtown", address: "529 Maple Avenue, Los Angeles, CA 90013", phone: "213-629-6200" }),
+      expect.objectContaining({ id: "ca-la-dmh-clinic-edelman-child-family", phone: "310-482-3200" }),
+      expect.objectContaining({ id: "ca-la-dmh-clinic-west-central-adult", city: "Los Angeles" }),
+    ]));
+    expect(losAngeles.find(({ id }) => id === "ca-la-dmh-clinic-edelman-child-family").description).toMatch(/ages 5–18/i);
+    expect(losAngeles.find(({ id }) => id === "ca-la-dmh-clinic-community-reintegration-vermont").description)
+      .toMatch(/referral required/i);
+
+    const cerritos = getCuratedFallback("programs", "mental health services", "Cerritos, CA");
+    expect(cerritos.map(({ id }) => id)).toEqual(expect.arrayContaining([
+      "ca-la-dmh-clinic-american-indian-cerritos",
+      "ca-la-dmh-clinic-rio-hondo-cerritos",
+    ]));
+    expect(getCuratedFallback("programs", "behavioral health clinic", "San Diego, CA").map(({ id }) => id))
+      .not.toContain("ca-la-dmh-clinic-downtown");
+  });
+
   it("adds San Diego County clinic, peer, food, benefits, and urgent care contacts without leaking them out of county", () => {
     const treatment = getCuratedFallback("programs", "behavioral health clinic", "Escondido, CA");
     expect(treatment).toEqual(expect.arrayContaining([

@@ -223,6 +223,69 @@ export const CALIFORNIA_TREATMENT_RESOURCES = [
     locationLine: `${city} · county-listed clinic · call to confirm current intake and eligibility`,
     checkedAt: "2026-10-25",
   })),
+  ...[
+    { id: "olive-view-sylmar", name: "Olive View Mental Health Clinic", city: "Sylmar", address: "14238 Saranac Lane, Sylmar, CA 91342", phone: "818-485-0888", service: "Adult and older-adult mental-health clinic." },
+    { id: "san-fernando-adult", name: "San Fernando Mental Health Center", city: "Granada Hills", address: "10605 Balboa Boulevard, Suite 100, Granada Hills, CA 91344", phone: "818-832-2400", alternatePhone: "Admission/intake: 818-798-3081", service: "Adult and older-adult mental-health clinic. The county separately publishes an admission/intake line." },
+    { id: "west-valley-chatsworth", name: "West Valley Mental Health Center", city: "Chatsworth", address: "20151 Nordhoff Street, Chatsworth, CA 91311", phone: "818-407-3200", service: "Adult and older-adult mental-health clinic." },
+    { id: "santa-clarita-valencia", name: "Santa Clarita Valley Mental Health Center", city: "Valencia", address: "23501 Cinema Drive, Suite 200, Valencia, CA 91355", phone: "661-288-4800", service: "Adult and older-adult mental-health clinic." },
+    { id: "valley-coordinated-children-reseda", name: "Valley Coordinated Children’s Services", city: "Reseda", address: "19231 Victory Boulevard, Suite 110, Reseda, CA 91335", phone: "818-708-4500", service: "Children and young-adult mental-health clinic; call to ask about age range, referral, and intake." },
+    { id: "san-fernando-child-family", name: "San Fernando Child and Family Center", city: "San Fernando", address: "919 1st Street, San Fernando, CA 91340", phone: "818-256-1124", service: "Children, young people, and family mental-health clinic; call to ask about age range, referral, and intake." },
+    { id: "arcadia", name: "Arcadia Mental Health Center", city: "Arcadia", address: "330 E. Live Oak Avenue, Arcadia, CA 91006", phone: "626-254-1400", service: "Directly operated outpatient mental-health clinic. The county publishes weekday hours and says walk-ins are accepted; call to confirm current intake and eligibility." },
+    { id: "east-san-gabriel-covina", name: "East San Gabriel Valley Mental Health Center", city: "Covina", address: "1359 N. Grand Avenue, Covina, CA 91724", phone: "626-430-2900", service: "Directly operated outpatient mental-health clinic. The county publishes weekday hours and says walk-ins are accepted; call to confirm current intake and eligibility." },
+    { id: "downtown", name: "Downtown Mental Health Center", city: "Los Angeles", address: "529 Maple Avenue, Los Angeles, CA 90013", phone: "213-629-6200", service: "Directly operated outpatient mental-health center. Published hours are Monday–Friday, 8 a.m.–5 p.m.; call to confirm intake and eligibility." },
+    { id: "hollywood", name: "Hollywood Mental Health Center", city: "Los Angeles", address: "1224 Vine Street, Los Angeles, CA 90038", phone: "323-769-6100", service: "Directly operated outpatient mental-health center. Published hours are Monday–Friday, 8 a.m.–5 p.m.; call to confirm intake and eligibility." },
+    { id: "northeast", name: "Northeast Mental Health Center", city: "Los Angeles", address: "3303 N. Broadway, Los Angeles, CA 90031", phone: "323-478-8200", service: "Directly operated outpatient mental-health center. Published hours are Monday–Friday, 8 a.m.–5 p.m.; call to confirm intake and eligibility." },
+    { id: "koreatown", name: "Koreatown Mental Health Clinic", city: "Los Angeles", address: "510 S. Vermont Avenue, Los Angeles, CA 90020", phone: "213-948-2980", service: "Directly operated outpatient mental-health clinic. Published hours are Monday–Friday, 8 a.m.–5 p.m.; call to confirm intake and eligibility." },
+    { id: "edelman-adult-wellness", name: "Edelman Westside Mental Health Center — Adult and Wellness Programs", city: "Los Angeles", address: "11080 W. Olympic Boulevard, Los Angeles, CA 90064", phone: "310-966-6500", alternatePhone: "Wellness programs: 310-482-3200", service: "Adult mental-health programs for ages 18 and older, including case management, therapy, support groups, medication management, crisis intervention, and occupational therapy. Call to identify the right program and confirm intake." },
+    { id: "edelman-child-family", name: "Edelman Child and Family Clinic", city: "Los Angeles", address: "11303 W. Washington Boulevard, Los Angeles, CA 90066", phone: "310-482-3200", service: "Outpatient care for children ages 5–18 and families, including therapy, psychiatric services, substance-use disorder treatment, crisis intervention, and rehabilitation. Call to confirm age fit, intake, and availability." },
+    { id: "west-central-adult", name: "West Central Mental Health Center — Adult", city: "Los Angeles", address: "3751 Stocker Street, Los Angeles, CA 90008", phone: "323-298-3680", service: "Directly operated adult mental-health clinic. The county publishes weekday walk-in hours, 8 a.m.–4 p.m.; call to confirm current intake and eligibility." },
+    { id: "community-reintegration-vermont", name: "Community Reintegration Services and Education Center", city: "Los Angeles", address: "8300 S. Vermont Street, Los Angeles, CA 90044", phone: "323-525-6400", service: "Directly operated mental-health clinic; the county marks this service referral required. Call the county or referring provider to confirm referral steps and eligibility before visiting." },
+    { id: "hawkins-children", name: "Augustus F. Hawkins Mental Health Center — Children", city: "Los Angeles", address: "1741 E. 120th Street, 3rd Floor, Los Angeles, CA 90059", phone: "310-668-4803", service: "Directly operated children’s mental-health clinic. The county publishes weekday walk-in hours, 8 a.m.–3 p.m.; call to confirm age fit and current intake." },
+    { id: "hawkins-adult-calworks", name: "Hawkins Clinic at Mark Ridley-Thomas Behavioral Health Center", city: "Los Angeles", address: "12021 S. Wilmington Avenue, Los Angeles, CA 90059", phone: "424-454-5000", service: "Directly operated adult and CalWORKs mental-health clinic. The county publishes weekday walk-in hours, 8 a.m.–3 p.m.; call to confirm service eligibility and intake." },
+    { id: "compton-family", name: "Compton Family Mental Health Center", city: "Compton", address: "921 E. Compton Boulevard, Compton, CA 90221", phone: "310-668-6800", service: "Directly operated adult and children’s mental-health clinic. The county publishes weekday walk-in hours, 8 a.m.–5 p.m., and recommends arriving early; call to confirm current intake and age fit." },
+    { id: "american-indian-fsp-hollywood", name: "American Indian Counseling Center — FSP Hollywood", city: "Los Angeles", address: "947 Cole Avenue, 2nd Floor, Los Angeles, CA 90038", phone: "323-871-4650", service: "County-listed adult mental-health and Full Service Partnership location. Call to ask about the program’s eligibility, intake, and whether it serves your needs." },
+    { id: "american-indian-cerritos", name: "American Indian Counseling Center", city: "Cerritos", address: "17707 Studebaker Road, Cerritos, CA 90703", phone: "562-402-0677", service: "County-listed adult mental-health clinic. Published hours are Monday–Friday, 8 a.m.–6 p.m.; call to confirm intake and eligibility." },
+    { id: "rio-hondo-cerritos", name: "Rio Hondo Community Mental Health Center", city: "Cerritos", address: "17707 Studebaker Road, Cerritos, CA 90703", phone: "562-402-0688", alternatePhone: "Admissions/intake: 562-403-0141", service: "County-listed outpatient mental-health center at the same published address as American Indian Counseling Center; call admissions to identify the right program and confirm intake." },
+    { id: "rio-hondo-centro-bienestar", name: "Rio Hondo Mental Health Center — Centro de Bienestar", city: "Huntington Park", address: "6330 Rugby Avenue, Suite 200, Huntington Park, CA 90255", phone: "323-826-6300", service: "County-listed mental-health center and wellness program. The county publishes weekday hours; call to confirm current services, intake, and eligibility." },
+    { id: "roybal-family", name: "Roybal Family Mental Health Center", city: "Los Angeles", address: "4701 E. Cesar Chavez Avenue, Los Angeles, CA 90022", phone: "323-267-3400", service: "County-listed children’s and family mental-health clinic. Call to confirm age range, intake, and whether a referral is needed." },
+    { id: "san-antonio-family", name: "San Antonio Family Center", city: "Huntington Park", address: "2629 Clarendon Avenue, Huntington Park, CA 90255", phone: "323-584-3700", service: "County-listed children’s and family mental-health clinic. Call to confirm age range, current hours, and intake." },
+  ].map(({ id, name, city, address, phone, alternatePhone, service }) => {
+    const serviceArea = id.startsWith("olive-view-") || id.startsWith("san-fernando-") || id.startsWith("west-valley-") || id.startsWith("santa-clarita-") || id.startsWith("valley-coordinated-")
+      ? "Service Area 2"
+      : id === "arcadia" || id.startsWith("east-san-gabriel-")
+        ? "Service Area 3"
+        : ["downtown", "hollywood", "northeast", "koreatown"].includes(id)
+          ? "Service Area 4"
+          : id.startsWith("edelman-")
+            ? "Service Area 5"
+            : ["west-central-adult", "community-reintegration-vermont", "hawkins-children", "hawkins-adult-calworks", "compton-family"].includes(id)
+              ? "Service Area 6"
+              : "Service Area 7";
+    const sourceUrl = {
+      "Service Area 2": "https://dmh.lacounty.gov/about/service-areas/service-area-2/service-area-2-resources/",
+      "Service Area 3": "https://dmh.lacounty.gov/about/service-areas/service-area-3/administration-and-resources/",
+      "Service Area 4": "https://dmh.lacounty.gov/about/service-areas/service-area-4/service-area-4-resources/",
+      "Service Area 5": "https://dmh.lacounty.gov/about/service-areas/service-area-5/service-area-5-resources/",
+      "Service Area 6": "https://dmh.lacounty.gov/about/service-areas/service-area-6/service-area-6-resources/",
+      "Service Area 7": "https://dmh.lacounty.gov/about/service-areas/service-area-7/service-area-7-resources/",
+    }[serviceArea];
+    return reviewed({
+    id: `ca-la-dmh-clinic-${id}`,
+    name,
+    description: `${service} These are behavioral-health listings, not confirmation that every site provides substance-use treatment. Contact the clinic to ask about the specific care you need, catchment, eligibility, and current appointment or walk-in availability before traveling.`,
+    phone,
+    ...(alternatePhone ? { alternatePhone } : {}),
+    link: sourceUrl,
+    source: `Los Angeles County Department of Mental Health, ${serviceArea} directly operated clinic listing`,
+    city,
+    state: "CA",
+    address,
+    serviceArea: "Los Angeles County",
+    coverageScope: "county",
+    locationLine: `${city} · County mental-health clinic · call to confirm intake and eligibility`,
+    checkedAt: "2026-10-25",
+  });
+  }),
 ];
 
 export const CALIFORNIA_PEER_RESOURCES = [
