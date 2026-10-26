@@ -1,0 +1,13 @@
+---
+description: Preserve approved and committed WellnessCafe behavior across all work
+alwaysApply: true
+---
+
+# Approved Build Protection
+
+- Treat behavior already approved and committed as a compatibility contract. Preserve it by default; do not remove, replace, disable, or silently narrow it when adding features or data.
+- Inspect the current behavior and regression coverage before editing an existing product path. Prefer additive changes and keep prior routes, data, IDs, and user actions available.
+- Intentional changes to approved behavior require the user's explicit authorization, a written reason, and regression coverage for both the retained behavior and the authorized change.
+- Never amend or rebase commits already on `main`, and never force-push shared release branches.
+- Changes to existing product files require the `approved-behavior-change` PR label and passing `approved-build-protection` CI. The label authorizes review of the diff; it does not by itself authorize a behavior change.
+- Require this check on protected release branches. Do not merge or deploy around a failed or missing check.

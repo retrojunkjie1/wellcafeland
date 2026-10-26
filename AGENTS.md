@@ -13,6 +13,15 @@ WellnessCafe OS is a React 19 + Vite 7 SPA with Tailwind CSS v3 and Firebase bac
 - Do not update tests merely to silence a failure. Update stale assertions to current behavior only when the current behavior is intentional and remains covered; fix actual product regressions in the product code.
 - A failed or skipped required check blocks “done” and production deploy. If a check cannot run, record why and the exact remaining acceptance step; do not report it as passed.
 
+## Protect approved and committed behavior
+
+- Treat behavior already approved and committed as a compatibility contract. Preserve it by default; do not remove, replace, disable, or silently narrow it while adding new work.
+- Before changing an existing product path, identify its current behavior and regression coverage. Make additive changes where possible and keep prior data, IDs, routes, and user actions available.
+- A change that intentionally alters or removes approved behavior requires explicit user authorization. Record the reason and migration/rollback implications in the change description, and add regression coverage for both the retained behavior and the authorized change.
+- Never rewrite published history: do not amend or rebase commits already on `main`, and do not force-push shared release branches.
+- Every pull request that changes an existing product file must carry the `approved-behavior-change` label. The `approved-build-protection` check enforces this and runs the UI suite and production build. Configure that check as required on protected release branches; do not merge or deploy around a failed or missing check.
+- Adding the label authorizes review of the diff; it does not replace explicit user authorization for an intentional behavior change.
+
 ### Running the frontend
 - **Dev server**: `npm run dev` (serves on `http://localhost:5173`, binds to `0.0.0.0`)
 - **Build**: `npm run build` (outputs to `dist/`)
