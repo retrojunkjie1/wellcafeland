@@ -122,6 +122,29 @@ describe("category fallback pathways", () => {
       .not.toContain("il-rockford-rescue-mission-emergency-shelter");
   });
 
+  it("routes another five Illinois food and shelter contacts only to their published cities", () => {
+    expect(getCuratedFallback("food.essentials", "food groceries pantry", "Aurora, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-aurora-area-interfaith-food-pantry-marketplace", phone: "630-897-2127", address: "1110 Jericho Road, Aurora, IL 60506" }),
+    );
+    expect(getCuratedFallback("food.essentials", "hot meal soup kitchen", "Champaign, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-champaign-daily-bread-soup-kitchen", phone: "217-607-1418" }),
+    );
+    expect(getCuratedFallback("food.essentials", "food pantry", "Champaign, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-champaign-salvation-army-weekday-food-pantry", phone: "217-373-7832" }),
+    );
+    expect(getCuratedFallback("food.essentials", "food pantry groceries", "Urbana, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-urbana-wesley-evening-food-pantry", phone: "217-729-7418" }),
+    );
+    expect(getCuratedFallback("housing", "emergency shelter", "Bloomington, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-bloomington-home-sweet-home-emergency-shelter", phone: "309-828-7356" }),
+    );
+
+    expect(getCuratedFallback("food.essentials", "food pantry", "Chicago, IL").map(({ id }) => id))
+      .not.toContain("il-aurora-area-interfaith-food-pantry-marketplace");
+    expect(getCuratedFallback("housing", "emergency shelter", "Peoria, IL").map(({ id }) => id))
+      .not.toContain("il-bloomington-home-sweet-home-emergency-shelter");
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
