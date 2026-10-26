@@ -253,6 +253,33 @@ describe("category fallback pathways", () => {
     expect(audit.find((category) => category.id === "hotlines").countywideRoutes.map((record) => record.id)).toContain("ca-la-dmh-24-7-help-line");
   });
 
+  it("adds Los Angeles County psychiatric urgent care sites with published access details", () => {
+    const county = getCuratedFallback("hotlines", "mental health crisis", "Los Angeles County, CA");
+    const countySites = county.filter((resource) => resource.id.startsWith("ca-la-urgent-care-"));
+    expect(countySites).toHaveLength(9);
+    expect(countySites.every((resource) => resource.phone && resource.address && resource.checkedAt === "2026-10-25")).toBe(true);
+    expect(countySites).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "ca-la-urgent-care-exodus-eastside",
+        address: "1920 Marengo Street, Los Angeles, CA 90033",
+        phone: "323-276-6400",
+        serviceArea: "Los Angeles County",
+      }),
+      expect.objectContaining({
+        id: "ca-la-urgent-care-la-casa-long-beach",
+        phone: "562-790-1860",
+        locationLine: expect.stringContaining("referral only"),
+      }),
+      expect.objectContaining({
+        id: "ca-la-urgent-care-exodus-westside",
+        alternatePhone: "Intake: 800-829-3923",
+      }),
+    ]));
+
+    const sanFrancisco = getCuratedFallback("hotlines", "mental health crisis", "San Francisco, CA");
+    expect(sanFrancisco.some((resource) => resource.id.startsWith("ca-la-urgent-care-"))).toBe(false);
+  });
+
   it("shows state-specific Nigeria public hospitals as treatment contacts with independent source dates", () => {
     const resources = getCuratedFallback("programs", "recovery support programs", "Sokoto, Nigeria");
     expect(resources).toEqual(expect.arrayContaining([
