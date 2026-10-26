@@ -2,6 +2,7 @@ name: Security gates
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
     branches: [main, phase-j-local]
 
 jobs:
