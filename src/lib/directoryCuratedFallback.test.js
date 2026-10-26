@@ -145,6 +145,28 @@ describe("category fallback pathways", () => {
       .not.toContain("il-bloomington-home-sweet-home-emergency-shelter");
   });
 
+  it("adds five city-matched Illinois treatment options with current intake caveats", () => {
+    const aurora = getCuratedFallback("programs", "addiction treatment counseling", "Aurora, IL");
+    const bloomington = getCuratedFallback("programs", "substance use treatment", "Bloomington, IL");
+    const champaign = getCuratedFallback("programs", "addiction treatment", "Champaign, IL");
+
+    expect(aurora).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "il-aurora-family-guidance-centers-outpatient-treatment", phone: "630-801-0017", address: "751 Aurora Avenue, Aurora, IL 60505" }),
+      expect.objectContaining({ id: "il-aurora-family-counseling-substance-use-treatment", phone: "630-844-2662" }),
+      expect.objectContaining({ id: "il-aurora-gateway-foundation-addiction-treatment", address: "400 Mercy Lane, Aurora, IL 60506" }),
+    ]));
+    expect(bloomington).toContainEqual(expect.objectContaining({
+      id: "il-bloomington-chestnut-substance-use-assessment", phone: "309-827-6026",
+    }));
+    expect(champaign).toContainEqual(expect.objectContaining({
+      id: "il-champaign-rosecrance-moreland-treatment-campus", phone: "217-239-5209",
+    }));
+    expect(getCuratedFallback("programs", "addiction treatment", "Chicago, IL").map(({ id }) => id))
+      .not.toContain("il-aurora-gateway-foundation-addiction-treatment");
+    expect(aurora.filter(({ id }) => id.startsWith("il-aurora-")).every(({ description }) => /call|confirm/i.test(description)))
+      .toBe(true);
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
