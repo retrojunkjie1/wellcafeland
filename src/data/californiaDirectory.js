@@ -118,6 +118,57 @@ export const CALIFORNIA_TREATMENT_RESOURCES = [
 ];
 
 export const CALIFORNIA_PEER_RESOURCES = [
+  ...[
+    {
+      id: "service-area-2-sylmar",
+      name: "Service Area 2 Peer Resource Center — La Casita del Valle Clubhouse",
+      city: "Sylmar",
+      address: "14238 Saranac Lane, Sylmar, CA 91342",
+      phone: "818-485-0888",
+      hours: "Monday–Friday, 8 a.m.–5 p.m. as published",
+      detail: "A community space for peers, family members, and other community members to share lived experience, find connection, and access mental-health resources. Call first to confirm activities and whether the center is open for an in-person visit.",
+      link: "https://dmh.lacounty.gov/about/service-areas/service-area-2/service-area-2-peer-resource-center/",
+    },
+    {
+      id: "service-area-3-covina",
+      name: "Service Area 3 Peer Resource Center — Covina",
+      city: "Covina",
+      address: "1359 N. Grand Avenue, Covina, CA 91724",
+      phone: "626-643-2900",
+      email: "SA3PRC@dmh.lacounty.gov",
+      hours: "Monday–Friday, 8:30 a.m.–5 p.m. as published",
+      detail: "Peer and community support with lived-experience connection, resources, groups, and activities available in person or virtually. Call or email to check the current schedule and whether an in-person visit is available.",
+      link: "https://dmh.lacounty.gov/about/service-areas/service-area-3/service-area-3-peer-resource-center/",
+    },
+    {
+      id: "service-area-7-huntington-park",
+      name: "Service Area 7 Peer Resource Center — Huntington Park",
+      city: "Huntington Park",
+      address: "6330 Rugby Avenue, Suite 200, Huntington Park, CA 90255",
+      phone: "323-705-5992",
+      email: "SA7PRC@dmh.lacounty.gov",
+      hours: "Monday–Friday, 8 a.m.–5 p.m. as published",
+      detail: "The center offers peer-led, non-clinical community support and can bring services to community locations; it is not tied to a fixed drop-in site. Call or email to schedule a visit or ask where the team is meeting.",
+      link: "https://dmh.lacounty.gov/about/service-areas/service-area-7/service-area-7-peer-resource-center/",
+    },
+  ].map(({ id, name, city, address, phone, email, hours, detail, link }) => ({
+    ...reviewed({
+      id: `ca-la-peer-${id}`,
+      name,
+      description: detail,
+      phone,
+      ...(email ? { email } : {}),
+      link,
+      source: "Los Angeles County Department of Mental Health, Service Area Peer Resource Centers",
+      city,
+      state: "CA",
+      address,
+      serviceArea: "Los Angeles County",
+      coverageScope: "county",
+      locationLine: `${city} · ${hours} · confirm current schedule before visiting`,
+    }),
+    checkedAt: "2026-10-25",
+  })),
   reviewed({
     id: "ca-la-sa4-peer-resource-center",
     name: "LA County Service Area 4 Peer Resource Center",

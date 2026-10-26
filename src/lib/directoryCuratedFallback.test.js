@@ -280,6 +280,33 @@ describe("category fallback pathways", () => {
     expect(sanFrancisco.some((resource) => resource.id.startsWith("ca-la-urgent-care-"))).toBe(false);
   });
 
+  it("adds county peer centers by their published cities and preserves access caveats", () => {
+    const sylmar = getCuratedFallback("peer", "peer support", "Sylmar, CA");
+    expect(sylmar).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "ca-la-peer-service-area-2-sylmar",
+        address: "14238 Saranac Lane, Sylmar, CA 91342",
+        phone: "818-485-0888",
+        checkedAt: "2026-10-25",
+      }),
+    ]));
+
+    const covina = getCuratedFallback("peer", "peer support", "Covina, CA");
+    expect(covina).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "ca-la-peer-service-area-3-covina",
+        email: "SA3PRC@dmh.lacounty.gov",
+        phone: "626-643-2900",
+      }),
+    ]));
+
+    const huntingPark = getCuratedFallback("peer", "peer support", "Huntington Park, CA");
+    expect(huntingPark.find((resource) => resource.id === "ca-la-peer-service-area-7-huntington-park").description).toMatch(/not tied to a fixed drop-in site/i);
+
+    const fresno = getCuratedFallback("peer", "peer support", "Fresno, CA");
+    expect(fresno.some((resource) => resource.id.startsWith("ca-la-peer-service-area-"))).toBe(false);
+  });
+
   it("shows state-specific Nigeria public hospitals as treatment contacts with independent source dates", () => {
     const resources = getCuratedFallback("programs", "recovery support programs", "Sokoto, Nigeria");
     expect(resources).toEqual(expect.arrayContaining([
