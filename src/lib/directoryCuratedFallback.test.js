@@ -9,6 +9,30 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("surfaces Chicago shelter contacts by household pathway without promising placement", () => {
+    const housing = getCuratedFallback("housing", "emergency shelter safe place", "Chicago, IL");
+    const expectedIds = [
+      "il-chicago-salvation-army-shield-of-hope-family-shelter",
+      "il-chicago-covenant-house-youth-shelter-and-drop-in",
+      "il-chicago-night-ministry-crib-youth-emergency-shelter",
+      "il-chicago-pacific-garden-mission-emergency-shelter",
+      "il-chicago-sarahs-circle-womens-housing-support",
+    ];
+    const records = housing.filter(({ id }) => expectedIds.includes(id));
+
+    expect(records).toHaveLength(expectedIds.length);
+    expect(records.every(({ city, state, address, phone, link, description }) =>
+      city === "Chicago" && state === "IL" && address && phone && link && description
+    )).toBe(true);
+    expect(records.every(({ description }) => /call|contact|311/i.test(description))).toBe(true);
+    expect(records.find(({ id }) => id === "il-chicago-salvation-army-shield-of-hope-family-shelter").description)
+      .toMatch(/child under 18/i);
+    expect(records.find(({ id }) => id === "il-chicago-covenant-house-youth-shelter-and-drop-in").description)
+      .toMatch(/ages 18–24/i);
+    expect(records.find(({ id }) => id === "il-chicago-sarahs-circle-womens-housing-support").description)
+      .toMatch(/not a walk-in shelter bed/i);
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
