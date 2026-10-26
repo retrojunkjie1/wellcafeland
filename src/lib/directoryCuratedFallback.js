@@ -254,10 +254,19 @@ export function isUSLocation(region = "") {
     .filter((resource) => resource.state === "TX")
     .map((resource) => resource.city)
     .filter(Boolean))];
+  const illinoisCities = [...new Set([
+    ...ILLINOIS_TREATMENT_RESOURCES,
+    ...ILLINOIS_PEER_RESOURCES,
+    ...ILLINOIS_HOUSING_RESOURCES,
+    ...ILLINOIS_FOOD_RESOURCES,
+    ...ILLINOIS_BENEFIT_RESOURCES,
+    ...ILLINOIS_URGENT_RESOURCES,
+  ].map((resource) => resource.city).filter(Boolean))];
   if (!normalized) return false;
   if (/\b(?:united states|u\.?s\.?a?\.?|usa)\b/.test(normalized) || /\b\d{5}(?:-\d{4})?\b/.test(normalized)) return true;
   if (US_STATES_AND_TERRITORIES.some((state) => normalized.includes(state))) return true;
   if (/(?:,\s*|\s)(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|PR|GU|AS|VI|MP)$/i.test(String(region).trim())) return true;
+  if (illinoisCities.some((city) => normalized === city.toLowerCase() || normalized.startsWith(`${city.toLowerCase()},`))) return true;
   if (louisianaCities.some((city) => normalized === city || normalized.startsWith(`${city},`))) return true;
   if (maineCities.some((city) => normalized === city || normalized.startsWith(`${city},`))) return true;
   if (/\b(?:columbus|cincinnati|cleveland|toledo|dayton|akron|springfield|lorain|youngstown|fairfield|logan|lima|newark|philadelphia|pittsburgh|harrisburg|lancaster|erie|allentown|scranton|pittston|altoona|media|doylestown|exton|sharon|uniontown|johnstown|washington|reading|indiana|delmont|york)\b/i.test(normalized)) return true;
@@ -651,7 +660,19 @@ export function getCuratedFallback(domain, query, region = "") {
   ];
   const isFlorida = /\bflorida\b|(?:,\s*|\s)fl\b|\b(?:miami|homestead|orlando|tampa|jacksonville|tallahassee|fort lauderdale)\b/.test(normalizedRegion)
     || floridaRecords.some((resource) => resource.city && normalizedRegion.includes(String(resource.city).toLowerCase()));
-  const isIllinois = /\billinois\b|(?:,\s*|\s)il\b/.test(normalizedRegion);
+  const illinoisDirectoryRecords = [
+    ...ILLINOIS_TREATMENT_RESOURCES,
+    ...ILLINOIS_PEER_RESOURCES,
+    ...ILLINOIS_HOUSING_RESOURCES,
+    ...ILLINOIS_FOOD_RESOURCES,
+    ...ILLINOIS_BENEFIT_RESOURCES,
+    ...ILLINOIS_URGENT_RESOURCES,
+  ];
+  const illinoisCity = [...new Set(illinoisDirectoryRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isIllinois = /\billinois\b|(?:,\s*|\s)il\b/.test(normalizedRegion) || Boolean(illinoisCity);
+  const isIllinoisStatewide = /^\s*(?:illinois|il)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
   const isChicago = /\bchicago\b|\b606\d{2}\b/.test(normalizedRegion);
   const georgiaDirectoryRecords = [
     ...GEORGIA_TREATMENT_RESOURCES,
@@ -837,8 +858,11 @@ export function getCuratedFallback(domain, query, region = "") {
   }
   if (isIllinois || isChicago) {
     const localAndArea = (resources) => resources.filter((resource) => {
-      if (isChicago) return resource.city === "Chicago" || (resource.state === "IL" && resource.coverageScope);
-      return resource.state === "IL" && !resource.city;
+      if (resource.state !== "IL") return false;
+      if (isIllinoisStatewide) return !resource.city;
+      const city = isChicago ? "Chicago" : illinoisCity;
+      if (city) return resource.city === city || (!resource.city && resource.coverageScope);
+      return !resource.city;
     });
     if (domainKey === "programs" || domainKey === "providers") return [...localAndArea(ILLINOIS_TREATMENT_RESOURCES), ...selected];
     if (domainKey === "peer") return [...localAndArea(ILLINOIS_PEER_RESOURCES), ...selected];

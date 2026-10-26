@@ -64,6 +64,34 @@ describe("category fallback pathways", () => {
       .not.toContain("il-chicago-step-up-peer-support");
   });
 
+  it("routes Illinois city listings to Peoria, East Peoria, Springfield, and Rockford searches", () => {
+    const peoria = getCuratedFallback("programs", "addiction recovery treatment", "Peoria, IL");
+    expect(peoria).toContainEqual(expect.objectContaining({
+      id: "il-peoria-carle-addiction-recovery-center",
+      phone: "309-691-1055",
+      address: "5409 N. Knoxville Avenue, Peoria, IL 61614",
+    }));
+    expect(getCuratedFallback("peer", "peer recovery harm reduction", "Peoria")).toContainEqual(
+      expect.objectContaining({ id: "il-peoria-jolt-foundation-peer-recovery-harm-reduction", phone: "309-966-3643" }),
+    );
+    expect(getCuratedFallback("programs", "outpatient addiction treatment", "East Peoria, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-east-peoria-trillium-outpatient-addiction-services", phone: "309-694-6462" }),
+    );
+    expect(getCuratedFallback("programs", "substance use treatment", "Springfield")).toContainEqual(
+      expect.objectContaining({ id: "il-springfield-family-guidance-centers-addiction-treatment", phone: "217-544-9858" }),
+    );
+    expect(getCuratedFallback("programs", "addiction treatment", "Rockford, IL")).toContainEqual(
+      expect.objectContaining({ id: "il-rockford-rosecrance-harrison-campus-treatment", phone: "888-928-5280" }),
+    );
+
+    const chicago = getCuratedFallback("programs", "addiction treatment", "Chicago, IL");
+    expect(chicago.filter((resource) => matchesHelpLocation(resource, "Chicago, IL")).map(({ id }) => id))
+      .not.toContain("il-peoria-carle-addiction-recovery-center");
+    expect(getCuratedFallback("programs", "addiction treatment", "Illinois")
+      .filter((resource) => matchesHelpLocation(resource, "Illinois")).map(({ id }) => id))
+      .not.toContain("il-rockford-rosecrance-harrison-campus-treatment");
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
