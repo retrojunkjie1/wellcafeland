@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { getCuratedFallback, isUSLocation } from "./directoryCuratedFallback";
 import { getUSStateCoverage } from "@/data/usDirectoryCoverage";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
+import { NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
@@ -26,6 +27,27 @@ describe("category fallback pathways", () => {
     ]));
     expect(getCuratedFallback("programs", "behavioral health clinic", "San Diego, CA").map(({ id }) => id))
       .not.toContain("ca-la-dmh-clinic-downtown");
+  });
+
+  it("returns NYC psychiatric emergency locations across all five boroughs without leaking them to other cities", () => {
+    expect(isUSLocation("New York City, NY")).toBe(true);
+    const nyc = getCuratedFallback("hotlines", "psychiatric emergency", "New York City, NY");
+    const cpep = nyc.filter(({ id }) => id.startsWith("nyc-cpep-"));
+    expect(NEW_YORK_URGENT_RESOURCES.filter(({ id }) => id.startsWith("nyc-cpep-"))).toHaveLength(18);
+    expect(cpep).toHaveLength(18);
+    expect(new Set(cpep.map(({ locationLine }) => locationLine.split(" · ")[0]))).toEqual(new Set([
+      "Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island",
+    ]));
+    expect(cpep).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "nyc-cpep-jacobi", phone: "718-918-4850", address: "1400 Pelham Parkway South, Bronx, NY 10461" }),
+      expect.objectContaining({ id: "nyc-cpep-queens-hospital", phone: "718-883-3575" }),
+      expect.objectContaining({ id: "nyc-cpep-richmond", phone: "718-818-6300" }),
+    ]));
+    expect(cpep.every(({ description }) => /24\/7|24 hours/i.test(description))).toBe(true);
+    expect(cpep.find(({ id }) => id === "nyc-cpep-bellevue").description).toMatch(/hospital main line; ask for CPEP/i);
+
+    expect(getCuratedFallback("hotlines", "psychiatric emergency", "Buffalo, NY").map(({ id }) => id))
+      .not.toContain("nyc-cpep-bellevue");
   });
 
   it("adds San Diego County clinic, peer, food, benefits, and urgent care contacts without leaking them out of county", () => {

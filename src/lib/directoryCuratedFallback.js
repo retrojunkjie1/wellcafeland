@@ -622,7 +622,7 @@ export function getCuratedFallback(domain, query, region = "") {
   const maineDirectoryCities = [...new Set(maineRecords.map((resource) => resource.city).filter(Boolean))]
     .sort((a, b) => b.length - a.length);
   const maineCity = maineDirectoryCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
-  const isMaine = /\bmaine\b|,\s*me(?:\s|$)/.test(normalizedRegion) || /^\s*me\s*$/.test(normalizedRegion) || (!explicitOtherState && Boolean(maineCity));
+  const isMaine = /\bmaine\b|,\s*me(?:\s|$)/.test(normalizedRegion) || /^\s*me\s*$/.test(normalizedRegion) || (!explicitOtherState && Boolean(maineCity) && !/\bnew york\b/.test(normalizedRegion));
   const isMaineStatewide = /^\s*(?:maine|me)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
   const texasCity = [...new Set(Object.values(US_LOCAL_RESOURCE_CATALOG).flat()
     .filter((resource) => resource.state === "TX")
@@ -710,7 +710,7 @@ export function getCuratedFallback(domain, query, region = "") {
     .sort((a, b) => b.length - a.length)
     .find((city) => normalizedRegion.includes(city.toLowerCase()));
   const hasExplicitPennsylvania = /\bpennsylvania\b|(?:,\s*|\s)pa\b/.test(normalizedRegion);
-  const isPennsylvania = hasExplicitPennsylvania || Boolean(pennsylvaniaCity);
+  const isPennsylvania = hasExplicitPennsylvania || (Boolean(pennsylvaniaCity) && !/\bnew york\b/.test(normalizedRegion));
   const isPennsylvaniaStatewide = /^\s*(?:pennsylvania|pa)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
   const arizonaDirectoryRecords = [
     ...ARIZONA_TREATMENT_RESOURCES,
