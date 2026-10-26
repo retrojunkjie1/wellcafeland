@@ -204,6 +204,33 @@ export const NEW_YORK_PEER_RESOURCES = [
     source: "Alcoholics Anonymous in New York State service directory",
     state: "NY", coverageScope: "state", locationLine: "Statewide directory of local A.A. service offices and meeting contacts",
   }),
+  ...[
+    { id: "fountain-house-bronx", name: "Fountain House Bronx", borough: "Bronx", address: "564 Walton Avenue, Bronx, NY 10451", phone: "646-485-5203", email: "jointheclubbx@fountainhouse.org" },
+    { id: "lantern-house-bronx", name: "Goodwill Lantern House", borough: "Bronx", address: "512 Southern Boulevard, Bronx, NY 10455", phone: "718-993-1078", email: "hgarcia@goodwillny.org" },
+    { id: "venture-house-bronx", name: "Venture House Bronx", borough: "Bronx", address: "2494 Elm Place, 2nd Floor, Bronx, NY 10458", phone: "646-214-8164", email: "info@venturehouse.org" },
+    { id: "greater-heights-brooklyn", name: "Brooklyn Community Services — Greater Heights Clubhouse", borough: "Brooklyn", address: "980 Halsey Street, Brooklyn, NY 11207", phone: "718-235-5780", email: "GreaterheightsCHintake@wearebcs.org" },
+    { id: "sus-brooklyn-clubhouse", name: "Services for the Underserved — Brooklyn Clubhouse", borough: "Brooklyn", address: "1125 Fulton Street, 2nd Floor, Brooklyn, NY 11238", phone: "347-226-9015", email: "brooklynclubhousemembership@sus.org" },
+    { id: "venture-house-brooklyn", name: "Venture House Brooklyn", borough: "Brooklyn", address: "2708 Snyder Avenue, 2nd Floor, Brooklyn, NY 11226", phone: "929-551-2130", email: "info@venturehouse.org" },
+    { id: "fountain-house-midtown", name: "Fountain House Midtown", borough: "Manhattan", address: "425 West 47th Street, New York, NY 10036", phone: "646-485-5203", email: "jointheclub@fountainhouse.org" },
+    { id: "fountain-house-harlem", name: "Fountain House Harlem", borough: "Manhattan", address: "2067 Fifth Avenue, New York, NY 10035", phone: "646-485-5203", email: "jointheclub@fountainhouse.org" },
+    { id: "elements-house-manhattan", name: "NY Disaster Interfaith Services — Elements House", borough: "Manhattan", address: "48 Henry Street, New York, NY 10002", phone: "332-400-1957", email: "clubhouse@nydis.org" },
+    { id: "phoenix-house-harlem-clubhouse", name: "Phoenix House Harlem Clubhouse", borough: "Manhattan", address: "129 West 138th Street, New York, NY 10030", phone: "646-455-0205", email: "clubhouse@phoenixhouseny.org" },
+    { id: "citiview-connections-queens", name: "Goodwill Citiview Connections", borough: "Queens", address: "33-24A Northern Boulevard, 3rd Floor, Long Island City, NY 11101", phone: "718-361-7030", email: "awaddell@goodwillny.org" },
+    { id: "venture-house-queens", name: "Venture House Queens", borough: "Queens", address: "150-10 Hillside Avenue, Jamaica, NY 11432", phone: "718-658-7201", email: "info@venturehouse.org" },
+    { id: "venture-house-staten-island", name: "Venture House Staten Island", borough: "Staten Island", address: "1442 Castleton Avenue, Staten Island, NY 10302", phone: "718-658-7821", email: "info@venturehouse.org" },
+  ].map(({ id, name, borough, address, phone, email }) => reviewed({
+    id: `nyc-clubhouse-${id}`,
+    name: `${name} — peer community clubhouse`,
+    description: `NYC Health lists this free community clubhouse for adults 18 and older with a primary diagnosis of serious mental illness. Clubhouses support recovery through peer community, shared activities, social connection, and help with personal goals; some also offer virtual participation. Membership is voluntary. The city says enrollment requires documentation of diagnosis and a clubhouse application. Call or email ${phone} / ${email} to ask about eligibility, current activities, tours, and accessibility before visiting.`,
+    phone,
+    email,
+    link: "https://www.nyc.gov/site/doh/health/health-topics/clubhouses.page",
+    source: "NYC Department of Health clubhouse directory and membership guidance",
+    ...NYC,
+    address,
+    locationLine: `${borough} · free peer community clubhouse · contact for membership and visit details`,
+    checkedAt: "2026-10-25",
+  })),
 ];
 
 export const NEW_YORK_HOUSING_RESOURCES = [

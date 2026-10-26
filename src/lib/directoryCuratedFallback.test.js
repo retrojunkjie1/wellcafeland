@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { getCuratedFallback, isUSLocation } from "./directoryCuratedFallback";
 import { getUSStateCoverage } from "@/data/usDirectoryCoverage";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
-import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
+import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_PEER_RESOURCES, NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
@@ -66,6 +66,24 @@ describe("category fallback pathways", () => {
     expect(NEW_YORK_BENEFIT_RESOURCES.filter(({ id }) => id.startsWith("nyc-hra-bac-")).length).toBe(17);
     expect(getCuratedFallback("grants", "benefits access center", "Buffalo, NY").map(({ id }) => id))
       .not.toContain("nyc-hra-bac-richmond");
+  });
+
+  it("returns NYC peer clubhouses from the city directory with membership criteria and five-borough coverage", () => {
+    const nyc = getCuratedFallback("peer", "mental health clubhouse peer community", "New York City, NY");
+    const clubhouses = nyc.filter(({ id }) => id.startsWith("nyc-clubhouse-"));
+    expect(clubhouses).toHaveLength(13);
+    expect(new Set(clubhouses.map(({ locationLine }) => locationLine.split(" · ")[0]))).toEqual(new Set([
+      "Bronx", "Brooklyn", "Manhattan", "Queens", "Staten Island",
+    ]));
+    expect(clubhouses).toContainEqual(expect.objectContaining({
+      id: "nyc-clubhouse-venture-house-staten-island",
+      address: "1442 Castleton Avenue, Staten Island, NY 10302",
+      phone: "718-658-7821",
+    }));
+    expect(clubhouses.every(({ description }) => /18 and older/i.test(description))).toBe(true);
+    expect(NEW_YORK_PEER_RESOURCES.filter(({ id }) => id.startsWith("nyc-clubhouse-")).length).toBe(13);
+    expect(getCuratedFallback("peer", "mental health clubhouse", "Buffalo, NY").map(({ id }) => id))
+      .not.toContain("nyc-clubhouse-venture-house-staten-island");
   });
 
   it("adds San Diego County clinic, peer, food, benefits, and urgent care contacts without leaking them out of county", () => {
