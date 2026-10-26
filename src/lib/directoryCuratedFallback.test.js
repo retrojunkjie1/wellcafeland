@@ -335,6 +335,26 @@ describe("category fallback pathways", () => {
     expect(sacramento.some((resource) => resource.id.startsWith("ca-la-housing-"))).toBe(false);
   });
 
+  it("adds source-reviewed California food sites across Los Angeles County", () => {
+    const losAngeles = getCuratedFallback("food.essentials", "food pantry", "Los Angeles, CA");
+    expect(losAngeles.map((resource) => resource.id)).toEqual(expect.arrayContaining([
+      "ca-la-food-immanuel-presbyterian-pantry",
+      "ca-la-food-islamic-center-southern-california-pantry",
+      "ca-la-food-proyecto-pastoral-produce-distribution",
+      "ca-la-food-our-saviour-center-pantry",
+      "ca-la-food-his-helping-hands-pantry",
+    ]));
+    expect(losAngeles.find((resource) => resource.id === "ca-la-food-proyecto-pastoral-produce-distribution")).toMatchObject({
+      phone: "323-881-0018",
+      address: "Pico Aliso Recreation Center, 370 S. Clarence St., Los Angeles, CA 90033",
+      checkedAt: "2026-10-25",
+    });
+    expect(losAngeles.find((resource) => resource.id === "ca-la-food-our-saviour-center-pantry").description).toMatch(/second and fourth Saturday/i);
+
+    const sacramento = getCuratedFallback("food.essentials", "food pantry", "Sacramento, CA");
+    expect(sacramento.some((resource) => resource.id.startsWith("ca-la-food-"))).toBe(false);
+  });
+
   it("shows state-specific Nigeria public hospitals as treatment contacts with independent source dates", () => {
     const resources = getCuratedFallback("programs", "recovery support programs", "Sokoto, Nigeria");
     expect(resources).toEqual(expect.arrayContaining([
