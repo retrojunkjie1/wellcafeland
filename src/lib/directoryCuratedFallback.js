@@ -71,6 +71,24 @@ import {
 } from "@/data/arizonaDirectory";
 import { TEXAS_CITY_RESOURCES } from "@/data/texasCitiesDirectory";
 import { TEXAS_BATCH_TWO } from "@/data/texasCitiesBatchTwo";
+import { TEXAS_BATCH_THREE } from "@/data/texasCitiesBatchThree";
+import { TEXAS_BATCH_FOUR } from "@/data/texasCitiesBatchFour";
+import { TEXAS_BATCH_FIVE } from "@/data/texasCitiesBatchFive";
+import { TEXAS_BATCH_SIX } from "@/data/texasCitiesBatchSix";
+import { TEXAS_BATCH_SEVEN } from "@/data/texasCitiesBatchSeven";
+import { OKLAHOMA_PROGRAMS, OKLAHOMA_PEER, OKLAHOMA_HOUSING, OKLAHOMA_FOOD, OKLAHOMA_BENEFITS, OKLAHOMA_URGENT } from "@/data/oklahomaDirectory";
+import { ALABAMA_TREATMENT, ALABAMA_PEER, ALABAMA_HOUSING, ALABAMA_FOOD, ALABAMA_BENEFITS, ALABAMA_URGENT } from "@/data/alabamaDirectory";
+import { ALASKA_TREATMENT, ALASKA_PEER, ALASKA_HOUSING, ALASKA_FOOD, ALASKA_BENEFITS, ALASKA_URGENT } from "@/data/alaskaDirectory";
+import { ARKANSAS_TREATMENT, ARKANSAS_PEER, ARKANSAS_HOUSING, ARKANSAS_FOOD, ARKANSAS_BENEFITS, ARKANSAS_URGENT } from "@/data/arkansasDirectory";
+import { CONNECTICUT_TREATMENT, CONNECTICUT_PEER, CONNECTICUT_HOUSING, CONNECTICUT_FOOD, CONNECTICUT_BENEFITS, CONNECTICUT_URGENT } from "@/data/connecticutDirectory";
+import { DELAWARE_TREATMENT, DELAWARE_PEER, DELAWARE_HOUSING, DELAWARE_FOOD, DELAWARE_BENEFITS, DELAWARE_URGENT } from "@/data/delawareDirectory";
+import { HAWAII_TREATMENT, HAWAII_PEER, HAWAII_HOUSING, HAWAII_FOOD, HAWAII_BENEFITS, HAWAII_BENEFITS_OUTREACH, HAWAII_URGENT } from "@/data/hawaiiDirectory";
+import { IDAHO_TREATMENT, IDAHO_PEER, IDAHO_HOUSING, IDAHO_FOOD, IDAHO_BENEFITS, IDAHO_URGENT } from "@/data/idahoDirectory";
+import { INDIANA_TREATMENT, INDIANA_PEER, INDIANA_HOUSING, INDIANA_HOUSING_REFERRALS, INDIANA_FOOD, INDIANA_BENEFITS, INDIANA_URGENT } from "@/data/indianaDirectory";
+import { IOWA_TREATMENT, IOWA_PEER, IOWA_HOUSING, IOWA_FOOD, IOWA_BENEFITS, IOWA_URGENT } from "@/data/iowaDirectory";
+import { KANSAS_TREATMENT, KANSAS_SUD_TREATMENT, KANSAS_PEER, KANSAS_HOUSING, KANSAS_FOOD, KANSAS_BENEFITS, KANSAS_CMH_CRISES, KANSAS_URGENT } from "@/data/kansasDirectory";
+import { LOUISIANA_TREATMENT, LOUISIANA_PEER, LOUISIANA_HOUSING, LOUISIANA_FOOD, LOUISIANA_BENEFITS, LOUISIANA_URGENT } from "@/data/louisianaDirectory";
+import { MAINE_TREATMENT, MAINE_PEER, MAINE_HOUSING, MAINE_FOOD, MAINE_BENEFITS, MAINE_URGENT } from "@/data/maineDirectory";
 import {
   COLORADO_CITY_PROGRAMS,
   COLORADO_CITY_PEER,
@@ -229,13 +247,24 @@ const US_STATES_AND_TERRITORIES = ["alabama", "alaska", "arizona", "arkansas", "
 export function isUSLocation(region = "") {
   const normalized = String(region).trim().toLowerCase();
   const georgiaCities = ["savannah", "macon", "augusta", "athens", "columbus", "college park", "cartersville", "moultrie", "cleveland", "clayton", "milledgeville"];
+  const alabamaCities = ["birmingham", "montgomery", "mobile", "huntsville", "tuscaloosa", "hoover", "dothan", "auburn", "decatur", "madison", "florence", "gadsden", "enterprise", "opelika", "jasper", "talladega", "selma", "anniston", "prattville", "vestavia hills", "albertville", "rainville", "tuskegee", "carrollton", "daphne", "clanton"];
+  const louisianaCities = ["new orleans", "baton rouge", "shreveport", "lafayette", "lake charles", "monroe", "alexandria", "houma", "slidell", "kenner", "bossier city", "metairie", "ruston", "hammond", "gonzales", "new iberia", "west monroe", "tallulah", "bogalusa", "mansfield", "rayville", "homer", "morgan city", "bastrop", "winnsboro", "franklin", "amite", "gretna", "harvey", "marrero", "opelousas", "springhill", "natchitoches", "bunkie", "columbia", "crowley", "ferriday", "plaquemine"];
+  const maineCities = ["portland", "lewiston", "brunswick", "bangor", "augusta", "waterville", "auburn", "presque isle", "ellsworth", "rockland", "sanford", "biddeford", "caribou", "houlton", "fort kent", "machias", "calais", "freeport", "blue hill", "hampden", "harrison", "orland", "east wilton", "rumford", "norway", "solon", "pleasant point", "acton", "albion", "alfred", "andover", "anson", "ashland", "belgrade", "bethel", "bingham", "buckfield", "bucksport", "burlington", "buxton", "danforth", "dixfield", "fryeburg", "gardiner", "gorham", "hallowell", "holden", "hollis center", "lubec", "madison", "milbridge", "norridgewock", "north berwick", "saco", "south portland", "unity", "vinalhaven", "waldoboro", "warren"];
+  const curatedCities = [...new Set(Object.values(US_LOCAL_RESOURCE_CATALOG).flat()
+    .filter((resource) => resource.state === "TX")
+    .map((resource) => resource.city)
+    .filter(Boolean))];
   if (!normalized) return false;
   if (/\b(?:united states|u\.?s\.?a?\.?|usa)\b/.test(normalized) || /\b\d{5}(?:-\d{4})?\b/.test(normalized)) return true;
   if (US_STATES_AND_TERRITORIES.some((state) => normalized.includes(state))) return true;
   if (/(?:,\s*|\s)(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|PR|GU|AS|VI|MP)$/i.test(String(region).trim())) return true;
+  if (louisianaCities.some((city) => normalized === city || normalized.startsWith(`${city},`))) return true;
+  if (maineCities.some((city) => normalized === city || normalized.startsWith(`${city},`))) return true;
   if (/\b(?:columbus|cincinnati|cleveland|toledo|dayton|akron|springfield|lorain|youngstown|fairfield|logan|lima|newark|philadelphia|pittsburgh|harrisburg|lancaster|erie|allentown|scranton|pittston|altoona|media|doylestown|exton|sharon|uniontown|johnstown|washington|reading|indiana|delmont|york)\b/i.test(normalized)) return true;
   if (georgiaCities.some((city) => normalized === city || normalized.startsWith(`${city}, ga`) || normalized.startsWith(`${city}, georgia`))) return true;
-  return /\b(?:denver|dallas|fort worth|houston|austin|san antonio|el paso|aurora|los angeles|san diego|san francisco|san jose|sacramento|fresno|oakland|long beach|miami|homestead|orlando|tampa|jacksonville|tallahassee|fort lauderdale|chicago|atlanta|decatur|new york city|nyc|manhattan|brooklyn|queens|bronx|staten island|buffalo|sloan|rochester|syracuse|albany|batavia|sanborn|long island|bethpage|freeport|phoenix|tucson|mesa|flagstaff|surprise|chinle|nogales|yuma|sierra vista|prescott|kingman|bullhead city|payson|globe|safford|show low|holbrook|page|cottonwood|sahuarita|green valley)\b/i.test(normalized);
+  if (/^al$/i.test(normalized) || alabamaCities.some((city) => normalized === city || normalized.startsWith(`${city}, al`) || normalized.startsWith(`${city}, alabama`))) return true;
+  if (curatedCities.some((city) => normalized === city.toLowerCase() || normalized.startsWith(`${city.toLowerCase()},`))) return true;
+  return /\b(?:denver|dallas|fort worth|houston|austin|san antonio|el paso|aurora|los angeles|san diego|san francisco|san jose|sacramento|fresno|oakland|long beach|miami|homestead|orlando|tampa|jacksonville|tallahassee|fort lauderdale|chicago|atlanta|decatur|new york city|nyc|manhattan|brooklyn|queens|bronx|staten island|buffalo|sloan|rochester|syracuse|albany|batavia|sanborn|long island|bethpage|freeport|phoenix|tucson|mesa|flagstaff|surprise|chinle|nogales|yuma|sierra vista|prescott|kingman|bullhead city|payson|globe|safford|show low|holbrook|page|cottonwood|sahuarita|green valley|oklahoma city|okc|tulsa|lawton|broken arrow|norman|edmond|stillwater|muskogee|enid)\b/i.test(normalized);
 }
 
 export function isNigeriaLocation(region = "") {
@@ -405,12 +434,12 @@ const DALLAS_URGENT_RESOURCES = [
 ];
 
 export const US_LOCAL_RESOURCE_CATALOG = {
-  programs: [...DALLAS_TREATMENT_RESOURCES, ...HOUSTON_TREATMENT_RESOURCES, ...TEXAS_CITY_RESOURCES.programs, ...TEXAS_BATCH_TWO.programs, ...COLORADO_CITY_PROGRAMS, ...CALIFORNIA_TREATMENT_RESOURCES, ...FLORIDA_TREATMENT_RESOURCES, ...ILLINOIS_TREATMENT_RESOURCES, ...GEORGIA_TREATMENT_RESOURCES, ...NEW_YORK_TREATMENT_RESOURCES, ...OHIO_TREATMENT_RESOURCES, ...PENNSYLVANIA_TREATMENT_RESOURCES, ...ARIZONA_TREATMENT_RESOURCES],
-  peer: [...DALLAS_PEER_RESOURCES, ...COLORADO_PEER_RESOURCES, ...DENVER_PEER_RESOURCES, ...AURORA_PEER_RESOURCES, ...COLORADO_CITY_PEER, ...HOUSTON_PEER_RESOURCES, ...TEXAS_CITY_RESOURCES.peer, ...TEXAS_BATCH_TWO.peer, ...CALIFORNIA_PEER_RESOURCES, ...FLORIDA_PEER_RESOURCES, ...ILLINOIS_PEER_RESOURCES, ...GEORGIA_PEER_RESOURCES, ...NEW_YORK_PEER_RESOURCES, ...OHIO_PEER_RESOURCES, ...PENNSYLVANIA_PEER_RESOURCES, ...ARIZONA_PEER_RESOURCES],
-  housing: [...DENVER_HOUSING_RESOURCES, ...COLORADO_CITY_HOUSING, ...DALLAS_HOUSING_RESOURCES, ...HOUSTON_HOUSING_RESOURCES, ...TEXAS_CITY_RESOURCES.housing, ...TEXAS_BATCH_TWO.housing, ...CALIFORNIA_HOUSING_RESOURCES, ...FLORIDA_HOUSING_RESOURCES, ...ILLINOIS_HOUSING_RESOURCES, ...GEORGIA_HOUSING_RESOURCES, ...NEW_YORK_HOUSING_RESOURCES, ...OHIO_HOUSING_RESOURCES, ...PENNSYLVANIA_HOUSING_RESOURCES, ...ARIZONA_HOUSING_RESOURCES],
-  "food.essentials": [...DALLAS_FOOD_RESOURCES, ...HOUSTON_FOOD_RESOURCES, ...TEXAS_CITY_RESOURCES.food, ...TEXAS_BATCH_TWO.food, ...COLORADO_CITY_FOOD, ...CALIFORNIA_FOOD_RESOURCES, ...FLORIDA_FOOD_RESOURCES, ...ILLINOIS_FOOD_RESOURCES, ...GEORGIA_FOOD_RESOURCES, ...NEW_YORK_FOOD_RESOURCES, ...OHIO_FOOD_RESOURCES, ...PENNSYLVANIA_FOOD_RESOURCES, ...ARIZONA_FOOD_RESOURCES],
-  grants: [...DALLAS_BENEFIT_RESOURCES, ...COLORADO_BENEFIT_RESOURCES, ...DENVER_BENEFIT_RESOURCES, ...COLORADO_CITY_BENEFITS, ...HOUSTON_BENEFIT_RESOURCES, ...TEXAS_CITY_RESOURCES.benefits, ...TEXAS_BATCH_TWO.benefits, ...CALIFORNIA_BENEFIT_RESOURCES, ...FLORIDA_BENEFIT_RESOURCES, ...ILLINOIS_BENEFIT_RESOURCES, ...GEORGIA_BENEFIT_RESOURCES, ...NEW_YORK_BENEFIT_RESOURCES, ...OHIO_BENEFIT_RESOURCES, ...PENNSYLVANIA_BENEFIT_RESOURCES, ...ARIZONA_BENEFIT_RESOURCES],
-  hotlines: [...DALLAS_URGENT_RESOURCES, ...COLORADO_URGENT_RESOURCES, ...DENVER_URGENT_RESOURCES, ...COLORADO_CITY_URGENT, ...HOUSTON_URGENT_RESOURCES, ...TEXAS_CITY_RESOURCES.urgent, ...TEXAS_BATCH_TWO.urgent, ...CALIFORNIA_URGENT_RESOURCES, ...FLORIDA_URGENT_RESOURCES, ...ILLINOIS_URGENT_RESOURCES, ...GEORGIA_URGENT_RESOURCES, ...NEW_YORK_URGENT_RESOURCES, ...OHIO_URGENT_RESOURCES, ...PENNSYLVANIA_URGENT_RESOURCES, ...ARIZONA_URGENT_RESOURCES],
+  programs: [...DALLAS_TREATMENT_RESOURCES, ...HOUSTON_TREATMENT_RESOURCES, ...TEXAS_CITY_RESOURCES.programs, ...TEXAS_BATCH_TWO.programs, ...TEXAS_BATCH_THREE.programs, ...TEXAS_BATCH_FOUR.programs, ...TEXAS_BATCH_FIVE.programs, ...TEXAS_BATCH_SIX.programs, ...TEXAS_BATCH_SEVEN.programs, ...COLORADO_CITY_PROGRAMS, ...CALIFORNIA_TREATMENT_RESOURCES, ...FLORIDA_TREATMENT_RESOURCES, ...ILLINOIS_TREATMENT_RESOURCES, ...GEORGIA_TREATMENT_RESOURCES, ...NEW_YORK_TREATMENT_RESOURCES, ...OHIO_TREATMENT_RESOURCES, ...PENNSYLVANIA_TREATMENT_RESOURCES, ...ARIZONA_TREATMENT_RESOURCES, ...OKLAHOMA_PROGRAMS, ...ALABAMA_TREATMENT, ...ALASKA_TREATMENT, ...ARKANSAS_TREATMENT, ...CONNECTICUT_TREATMENT, ...DELAWARE_TREATMENT, ...HAWAII_TREATMENT, ...IDAHO_TREATMENT, ...INDIANA_TREATMENT, ...IOWA_TREATMENT, ...KANSAS_TREATMENT, ...KANSAS_SUD_TREATMENT, ...LOUISIANA_TREATMENT, ...MAINE_TREATMENT],
+  peer: [...DALLAS_PEER_RESOURCES, ...COLORADO_PEER_RESOURCES, ...DENVER_PEER_RESOURCES, ...AURORA_PEER_RESOURCES, ...COLORADO_CITY_PEER, ...HOUSTON_PEER_RESOURCES, ...TEXAS_CITY_RESOURCES.peer, ...TEXAS_BATCH_TWO.peer, ...TEXAS_BATCH_THREE.peer, ...TEXAS_BATCH_FOUR.peer, ...TEXAS_BATCH_FIVE.peer, ...TEXAS_BATCH_SIX.peer, ...TEXAS_BATCH_SEVEN.peer, ...CALIFORNIA_PEER_RESOURCES, ...FLORIDA_PEER_RESOURCES, ...ILLINOIS_PEER_RESOURCES, ...GEORGIA_PEER_RESOURCES, ...NEW_YORK_PEER_RESOURCES, ...OHIO_PEER_RESOURCES, ...PENNSYLVANIA_PEER_RESOURCES, ...ARIZONA_PEER_RESOURCES, ...OKLAHOMA_PEER, ...ALABAMA_PEER, ...ALASKA_PEER, ...ARKANSAS_PEER, ...CONNECTICUT_PEER, ...DELAWARE_PEER, ...HAWAII_PEER, ...IDAHO_PEER, ...INDIANA_PEER, ...IOWA_PEER, ...KANSAS_PEER, ...LOUISIANA_PEER, ...MAINE_PEER],
+  housing: [...DENVER_HOUSING_RESOURCES, ...COLORADO_CITY_HOUSING, ...DALLAS_HOUSING_RESOURCES, ...HOUSTON_HOUSING_RESOURCES, ...TEXAS_CITY_RESOURCES.housing, ...TEXAS_BATCH_TWO.housing, ...TEXAS_BATCH_THREE.housing, ...TEXAS_BATCH_FOUR.housing, ...TEXAS_BATCH_FIVE.housing, ...TEXAS_BATCH_SIX.housing, ...TEXAS_BATCH_SEVEN.housing, ...CALIFORNIA_HOUSING_RESOURCES, ...FLORIDA_HOUSING_RESOURCES, ...ILLINOIS_HOUSING_RESOURCES, ...GEORGIA_HOUSING_RESOURCES, ...NEW_YORK_HOUSING_RESOURCES, ...OHIO_HOUSING_RESOURCES, ...PENNSYLVANIA_HOUSING_RESOURCES, ...ARIZONA_HOUSING_RESOURCES, ...OKLAHOMA_HOUSING, ...ALABAMA_HOUSING, ...ALASKA_HOUSING, ...ARKANSAS_HOUSING, ...CONNECTICUT_HOUSING, ...DELAWARE_HOUSING, ...HAWAII_HOUSING, ...IDAHO_HOUSING, ...INDIANA_HOUSING, ...INDIANA_HOUSING_REFERRALS, ...IOWA_HOUSING, ...KANSAS_HOUSING, ...LOUISIANA_HOUSING, ...MAINE_HOUSING],
+  "food.essentials": [...DALLAS_FOOD_RESOURCES, ...HOUSTON_FOOD_RESOURCES, ...TEXAS_CITY_RESOURCES.food, ...TEXAS_BATCH_TWO.food, ...TEXAS_BATCH_THREE.food, ...TEXAS_BATCH_FOUR.food, ...TEXAS_BATCH_FIVE.food, ...TEXAS_BATCH_SIX.food, ...TEXAS_BATCH_SEVEN.food, ...COLORADO_CITY_FOOD, ...CALIFORNIA_FOOD_RESOURCES, ...FLORIDA_FOOD_RESOURCES, ...ILLINOIS_FOOD_RESOURCES, ...GEORGIA_FOOD_RESOURCES, ...NEW_YORK_FOOD_RESOURCES, ...OHIO_FOOD_RESOURCES, ...PENNSYLVANIA_FOOD_RESOURCES, ...ARIZONA_FOOD_RESOURCES, ...OKLAHOMA_FOOD, ...ALABAMA_FOOD, ...ALASKA_FOOD, ...ARKANSAS_FOOD, ...CONNECTICUT_FOOD, ...DELAWARE_FOOD, ...HAWAII_FOOD, ...IDAHO_FOOD, ...INDIANA_FOOD, ...IOWA_FOOD, ...KANSAS_FOOD, ...LOUISIANA_FOOD, ...MAINE_FOOD],
+  grants: [...DALLAS_BENEFIT_RESOURCES, ...COLORADO_BENEFIT_RESOURCES, ...DENVER_BENEFIT_RESOURCES, ...COLORADO_CITY_BENEFITS, ...HOUSTON_BENEFIT_RESOURCES, ...TEXAS_CITY_RESOURCES.benefits, ...TEXAS_BATCH_TWO.benefits, ...TEXAS_BATCH_THREE.benefits, ...TEXAS_BATCH_FOUR.benefits, ...TEXAS_BATCH_FIVE.benefits, ...TEXAS_BATCH_SIX.benefits, ...TEXAS_BATCH_SEVEN.benefits, ...CALIFORNIA_BENEFIT_RESOURCES, ...FLORIDA_BENEFIT_RESOURCES, ...ILLINOIS_BENEFIT_RESOURCES, ...GEORGIA_BENEFIT_RESOURCES, ...NEW_YORK_BENEFIT_RESOURCES, ...OHIO_BENEFIT_RESOURCES, ...PENNSYLVANIA_BENEFIT_RESOURCES, ...ARIZONA_BENEFIT_RESOURCES, ...OKLAHOMA_BENEFITS, ...ALABAMA_BENEFITS, ...ALASKA_BENEFITS, ...ARKANSAS_BENEFITS, ...CONNECTICUT_BENEFITS, ...DELAWARE_BENEFITS, ...HAWAII_BENEFITS, ...HAWAII_BENEFITS_OUTREACH, ...IDAHO_BENEFITS, ...INDIANA_BENEFITS, ...IOWA_BENEFITS, ...KANSAS_BENEFITS, ...LOUISIANA_BENEFITS, ...MAINE_BENEFITS],
+  hotlines: [...DALLAS_URGENT_RESOURCES, ...COLORADO_URGENT_RESOURCES, ...DENVER_URGENT_RESOURCES, ...COLORADO_CITY_URGENT, ...HOUSTON_URGENT_RESOURCES, ...TEXAS_CITY_RESOURCES.urgent, ...TEXAS_BATCH_TWO.urgent, ...TEXAS_BATCH_THREE.urgent, ...TEXAS_BATCH_FOUR.urgent, ...TEXAS_BATCH_FIVE.urgent, ...TEXAS_BATCH_SIX.urgent, ...TEXAS_BATCH_SEVEN.urgent, ...CALIFORNIA_URGENT_RESOURCES, ...FLORIDA_URGENT_RESOURCES, ...ILLINOIS_URGENT_RESOURCES, ...GEORGIA_URGENT_RESOURCES, ...NEW_YORK_URGENT_RESOURCES, ...OHIO_URGENT_RESOURCES, ...PENNSYLVANIA_URGENT_RESOURCES, ...ARIZONA_URGENT_RESOURCES, ...OKLAHOMA_URGENT, ...ALABAMA_URGENT, ...ALASKA_URGENT, ...ARKANSAS_URGENT, ...CONNECTICUT_URGENT, ...DELAWARE_URGENT, ...HAWAII_URGENT, ...IDAHO_URGENT, ...INDIANA_URGENT, ...IOWA_URGENT, ...KANSAS_CMH_CRISES, ...KANSAS_URGENT, ...LOUISIANA_URGENT, ...MAINE_URGENT],
 };
 
 /**
@@ -425,6 +454,8 @@ function filterByQuery(items, query) {
     return name.includes(q) || desc.includes(q) || q.split(/\s+/).some((word) => word.length > 2 && (name.includes(word) || desc.includes(word)));
   });
 }
+
+const uniqueRecords = (items) => [...new Map(items.map((item) => [item.id, item])).values()];
 
 /**
  * Get curated fallback results when API fails
@@ -513,6 +544,86 @@ export function getCuratedFallback(domain, query, region = "") {
   const isFortWorth = /\bfort worth\b|\b761\d{2}\b/.test(normalizedRegion);
   const isElPaso = /\bel paso\b|\b799\d{2}\b/.test(normalizedRegion);
   const isTexasStatewide = /^\s*(?:texas|tx)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const isOklahoma = /\boklahoma\b|(?:,\s*|\s)ok\b|\b(?:oklahoma city|okc|tulsa|lawton|broken arrow|norman|edmond|stillwater|muskogee|enid)\b/.test(normalizedRegion);
+  const isOklahomaStatewide = /^\s*(?:oklahoma|ok)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const oklahomaCity = /\boklahoma city\b|\bokc\b/.test(normalizedRegion)
+    ? "Oklahoma City"
+    : /\btulsa\b/.test(normalizedRegion) ? "Tulsa" : null;
+  const alabamaCity = [...new Set(Object.values(US_LOCAL_RESOURCE_CATALOG).flat()
+    .filter((resource) => resource.state === "AL")
+    .map((resource) => resource.city)
+    .filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isAlabama = /\balabama\b|(?:,\s*|\s)al\b/.test(normalizedRegion) || /^\s*al\s*$/.test(normalizedRegion) || Boolean(alabamaCity);
+  const isAlabamaStatewide = /^\s*(?:alabama|al)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const alaskaRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "AK");
+  const alaskaCity = [...new Set(alaskaRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isAlaska = /\balaska\b|(?:,\s*|\s)ak\b/.test(normalizedRegion) || /^\s*ak\s*$/.test(normalizedRegion) || Boolean(alaskaCity);
+  const isAlaskaStatewide = /^\s*(?:alaska|ak)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const arkansasRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "AR");
+  const arkansasCity = [...new Set(arkansasRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isArkansas = /\barkansas\b|(?:,\s*|\s)ar\b/.test(normalizedRegion) || /^\s*ar\s*$/.test(normalizedRegion) || Boolean(arkansasCity);
+  const isArkansasStatewide = /^\s*(?:arkansas|ar)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const connecticutRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "CT");
+  const connecticutCity = [...new Set(connecticutRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isConnecticut = /\bconnecticut\b|(?:,\s*|\s)ct\b/.test(normalizedRegion) || /^\s*ct\s*$/.test(normalizedRegion) || Boolean(connecticutCity);
+  const isConnecticutStatewide = /^\s*(?:connecticut|ct)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const delawareRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "DE");
+  const delawareCities = [...new Set(delawareRecords.map((resource) => resource.city).filter(Boolean))].sort((a, b) => b.length - a.length);
+  const delawareCity = delawareCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isDelaware = /\bdelaware\b|(?:,\s*|\s)de\b/.test(normalizedRegion) || /^\s*de\s*$/.test(normalizedRegion) || Boolean(delawareCity);
+  const isDelawareStatewide = /^\s*(?:delaware|de)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const hawaiiRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "HI");
+  const hawaiiCities = [...new Set(hawaiiRecords.map((resource) => resource.city).filter(Boolean))].sort((a, b) => b.length - a.length);
+  const hawaiiCity = hawaiiCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isHawaii = /\bhawaii\b|(?:,\s*|\s)hi\b/.test(normalizedRegion) || /^\s*hi\s*$/.test(normalizedRegion) || Boolean(hawaiiCity);
+  const isHawaiiStatewide = /^\s*(?:hawaii|hi)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const idahoRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "ID");
+  const idahoCities = [...new Set(idahoRecords.map((resource) => resource.city).filter(Boolean))].sort((a, b) => b.length - a.length);
+  const idahoCity = idahoCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isIdaho = /\bidaho\b|(?:,\s*|\s)id\b/.test(normalizedRegion) || /^\s*id\s*$/.test(normalizedRegion) || Boolean(idahoCity);
+  const isIdahoStatewide = /^\s*(?:idaho|id)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const indianaRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "IN");
+  const indianaCity = [...new Set(indianaRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length)
+    .find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isIndiana = /\bindiana\b|,\s*in(?:\s|$)/.test(normalizedRegion) || /^\s*in\s*$/.test(normalizedRegion) || Boolean(indianaCity);
+  const isIndianaStatewide = /^\s*(?:indiana|in)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const iowaRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "IA");
+  const iowaCities = [...new Set(iowaRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  const iowaCity = iowaCities.find((city) => city !== "Washington" && normalizedRegion.includes(city.toLowerCase()))
+    || (iowaCities.includes("Washington") && /washington(?:,\s*ia|\s+iowa)/.test(normalizedRegion) ? "Washington" : null);
+  const explicitIowa = /\biowa\b|,\s*ia(?:\s|$)/.test(normalizedRegion) || /^\s*ia\s*$/.test(normalizedRegion);
+  const explicitKansas = /\bkansas\b|,\s*ks(?:\s|$)/.test(normalizedRegion) || /^\s*ks\s*$/.test(normalizedRegion);
+  const isIowa = explicitIowa || (!explicitKansas && Boolean(iowaCity));
+  const isIowaStatewide = /^\s*(?:iowa|ia)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const kansasRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "KS");
+  const kansasCities = [...new Set(kansasRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  const kansasCity = kansasCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isKansas = explicitKansas || (!/,(?:\s*)mo(?:\s|$)/.test(normalizedRegion) && Boolean(kansasCity));
+  const isKansasStatewide = /^\s*(?:kansas|ks)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const louisianaRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "LA");
+  const louisianaCities = [...new Set(louisianaRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  const louisianaCity = louisianaCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const explicitOtherState = /,\s*(?!la(?:\s|$))[a-z]{2}\b/.test(normalizedRegion);
+  const isLouisiana = /\blouisiana\b|,\s*la(?:\s|$)/.test(normalizedRegion) || /^\s*la\s*$/.test(normalizedRegion) || (!explicitOtherState && Boolean(louisianaCity));
+  const isLouisianaStatewide = /^\s*(?:louisiana|la)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const maineRecords = Object.values(US_LOCAL_RESOURCE_CATALOG).flat().filter((resource) => resource.state === "ME");
+  const maineDirectoryCities = [...new Set(maineRecords.map((resource) => resource.city).filter(Boolean))]
+    .sort((a, b) => b.length - a.length);
+  const maineCity = maineDirectoryCities.find((city) => normalizedRegion.includes(city.toLowerCase()));
+  const isMaine = /\bmaine\b|,\s*me(?:\s|$)/.test(normalizedRegion) || /^\s*me\s*$/.test(normalizedRegion) || (!explicitOtherState && Boolean(maineCity));
+  const isMaineStatewide = /^\s*(?:maine|me)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
   const texasCity = [...new Set(Object.values(US_LOCAL_RESOURCE_CATALOG).flat()
     .filter((resource) => resource.state === "TX")
     .map((resource) => resource.city)
@@ -553,7 +664,10 @@ export function getCuratedFallback(domain, query, region = "") {
   const georgiaCity = [...new Set(georgiaDirectoryRecords.map((resource) => resource.city).filter(Boolean))]
     .sort((a, b) => b.length - a.length)
     .find((city) => normalizedRegion.includes(city.toLowerCase()));
-  const isGeorgia = /\bgeorgia\b|(?:,\s*|\s)ga\b/.test(normalizedRegion) || Boolean(georgiaCity);
+  const explicitGeorgia = /\bgeorgia\b|(?:,\s*|\s)ga\b/.test(normalizedRegion);
+  const explicitOtherStateForGeorgia = /,\s*(?!ga(?:\s|$))[a-z]{2}\b/.test(normalizedRegion)
+    || /\bmaine\b/.test(normalizedRegion);
+  const isGeorgia = explicitGeorgia || (!explicitOtherStateForGeorgia && Boolean(georgiaCity));
   const isGeorgiaStatewide = /^\s*(?:georgia|ga)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
   const isAtlanta = /\batlanta\b|\bdecatur\b|\b303\d{2}\b/.test(normalizedRegion);
   const newYorkRecords = [
@@ -620,26 +734,48 @@ export function getCuratedFallback(domain, query, region = "") {
     .filter((resource) => resource.state === "CO");
   const coloradoCity = [...new Set(coloradoRecords.map((resource) => resource.city).filter(Boolean))]
     .sort((a, b) => b.length - a.length)
-    .find((city) => normalizedRegion.includes(city.toLowerCase()));
-  const isColorado = /\bcolorado\b|\bco\b|\b(?:80|81)\d{3}\b/.test(normalizedRegion) || Boolean(coloradoCity);
-  const isDenver = /\bdenver\b/.test(normalizedRegion);
+    .find((city) => normalizedRegion.includes(city.toLowerCase()))
+    || (/\b802\d{2}\b/.test(normalizedRegion) ? "Denver" : null)
+    || (/\b80010\b/.test(normalizedRegion) ? "Aurora" : null);
+  const isColoradoStatewide = /^\s*(?:colorado|co)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
+  const explicitOtherStateForColorado = /,\s*(?!co(?:\s|$))[a-z]{2}\b/.test(normalizedRegion);
+  const isColorado = /\bcolorado\b|,\s*co(?:\s|$)|^\s*co\s*$|\b(?:80|81)\d{3}\b/.test(normalizedRegion)
+    || (!explicitOtherStateForColorado && Boolean(coloradoCity));
+  const isDenver = /\bdenver\b|\b802\d{2}\b/.test(normalizedRegion);
   const isDenverZip = /\b802\d{2}\b/.test(normalizedRegion);
-  const isAurora = /\baurora\b/.test(normalizedRegion);
+  const isAurora = /\baurora\b|\b80010\b/.test(normalizedRegion);
   const isAuroraZip = /\b80010\b/.test(normalizedRegion);
   if (isColorado) {
     const catalogKey = domainKey === "providers" || domainKey === "government_assistance"
       ? (domainKey === "providers" ? "programs" : "grants")
       : domainKey;
     const coloradoResults = (US_LOCAL_RESOURCE_CATALOG[catalogKey] || [])
-      .filter((resource) => resource.state === "CO"
-        && (!coloradoCity || !resource.city || resource.city === coloradoCity));
+      .filter((resource) => resource.state === "CO" && (
+        isColoradoStatewide
+          ? !resource.city || ["state", "statewide", "region"].includes(resource.coverageScope)
+          : resource.city
+            ? resource.city === coloradoCity
+            : true
+      ));
     const matchingColoradoResults = filterByQuery(coloradoResults, query);
     const results = matchingColoradoResults.length ? matchingColoradoResults : coloradoResults;
     if (catalogKey === "hotlines") {
       const emergency = items.find((item) => item.id === "911");
-      return [emergency, ...results.filter((item) => item.id !== "911")].filter(Boolean);
+      return uniqueRecords([emergency, ...results, ...selectedWithEmergencyNumber]).filter(Boolean);
     }
-    return results;
+    const citySpecific = catalogKey === "grants"
+      ? [
+          ...(isDenver ? DENVER_BENEFIT_RESOURCES : []),
+          ...COLORADO_BENEFIT_RESOURCES,
+        ]
+      : catalogKey === "peer"
+        ? [
+            ...(isDenver ? DENVER_PEER_RESOURCES : []),
+            ...(isAurora ? AURORA_PEER_RESOURCES : []),
+            ...COLORADO_PEER_RESOURCES,
+          ]
+        : [];
+    return uniqueRecords([...citySpecific, ...results, ...selected]);
   }
   if (domainKey === "grants" && isColorado) {
     return [
@@ -659,7 +795,9 @@ export function getCuratedFallback(domain, query, region = "") {
     const isCaliforniaStatewide = /^\s*(?:california|ca)(?:\s*,?\s*(?:usa|united states))?\s*$/.test(normalizedRegion);
     const localAndCounty = (resources) => resources.filter((resource) => {
       if (resource.state !== "CA") return false;
-      if (isCaliforniaStatewide) return true;
+      if (isCaliforniaStatewide) {
+        return !resource.city || resource.coverageScope === "statewide" || resource.coverageScope === "county";
+      }
       if (resource.coverageScope === "statewide") return true;
       const cityMatch = normalizedRegion.includes(String(resource.city).toLowerCase());
       const serviceArea = String(resource.serviceArea || "").toLowerCase();
@@ -815,13 +953,262 @@ export function getCuratedFallback(domain, query, region = "") {
       }
       return texasResults;
     }
-    const local = (resources) => resources.filter((resource) => resource.state === "TX" && (!city || resource.city === city));
-    if (domainKey === "programs" || domainKey === "providers") return [...local(TEXAS_CITY_RESOURCES.programs), ...selected];
-    if (domainKey === "peer") return [...local(TEXAS_CITY_RESOURCES.peer), ...selected];
-    if (domainKey === "housing") return [...local(TEXAS_CITY_RESOURCES.housing), ...selected];
-    if (domainKey === "food.essentials") return [...local(TEXAS_CITY_RESOURCES.food), ...selected];
-    if (domainKey === "grants" || domainKey === "government_assistance") return [...local(TEXAS_CITY_RESOURCES.benefits), ...selected];
-    if (domainKey === "hotlines") return [...local(TEXAS_CITY_RESOURCES.urgent), ...selectedWithEmergencyNumber];
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const local = (US_LOCAL_RESOURCE_CATALOG[catalogKey] || [])
+      .filter((resource) => resource.state === "TX" && (!city || resource.city === city));
+    if (domainKey === "programs" || domainKey === "providers" || domainKey === "peer" || domainKey === "housing" || domainKey === "food.essentials" || domainKey === "grants" || domainKey === "government_assistance") return uniqueRecords([...local, ...selected]);
+    if (domainKey === "hotlines") return uniqueRecords([...local, ...selectedWithEmergencyNumber]);
+  }
+  if (isOklahoma) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const oklahomaRecords = (US_LOCAL_RESOURCE_CATALOG[catalogKey] || [])
+      .filter((resource) => resource.state === "OK");
+    const localAndStatewide = oklahomaRecords.filter((resource) => {
+      if (isOklahomaStatewide) return true;
+      return resource.city === oklahomaCity || resource.coverageScope === "state" || !resource.city;
+    });
+    const matches = filterByQuery(localAndStatewide, query);
+    const results = matches.length ? matches : localAndStatewide;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isAlabama) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const countiesByCity = {
+      Birmingham: ["Jefferson"], Montgomery: ["Montgomery"], Mobile: ["Mobile"], Huntsville: ["Madison", "Limestone"],
+      Tuscaloosa: ["Tuscaloosa"], Dothan: ["Houston"], Auburn: ["Lee"], Opelika: ["Lee"], Decatur: ["Morgan"],
+      Florence: ["Lauderdale"], Gadsden: ["Etowah"], Albertville: ["Marshall"], Clanton: ["Chilton"], Daphne: ["Baldwin"],
+      Jasper: ["Walker"], Talladega: ["Talladega"], Tuskegee: ["Macon"], Carrollton: ["Pickens"], Enterprise: ["Coffee"],
+    };
+    const local = (US_LOCAL_RESOURCE_CATALOG[catalogKey] || []).filter((resource) => resource.state === "AL");
+    const cityCounties = alabamaCity ? (countiesByCity[alabamaCity] || []) : [];
+    const scoped = isAlabamaStatewide ? local : local.filter((resource) =>
+      !alabamaCity || resource.city === alabamaCity || resource.coverageScope === "state" ||
+      (resource.serviceAreaCounties || []).some((county) => cityCounties.includes(county))
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isAlaska) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const alaskaCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const local = alaskaCatalog.filter((resource) => resource.state === "AK");
+    const scoped = isAlaskaStatewide ? local : local.filter((resource) =>
+      !alaskaCity || resource.city === alaskaCity || resource.coverageScope === "state" || !resource.city
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isConnecticut) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const local = (US_LOCAL_RESOURCE_CATALOG[catalogKey] || []).filter((resource) => resource.state === "CT");
+    const scoped = isConnecticutStatewide || !connecticutCity ? local : local.filter((resource) =>
+      resource.city === connecticutCity || resource.coverageScope === "state" ||
+      (resource.serviceAreaCities || []).some((town) => town.toLowerCase() === connecticutCity.toLowerCase())
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isDelaware) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const delawareCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const local = delawareCatalog.filter((resource) => resource.state === "DE");
+    const scoped = isDelawareStatewide || !delawareCity ? local : local.filter((resource) =>
+      resource.city === delawareCity || resource.coverageScope === "state"
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isHawaii) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const hawaiiCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const local = hawaiiCatalog.filter((resource) => resource.state === "HI");
+    const scoped = isHawaiiStatewide || !hawaiiCity ? local : local.filter((resource) =>
+      resource.city === hawaiiCity || resource.coverageScope === "state" || resource.coverageScope === "region"
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isIdaho) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const idahoCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const local = idahoCatalog.filter((resource) => resource.state === "ID");
+    const scoped = isIdahoStatewide || !idahoCity ? local : local.filter((resource) =>
+      resource.city === idahoCity || resource.coverageScope === "state" || resource.coverageScope === "region"
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isIndiana) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const indianaCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const indianaCountyByCity = {
+      Indianapolis: ["Marion"], "Fort Wayne": ["Allen"], Evansville: ["Vanderburgh"], "South Bend": ["St. Joseph"], Mishawaka: ["St. Joseph"],
+      Carmel: ["Hamilton"], Fishers: ["Hamilton"], Noblesville: ["Hamilton"], Bloomington: ["Monroe"], Lafayette: ["Tippecanoe"],
+      "West Lafayette": ["Tippecanoe"], "Terre Haute": ["Vigo"], Muncie: ["Delaware"], Anderson: ["Madison"], Elkhart: ["Elkhart"],
+      Goshen: ["Elkhart"], Hammond: ["Lake"], Gary: ["Lake"], "East Chicago": ["Lake"], Kokomo: ["Howard"], Columbus: ["Bartholomew"],
+      "New Albany": ["Floyd"], Jeffersonville: ["Clark"], Richmond: ["Wayne"], "Michigan City": ["LaPorte"], Valparaiso: ["Porter"],
+      Chesterton: ["Porter"], Warsaw: ["Kosciusko"], Marion: ["Grant"], Logansport: ["Cass"], Peru: ["Miami"], Seymour: ["Jackson"],
+      Franklin: ["Johnson"], Greenfield: ["Hancock"], Shelbyville: ["Shelby"], Vincennes: ["Knox"], Bedford: ["Lawrence"],
+      "New Castle": ["Henry"], Connersville: ["Fayette"], Auburn: ["DeKalb"], Angola: ["Steuben"], Wabash: ["Wabash"],
+      Huntington: ["Huntington"], Washington: ["Daviess"], Jasper: ["Dubois"], Madison: ["Jefferson"], Crawfordsville: ["Montgomery"],
+      Plymouth: ["Marshall"], Bremen: ["Marshall"], Argos: ["Marshall"], Culver: ["Marshall"], Nappanee: ["Elkhart"], Bristol: ["Elkhart"],
+      Osceola: ["St. Joseph"], Walkerton: ["St. Joseph"], "New Carlisle": ["St. Joseph"], Pierceton: ["Kosciusko"], "Silver Lake": ["Kosciusko"],
+      LaPorte: ["LaPorte"], Knox: ["Starke"], Rolling: ["LaPorte"], Aurora: ["Dearborn"], Paoli: ["Orange"], Milford: ["Kosciusko"],
+      Connersville: ["Fayette"],
+    };
+    const selectedCountyNames = indianaCity ? (indianaCountyByCity[indianaCity] || []) : [];
+    const local = indianaCatalog.filter((resource) => resource.state === "IN");
+    const scoped = isIndianaStatewide || !indianaCity ? local : local.filter((resource) =>
+      resource.city === indianaCity || resource.coverageScope === "state" ||
+      (resource.serviceAreaCounties || []).some((county) => selectedCountyNames.includes(county))
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isIowa) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const iowaCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const countyByCity = {
+      Ames: ["Story"], Ankeny: ["Polk"], Atlantic: ["Cass"], Burlington: ["Des Moines"], Carroll: ["Carroll"],
+      "Cedar Rapids": ["Linn"], Clinton: ["Clinton"], "Council Bluffs": ["Pottawattamie"], Davenport: ["Scott"],
+      Decorah: ["Winneshiek"], "Des Moines": ["Polk"], Dubuque: ["Dubuque"], Estherville: ["Emmet"], Fairfield: ["Jefferson"],
+      "Fort Dodge": ["Webster"], Independence: ["Buchanan"], "Iowa City": ["Johnson"], Keokuk: ["Lee"], Knoxville: ["Marion"],
+      "Mount Pleasant": ["Henry"], Newton: ["Jasper"], Ottumwa: ["Wapello"], Perry: ["Dallas"], "Pleasant Hill": ["Polk"],
+      Sheldon: ["O’Brien"], Sigourney: ["Keokuk"], "Sioux City": ["Woodbury"], Spencer: ["Clay"], Wapello: ["Louisa"],
+      Washington: ["Washington"], Waterloo: ["Black Hawk"], Woodward: ["Boone"], Hiawatha: ["Linn"], Altoona: ["Polk"],
+      Marshalltown: ["Marshall"], Muscatine: ["Muscatine"],
+    };
+    const selectedCountyNames = iowaCity ? (countyByCity[iowaCity] || []) : [];
+    const local = iowaCatalog.filter((resource) => resource.state === "IA");
+    const scoped = isIowaStatewide || !iowaCity ? local : local.filter((resource) =>
+      resource.city === iowaCity || resource.coverageScope === "state" ||
+      (resource.serviceAreaCounties || []).some((county) => selectedCountyNames.includes(county))
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isKansas) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const kansasCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const kansasCountyByCity = {
+      Topeka: ["Shawnee"], Emporia: ["Lyon"], Mission: ["Johnson"], Lawrence: ["Douglas"], Ottawa: ["Franklin"],
+      Hiawatha: ["Brown"], Salina: ["Saline"], Independence: ["Montgomery"], Parsons: ["Labette"], Wichita: ["Sedgwick"],
+      Hays: ["Ellis"], Manhattan: ["Riley"], "Garden City": ["Finney"], Hutchinson: ["Reno"], Newton: ["Harvey"],
+      Pittsburg: ["Crawford"], Greensburg: ["Kiowa"], Augusta: ["Butler"], Iola: ["Allen"], Wellington: ["Sumner"],
+      "Kansas City": ["Wyandotte"], Liberal: ["Seward"], "Great Bend": ["Barton"], Riverton: ["Cherokee"], Leavenworth: ["Leavenworth"],
+    };
+    const selectedCountyNames = kansasCity ? (kansasCountyByCity[kansasCity] || []) : [];
+    const local = kansasCatalog.filter((resource) => resource.state === "KS");
+    const scoped = isKansasStatewide || !kansasCity ? local : local.filter((resource) =>
+      resource.city === kansasCity || resource.coverageScope === "state" ||
+      (resource.serviceAreaCounties || []).some((county) => selectedCountyNames.includes(county))
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isLouisiana) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const louisianaCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const local = louisianaCatalog.filter((resource) => resource.state === "LA");
+    const scoped = isLouisianaStatewide || !louisianaCity ? local : local.filter((resource) =>
+      resource.city === louisianaCity || resource.coverageScope === "state"
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isMaine) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const maineCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const local = maineCatalog.filter((resource) => resource.state === "ME");
+    const scoped = isMaineStatewide || !maineCity ? local : local.filter((resource) =>
+      resource.city === maineCity || resource.coverageScope === "state"
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber.filter((item) => item.id !== "988")])
+      : uniqueRecords([...results, ...selected]);
+  }
+  if (isArkansas) {
+    const catalogKey = domainKey === "providers" ? "programs"
+      : domainKey === "government_assistance" ? "grants"
+        : domainKey;
+    const arkansasCatalog = US_LOCAL_RESOURCE_CATALOG[catalogKey] || [];
+    const countiesByCity = {
+      "Little Rock": ["Pulaski"], "North Little Rock": ["Pulaski"], Benton: ["Saline"], Cabot: ["Lonoke"], Conway: ["Faulkner"],
+      Fayetteville: ["Washington"], Springdale: ["Washington"], Rogers: ["Benton"], "Siloam Springs": ["Benton"], "Fort Smith": ["Sebastian"],
+      Jonesboro: ["Craighead"], "West Memphis": ["Crittenden"], "Pine Bluff": ["Jefferson"], "Hot Springs": ["Garland"], Russellville: ["Pope"],
+      Harrison: ["Boone"], "Mountain Home": ["Baxter"], "El Dorado": ["Union"], Texarkana: ["Miller"], Batesville: ["Independence"],
+    };
+    const local = arkansasCatalog.filter((resource) => resource.state === "AR");
+    const selectedCountyNames = arkansasCity ? (countiesByCity[arkansasCity] || []) : [];
+    const scoped = isArkansasStatewide ? local : local.filter((resource) =>
+      resource.city === arkansasCity || resource.coverageScope === "state" ||
+      (resource.serviceAreaCounties || []).some((name) => selectedCountyNames.includes(name))
+    );
+    const matching = filterByQuery(scoped, query);
+    const results = matching.length ? matching : scoped;
+    return domainKey === "hotlines"
+      ? uniqueRecords([...results, ...selectedWithEmergencyNumber])
+      : uniqueRecords([...results, ...selected]);
   }
   if (domainKey === "hotlines" && isColorado) {
     return [

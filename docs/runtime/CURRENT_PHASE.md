@@ -1,5 +1,11 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-10-25 — Regional U.S. resource directory expansion (Hosting deployed)
+
+Expanded curated regional resource coverage with new state catalogs for Alabama, Alaska, Arkansas, Connecticut, Delaware, Hawaii, Idaho, Indiana, Iowa, Kansas, Louisiana, Maine, and Oklahoma, plus four additional Texas city batches. Updated directory chunking and corrected city/state routing so statewide resources remain available alongside city-specific results without leaking unrelated city or state listings.
+
+Verification: `npm run verify:release` passed: UI 141 files / 608 tests; agent contracts 58; authenticated client/admin workflows 12; client-practitioner journey 1; practitioner care 12; scheduling 8; messaging 4; workspace lifecycle 1; Help Directory emulator 7; recovery-source emulator 9; food directory 4; Firestore Rules 13; production build; Firebase predeploy; and `git diff --check`. Focused directory fallback checks passed (16/16), and the isolated Help Directory admin UI suite passed (7/7). Firebase Hosting uploaded 571 files, finalized the version, and reported “release complete” and “Deploy complete” for project `wellnesscafelanding` at `https://wellnesscafelanding.web.app`. The CLI then exited with code 2 after reporting stale Firebase credentials and an update/config-store error; deployment had already been reported complete. A fresh live Assistance route on `https://wellnesscafe.app/assistance?priority=food&region=Texas` loaded successfully as a Guest session. No location search was submitted and no authenticated admin or account-backed workflow was exercised. Full-system DoD remains open.
+
 ### 2026-10-23 — Help Directory admin-session recovery
 
 The Help Directory refresh and failed-load recovery controls now force-refresh the signed-in administrator's ID-token claims through the shared `useAdminClaim` flow before retrying the directory service. Server-side authorization checks remain in place on every callable request. This addresses stale client claims as a recoverable case; it does not grant or widen directory permissions.
