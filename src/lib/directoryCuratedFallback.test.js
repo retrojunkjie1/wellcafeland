@@ -33,6 +33,37 @@ describe("category fallback pathways", () => {
       .toMatch(/not a walk-in shelter bed/i);
   });
 
+  it("surfaces five newly reviewed Chicago peer and crisis options with access caveats", () => {
+    const peer = getCuratedFallback("peer", "peer support mental health recovery groups", "Chicago, IL");
+    const expectedPeerIds = [
+      "il-chicago-step-up-peer-support",
+      "il-chicago-dbsa-heart-of-chicago-peer-groups",
+      "il-chicago-association-house-peer-drop-in",
+      "il-chicago-recovery-alliance-harm-reduction",
+    ];
+    const peerRecords = peer.filter(({ id }) => expectedPeerIds.includes(id));
+    expect(peerRecords.map(({ id }) => id)).toEqual(expect.arrayContaining(expectedPeerIds));
+    expect(peerRecords.every(({ city, state, link, source, description }) =>
+      city === "Chicago" && state === "IL" && link && source && description
+    )).toBe(true);
+    expect(peerRecords.find(({ id }) => id === "il-chicago-association-house-peer-drop-in").description)
+      .toMatch(/enrolled in an Association House mental-health program/i);
+    expect(peerRecords.find(({ id }) => id === "il-chicago-recovery-alliance-harm-reduction").description)
+      .toMatch(/changing van and drop-in schedules/i);
+
+    const urgent = getCuratedFallback("hotlines", "peer crisis respite", "Chicago, IL");
+    expect(urgent).toContainEqual(expect.objectContaining({
+      id: "il-chicago-thresholds-living-room-crisis-respite",
+      phone: "773-537-3601",
+      address: "4423 N. Ravenswood Avenue, Chicago, IL 60640",
+    }));
+    expect(urgent.find(({ id }) => id === "il-chicago-thresholds-living-room-crisis-respite").description)
+      .toMatch(/not an emergency department/i);
+
+    expect(getCuratedFallback("peer", "peer support", "Milwaukee, WI").map(({ id }) => id))
+      .not.toContain("il-chicago-step-up-peer-support");
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
