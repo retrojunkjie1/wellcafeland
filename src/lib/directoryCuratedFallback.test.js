@@ -244,7 +244,8 @@ describe("category fallback pathways", () => {
       expect.objectContaining({ id: "ca-la-uchc-oneill-food-pantry", address: "O’Neill Clinic, 1919 San Pedro St., Los Angeles, CA 90011" }),
       expect.objectContaining({ id: "ca-la-regional-food-bank-pantry-finder", description: expect.stringMatching(/food is not distributed at its warehouse/i) }),
     ]));
-    expect(getCuratedFallback("housing", "", "California").some((record) => record.city === "Los Angeles")).toBe(false);
+    const statewideHousing = getCuratedFallback("housing", "", "California");
+    expect(statewideHousing.filter((record) => record.city === "Los Angeles").every((record) => record.coverageScope === "county")).toBe(true);
 
     const audit = getUSStateCoverage("California");
     expect(audit).toHaveLength(6);
@@ -305,6 +306,33 @@ describe("category fallback pathways", () => {
 
     const fresno = getCuratedFallback("peer", "peer support", "Fresno, CA");
     expect(fresno.some((resource) => resource.id.startsWith("ca-la-peer-service-area-"))).toBe(false);
+  });
+
+  it("adds distinct Los Angeles shelter intakes with eligibility and availability caveats", () => {
+    const resources = getCuratedFallback("housing", "emergency shelter", "Los Angeles, CA");
+    expect(resources).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "ca-la-housing-urm-emergency-guest-services",
+        phone: "213-347-6351",
+        alternatePhone: "After hours: 213-316-2711",
+        address: "545 S. San Pedro Street, Los Angeles, CA 90013",
+      }),
+      expect.objectContaining({
+        id: "ca-la-housing-guadalupe-mens-shelter",
+        phone: "323-881-0032",
+        address: "171 S. Gless Street, Los Angeles, CA 90033",
+      }),
+      expect.objectContaining({
+        id: "ca-la-housing-guadalupe-womens-shelter",
+        phone: "323-604-9985",
+        address: "135 N. Mission Road, Los Angeles, CA 90033",
+      }),
+    ]));
+    expect(resources.find((resource) => resource.id === "ca-la-housing-guadalupe-womens-shelter").description).toMatch(/over age 55/i);
+    expect(resources.find((resource) => resource.id === "ca-la-housing-urm-emergency-guest-services").description).toMatch(/bed is not guaranteed/i);
+
+    const sacramento = getCuratedFallback("housing", "emergency shelter", "Sacramento, CA");
+    expect(sacramento.some((resource) => resource.id.startsWith("ca-la-housing-"))).toBe(false);
   });
 
   it("shows state-specific Nigeria public hospitals as treatment contacts with independent source dates", () => {

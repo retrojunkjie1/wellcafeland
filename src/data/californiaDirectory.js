@@ -195,6 +195,56 @@ export const CALIFORNIA_PEER_RESOURCES = [
 ];
 
 export const CALIFORNIA_HOUSING_RESOURCES = [
+  ...[
+    {
+      id: "urm-emergency-guest-services",
+      name: "Union Rescue Mission — emergency guest services and shelter intake",
+      address: "545 S. San Pedro Street, Los Angeles, CA 90013",
+      phone: "213-347-6351",
+      alternatePhone: "After hours: 213-316-2711",
+      hours: "Guest intake by phone Monday–Friday, 8:30 a.m.–5 p.m.; after-hours line available 7 days a week",
+      description: "Emergency guest services for single adults and families with children, including a day room, meals, showers, clothing, laundry, and sign-up for available beds. The mission says guests need proof of ID and must pass Megan’s Law clearance. Call intake before traveling to confirm eligibility, documents, and current space; a bed is not guaranteed.",
+      link: "https://urm.org/gethelp/",
+      source: "Union Rescue Mission, Emergency Services and Guest Intake",
+    },
+    {
+      id: "guadalupe-mens-shelter",
+      name: "Guadalupe Homeless Project — men’s emergency and transitional shelter",
+      address: "171 S. Gless Street, Los Angeles, CA 90033",
+      phone: "323-881-0032",
+      hours: "Organization lists intake Monday–Friday, 4–8 p.m.; call to confirm current intake",
+      description: "Proyecto Pastoral’s Boyle Heights shelter for men provides emergency and transitional shelter, meals, showers, and connections to mental-health, employment, English-language, and substance-prevention resources. The organization lists weekday service hours; call before arriving to ask about current intake, eligibility, and space.",
+      link: "https://www.proyectopastoral.org/contact",
+      source: "Proyecto Pastoral, Guadalupe Homeless Project locations and intake",
+    },
+    {
+      id: "guadalupe-womens-shelter",
+      name: "Guadalupe Homeless Project — women’s shelter for adults over 55",
+      address: "135 N. Mission Road, Los Angeles, CA 90033",
+      phone: "323-604-9985",
+      hours: "Organization lists Monday–Friday, 8 a.m.–8 p.m.; call to confirm current intake",
+      description: "Proyecto Pastoral’s women’s shelter is dedicated to women over age 55 and provides shelter, meals, showers, and connections to mental-health, employment, English-language, and substance-prevention resources. Call before arriving to confirm age eligibility, current intake, and availability; space is limited.",
+      link: "https://www.proyectopastoral.org/contact",
+      source: "Proyecto Pastoral, Guadalupe Homeless Project locations and intake",
+    },
+  ].map(({ id, name, address, phone, alternatePhone, hours, description, link, source }) => ({
+    ...reviewed({
+      id: `ca-la-housing-${id}`,
+      name,
+      description,
+      phone,
+      ...(alternatePhone ? { alternatePhone } : {}),
+      link,
+      source,
+      city: "Los Angeles",
+      state: "CA",
+      address,
+      serviceArea: "Los Angeles County",
+      coverageScope: "county",
+      locationLine: `${hours} · capacity and eligibility must be confirmed with the organization`,
+    }),
+    checkedAt: "2026-10-25",
+  })),
   reviewed({
     id: "ca-la-midnight-mission-emergency-shelter",
     name: "The Midnight Mission — 24/7 emergency shelter",
