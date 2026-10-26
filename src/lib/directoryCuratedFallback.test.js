@@ -167,6 +167,30 @@ describe("category fallback pathways", () => {
       .toBe(true);
   });
 
+  it("routes five Illinois emergency housing options to the right city and protects confidential intake details", () => {
+    const aurora = getCuratedFallback("housing", "emergency shelter", "Aurora, IL");
+    const champaign = getCuratedFallback("housing", "emergency shelter", "Champaign, IL");
+    const springfield = getCuratedFallback("housing", "emergency shelter", "Springfield, IL");
+
+    expect(aurora).toContainEqual(expect.objectContaining({
+      id: "il-aurora-hesed-house-emergency-shelter", phone: "630-897-2156",
+    }));
+    expect(aurora).toContainEqual(expect.objectContaining({
+      id: "il-aurora-mutual-ground-confidential-shelter-access", phone: "630-897-0080",
+    }));
+    expect(aurora.find(({ id }) => id === "il-aurora-mutual-ground-confidential-shelter-access").address)
+      .toBeUndefined();
+    expect(champaign).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "il-champaign-strides-low-barrier-emergency-shelter", phone: "217-403-6150", address: "70 E. Washington Street, Champaign, IL 61820" }),
+      expect.objectContaining({ id: "il-champaign-cu-at-home-mens-overnight-shelter", phone: "217-819-4569" }),
+    ]));
+    expect(springfield).toContainEqual(expect.objectContaining({
+      id: "il-springfield-contact-ministries-womens-emergency-shelter", phone: "217-753-3939",
+    }));
+    expect(getCuratedFallback("housing", "emergency shelter", "Chicago, IL").map(({ id }) => id))
+      .not.toContain("il-springfield-contact-ministries-womens-emergency-shelter");
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
