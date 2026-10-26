@@ -92,6 +92,36 @@ describe("category fallback pathways", () => {
       .not.toContain("il-rockford-rosecrance-harrison-campus-treatment");
   });
 
+  it("surfaces five source-reviewed Illinois food and shelter listings in their matching cities", () => {
+    const peoriaFood = getCuratedFallback("food.essentials", "food pantry groceries", "Peoria, IL");
+    const rockfordFood = getCuratedFallback("food.essentials", "food pantry groceries", "Rockford, IL");
+    const springfieldFood = getCuratedFallback("food.essentials", "food pantry groceries", "Springfield, IL");
+    const peoriaHousing = getCuratedFallback("housing", "emergency shelter", "Peoria, IL");
+    const rockfordHousing = getCuratedFallback("housing", "emergency shelter", "Rockford, IL");
+
+    expect(peoriaFood).toContainEqual(expect.objectContaining({
+      id: "il-peoria-area-food-pantry-emergency-groceries",
+      phone: "309-999-3842", address: "721 W. McBean Street, Peoria, IL 61605",
+    }));
+    expect(rockfordFood).toContainEqual(expect.objectContaining({
+      id: "il-rockford-icna-community-food-pantry", phone: "815-991-8082",
+    }));
+    expect(springfieldFood).toContainEqual(expect.objectContaining({
+      id: "il-springfield-fifth-street-renaissance-food-pantry", phone: "217-544-5040",
+    }));
+    expect(peoriaHousing).toContainEqual(expect.objectContaining({
+      id: "il-peoria-dream-center-family-emergency-shelter", phone: "309-839-1810",
+    }));
+    expect(rockfordHousing).toContainEqual(expect.objectContaining({
+      id: "il-rockford-rescue-mission-emergency-shelter", phone: "815-965-5332",
+    }));
+
+    expect(getCuratedFallback("food.essentials", "food pantry", "Chicago, IL").map(({ id }) => id))
+      .not.toContain("il-peoria-area-food-pantry-emergency-groceries");
+    expect(getCuratedFallback("housing", "emergency shelter", "Illinois").map(({ id }) => id))
+      .not.toContain("il-rockford-rescue-mission-emergency-shelter");
+  });
+
   it("adds source-reviewed LA County outpatient clinics to their published city only", () => {
     const losAngeles = getCuratedFallback("programs", "behavioral health clinic", "Los Angeles, CA");
     expect(losAngeles).toEqual(expect.arrayContaining([
