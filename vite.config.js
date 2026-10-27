@@ -86,6 +86,7 @@ export default defineConfig(({ mode }) => {
               "./src/data/texasCitiesBatchFive.js",
               "./src/data/texasCitiesBatchSix.js",
               "./src/data/texasCitiesBatchSeven.js",
+              "./src/data/texasCitiesBatchEight.js",
             ],
             "us-regional-resource-directories": [
               "./src/data/coloradoCitiesDirectory.js",

@@ -93,7 +93,19 @@ describe("client session workspace lifecycle", () => {
 
     await screen.findByText("No upcoming sessions have been scheduled yet.");
     fireEvent.click(screen.getByRole("button", { name: "Choose a time" }));
-    await screen.findByRole("option", { name: /practitioner time · your local time/ });
+    const slotOption = await screen.findByRole("option", { name: /practitioner time/ });
+    const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (localTimezone === "America/Denver") {
+      expect(slotOption).toHaveAccessibleName(/practitioner time · your local time/);
+    } else {
+      const localTime = new Intl.DateTimeFormat(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: localTimezone,
+      }).format(new Date(slot));
+      expect(slotOption).toHaveTextContent(localTime);
+      expect(slotOption).toHaveTextContent(/your time/);
+    }
     fireEvent.change(screen.getByLabelText("Available appointment time"), { target: { value: slot } });
     fireEvent.change(screen.getByLabelText("Note for your practitioner (optional)"), { target: { value: "Could we meet after lunch?" } });
     fireEvent.click(screen.getByRole("button", { name: "Send session request" }));
