@@ -22,6 +22,10 @@ WellnessCafe is a comprehensive wellness platform that combines ancient healing 
 - **💰 Competitive Rates** - Set your own pricing and maximize earnings
 - **🔒 HIPAA Compliant** - Secure, compliant platform for client data
 
+## 🌍 Resource directory coverage
+
+The maintained country, state, territory, province, and region coverage register is in [docs/directory/COVERAGE_REGISTER.md](docs/directory/COVERAGE_REGISTER.md). It records which areas meet the current listing floor, which are still being expanded, and which are planned. Update it in the same change as every resource-directory batch. A source-reviewed listing does not mean a service has confirmed current availability or eligibility.
+
 ## 🚀 Quick Start
 
 ```bash
