@@ -4,7 +4,7 @@ const { after, before, test } = require("node:test");
 process.env.GCLOUD_PROJECT = "demo-wellnesscafe-cross-role-journey";
 process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: process.env.GCLOUD_PROJECT });
 
-const admin = require("firebase-admin");
+const admin = require("../src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
 const db = admin.firestore();
 

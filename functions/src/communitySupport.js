@@ -1,6 +1,6 @@
 const { randomUUID } = require("node:crypto");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const { addCommunityGiverRole } = require("./workspaceRoles");
 const { requireAdminScope, requireAdminScopeForListing, constrainQueryToAdminRegions } = require("./adminAuthorization");
 

@@ -42,7 +42,7 @@ async function main() {
 
   const serviceAccount = JSON.parse(fs.readFileSync(abs, "utf8"));
 
-  const admin = require("firebase-admin");
+  const admin = require("../functions/src/firebaseAdminCompat.cjs");
   if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),

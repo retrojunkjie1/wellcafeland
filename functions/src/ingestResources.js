@@ -3,7 +3,7 @@
 
 const { searchFindTreatment } = require("./findTreatmentClient");
 const { batchUpsertResources } = require("./resourceIndex");
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 
 // State codes (start with configurable list)
 const DEFAULT_STATES = [

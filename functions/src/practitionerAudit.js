@@ -1,4 +1,4 @@
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 
 const COLLECTION = "practitioner_data_access_audit";
 

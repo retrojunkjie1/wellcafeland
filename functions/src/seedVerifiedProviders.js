@@ -1,7 +1,7 @@
 // functions/src/seedVerifiedProviders.js
 // Callable function to seed verified providers (admin-only)
 
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const fs = require("fs");
 const path = require("path");
 

@@ -8,7 +8,7 @@ process.env.LIVEKIT_URL = "wss://video.test.invalid";
 process.env.LIVEKIT_API_KEY = "test-livekit-key";
 process.env.LIVEKIT_API_SECRET = "test-livekit-secret-not-for-production";
 
-const admin = require("firebase-admin");
+const admin = require("../src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
 const db = admin.firestore();
 const issueAppointmentVideoToken = require("../src/videoSessions").createAppointmentVideoToken.run;

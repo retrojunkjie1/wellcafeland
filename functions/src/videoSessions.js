@@ -1,6 +1,6 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const { AccessToken, TrackSource } = require("livekit-server-sdk");
 const { deriveVideoRoomAccess } = require("./videoSessionPolicy");
 const { requireVerifiedAccount } = require("./accountAccess");
