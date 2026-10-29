@@ -1,5 +1,13 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-10-29 — Food directory visibility and dependency release follow-through
+
+Merged PR #106 (`bb050f5a1b16ee77265fc4b4fb7f58ee8a894c4d`) so the saved local food directory is open by default when relevant contacts are available. The directory remains collapsible. Required PR checks passed, and production workflow `40930393472` completed successfully with tests, build, Firebase Hosting, and the configured voice functions. The live Los Angeles Assistance route returned HTTP 200; this confirms route availability, not a submitted search or authenticated journey.
+
+Merged PR #107 (`1e1e27810fa9af42cb0595af81b13dcf75652a2e`) to remediate high-severity dependency findings across the root and Functions lockfiles. Required checks passed after resolving a test-runtime mismatch. Production workflow `40931935957` completed successfully with tests, build, Hosting, and voice-function deployment. GitHub still reported 22 open dependency alerts after that release (4 high, 11 moderate, 7 low), all four high alerts affecting `undici` below its patched `8.12.2` release. Follow-up PR #108 restores patched `undici` 8.12.3 and moves the Node 22 regression gate to 22.22.2 to satisfy the dependency's runtime requirement. Recheck the alert count after #108 merges; the 22-alert count is point-in-time.
+
+The food-directory update preserves the existing saved-contact and wider-area sections. No provider availability or listing exhaustiveness is inferred from these releases. Full-system DoD remains open.
+
 ### 2026-10-29 — Owner-led merge gate and critical dependency release (deployed)
 
 Updated the repository contribution guidance to match the active `main` ruleset: pull requests remain required, the human-approval count is zero, and the required checks are `approved-build-protection`, `dependency-review`, `lint`, and `verify`. Branch deletion and force pushes remain blocked. This preserves the owner’s ability to merge after required automated checks pass without waiting for a third-party approval. PR #103 merged as `63ab18668c2ff71eea9b24bd123b1188474bc848`.
