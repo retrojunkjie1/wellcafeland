@@ -16,7 +16,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are represented in the coverage calculator; 23 jurisdictions meet or exceed the 75-record floor. | In progress | Work through the 28 jurisdictions below the floor. Audit states above the planning range without deleting approved listings. |
+| United States | All 50 states plus DC are represented in the coverage calculator; 24 jurisdictions meet or exceed the 75-record floor. | In progress | Work through the 27 jurisdictions below the floor. Audit states above the planning range without deleting approved listings. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -49,6 +49,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Iowa | IA | 108 | Complete (initial floor met) |
 | Louisiana | LA | 123 | Complete (initial floor met) |
 | Maine | ME | 121 | Complete (initial floor met) |
+| Massachusetts | MA | 78 | Complete (initial floor met); source-reviewed, phone confirmation and exhaustive review remain open |
 | New York | NY | 123 | Complete (initial floor met) |
 | Ohio | OH | 76 | Complete (initial floor met) |
 | Oklahoma | OK | 75 | Complete (initial floor met) |
@@ -66,9 +67,11 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 
 ### Below the 75-record floor
 
-These states currently have zero records in the active U.S. six-category coverage calculation. This is a coverage-system gap; first check existing modules and legacy listings before adding anything, so working material is not duplicated or lost.
+These states currently have fewer than 75 records in the active U.S. six-category coverage calculation. This is a coverage-system gap; first check existing modules and legacy listings before adding anything, so working material is not duplicated or lost.
 
-Kentucky (KY), Maryland (MD), Massachusetts (MA), Michigan (MI), Minnesota (MN), Mississippi (MS), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Carolina (NC), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+Kentucky (KY), Maryland (MD), Michigan (MI), Minnesota (MN), Mississippi (MS), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Carolina (NC), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+
+Massachusetts's 78 state-linked records comprise 38 peer recovery support centers, 31 Community Behavioral Health Center listings, and 9 statewide routes for behavioral-health access, substance-use referral, housing, food, SNAP, health coverage, 988 and Mass 211. The state coverage calculator counts all 78; 59 are city-tagged and 19 are statewide or need a city selected through the official CBHC locator. Sources were reviewed on 2026-10-29. None of the listings is phone-confirmed, and the Commonwealth's published network totals are not an exhaustive directory claim.
 
 ## Nigeria: states and Federal Capital Territory
 

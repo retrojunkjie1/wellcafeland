@@ -65,7 +65,7 @@ export const US_DIRECTORY_COVERAGE = US_JURISDICTIONS.map(({ state, code }) => {
     stateLinkedRecordCount,
     targetStatus,
     meetsMinimum: targetStatus !== "below-minimum",
-    localContacts: categories.reduce((sum, category) => sum + category.localContacts.length, 0),
+    localContacts: dedupe(categories.flatMap((category) => category.localContacts)).length,
     categoriesWithLocalContacts: categories.filter((category) => category.localContacts.length > 0).length,
   };
 });
