@@ -1,6 +1,6 @@
 // src/apps/ai/AssistantOrb.jsx
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { isDebugEnabled } from "@/lib/debug";
 import { useAIStore } from "./useAIStore";
@@ -17,7 +17,7 @@ const AssistantOrb = () => {
     const store = useAIStore();
     toggleConsole = store?.toggleConsole || (() => {});
     isThinking = store?.isThinking || false;
-  } catch (err) {
+  } catch {
     // Silently fail - orb must always render
     toggleConsole = () => {};
     isThinking = false;

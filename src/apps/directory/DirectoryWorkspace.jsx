@@ -190,7 +190,7 @@ const DirectoryWorkspace = () => {
         setNextPageToken(nextToken || null);
         setActualQuery(trimmed);
       }
-    } catch (err) {
+    } catch {
       if (!abortControllerRef.current?.signal?.aborted && !isLoadMore) {
         setError("Search is temporarily unavailable. Try again.");
         setResults([]);

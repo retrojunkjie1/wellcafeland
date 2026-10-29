@@ -28,8 +28,10 @@ export const AmbientOrbs: React.FC<AmbientOrbsProps> = ({ density = 'medium' }) 
         style={{
           width: size,
           height: size,
-          top: `${Math.random() * 100}%`,
-          left: `${Math.random() * 100}%`,
+          // Stable placement prevents page state updates from scattering the
+          // ambient layer again and creating brief visual flashes.
+          top: `${(index * 29 + 11) % 100}%`,
+          left: `${(index * 47 + 7) % 100}%`,
           filter: 'blur(3px)',
           opacity,
         }}

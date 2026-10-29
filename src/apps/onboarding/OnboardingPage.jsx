@@ -1,24 +1,37 @@
 // src/apps/onboarding/OnboardingPage.jsx
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 import Logo from "../../components/Logo";
-import { Heart, Wind, Brain, Sparkles, ArrowRight } from "lucide-react";
+import { Heart, Wind, Brain, Sparkles, ArrowRight, LoaderCircle } from "lucide-react";
 import { buildClinicalPlan } from "@/services/clinicalPlanService";
 
 const OnboardingPage = () => {
-  const [step, setStep] = useState(0);
-  const [selectedConcerns, setSelectedConcerns] = useState([]);
+  const [searchParams] = useSearchParams();
+  const retryPlan = searchParams.get("retryPlan") === "1";
+  const [step, setStep] = useState(retryPlan ? 1 : 0);
+  const [selectedConcerns, setSelectedConcerns] = useState(() => {
+    if (!retryPlan) return [];
+    try {
+      const saved = JSON.parse(localStorage.getItem("wc_onboarding_concerns") || "[]");
+      return Array.isArray(saved) ? saved.filter((item) => typeof item === "string") : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const planRequestIdRef = useRef("");
   const navigate = useNavigate();
 
   useEffect(() => {
     // If already completed onboarding, skip
     const completed = localStorage.getItem("wc_onboarding_complete");
-    if (completed) {
+    if (completed && !retryPlan) {
       navigate("/", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, retryPlan]);
 
   const concerns = [
     { id: "stress", label: "Stress", icon: Wind, color: "text-blue-400" },
@@ -28,6 +41,12 @@ const OnboardingPage = () => {
   ];
 
   const handleConcernToggle = (concernId) => {
+    setSubmitError("");
+    const user = getAuth().currentUser;
+    if (user) {
+      sessionStorage.removeItem(`wc_onboarding_plan_request_${user.uid}`);
+    }
+    planRequestIdRef.current = "";
     setSelectedConcerns((prev) =>
       prev.includes(concernId)
         ? prev.filter((id) => id !== concernId)
@@ -35,28 +54,47 @@ const OnboardingPage = () => {
     );
   };
 
-  const handleComplete = async () => {
+  const continueWithoutPlan = (reason) => {
     localStorage.setItem("wc_onboarding_complete", "true");
-    if (selectedConcerns.length > 0) {
-      localStorage.setItem("wc_onboarding_concerns", JSON.stringify(selectedConcerns));
-    }
+    localStorage.setItem("wc_onboarding_concerns", JSON.stringify(selectedConcerns));
+    navigate("/plan/start", { replace: true, state: { plan: null, reason } });
+  };
+
+  const handleComplete = async () => {
+    if (isSubmitting) return;
+    setSubmitError("");
     const user = getAuth().currentUser;
-    if (user) {
-      try {
-        const result = await buildClinicalPlan({
-          concerns: selectedConcerns,
-          commitment: "medium",
-          support: "some",
-        });
-        if (result?.ok && result?.summary) {
-          navigate("/plan/start", { replace: true, state: { plan: result } });
-          return;
-        }
-      } catch {
-        // fallback to default
-      }
+    localStorage.setItem("wc_onboarding_concerns", JSON.stringify(selectedConcerns));
+    if (!user || user.isAnonymous) {
+      continueWithoutPlan("account-required");
+      return;
     }
-    navigate("/plan/start", { replace: true, state: { plan: null } });
+
+    setIsSubmitting(true);
+    try {
+      const storageKey = `wc_onboarding_plan_request_${user.uid}`;
+      const requestId = planRequestIdRef.current || sessionStorage.getItem(storageKey) || globalThis.crypto?.randomUUID?.();
+      if (!requestId) throw new Error("A secure request id could not be created. Please try again.");
+      planRequestIdRef.current = requestId;
+      sessionStorage.setItem(storageKey, requestId);
+      const result = await buildClinicalPlan({
+        concerns: selectedConcerns,
+        commitment: "medium",
+        support: "some",
+        requestId,
+      });
+      if (!result?.ok || !result?.summary) {
+        throw new Error(result?.error || "Your plan could not be saved yet.");
+      }
+      localStorage.setItem("wc_onboarding_complete", "true");
+      sessionStorage.removeItem(storageKey);
+      navigate("/plan/start", { replace: true, state: { plan: result } });
+    } catch (error) {
+      console.warn("Onboarding plan creation did not complete:", error?.code || "request_failed");
+      setSubmitError("We couldn’t create your personal plan right now. Check your connection and try again, or continue without one.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const steps = [
@@ -154,12 +192,20 @@ const OnboardingPage = () => {
 
           <div className="min-h-[200px]">{currentStep.content}</div>
 
+          {submitError && step === steps.length - 1 && (
+            <div role="alert" className="rounded-2xl border border-amber-200/20 bg-amber-100/[0.06] p-4 text-sm leading-relaxed text-amber-50/90">
+              <p>{submitError}</p>
+              <button type="button" onClick={() => continueWithoutPlan("plan-unavailable")} disabled={isSubmitting} className="mt-3 min-h-10 rounded-full border border-white/15 px-4 text-xs text-white/75 transition hover:bg-white/5 disabled:cursor-wait disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">Continue without a personal plan</button>
+            </div>
+          )}
+
           {/* Navigation buttons */}
           <div className="flex items-center justify-between pt-4">
             {step > 0 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
+                disabled={isSubmitting}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Back
@@ -181,10 +227,10 @@ const OnboardingPage = () => {
               <button
                 type="button"
                 onClick={handleComplete}
+                disabled={isSubmitting}
                 className="inline-flex items-center gap-2 rounded-full border border-foreground bg-foreground text-background px-6 py-2 text-sm font-medium hover:bg-background hover:text-foreground transition-colors"
               >
-                Open WellnessCafe
-                <ArrowRight className="h-4 w-4" />
+                {isSubmitting ? <><LoaderCircle className="h-4 w-4 animate-spin" /> Saving your plan…</> : <>{submitError ? "Retry plan setup" : "Open WellnessCafe"}<ArrowRight className="h-4 w-4" /></>}
               </button>
             )}
           </div>
@@ -195,4 +241,3 @@ const OnboardingPage = () => {
 };
 
 export default OnboardingPage;
-

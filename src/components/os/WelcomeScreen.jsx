@@ -2,26 +2,37 @@
 // Welcome screen shown before conversation starts — clinically-guided luxury pathway layout
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useOSStore } from "@/stores/useOSStore";
 import Logo from "@/components/Logo";
 import PrimaryPathways from "@/apps/home/components/PrimaryPathways";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 const WelcomeScreen = ({ onAction, onContinueChat }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { messages } = useOSStore();
   const [showChooser, setShowChooser] = useState(false);
+  const [conversationStarted, setConversationStarted] = useState(false);
   const hasStarted = messages.length > 1; // More than welcome message
+  const beginConversation = () => {
+    setConversationStarted(true);
+    onContinueChat?.();
+  };
 
-  if (hasStarted) return null;
+  if (hasStarted || conversationStarted) return null;
 
   const handlePathwayClick = (pathwayId) => {
     if (pathwayId === "process") {
-      onAction?.("I want to talk this through. Please start with one simple question and let me choose what kind of help I want.");
+      beginConversation();
       return;
     }
     if (pathwayId === "real-help") {
       navigate("/assistance");
+      return;
+    }
+    if (pathwayId === "cravings") {
+      navigateToTool(navigate, "/tools/urge-surfing", location);
       return;
     }
     navigate(`/session/${pathwayId}`);
@@ -47,8 +58,8 @@ const WelcomeScreen = ({ onAction, onContinueChat }) => {
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <button type="button" onClick={() => navigate("/assistance")} className="min-h-14 rounded-xl border border-emerald-200/20 bg-emerald-300/10 px-4 py-3 text-left text-base font-semibold text-emerald-50 hover:bg-emerald-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-200">Food, housing, or other practical help</button>
               <button type="button" onClick={() => navigate("/session/stabilize")} className="min-h-14 rounded-xl border border-amber-200/20 bg-amber-300/10 px-4 py-3 text-left text-base font-semibold text-amber-50 hover:bg-amber-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-200">I need a steadier moment</button>
-              <button type="button" onClick={() => navigate("/session/cravings")} className="min-h-14 rounded-xl border border-sky-200/20 bg-sky-300/10 px-4 py-3 text-left text-base font-semibold text-sky-50 hover:bg-sky-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-200">I’m dealing with an urge</button>
-              <button type="button" onClick={() => { setShowChooser(false); onContinueChat?.(); }} className="min-h-14 rounded-xl border border-violet-200/20 bg-violet-300/10 px-4 py-3 text-left text-base font-semibold text-violet-50 hover:bg-violet-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-200">I want to talk or be heard</button>
+              <button type="button" onClick={() => navigateToTool(navigate, "/tools/urge-surfing", location)} className="min-h-14 rounded-xl border border-sky-200/20 bg-sky-300/10 px-4 py-3 text-left text-base font-semibold text-sky-50 hover:bg-sky-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-sky-200">I’m dealing with an urge</button>
+              <button type="button" onClick={() => { setShowChooser(false); beginConversation(); }} className="min-h-14 rounded-xl border border-violet-200/20 bg-violet-300/10 px-4 py-3 text-left text-base font-semibold text-violet-50 hover:bg-violet-300/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-200">I want to talk or be heard</button>
             </div>
             <button type="button" onClick={() => setShowChooser(false)} className="mt-3 min-h-11 rounded-full px-3 text-sm text-white/70 underline underline-offset-4 hover:text-white">Back to the choices</button>
           </section>

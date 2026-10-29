@@ -2,7 +2,7 @@
 // Provider Network management (God-Eye real operational power)
 
 import React, { useState, useEffect } from "react";
-import { collection, query, where, orderBy, getDocs, addDoc, updateDoc, doc, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, updateDoc, doc, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
 import { httpsCallable, getFunctions } from "firebase/functions";
 import app from "@/firebase";
 import { db } from "@/firebase";

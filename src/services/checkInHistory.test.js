@@ -22,7 +22,7 @@ vi.mock("firebase/firestore", () => ({
   getDocs: mocks.getDocs,
 }));
 
-import { getMyCheckInMilestoneSummary, getMyCheckInWeekSummary, listMyCheckInHistory, listMyCheckInHistoryPage } from "./checkInHistory";
+import { getMyCheckInMilestoneSummary, getMyCheckInWeekSummary, listMyCheckInHistory, listMyCheckInHistoryPage, listMyCheckInPatternEntries } from "./checkInHistory";
 
 describe("account-scoped check-in history", () => {
   beforeEach(() => {
@@ -49,6 +49,21 @@ describe("account-scoped check-in history", () => {
 
     await expect(listMyCheckInHistory()).resolves.toEqual([]);
     expect(mocks.getDocs).not.toHaveBeenCalled();
+  });
+
+  it("loads only a bounded, text-free projection of the signed-in account's pattern entries", async () => {
+    mocks.getDocs.mockResolvedValue({ docs: [
+      { data: () => ({ timestamp: new Date("2026-10-03T12:00:00Z"), mood: "good", stress: 7, journal: "private", triggerDetails: "private" }) },
+      { data: () => ({ date: "2026-10-02", mood: "unexpected", energy: 4, userId: "not-returned" }) },
+    ] });
+    const entries = await listMyCheckInPatternEntries(900);
+    expect(mocks.where).toHaveBeenCalledWith("userId", "==", "client-1");
+    expect(mocks.limit).toHaveBeenCalledWith(20);
+    expect(entries).toEqual([
+      { date: "2026-10-03", fields: { mood: "good", stress: 7 } },
+      { date: "2026-10-02", fields: { energy: 4 } },
+    ]);
+    expect(JSON.stringify(entries)).not.toMatch(/private|userId|journal/);
   });
 
   it("pages older account check-ins from the last document without crossing account scope", async () => {

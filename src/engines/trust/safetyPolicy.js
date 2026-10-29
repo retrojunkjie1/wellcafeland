@@ -1,4 +1,4 @@
-export const assessRisk = ({text,telemetry}) => {
+export const assessRisk = ({text}) => {
   const t=(text||"").toLowerCase();
   const hits=[];
   const crisisTerms=["suicide","kill myself","end my life","hurt myself","self harm","self-harm","overdose","i want to die"];

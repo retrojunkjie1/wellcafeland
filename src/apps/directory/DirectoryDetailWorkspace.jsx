@@ -2,7 +2,7 @@
 // Directory item detail view
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useSmartBack } from "@/lib/useSmartBack";
 import { MapPin, Phone, Mail, ExternalLink, Heart, FileText, ArrowLeft } from "lucide-react";
 import { getDirectoryItem, saveFavoriteResource, saveResourcePlan } from "@/services/directoryService";
@@ -11,7 +11,6 @@ import OpenInAppButton from "@/components/OpenInAppButton";
 
 const DirectoryDetailWorkspace = () => {
   const { domain: routeDomain, id } = useParams();
-  const navigate = useNavigate();
   const onBack = useSmartBack(`/directory/${routeDomain || "housing"}`);
   
   // Map route domain to backend domain format

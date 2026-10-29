@@ -60,8 +60,8 @@ describe("ToolProtocolView", () => {
     expect(screen.queryByText(/Reach out to someone you trust/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /need more support/i }));
     expect(screen.getByText(/Reach out to someone you trust/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /back to practices/i }));
+    fireEvent.click(screen.getByRole("button", { name: /back to where you were/i }));
     expect(onClose).toHaveBeenCalledOnce();
-    expect(navigate).toHaveBeenCalledWith("/tools");
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

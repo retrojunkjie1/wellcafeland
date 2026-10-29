@@ -1,7 +1,7 @@
 // src/admin/AdminLayout.jsx
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, Activity, Users, Rocket, Shield, TrendingUp, Zap, AlertTriangle, FileText, BarChart3, Building2, HandHeart, BadgeCheck, KeyRound } from "lucide-react";
+import { Eye, Activity, Users, Rocket, Shield, TrendingUp, Zap, AlertTriangle, FileText, BarChart3, HandHeart, BadgeCheck, KeyRound } from "lucide-react";
 import { useAdminClaim } from "@/hooks/useAdminClaim";
 
 const SECTIONS = [
@@ -15,7 +15,7 @@ const SECTIONS = [
   { id: "forecast", label: "Risk Radar", icon: TrendingUp, scope: "platform.operations.view" },
   { id: "audit", label: "Audit", icon: FileText, scope: "platform.operations.view" },
   { id: "telemetry", label: "Support Activity", icon: Activity, scope: "support.activity.read" },
-  { id: "provider-network", label: "Provider Network", icon: Building2, scope: "practitioner.directory.manage" },
+  { id: "provider-network", label: "Practitioner Network", icon: Users, scope: "practitioner.directory.manage" },
   { id: "community-givers", label: "Giving Review", icon: HandHeart, scope: "giving.review" },
   { id: "practitioners", label: "Practitioner Review", icon: BadgeCheck, scope: "practitioner.review" },
   { id: "deploy", label: "Deploy", icon: Rocket, scope: "platform.operations.control" },

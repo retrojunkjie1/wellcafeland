@@ -1,0 +1,112 @@
+.god-eye-console {
+  --god-eye-mint: #9de7c7;
+  --god-eye-sage: #c1d8ba;
+  --god-eye-gold: #f6d889;
+  --god-eye-ice: #a5d8ed;
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 16% 3%, rgba(87, 142, 111, .13), transparent 36rem),
+    radial-gradient(ellipse at 88% 18%, rgba(105, 137, 153, .09), transparent 32rem),
+    #05080e;
+}
+
+.god-eye-console [hidden] {
+  display: none !important;
+}
+
+.god-eye-shell {
+  position: relative;
+  z-index: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 1200px;
+}
+
+.god-eye-header {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image:
+    radial-gradient(ellipse at 82% 0%, rgba(157, 231, 199, .12), transparent 38%),
+    linear-gradient(125deg, rgba(14, 31, 24, .98), rgba(17, 22, 28, .98) 64%, rgba(31, 27, 19, .9));
+  box-shadow: 0 22px 64px rgba(0, 0, 0, .23), inset 0 1px rgba(255, 255, 255, .07);
+}
+
+.god-eye-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(157, 231, 199, .42), rgba(246, 216, 137, .3), transparent);
+  pointer-events: none;
+}
+
+.god-eye-console .god-eye-visual-panel,
+.god-eye-console .god-eye-metric,
+.god-eye-console #god-eye-panel-queues article,
+.god-eye-console #god-eye-panel-agents .lux-card,
+.god-eye-console #god-eye-panel-events .lux-card,
+.god-eye-console #god-eye-panel-risk .lux-card,
+.god-eye-console #god-eye-panel-controls .lux-card {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .17), inset 0 1px rgba(255, 255, 255, .045);
+  transition: transform .18s ease, border-color .18s ease, background-color .18s ease;
+}
+
+.god-eye-console .god-eye-visual-panel:hover,
+.god-eye-console .god-eye-metric:hover,
+.god-eye-console #god-eye-panel-queues article:hover,
+.god-eye-console #god-eye-panel-agents .lux-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(177, 227, 201, .2);
+}
+
+.god-eye-console .god-eye-metric {
+  min-height: 7.5rem;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .055), rgba(12, 20, 27, .45) 70%);
+}
+
+.god-eye-console .god-eye-trend-panel {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(204, 161, 84, .08), transparent 52%),
+    linear-gradient(150deg, rgba(12, 23, 27, .82), rgba(8, 12, 19, .76));
+}
+
+.god-eye-console .god-eye-ring-halo {
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--meter-color, #9de7c7) 42%, transparent));
+}
+
+.god-eye-console nav[aria-label="Command center sections"] button {
+  background: rgba(255, 255, 255, .025);
+  color: rgba(255, 255, 255, .65);
+}
+
+.god-eye-console nav[aria-label="Command center sections"] button:hover {
+  border-color: rgba(157, 231, 199, .26);
+  color: #ecfff6;
+}
+
+.god-eye-console nav[aria-label="Command center sections"] button[aria-selected="true"] {
+  border-color: rgba(246, 216, 137, .48);
+  background: linear-gradient(130deg, rgba(157, 231, 199, .12), rgba(246, 216, 137, .09));
+  color: #fff2c5;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 6px 18px rgba(0, 0, 0, .12);
+}
+
+.god-eye-console nav[aria-label="System settings categories"] button[aria-selected="true"] {
+  border-color: rgba(246, 216, 137, .44);
+  background: linear-gradient(130deg, rgba(157, 231, 199, .1), rgba(246, 216, 137, .07));
+  color: #fff2c5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .god-eye-console *,
+  .god-eye-console *::before,
+  .god-eye-console *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

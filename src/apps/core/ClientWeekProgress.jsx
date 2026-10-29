@@ -62,10 +62,10 @@ function WeekChart({ days }) {
   );
 }
 
-function WeekMetric({ icon: Icon, count, label, tone }) {
+function WeekMetric({ icon: _Icon, count, label, tone }) {
   return (
     <div className="flex min-h-[5.25rem] items-center gap-3 rounded-2xl border border-white/[0.08] bg-slate-950/30 px-3 py-3 sm:px-4">
-      <span className={`rounded-xl p-2 ${tone}`}><Icon aria-hidden="true" className="h-4 w-4" /></span>
+      <span className={`rounded-xl p-2 ${tone}`}><_Icon aria-hidden="true" className="h-4 w-4" /></span>
       <div className="min-w-0"><p className="text-xl font-semibold leading-none text-white">{count}</p><p className="mt-1.5 text-xs leading-snug text-white/55">{label}</p></div>
     </div>
   );
@@ -77,8 +77,8 @@ export default function ClientWeekProgress() {
   const signedIn = Boolean(user?.uid && !user.isAnonymous);
   const scope = signedIn ? `account:${user.uid}` : "guest";
   const [state, setState] = useState({ scope: "", summary: null, loading: true, error: "" });
-  const [deviceEntries, setDeviceEntries] = useState([]);
-  const [importState, setImportState] = useState({ status: "idle", message: "" });
+  const deviceEntries = signedIn ? readGuestCheckIns() : [];
+  const [importState, setImportState] = useState({ scope: "", status: "idle", message: "" });
   const sequence = useRef(0);
   const scopeRef = useRef(scope);
 
@@ -87,7 +87,6 @@ export default function ClientWeekProgress() {
   const load = useCallback(async () => {
     const requestId = ++sequence.current;
     const requestScope = scope;
-    setState({ scope: requestScope, summary: null, loading: true, error: "" });
     try {
       const summary = signedIn ? await getMyCheckInWeekSummary() : guestSummary();
       if (requestId === sequence.current && requestScope === scopeRef.current) {
@@ -102,40 +101,54 @@ export default function ClientWeekProgress() {
 
   useEffect(() => {
     if (authLoading) return undefined;
-    setDeviceEntries(signedIn ? readGuestCheckIns() : []);
-    setImportState({ status: "idle", message: "" });
-    load();
-    return () => { sequence.current += 1; };
-  }, [authLoading, load, signedIn]);
+    let cancelled = false;
+    const requestId = ++sequence.current;
+    const requestScope = scope;
+    const summaryRequest = signedIn
+      ? getMyCheckInWeekSummary()
+      : Promise.resolve().then(guestSummary);
+    summaryRequest.then((summary) => {
+      if (!cancelled && requestId === sequence.current && requestScope === scopeRef.current) {
+        setState({ scope: requestScope, summary, loading: false, error: "" });
+      }
+    }).catch(() => {
+      if (!cancelled && requestId === sequence.current && requestScope === scopeRef.current) {
+        setState({ scope: requestScope, summary: null, loading: false, error: "This week's progress could not load." });
+      }
+    });
+    return () => {
+      cancelled = true;
+      sequence.current += 1;
+    };
+  }, [authLoading, scope, signedIn]);
 
   const handleImportDeviceEntries = async () => {
-    if (!signedIn || !deviceEntries.length || importState.status === "saving") return;
-    setImportState({ status: "saving", message: "Preparing your device copy…" });
+    if (!signedIn || !deviceEntries.length || currentImportState.status === "saving") return;
+    setImportState({ scope, status: "saving", message: "Preparing your device copy…" });
     try {
       const prepared = prepareGuestCheckInsForImport(deviceEntries);
       // Persist stable import IDs before sending. If the connection drops and
       // the user retries, the same account documents are safely overwritten.
       writeGuestCheckIns(prepared);
-      setDeviceEntries(prepared);
       await importGuestCheckIns(prepared);
-      setImportState({ status: "complete", message: `${prepared.length} ${prepared.length === 1 ? "check-in was" : "check-ins were"} copied to your account. The device copy is still here until you clear it.` });
+      setImportState({ scope, status: "complete", message: `${prepared.length} ${prepared.length === 1 ? "check-in was" : "check-ins were"} copied to your account. The device copy is still here until you clear it.` });
       await load();
     } catch {
-      setImportState({ status: "error", message: "We couldn’t copy these check-ins. The device copy is still here; try again when you are ready." });
+      setImportState({ scope, status: "error", message: "We couldn’t copy these check-ins. The device copy is still here; try again when you are ready." });
     }
   };
 
   const handleClearDeviceCopy = () => {
     try {
       localStorage.removeItem(GUEST_CHECKINS_STORAGE_KEY);
-      setDeviceEntries([]);
-      setImportState({ status: "idle", message: "The device copy was cleared. Your account copy remains saved." });
+      setImportState({ scope, status: "idle", message: "The device copy was cleared. Your account copy remains saved." });
     } catch {
-      setImportState({ status: "error", message: "The device copy could not be cleared from this browser." });
+      setImportState({ scope, status: "error", message: "The device copy could not be cleared from this browser." });
     }
   };
 
   const summary = state.scope === scope ? state.summary : null;
+  const currentImportState = importState.scope === scope ? importState : { status: "idle", message: "" };
   const loading = authLoading || state.scope !== scope || state.loading;
   const resumeStep = summary?.latestSupportChoice && summary.latestSupportChoice !== "I am not sure yet"
     ? getCheckInNextStep(summary.latestSupportChoice)
@@ -167,17 +180,17 @@ export default function ClientWeekProgress() {
           <div className="border-t border-white/[0.08] pt-3">
             <p className="text-sm text-white/75">{guestDateRange(deviceEntries)}</p>
             <p className="mt-2 text-sm leading-relaxed text-white/60">Review before copying: this includes the answers you saved, including any longer private reflections. Copying places them in your account history. It does not share them with a practitioner; your sharing choices stay separate.</p>
-            {importState.message && <p role={importState.status === "error" ? "alert" : "status"} className={`mt-3 text-sm ${importState.status === "error" ? "text-rose-100/85" : "text-emerald-100/85"}`}>{importState.message}</p>}
+            {currentImportState.message && <p role={currentImportState.status === "error" ? "alert" : "status"} className={`mt-3 text-sm ${currentImportState.status === "error" ? "text-rose-100/85" : "text-emerald-100/85"}`}>{currentImportState.message}</p>}
             <div className="mt-4 flex flex-wrap gap-2">
-              {importState.status !== "complete" && <button type="button" onClick={handleImportDeviceEntries} disabled={importState.status === "saving"} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60"><Upload aria-hidden="true" className="h-4 w-4" />{importState.status === "saving" ? "Copying check-ins…" : "Copy to my account"}</button>}
-              {importState.status === "complete" && <button type="button" onClick={handleClearDeviceCopy} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/80 transition hover:bg-white/[0.06]"><Trash2 aria-hidden="true" className="h-4 w-4" />Clear device copy</button>}
+              {currentImportState.status !== "complete" && <button type="button" onClick={handleImportDeviceEntries} disabled={currentImportState.status === "saving"} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-200 px-4 text-sm font-semibold text-slate-950 transition hover:bg-amber-100 disabled:cursor-wait disabled:opacity-60"><Upload aria-hidden="true" className="h-4 w-4" />{currentImportState.status === "saving" ? "Copying check-ins…" : "Copy to my account"}</button>}
+              {currentImportState.status === "complete" && <button type="button" onClick={handleClearDeviceCopy} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/80 transition hover:bg-white/[0.06]"><Trash2 aria-hidden="true" className="h-4 w-4" />Clear device copy</button>}
             </div>
           </div>
         </details>
       )}
-      {signedIn && deviceEntries.length === 0 && importState.message && (
-        <p role={importState.status === "error" ? "alert" : "status"} className={`mt-3 rounded-xl border px-4 py-3 text-sm ${importState.status === "error" ? "border-rose-200/20 bg-rose-100/[0.05] text-rose-100/85" : "border-emerald-200/15 bg-emerald-100/[0.04] text-emerald-100/85"}`}>
-          {importState.message}
+      {signedIn && deviceEntries.length === 0 && currentImportState.message && (
+        <p role={currentImportState.status === "error" ? "alert" : "status"} className={`mt-3 rounded-xl border px-4 py-3 text-sm ${currentImportState.status === "error" ? "border-rose-200/20 bg-rose-100/[0.05] text-rose-100/85" : "border-emerald-200/15 bg-emerald-100/[0.04] text-emerald-100/85"}`}>
+          {currentImportState.message}
         </p>
       )}
 

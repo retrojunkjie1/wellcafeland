@@ -9,7 +9,7 @@ export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
-  const [lastChangeAt, setLastChangeAt] = useState(Date.now());
+  const [lastChangeAt, setLastChangeAt] = useState(() => Date.now());
 
   useEffect(() => {
     if (typeof window === "undefined") return;

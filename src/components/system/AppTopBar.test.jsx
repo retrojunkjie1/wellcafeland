@@ -33,6 +33,7 @@ describe("AppTopBar role-separated navigation", () => {
     expect(screen.queryByText("Practitioner workspace")).toBeNull();
     expect(screen.getByText("Apply to offer support")).toBeTruthy();
     expect(screen.getByText("Daily Practice")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "How to use WellnessCafe" }).getAttribute("href")).toBe("/getting-started");
     fireEvent.click(screen.getByText("More in client space"));
     expect(screen.getByRole("link", { name: "My sessions" }).getAttribute("href")).toBe("/my-sessions");
   });
@@ -47,6 +48,23 @@ describe("AppTopBar role-separated navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: /Client space/ }));
     expect(screen.getByLabelText("Current route")).toHaveTextContent("/home");
     expect(mocks.trackSupportAction).toHaveBeenCalledWith("account", "workspace_changed", "", "client");
+  });
+
+  it("keeps the workspace label aligned with this tab when another tab changes the saved preference", () => {
+    openMenu(
+      { isProvider: true, providerType: "counseling", mode: "account", userId: "dual-user", roles: ["client", "provider"] },
+      false,
+      "/home",
+      { uid: "dual-user", isAnonymous: false },
+    );
+
+    window.dispatchEvent(new CustomEvent("wc_workspace_change", {
+      detail: { userId: "dual-user", workspace: "practitioner" },
+    }));
+
+    expect(screen.getByRole("button", { name: /Client space · Current/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "My home" }).getAttribute("href")).toBe("/home");
+    expect(screen.queryByText("Workspace overview")).toBeNull();
   });
 
   it("keeps single-role practitioners in their own navigation without a client switch", () => {
@@ -67,6 +85,17 @@ describe("AppTopBar role-separated navigation", () => {
   it("keeps the God-Eye link available to administrators", () => {
     openMenu({}, true, "/", null, { godAdmin: true });
     expect(screen.getByText("God-Eye admin console")).toBeTruthy();
+  });
+
+  it("gives God-Eye a visible dashboard switcher and same-account practitioner access link", () => {
+    openMenu({ mode: "account", userId: "alpha-owner", isProvider: true, isAdmin: true, roles: ["admin", "provider"] }, true, "/admin/console", { email: "owner@example.com", isAnonymous: false }, { godAdmin: true, adminScopes: ["practitioner.directory.manage"] });
+    expect(screen.getByRole("region", { name: "God-Eye dashboard access" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open Client dashboard" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open Practitioner dashboard" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open Community giver dashboard" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open God-Eye dashboard" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Practitioner network" }).getAttribute("href")).toBe("/admin/provider-network");
+    expect(screen.getByRole("link", { name: "Add Practitioner access to an account" }).getAttribute("href")).toBe("/admin/user-access");
   });
 
   it("makes guest status and sign-in path visible from the account control", () => {

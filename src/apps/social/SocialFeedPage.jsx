@@ -11,6 +11,7 @@ const SocialFeedPage = () => {
   const { userId } = useSessionIdentity();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [showPostForm, setShowPostForm] = useState(false);
   const [postText, setPostText] = useState("");
   const [postType, setPostType] = useState("reflection");
@@ -28,8 +29,10 @@ const SocialFeedPage = () => {
     try {
       const postsData = await getFeedPosts(50);
       setPosts(postsData);
+      setLoadError("");
     } catch (err) {
       console.error("Failed to load posts:", err);
+      setLoadError(err?.message || "The community feed could not be loaded. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -58,10 +61,12 @@ const SocialFeedPage = () => {
 
   const handleReaction = async (postId, emoji) => {
     try {
-      await reactToPost(postId, emoji, userId);
+      const result = await reactToPost(postId, emoji, userId);
+      if (!result.ok) throw new Error(result.error || "Your reaction could not be saved.");
       await loadPosts();
     } catch (err) {
       console.error("Failed to react:", err);
+      setLoadError(err?.message || "Your reaction could not be saved. Please try again.");
     }
   };
 
@@ -114,9 +119,19 @@ const SocialFeedPage = () => {
           </button>
         </div>
 
+        {loadError && (
+          <div role="alert" className="rounded-xl border border-rose-300/25 bg-rose-300/10 p-4 text-sm text-rose-100">
+            <p>{loadError}</p>
+            <button onClick={loadPosts} className="mt-2 underline underline-offset-4">Try again</button>
+          </div>
+        )}
+
         {showPostForm && (
           <div className="lux-card p-6 border border-white/10 bg-white/5">
             <h3 className="text-lg font-medium text-white mb-4">Share to Feed</h3>
+            <p className="mb-4 text-sm leading-relaxed text-white/60">
+              Posts are visible to signed-in community members and reviewed by Cherubim before sharing. Anonymous hides your account name; the words you share remain visible.
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-white/70 mb-2">
@@ -186,7 +201,7 @@ const SocialFeedPage = () => {
         )}
 
         {/* Feed */}
-        {posts.length === 0 ? (
+        {posts.length === 0 && !loadError ? (
           <div className="text-center text-white/50 py-12">
             No posts yet. Be the first to share!
           </div>
@@ -238,4 +253,3 @@ const SocialFeedPage = () => {
 };
 
 export default SocialFeedPage;
-

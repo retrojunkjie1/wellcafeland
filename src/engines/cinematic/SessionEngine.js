@@ -331,7 +331,7 @@ export class SessionEngineV3 {
       const storageKey = `wc-sessions-${toolId}`;
       const sessions = JSON.parse(localStorage.getItem(storageKey) || '[]');
       return sessions.slice(-limit).reverse();
-    } catch (_error) {
+    } catch {
       return [];
     }
   }

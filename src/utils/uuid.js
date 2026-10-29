@@ -6,14 +6,14 @@ export function uuid() {
   if (typeof globalThis !== "undefined" && globalThis.crypto?.randomUUID) {
     try {
       return globalThis.crypto.randomUUID();
-    } catch (err) {
+    } catch {
       // Fall through to fallback
     }
   }
   if (typeof crypto !== "undefined" && crypto?.randomUUID) {
     try {
       return crypto.randomUUID();
-    } catch (err) {
+    } catch {
       // Fall through to fallback
     }
   }
@@ -37,7 +37,7 @@ export function uuid() {
         hex.slice(16, 20),
         hex.slice(20, 32)
       ].join('-');
-    } catch (err) {
+    } catch {
       // Fall through to simple fallback
     }
   }

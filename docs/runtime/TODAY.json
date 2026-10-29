@@ -1,6 +1,6 @@
 {
   "active_phase": "55",
-  "valid_today": "2026-02-07",
+  "valid_today": "2026-10-22",
   "phase": "55A.2",
   "title": "Control Surface Cleanup",
   "status": "COMPLETE",
@@ -11,8 +11,8 @@
     "Fix stacked docks / overlap and z-index order"
   ],
   "verify": [
-    "npm run phase55a:chatActions:verify",
-    "npm run dev"
+    "Run focused maintained behavioral tests for changed code",
+    "npm run verify:release before release readiness"
   ],
   "manualTests": [
     "Chat: only one mic surface; no duplicated Speak/Tools/Real Help controls",

@@ -34,9 +34,16 @@ export function useRiskRadar() {
 
   useEffect(() => {
     setLoading(true);
-    load();
-    const interval = setInterval(load, 30_000);
-    return () => clearInterval(interval);
+    const loadWhenVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    loadWhenVisible();
+    const interval = setInterval(loadWhenVisible, 60_000);
+    document.addEventListener("visibilitychange", loadWhenVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", loadWhenVisible);
+    };
   }, [load, revision]);
 
   return {

@@ -1,0 +1,17 @@
+.pmr-guides figure {
+  isolation: isolate;
+}
+
+.pmr-guides canvas {
+  display: block;
+  image-rendering: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pmr-guides *,
+  .pmr-guides *::before,
+  .pmr-guides *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

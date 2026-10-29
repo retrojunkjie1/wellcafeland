@@ -1,5 +1,7 @@
 # API Connectivity Report - WellnessCafe OS
 
+> **Historical snapshot; not a current readiness report.** Do not use any `VITE_RAPIDAPI_*` or `VITE_OPENAI_API_KEY` instructions below. Provider credentials must stay server-side. Current resource search uses the protected Firebase Function and Firebase Secret Manager; the admin health probe also goes through that function. This file's old “All APIs Linked and Configured” status and endpoint/config examples have not been revalidated.
+
 **Generated:** $(date)  
 **Status:** ✅ All APIs Linked and Configured
 

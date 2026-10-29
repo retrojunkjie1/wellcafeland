@@ -31,8 +31,8 @@ export const contentRegistry = {
   "tool.grounding.54321": {
     id: "tool.grounding.54321",
     section: CONTENT_SECTIONS.TOOLS,
-    title: "Choose an Anchor",
-    tags: ["grounding", "overwhelm", "panic"],
+    title: "Reconnect with the room",
+    tags: ["grounding", "present-moment", "orientation"],
     file: "tools/grounding-54321.md",
   },
 

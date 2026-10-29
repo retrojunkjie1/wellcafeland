@@ -3,14 +3,12 @@ const { requireAdminScope, requireAdminScopeForListing, constrainQueryToAdminReg
 const { requireVerifiedAccount } = require("./accountAccess");
 const admin = require("firebase-admin");
 const { isProductFeatureEnabled } = require("./agentOperations");
+const { CURRENT_PROVIDER_TYPES } = require("./practitionerWorkspacePolicy");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 const REGION = "us-central1";
-const TYPES = new Set([
-  "therapist", "counselor", "recovery-coach", "peer-support", "yoga",
-  "massage", "bodywork", "acupuncture", "spiritual-counselor", "community-supporter",
-]);
+const TYPES = new Set(CURRENT_PROVIDER_TYPES);
 const SERVICE_FORMATS = new Set(["one-to-one", "group", "community-event", "practical-giving"]);
 const ACCESS_OPTIONS = new Set(["wheelchair-accessible", "interpreter-available", "low-sensory-option"]);
 const DELIVERY_OPTIONS = new Set(["online", "in-person"]);
@@ -59,6 +57,14 @@ function normalizeApplication(data, user) {
     ? [...new Set(data.services.map((v) => cleanText(v, 64, "Service")).filter(Boolean))].slice(0, 12)
     : [];
   if (!services.length) throw new HttpsError("invalid-argument", "Add at least one service or form of support.");
+  const country = cleanText(data.country || "United States", 100, "Country", true);
+  const countryCode = cleanText(data.countryCode || "US", 2, "Country code", true).toUpperCase();
+  const countryName = new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode);
+  if (!countryName || countryName === countryCode || normalizeLocation(country) !== normalizeLocation(countryName)) {
+    throw new HttpsError("invalid-argument", "Enter a country name that matches its two-letter country code.");
+  }
+  const region = cleanText(data.region, 100, "State, province, or region").trim();
+  if (countryCode === "US" && region && region.length !== 2) throw new HttpsError("invalid-argument", "For U.S. practice locations, enter the two-letter state code.");
   return {
     uid: user.uid,
     email: user.token.email || "",
@@ -67,7 +73,9 @@ function normalizeApplication(data, user) {
     organization: cleanText(data.organization, 120, "Organization"),
     bio: cleanText(data.bio, 900, "Introduction", true),
     city: cleanText(data.city, 80, "City"),
-    region: cleanText(data.region, 2, "State or region").toUpperCase(),
+    region: countryCode === "US" ? region.toUpperCase() : region,
+    country,
+    countryCode,
     delivery: ["in-person", "online", "both"].includes(data.delivery) ? data.delivery : "both",
     serviceStyle: ["free", "paid", "both"].includes(data.serviceStyle) ? data.serviceStyle : "both",
     services,
@@ -117,6 +125,8 @@ exports.getMyPractitionerApplication = onCall({ region: REGION, enforceAppCheck:
     bio: profileData.bio || "",
     city: profileData.city || "",
     region: profileData.region || "",
+    country: profileData.country || "United States",
+    countryCode: profileData.countryCode || "US",
     delivery: profileData.delivery || "both",
     serviceStyle: profileData.serviceStyle || "both",
     services: Array.isArray(profileData.services) ? profileData.services : [],
@@ -160,6 +170,44 @@ exports.listPractitionersForReview = onCall({ region: REGION, enforceAppCheck: t
         || (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0);
     }),
   };
+});
+
+// God-Eye's practitioner network is a read-only, public-profile projection.
+// It deliberately excludes applicant email, credential material, private notes,
+// client relationships, and account documents while still showing whether a
+// published practitioner workspace has since been revoked.
+exports.listAdminPractitionerNetwork = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+  await requireAdminScope(request, "practitioner.directory.manage");
+  const snapshot = await db.collection("realHelpProviders")
+    .where("verification.status", "==", "verified")
+    .limit(200)
+    .get();
+  const candidates = snapshot.docs.filter((entry) => TYPES.has(entry.get("category") || entry.get("type")));
+  const accounts = candidates.length
+    ? await db.getAll(...candidates.map((entry) => db.collection("users").doc(entry.id)))
+    : [];
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
+  const practitioners = candidates.map((entry) => {
+    const data = entry.data();
+    const account = accountById.get(entry.id);
+    const active = !account?.exists || account.get("practitionerWorkspaceActive") !== false;
+    return {
+      id: entry.id,
+      name: cleanText(data.name, 120, "Practitioner name"),
+      organization: cleanText(data.organization, 120, "Organization"),
+      type: data.category || data.type,
+      city: cleanText(data.city, 80, "City"),
+      region: cleanText(data.region, 100, "Region").toUpperCase(),
+      country: cleanText(data.country || "United States", 100, "Country"),
+      countryCode: cleanText(data.countryCode || "US", 2, "Country code").toUpperCase(),
+      services: Array.isArray(data.services) ? data.services.filter((item) => typeof item === "string").slice(0, 12) : [],
+      delivery: data.delivery === "online" || data.delivery === "in-person" ? data.delivery : "both",
+      directoryStatus: "verified",
+      workspaceAccess: active ? "active" : "revoked",
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() || null,
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name));
+  return { practitioners, count: practitioners.length, capped: snapshot.size >= 200 };
 });
 
 exports.reviewPractitionerApplication = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
@@ -223,6 +271,8 @@ exports.reviewPractitionerApplication = onCall({ region: REGION, enforceAppCheck
       city: application.city || "",
       region: application.region || "",
       regionKey: application.region || "",
+      country: application.country || "United States",
+      countryCode: application.countryCode || "US",
       delivery: application.delivery,
       serviceStyle: application.serviceStyle,
       services: application.services,
@@ -248,6 +298,7 @@ exports.reviewPractitionerApplication = onCall({ region: REGION, enforceAppCheck
     transaction.set(userRef, {
       role: "provider",
       providerId: uid,
+      providerType: application.type,
       roles: [...new Set([...storedRoles, "provider"])],
       updatedAt: reviewedAt,
     }, { merge: true });
@@ -284,6 +335,13 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
     .where("verification.status", "==", "verified")
     .limit(200)
     .get();
+  const providerIds = snapshot.docs.map((doc) => doc.id);
+  const accounts = providerIds.length
+    ? await db.getAll(...providerIds.map((uid) => db.collection("users").doc(uid)))
+    : [];
+  const revokedProviderIds = new Set(accounts
+    .filter((account) => account.exists && account.get("practitionerWorkspaceActive") === false)
+    .map((account) => account.id));
   const type = cleanText(request.data?.type, 48, "Support type");
   const search = cleanText(request.data?.search, 100, "Search").toLowerCase();
   const serviceFormat = SERVICE_FORMATS.has(request.data?.serviceFormat) ? request.data.serviceFormat : "";
@@ -291,9 +349,10 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
   const deliveryOption = DELIVERY_OPTIONS.has(request.data?.deliveryOption) ? request.data.deliveryOption : "";
   const costOption = COST_OPTIONS.has(request.data?.costOption) ? request.data.costOption : "";
   const city = cleanText(request.data?.city, 80, "City").toLowerCase();
-  const region = cleanText(request.data?.region, 16, "State or region").toLowerCase();
+  const region = cleanText(request.data?.region, 100, "State, province, or region").toLowerCase();
+  const country = cleanText(request.data?.country, 100, "Country").toLowerCase();
   const acceptingNewClients = request.data?.acceptingNewClients === true;
-  const practitioners = snapshot.docs.map((doc) => {
+  const practitioners = snapshot.docs.filter((doc) => !revokedProviderIds.has(doc.id)).map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -303,6 +362,8 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
       bio: data.bio,
       city: data.city || "",
       region: data.region || "",
+      country: data.country || "United States",
+      countryCode: data.countryCode || "US",
       delivery: data.delivery || "both",
       serviceStyle: data.serviceStyle || "both",
       services: Array.isArray(data.services) ? data.services : [],
@@ -318,7 +379,7 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
     available: true,
     practitioners: practitioners.filter((item) => {
       const matchesType = !type || item.category === type || item.services.includes(type);
-      const haystack = `${item.name} ${item.organization} ${item.bio} ${item.city} ${item.region} ${item.services.join(" ")}`.toLowerCase();
+      const haystack = `${item.name} ${item.organization} ${item.bio} ${item.city} ${item.region} ${item.country} ${item.services.join(" ")}`.toLowerCase();
       return matchesType
         && (!serviceFormat || item.serviceFormats.includes(serviceFormat))
         && (!accessibilityOption || item.accessibilityOptions.includes(accessibilityOption))
@@ -326,6 +387,7 @@ exports.listVerifiedPractitioners = onCall({ region: REGION, enforceAppCheck: tr
         && (!costOption || item.serviceStyle === costOption || item.serviceStyle === "both")
         && (!city || item.city.toLowerCase().includes(city))
         && (!region || item.region.toLowerCase() === region)
+        && (!country || item.country.toLowerCase().includes(country))
         && (!acceptingNewClients || item.acceptsReferrals)
         && (!search || haystack.includes(search));
     }),

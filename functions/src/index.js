@@ -39,12 +39,15 @@ const providerScheduling = require("./providerScheduling");
 const practitionerRegistry = require("./practitionerRegistry");
 const practitionerConnections = require("./practitionerConnections");
 const practitionerCare = require("./practitionerCare");
+const careHandoffs = require("./careHandoffs");
 const practitionerMessaging = require("./practitionerMessaging");
 const agentOperations = require("./agentOperations");
 const adminUserAccess = require("./adminUserAccess");
 const adminAuthorization = require("./adminAuthorization");
 const supportActivity = require("./supportActivity");
 const securitySignals = require("./securitySignals");
+const communityFeed = require("./communityFeed");
+const friendCircles = require("./friendCircles");
 // Link Preview (v2)
 const { linkPreview } = require("./linkPreview");
 const recoveryMeetings = require("./recoveryMeetings");
@@ -70,6 +73,8 @@ exports.multimodalChat = onRequest(
       "http://localhost:5182",
       "https://wellnesscafe.net",
       "https://www.wellnesscafe.net",
+      "https://wellnesscafe.app",
+      "https://www.wellnesscafe.app",
       "https://wellnesscafelanding.web.app",
     ],
     secrets: ["OPENAI_API_KEY"],
@@ -135,6 +140,7 @@ exports.createAppointmentVideoToken = videoSessions.createAppointmentVideoToken;
 exports.submitPractitionerApplication = practitionerRegistry.submitPractitionerApplication;
 exports.getMyPractitionerApplication = practitionerRegistry.getMyPractitionerApplication;
 exports.listPractitionersForReview = practitionerRegistry.listPractitionersForReview;
+exports.listAdminPractitionerNetwork = practitionerRegistry.listAdminPractitionerNetwork;
 exports.reviewPractitionerApplication = practitionerRegistry.reviewPractitionerApplication;
 exports.listVerifiedPractitioners = practitionerRegistry.listVerifiedPractitioners;
 exports.searchPublicPractitionerDirectory = practitionerRegistry.searchPublicPractitionerDirectory;
@@ -147,12 +153,23 @@ exports.endMyPractitionerConnection = practitionerConnections.endMyPractitionerC
 exports.listMyPractitionerShares = practitionerCare.listMyPractitionerShares;
 exports.setPractitionerShare = practitionerCare.setPractitionerShare;
 exports.getProviderClientOverview = practitionerCare.getProviderClientOverview;
+exports.createMyCareHandoff = careHandoffs.createMyCareHandoff;
+exports.listMyCareHandoffs = careHandoffs.listMyCareHandoffs;
+exports.setMyCareHandoffStatus = careHandoffs.setMyCareHandoffStatus;
+exports.listProviderCareHandoffs = careHandoffs.listProviderCareHandoffs;
+exports.updateProviderCareHandoff = careHandoffs.updateProviderCareHandoff;
+exports.saveMyVisitPreparation = practitionerCare.saveMyVisitPreparation;
+exports.listMyVisitPreparations = practitionerCare.listMyVisitPreparations;
+exports.deleteMyVisitPreparation = practitionerCare.deleteMyVisitPreparation;
+exports.listProviderVisitPreparations = practitionerCare.listProviderVisitPreparations;
+exports.acknowledgeVisitPreparation = practitionerCare.acknowledgeVisitPreparation;
 exports.sendPractitionerSupportTool = practitionerCare.sendPractitionerSupportTool;
 exports.listMyPractitionerSupport = practitionerCare.listMyPractitionerSupport;
 exports.listMyDailyPractice = practitionerCare.listMyDailyPractice;
 exports.markPractitionerSupportSeen = practitionerCare.markPractitionerSupportSeen;
 exports.submitPractitionerPracticeProgress = practitionerCare.submitPractitionerPracticeProgress;
 exports.exportMyWellnessData = practitionerCare.exportMyWellnessData;
+exports.deleteMyCheckIns = practitionerCare.deleteMyCheckIns;
 exports.listProviderConversationMessages = practitionerMessaging.listProviderConversationMessages;
 exports.sendProviderMessage = practitionerMessaging.sendProviderMessage;
 exports.listMyPractitionerMessages = practitionerMessaging.listMyPractitionerMessages;
@@ -184,6 +201,7 @@ exports.setAdminSystemSettings = agentOperations.setAdminSystemSettings;
 exports.getPublicPracticeAvailability = agentOperations.getPublicPracticeAvailability;
 exports.findAdminWorkspaceAccount = adminUserAccess.findAdminWorkspaceAccount;
 exports.grantPractitionerWorkspace = adminUserAccess.grantPractitionerWorkspace;
+exports.revokePractitionerWorkspace = adminUserAccess.revokePractitionerWorkspace;
 exports.listAdminWorkspaceAccessEvents = adminUserAccess.listAdminWorkspaceAccessEvents;
 exports.getMyAdminAccess = adminAuthorization.getMyAdminAccess;
 exports.listAdminAssignments = adminAuthorization.listAdminAssignments;
@@ -193,6 +211,27 @@ exports.recordSupportActivity = supportActivity.recordSupportActivity;
 exports.listSupportActivityForAdmin = supportActivity.listSupportActivityForAdmin;
 exports.listOpenAccountSecuritySignals = securitySignals.listOpenAccountSecuritySignals;
 exports.reviewAccountSecuritySignal = securitySignals.reviewAccountSecuritySignal;
+exports.createSocialFeedPost = communityFeed.createSocialFeedPost;
+exports.listSocialFeedPosts = communityFeed.listSocialFeedPosts;
+exports.reactToSocialFeedPost = communityFeed.reactToSocialFeedPost;
+exports.createPrivateFriendCircle = friendCircles.createPrivateFriendCircle;
+exports.listMyPrivateFriendCircles = friendCircles.listMyPrivateFriendCircles;
+exports.createPrivateFriendCircleInvite = friendCircles.createPrivateFriendCircleInvite;
+exports.previewPrivateFriendCircleInvite = friendCircles.previewPrivateFriendCircleInvite;
+exports.acceptPrivateFriendCircleInvite = friendCircles.acceptPrivateFriendCircleInvite;
+exports.revokePrivateFriendCircleInvite = friendCircles.revokePrivateFriendCircleInvite;
+exports.listPrivateFriendCircleMessages = friendCircles.listPrivateFriendCircleMessages;
+exports.blockPrivateFriendCircleMember = friendCircles.blockPrivateFriendCircleMember;
+exports.unblockPrivateFriendCircleMember = friendCircles.unblockPrivateFriendCircleMember;
+exports.reportPrivateFriendCircleMessage = friendCircles.reportPrivateFriendCircleMessage;
+exports.listOpenPrivateFriendCircleReports = friendCircles.listOpenPrivateFriendCircleReports;
+exports.reviewPrivateFriendCircleReport = friendCircles.reviewPrivateFriendCircleReport;
+exports.deletePrivateFriendCircleMessage = friendCircles.deletePrivateFriendCircleMessage;
+exports.postPrivateFriendCircleMessage = friendCircles.postPrivateFriendCircleMessage;
+exports.removePrivateFriendCircleMember = friendCircles.removePrivateFriendCircleMember;
+exports.leavePrivateFriendCircle = friendCircles.leavePrivateFriendCircle;
+exports.transferPrivateFriendCircleOwnership = friendCircles.transferPrivateFriendCircleOwnership;
+exports.closePrivateFriendCircle = friendCircles.closePrivateFriendCircle;
 
 // ---------------------------
 // v1 LEGACY FUNCTIONS (SAFE)

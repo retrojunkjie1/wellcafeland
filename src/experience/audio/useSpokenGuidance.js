@@ -2,7 +2,7 @@
 // Phase 56 Day 3: play short spoken guidance clips. Fail silently if asset missing.
 
 import {useCallback, useRef, useState} from "react";
-import {useAudio} from "./AudioProvider.jsx";
+import {useAudio} from "./useAudio.js";
 
 const GUIDANCE_PREFIX = "guidance_";
 
@@ -29,7 +29,9 @@ export function useSpokenGuidance() {
         currentEngineIdRef.current = engineId;
         setCurrentGuidanceId(id);
         setIsGuiding(true);
-      } catch (e) {}
+      } catch {
+        // Voice guidance is optional; keep the tool usable without audio.
+      }
     },
     [audio]
   );
@@ -43,7 +45,9 @@ export function useSpokenGuidance() {
       if (audio?.duck) audio.duck(false);
       setCurrentGuidanceId(null);
       setIsGuiding(false);
-    } catch (e) {}
+  } catch {
+    // Browser speech cancellation can fail after the voice session has ended.
+  }
   }, [audio]);
 
   return {

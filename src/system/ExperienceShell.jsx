@@ -15,11 +15,12 @@ import { KillSwitchGate } from "@/components/routing/KillSwitchGate";
 import GodEyeDrawer from "@/components/os/GodEyeDrawer";
 import { EmulatorStatusPill } from "@/components/system/EmulatorStatusPill";
 import AppTopBar from "@/components/system/AppTopBar";
-import BottomRail, { railCardClass } from "@/components/layout/BottomRail";
+import BottomRail from "@/components/layout/BottomRail";
 import { AudioProvider } from "@/experience/audio/AudioProvider";
 import { VoiceSessionProvider } from "@/experience/voice/VoiceSessionProvider";
 import { useOSStore } from "@/stores/useOSStore";
 import { setTheme } from "@/theme/themeStore";
+import RouteContentBoundary from "@/components/routing/RouteContentBoundary";
 
 const isChatRoute = (path) => path === "/" || path.startsWith("/chat");
 const isToolDetailRoute = (path) =>
@@ -54,7 +55,7 @@ export default function ExperienceShell() {
 
   const isAuthenticated = Boolean(user);
   const authReady = !authLoading && !identity.isLoading;
-  const verificationRoute = ["/verify-email", "/login", "/signup"].includes(location.pathname);
+  const verificationRoute = ["/verify-email", "/login", "/signup", "/forgot-password", "/reset-password"].includes(location.pathname);
   const mustVerifyEmail = authReady && user && !user.isAnonymous && user.emailVerified === false;
   const isGuest = authReady && !isAuthenticated && identity.mode === "guest";
   const chatRoute = isChatRoute(location.pathname);
@@ -96,7 +97,9 @@ export default function ExperienceShell() {
         <NavigationProvider>
           <OSPageChrome />
           <KillSwitchGate>
-            <Outlet />
+            <RouteContentBoundary resetKey={location.key}>
+              <Outlet />
+            </RouteContentBoundary>
           </KillSwitchGate>
         </NavigationProvider>
       </main>
@@ -105,7 +108,7 @@ export default function ExperienceShell() {
       {showBottomRail && (
         <BottomRail>
           <BottomRail.Nav>
-            <div className={`${railCardClass} flex flex-col overflow-hidden wc-chat-composer-rail`}>
+            <div className="flex w-full flex-col overflow-hidden wc-chat-composer-rail">
               <div id="wc-composer-dock" data-wc-composer-dock="1" className="w-full wc-composer-in-rail flex-shrink-0" />
             </div>
           </BottomRail.Nav>

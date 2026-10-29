@@ -38,4 +38,47 @@ describe("ConnectionRequestsPanel", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Connection accepted. Your client list could not refresh");
     expect(screen.queryByText("Client Two")).toBeNull();
   });
+
+  it("does not report an empty queue when loading fails and lets the user retry", async () => {
+    mocks.listPractitionerConnectionRequests
+      .mockRejectedValueOnce(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }))
+      .mockResolvedValueOnce({ requests: [] });
+
+    render(<ConnectionRequestsPanel onSignIn={vi.fn()} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Please sign in to load connection requests");
+    expect(screen.queryByText("Unauthenticated")).toBeNull();
+    expect(screen.queryByText(/No new requests/)).toBeNull();
+    expect(screen.getByLabelText("Request count unavailable")).toHaveTextContent("—");
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText(/No new requests/)).toBeInTheDocument();
+    expect(mocks.listPractitionerConnectionRequests).toHaveBeenCalledTimes(2);
+  });
+
+  it("offers sign-in when the request service says there is no active session", async () => {
+    mocks.listPractitionerConnectionRequests.mockRejectedValueOnce(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+    const onSignIn = vi.fn();
+
+    render(<ConnectionRequestsPanel onSignIn={onSignIn} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in" }));
+
+    expect(onSignIn).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not ask an already signed-in user to sign in again when app verification failed", async () => {
+    mocks.listPractitionerConnectionRequests.mockRejectedValueOnce(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+
+    render(<ConnectionRequestsPanel isSignedIn appVerificationFailed onSignIn={vi.fn()} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Connection requests aren’t available right now.");
+    expect(screen.queryByText(/App Check|secure app verification|verification setup/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.queryByText(/No new requests/)).toBeNull();
+  });
 });

@@ -1,8 +1,11 @@
 const admin = require("firebase-admin");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { requireAdminScope } = require("./adminAuthorization");
+const agentCatalog = require("../agentCatalog.json");
 
-const IMPLEMENTED_AGENT_IDS = Object.freeze(["seer", "oracle", "overseer", "sentinel", "healer_spiritual"]);
+const IMPLEMENTED_AGENT_IDS = Object.freeze(
+  [...new Set(agentCatalog.agents.map((agent) => agent.handlerId).filter(Boolean))].sort(),
+);
 const CONTROLS_REF = "admin/agentControls";
 const SYSTEM_SETTINGS_REF = "admin/systemSettings";
 const MAX_RECENT_EVENTS = 100;

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Headphones, LoaderCircle, Pause, Play, Square } from "lucide-react";
 import { speakText } from "@/services/multimodalClient";
 
@@ -22,15 +22,43 @@ function speechLength(text) {
   return `About ${minutes} min`;
 }
 
-export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl }) {
+function getSpeechErrorMessage(result) {
+  switch (result?.code) {
+    case "APP_CHECK_REQUIRED":
+    case "APP_CHECK_INVALID":
+      return "Audio couldn’t verify this app session. Refresh the page and try again; the reply is still here to read.";
+    case "AUTH_REQUIRED":
+    case "AUTH_INVALID":
+      return "Audio couldn’t verify your session. Sign in again and retry; the reply is still here to read.";
+    case "RATE_LIMITED":
+    case "TTS_PROVIDER_RATE_LIMITED":
+      return "Audio is busy right now. Wait a moment and try again; the reply is still here to read.";
+    case "TTS_NOT_CONFIGURED":
+    case "TTS_PROVIDER_AUTH_FAILED":
+      return "Audio playback is unavailable right now. The app team needs to check its voice setup; the reply is still here to read.";
+    case "TTS_PROVIDER_UNAVAILABLE":
+    case "TTS_PROVIDER_FAILED":
+    case "AI_RATE_LIMIT_UNAVAILABLE":
+      return "Audio couldn’t be prepared right now. Try again shortly; the reply is still here to read.";
+    default:
+      return "Audio couldn’t be prepared. You can still read the response above.";
+  }
+}
+
+const VoiceResponse = forwardRef(function VoiceResponse({ text = "", audioUrl: providedAudioUrl, compact = false, headless = false, onStateChange }, ref) {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
   const audioRef = useRef(null);
+  const utteranceRef = useRef(null);
   const generatedUrlRef = useRef(null);
   const playRequestRef = useRef(0);
   const speechText = formatForSpeech(text);
   const hasAudioOption = Boolean(providedAudioUrl || speechText);
+
+  useEffect(() => {
+    onStateChange?.({ status, error });
+  }, [status, error, onStateChange]);
 
   const releaseGeneratedUrl = () => {
     if (generatedUrlRef.current) {
@@ -47,6 +75,8 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
       audioRef.current.load();
       audioRef.current = null;
     }
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    utteranceRef.current = null;
     releaseGeneratedUrl();
     setStatus("idle");
     setProgress(0);
@@ -59,8 +89,25 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
       audioRef.current.removeAttribute("src");
       audioRef.current.load();
     }
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
     if (generatedUrlRef.current) URL.revokeObjectURL(generatedUrlRef.current);
   }, []);
+
+  const useDeviceVoice = () => new Promise((resolve, reject) => {
+    if (typeof window === "undefined" || !window.speechSynthesis || typeof window.SpeechSynthesisUtterance !== "function") {
+      reject(new Error("Device speech is unavailable"));
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new window.SpeechSynthesisUtterance(speechText);
+    utteranceRef.current = utterance;
+    utterance.rate = 0.96;
+    utterance.onstart = () => { setStatus("playing"); resolve(); };
+    utterance.onend = () => { utteranceRef.current = null; setStatus("idle"); setProgress(0); };
+    utterance.onerror = () => { utteranceRef.current = null; setStatus("idle"); reject(new Error("Device speech failed")); };
+    setStatus("loading");
+    window.speechSynthesis.speak(utterance);
+  });
 
   const attachAudio = async (url, generated = false) => {
     const audio = new Audio(url);
@@ -95,22 +142,43 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
       try {
         await attachAudio(providedAudioUrl);
       } catch {
-        setStatus("idle");
-        setError("Audio couldn't be played. You can still read the response above.");
+        try {
+          await useDeviceVoice();
+        } catch {
+          setStatus("idle");
+          setError("Audio isn’t available on this device right now. The written reply is still here.");
+        }
       }
       return;
     }
 
+    // Chat read-aloud starts the device voice directly in the tap handler. This
+    // avoids browser autoplay restrictions and keeps the conversation free of
+    // a redundant audio player. The generated player remains available to the
+    // dedicated voice workspace below.
+    if (headless) {
+      try {
+        await useDeviceVoice();
+        return;
+      } catch {
+        // Continue to the server voice only when the browser has no speech API.
+      }
+    }
+
     setStatus("loading");
     try {
-      const result = await speakText(speechText.slice(0, 4096), { voice: "coral" });
+      const result = await speakText(speechText.slice(0, 4096), { voice: "marin" });
       if (requestId !== playRequestRef.current) {
         if (result.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(result.audioUrl);
         return;
       }
       if (!result.ok || !result.audioUrl) {
-        setStatus("idle");
-        setError("Audio couldn't be prepared. You can still read the response above.");
+        try {
+          await useDeviceVoice();
+        } catch {
+          setStatus("idle");
+          setError(getSpeechErrorMessage(result));
+        }
         return;
       }
       releaseGeneratedUrl();
@@ -119,8 +187,12 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
         await attachAudio(result.audioUrl, true);
       } catch {
         releaseGeneratedUrl();
-        setStatus("idle");
-        setError("Audio couldn't be played. You can still read the response above.");
+        try {
+          await useDeviceVoice();
+        } catch {
+          setStatus("idle");
+          setError("Audio isn’t available on this device right now. The written reply is still here.");
+        }
       }
     } catch {
       if (requestId === playRequestRef.current) {
@@ -133,7 +205,8 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
   const togglePlayback = async () => {
     if (status === "loading") return;
     if (status === "playing") {
-      audioRef.current?.pause();
+      if (audioRef.current) audioRef.current.pause();
+      else if (utteranceRef.current && window.speechSynthesis) window.speechSynthesis.pause();
       setStatus("paused");
     } else if (status === "paused" && audioRef.current) {
       try {
@@ -143,18 +216,25 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
         setStatus("idle");
         setError("Audio couldn't resume. You can still read the response above.");
       }
+    } else if (status === "paused" && utteranceRef.current && window.speechSynthesis) {
+      window.speechSynthesis.resume();
+      setStatus("playing");
     } else {
       await start();
     }
   };
 
+  useImperativeHandle(ref, () => ({ togglePlayback, stop }), [status, speechText, providedAudioUrl]);
+
   if (!hasAudioOption) return null;
+
+  if (headless) return null;
 
   const statusLabel = status === "loading" ? "Preparing audio" :
     status === "playing" ? "Now playing" : status === "paused" ? "Paused" : "Play this response";
 
   return (
-    <div className="my-3 w-full max-w-sm" aria-label="Voice response player">
+    <div className={`${compact ? "mt-2 w-full max-w-sm" : "my-3 w-full max-w-sm"}`} aria-label="Voice response player">
       <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.035] px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl">
         <button
           type="button"
@@ -187,4 +267,8 @@ export default function VoiceResponse({ text = "", audioUrl: providedAudioUrl })
       {error && <p className="mt-1.5 pl-2 text-xs text-amber-200/90" role="status">{error}</p>}
     </div>
   );
-}
+});
+
+VoiceResponse.displayName = "VoiceResponse";
+
+export default VoiceResponse;

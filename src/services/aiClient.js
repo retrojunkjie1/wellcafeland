@@ -199,6 +199,28 @@ export async function callAI(endpoint, body = {}, abortController = null) {
             correlationId,
           };
         }
+        if (callErr.code === "AUTH_INVALID") {
+          return {
+            ok: false,
+            error: "Your sign-in session couldn't be verified. Refresh the page or sign out and back in, then try again.",
+            errorCode: callErr.code,
+            errorReason: "auth",
+            retryable: false,
+            status: 401,
+            correlationId,
+          };
+        }
+        if (["APP_CHECK_REQUIRED", "APP_CHECK_INVALID"].includes(callErr.code)) {
+          return {
+            ok: false,
+            error: "We couldn't verify this app session. Refresh the page and try again. If it continues, open support.",
+            errorCode: callErr.code,
+            errorReason: "app_verification",
+            retryable: false,
+            status: 401,
+            correlationId,
+          };
+        }
         const status = callErr.status || 0;
         const backendCode = callErr.data?.error?.code || callErr.data?.code || callErr.code;
         logRequest("error", correlationId, {

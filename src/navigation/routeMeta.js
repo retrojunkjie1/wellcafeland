@@ -5,7 +5,7 @@ import { matchPath } from "react-router-dom";
 
 // Known roots: no back button, minimal chrome
 export const ROOT_ROUTES = [
-  "/", "/chat", "/login", "/signup", "/unauthorized"
+  "/", "/chat", "/login", "/signup", "/forgot-password", "/reset-password", "/unauthorized"
 ];
 
 // Route meta entries (pattern-based)
@@ -19,13 +19,13 @@ export const ROUTE_META = [
   { pattern: "/explore", title: "Explore", parent: "/home", breadcrumb: false },
   { pattern: "/tools", title: "Tools", parent: "/home", breadcrumb: false },
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", breadcrumb: true },
-  { pattern: "/tools/grounding/54321", title: "Choose an Anchor", parent: "/tools", breadcrumb: true },
+  { pattern: "/tools/grounding/54321", title: "Reconnect with the room", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", breadcrumb: true },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", breadcrumb: true },
 
   // Living / Guide / Sequences
-  { pattern: "/guide", title: "Guide", parent: "/home", breadcrumb: false },
+  { pattern: "/guide", title: "Chat", parent: "/chat", breadcrumb: false },
   { pattern: "/living", title: "Living Guide", parent: "/home", breadcrumb: false },
   { pattern: "/living/v3", title: "Living Guide V3", parent: "/living", breadcrumb: true },
   { pattern: "/sequence/:id", title: "Sequence", parent: "/home", breadcrumb: true },
@@ -39,7 +39,6 @@ export const ROUTE_META = [
   // Assistance / Support / Command
   { pattern: "/assistance", title: "Assistance", parent: "/home", breadcrumb: false },
   { pattern: "/assistance/community", title: "Community support", parent: "/assistance", breadcrumb: true },
-  { pattern: "/assistance/request", title: "Assistance Request", parent: "/assistance", breadcrumb: true }, // AssistancePage
   { pattern: "/support", title: "Support", parent: "/home", breadcrumb: false },
   { pattern: "/command", title: "Command", parent: "/home", breadcrumb: true },
 

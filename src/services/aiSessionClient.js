@@ -98,8 +98,13 @@ export const callAiSession = async (payload, options = {}) => {
   };
 
   let { resp, data } = await doFetch(headers);
+  const responseCode = (response) => response?.data?.error?.code || response?.data?.code || null;
+  const isAuthRejection = (response) => {
+    const code = responseCode(response);
+    return !code || ["AUTH_REQUIRED", "AUTH_INVALID"].includes(code);
+  };
 
-  if (resp.status === 401) {
+  if (resp.status === 401 && isAuthRejection({ resp, data })) {
     headers = await getAuthHeaders({ forceRefresh: true });
     const retry = await doFetch(headers);
     resp = retry.resp;
@@ -107,11 +112,11 @@ export const callAiSession = async (payload, options = {}) => {
   }
 
   if (!resp.ok) {
-    const err = new Error(resp.status === 401 ? "Session reconnecting…" : (data?.error?.message || data?.message || "AI_SESSION_FAILED"));
+    const code = data?.error?.code || data?.code || (resp.status === 401 ? "AUTH_REQUIRED" : "AI_SESSION_FAILED");
+    const serverMessage = data?.error?.message || (typeof data?.error === "string" ? data.error : null) || data?.message;
+    const err = new Error(serverMessage || (code === "AUTH_INVALID" ? "Your session could not be verified." : code === "AUTH_REQUIRED" ? "Session reconnecting…" : "AI_SESSION_FAILED"));
     err.status = resp.status;
-    err.code = resp.status === 401
-      ? "AUTH_REQUIRED"
-      : (data?.error?.code || data?.code || "AI_SESSION_FAILED");
+    err.code = code;
     err.retryAfterSeconds = Number(data?.retryAfterSeconds || resp.headers.get("Retry-After")) || null;
     err.data = data;
     throw err;

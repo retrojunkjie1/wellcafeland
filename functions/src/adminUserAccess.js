@@ -1,14 +1,12 @@
 const admin = require("firebase-admin");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { requireAdminScope } = require("./adminAuthorization");
+const { CURRENT_PROVIDER_TYPES } = require("./practitionerWorkspacePolicy");
 
 if (!admin.apps.length) admin.initializeApp();
 const db = admin.firestore();
 const REGION = "us-central1";
-const PROVIDER_TYPES = new Set([
-  "therapist", "counselor", "recovery-coach", "peer-support", "yoga",
-  "massage", "bodywork", "acupuncture", "spiritual-counselor", "community-supporter",
-]);
+const PROVIDER_TYPES = new Set(CURRENT_PROVIDER_TYPES);
 
 function normalizeEmail(value) {
   const email = typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -26,6 +24,10 @@ function accountSummary(user, userData = {}, application = {}) {
   if (claims.admin === true) roles.add("admin");
   for (const role of Array.isArray(userData.roles) ? userData.roles : []) roles.add(role);
   if (userData.role) roles.add(userData.role);
+  const workspaceAccessActive = userData.practitionerWorkspaceActive === false
+    ? false
+    : claims.provider === true || roles.has("provider") || roles.has("provider_admin");
+  if (!workspaceAccessActive) roles.delete("provider");
   const isAdmin = claims.admin === true
     || ["admin", "superadmin", "provider_admin"].some((role) => roles.has(role))
     || userData.isAdmin === true;
@@ -37,9 +39,10 @@ function accountSummary(user, userData = {}, application = {}) {
     disabled: user.disabled === true,
     isAdmin,
     roles: [...roles],
-    providerType: claims.providerType || userData.providerType || "",
+    providerType: workspaceAccessActive ? claims.providerType || userData.providerType || "" : "",
     applicationStatus: application.status || "none",
-    alreadyHasPractitionerAccess: claims.provider === true || roles.has("provider") || roles.has("provider_admin"),
+    workspaceAccessActive,
+    alreadyHasPractitionerAccess: workspaceAccessActive,
   };
 }
 
@@ -124,6 +127,8 @@ const listAdminWorkspaceAccessEvents = onCall({ region: REGION, enforceAppCheck:
         eventId: event.eventId,
         email: event.targetEmail || "",
         providerType: event.providerType || "",
+        action: event.action || "granted",
+        workspaceAccessActive: event.action !== "revoked",
         applicationStatus: application.exists ? application.get("status") || "unknown" : "not-started",
         assignedAt: createdAt ? createdAt.toISOString() : null,
       };
@@ -169,6 +174,7 @@ const grantPractitionerWorkspace = onCall({ region: REGION, enforceAppCheck: tru
       roles: grant.roles,
       providerId: target.uid,
       providerType,
+      practitionerWorkspaceActive: true,
       workspaceIntent: grant.workspaceIntent,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
@@ -177,6 +183,7 @@ const grantPractitionerWorkspace = onCall({ region: REGION, enforceAppCheck: tru
       targetUid: target.uid,
       targetEmail: target.email || email,
       workspace: "practitioner",
+      action: "granted",
       providerType,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
@@ -197,10 +204,94 @@ const grantPractitionerWorkspace = onCall({ region: REGION, enforceAppCheck: tru
   }
 });
 
+const revokePractitionerWorkspace = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+  const { uid: actorUid } = await requireAdminScope(request, "workspace.access.manage");
+  const email = normalizeEmail(request.data?.email);
+  const authApi = admin.auth();
+  const firestore = admin.firestore();
+  let target;
+  try {
+    target = await authApi.getUserByEmail(email);
+  } catch (error) {
+    if (error?.code === "auth/user-not-found") throw new HttpsError("not-found", "No WellnessCafe account uses that email.");
+    throw new HttpsError("unavailable", "The account could not be checked. Try again.");
+  }
+
+  const userRef = firestore.collection("users").doc(target.uid);
+  const userSnapshot = await userRef.get();
+  const userData = userSnapshot.exists ? userSnapshot.data() : {};
+  const currentClaims = target.customClaims || {};
+  const currentRoles = new Set([
+    ...(Array.isArray(currentClaims.roles) ? currentClaims.roles : []),
+    ...(Array.isArray(userData.roles) ? userData.roles : []),
+  ]);
+  if (currentClaims.role) currentRoles.add(currentClaims.role);
+  if (userData.role) currentRoles.add(userData.role);
+  currentRoles.delete("provider");
+  if (currentRoles.size === 0) currentRoles.add("client");
+
+  const adminRoles = ["admin", "superadmin", "org_admin", "provider_admin"];
+  const isAdminAccount = currentClaims.admin === true || userData.isAdmin === true
+    || adminRoles.some((role) => currentRoles.has(role));
+  const existingPrimaryRole = userData.role || currentClaims.role || "";
+  const primaryRole = existingPrimaryRole !== "provider"
+    ? existingPrimaryRole
+    : (isAdminAccount ? adminRoles.find((role) => currentRoles.has(role)) || "admin" : "client");
+  const claims = { ...currentClaims, role: primaryRole, roles: [...currentRoles], provider: false };
+  delete claims.providerType;
+  const auditRef = firestore.collection("admin_workspace_access_events").doc();
+  const providerType = userData.providerType || currentClaims.providerType || "";
+
+  try {
+    // The account record is the server authorization source. Close it first so
+    // stale ID tokens cannot keep practitioner callables available if Auth
+    // claim refresh or audit persistence encounters an error.
+    await userRef.set({
+      uid: target.uid,
+      role: primaryRole,
+      roles: [...currentRoles],
+      practitionerWorkspaceActive: false,
+      providerType: admin.firestore.FieldValue.delete(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await authApi.setCustomUserClaims(target.uid, claims);
+    await auditRef.set({
+      actorUid,
+      targetUid: target.uid,
+      targetEmail: target.email || email,
+      workspace: "practitioner",
+      action: "revoked",
+      providerType,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    const updatedUserData = {
+      ...userData,
+      role: primaryRole,
+      roles: [...currentRoles],
+      practitionerWorkspaceActive: false,
+      providerType: "",
+    };
+    return {
+      ok: true,
+      account: accountSummary({ ...target, customClaims: claims }, updatedUserData),
+      requiresSignInRefresh: true,
+      directoryProfileUnchanged: true,
+    };
+  } catch (error) {
+    console.error("[adminUserAccess] Practitioner workspace revocation failed", {
+      actorUid,
+      targetUid: target.uid,
+      code: error?.code || "UNKNOWN",
+    });
+    throw new HttpsError("unavailable", "Workspace access was changed incompletely. Refresh the account status before taking another action.");
+  }
+});
+
 module.exports = {
   findAdminWorkspaceAccount,
   listAdminWorkspaceAccessEvents,
   grantPractitionerWorkspace,
+  revokePractitionerWorkspace,
   searchAccount,
   normalizeEmail,
   accountSummary,

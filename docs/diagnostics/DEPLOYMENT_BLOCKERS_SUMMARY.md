@@ -29,7 +29,7 @@ VITE_FIREBASE_APP_ID=1:1022330574843:web:cb618943891f1d6d0e1d5e
 VITE_FIREBASE_MEASUREMENT_ID=G-4TGHRQB475
 VITE_FIREBASE_FUNCTIONS_URL=https://us-central1-wellnesscafelanding.cloudfunctions.net  # FIX: was wellnesscafe-os
 VITE_OPENAI_HAS_AUDIO=true
-VITE_RAPIDAPI_KEY=c4a0609edcmshf9c6797bb339190p1903b1jsn9845dbe45f6d
+# RAPIDAPI_KEY must be stored in Firebase Secret Manager; never expose it as a VITE_* variable.
 ```
 
 **⚠️ CRITICAL**: Current `.env` has wrong project. Must update all `wellnesscafe-os` references to `wellnesscafelanding`.

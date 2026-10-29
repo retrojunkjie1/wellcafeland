@@ -2,17 +2,16 @@ import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 
 export function useAdminGate() {
-  const [state, setState] = useState({
-    loading: true,
+  const [state, setState] = useState(() => ({
+    loading: Boolean(getAuth().currentUser),
     isAdmin: false,
-  });
+  }));
 
   useEffect(() => {
     const auth = getAuth();
     const user = auth.currentUser;
 
     if (!user) {
-      setState({ loading: false, isAdmin: false });
       return;
     }
 

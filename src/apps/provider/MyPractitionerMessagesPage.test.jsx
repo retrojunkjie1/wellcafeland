@@ -47,4 +47,40 @@ describe("MyPractitionerMessagesPage", () => {
     fireEvent.click(refresh);
     await waitFor(() => expect(mocks.listMyPractitionerMessages).toHaveBeenCalledTimes(2));
   });
+
+  it("does not show the no-connection empty state when loading connections fails", async () => {
+    mocks.listMyPractitionerShares.mockRejectedValue(Object.assign(new Error("App verification required"), { code: "functions/unauthenticated" }));
+
+    renderPage();
+
+    expect(await screen.findByText("Your practitioner connections aren’t available right now.")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No practitioner connection yet" })).toBeNull();
+    expect(screen.queryByText(/App verification|functions\/unauthenticated|sign in again/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it("keeps manual recovery for a temporary connection lookup failure", async () => {
+    mocks.listMyPractitionerShares.mockRejectedValueOnce(new Error("temporary outage")).mockResolvedValueOnce({ shares: [] });
+
+    renderPage();
+
+    expect(await screen.findByText("We couldn’t load your connections. Try again in a moment.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("heading", { name: "No practitioner connection yet" })).toBeInTheDocument();
+    expect(mocks.listMyPractitionerShares).toHaveBeenCalledTimes(2);
+  });
+
+  it("stops retries and hides the empty conversation prompt after persistent message rejection", async () => {
+    mocks.listMyPractitionerShares.mockResolvedValue({ shares: [{ practitionerId: "p-one", name: "Jordan Lee", type: "recovery coach" }] });
+    mocks.listMyPractitionerMessages.mockRejectedValue(Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }));
+
+    renderPage();
+
+    expect(await screen.findByText("Messages aren’t available right now.")).toBeInTheDocument();
+    expect(screen.getByText("This conversation is unavailable right now.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh messages" })).toBeDisabled();
+    expect(screen.queryByText("Start the conversation when you’re ready")).toBeNull();
+    expect(screen.queryByText(/Unauthenticated|sign in again|app verification|App Check/i)).toBeNull();
+  });
 });

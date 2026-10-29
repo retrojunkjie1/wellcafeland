@@ -3,12 +3,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, AlertTriangle, Activity, TrendingUp, MessageSquare } from "lucide-react";
+import { Users, ShieldCheck } from "lucide-react";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { listClientsForProvider } from "@/services/providerRegistry";
 import { getConnections } from "@/services/connectionsService";
 import { getUserCircles } from "@/services/circlesService";
-import { getFeedPosts } from "@/services/socialService";
 import PageHeader from "@/components/navigation/PageHeader";
 
 const ProviderSocialInsights = () => {
@@ -19,7 +18,6 @@ const ProviderSocialInsights = () => {
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientConnections, setClientConnections] = useState(null);
   const [clientCircles, setClientCircles] = useState([]);
-  const [clientFeedActivity, setClientFeedActivity] = useState([]);
 
   useEffect(() => {
     if (!isProvider && !isAdmin) {
@@ -50,66 +48,16 @@ const ProviderSocialInsights = () => {
 
   const loadClientSocialData = async (clientId) => {
     try {
-      const [connections, circles, feedPosts] = await Promise.all([
+      const [connections, circles] = await Promise.all([
         getConnections(clientId),
         getUserCircles(clientId),
-        getFeedPosts(100), // Get all posts and filter client's
       ]);
 
       setClientConnections(connections);
       setClientCircles(circles);
-      
-      // Filter feed posts for this client
-      const clientPosts = feedPosts.filter(post => post.userId === clientId);
-      setClientFeedActivity(clientPosts);
     } catch (err) {
       console.error("Failed to load client social data:", err);
     }
-  };
-
-  const calculateSocialRiskScore = (connections, circles, feedActivity) => {
-    let score = 0;
-    let flags = [];
-
-    // Check for isolation
-    if (connections.friends.length === 0 && connections.trusted.length === 0) {
-      score += 20;
-      flags.push("No social connections");
-    }
-
-    // Check for blocked users (might indicate conflict)
-    if (connections.blocked.length > 5) {
-      score += 15;
-      flags.push("High number of blocked users");
-    }
-
-    // Check for circle participation
-    if (circles.length === 0) {
-      score += 10;
-      flags.push("Not participating in circles");
-    }
-
-    // Check feed activity (low activity might indicate withdrawal)
-    if (feedActivity.length === 0) {
-      score += 10;
-      flags.push("No social feed activity");
-    }
-
-    // Check for negative patterns in feed
-    const negativeKeywords = ["struggling", "hard", "difficult", "alone", "lost"];
-    const hasNegativePattern = feedActivity.some(post => 
-      negativeKeywords.some(kw => post.text.toLowerCase().includes(kw))
-    );
-    if (hasNegativePattern) {
-      score += 15;
-      flags.push("Negative patterns in social posts");
-    }
-
-    return {
-      score: Math.min(100, score),
-      level: score < 30 ? "low" : score < 60 ? "medium" : "high",
-      flags,
-    };
   };
 
   if (!isProvider && !isAdmin) {
@@ -127,15 +75,11 @@ const ProviderSocialInsights = () => {
     );
   }
 
-  const socialRisk = selectedClient && clientConnections && clientCircles && clientFeedActivity
-    ? calculateSocialRiskScore(clientConnections, clientCircles, clientFeedActivity)
-    : null;
-
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <PageHeader
         title="Social Signals"
-        subtitle="Monitor client social connections and activity"
+        subtitle="Support chosen connections without turning private recovery activity into a score"
       />
       <div className="lux-shell py-10 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -178,45 +122,15 @@ const ProviderSocialInsights = () => {
               </div>
             ) : (
               <>
-                {/* Social Risk Score */}
-                {socialRisk && (
-                  <div className="lux-card p-6 border border-white/10 bg-white/5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <TrendingUp className="h-5 w-5 text-white/70" />
-                      <h2 className="text-lg font-medium text-white">Social Risk Score</h2>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`text-3xl font-bold ${
-                          socialRisk.level === "low" ? "text-green-400" :
-                          socialRisk.level === "medium" ? "text-yellow-400" :
-                          "text-red-400"
-                        }`}>
-                          {socialRisk.score}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-white capitalize">
-                            {socialRisk.level} Risk
-                          </div>
-                          <div className="text-xs text-white/50">Social engagement score</div>
-                        </div>
-                      </div>
-                      {socialRisk.flags.length > 0 && (
-                        <div className="pt-3 border-t border-white/10">
-                          <div className="text-xs font-medium text-white/70 mb-2">Flags:</div>
-                          <div className="space-y-1">
-                            {socialRisk.flags.map((flag, idx) => (
-                              <div key={idx} className="flex items-center gap-2 text-xs text-white/60">
-                                <AlertTriangle className="h-3 w-3 text-yellow-400" />
-                                <span>{flag}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                <div className="lux-card p-5 border border-emerald-300/20 bg-emerald-300/5">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 text-emerald-200 mt-0.5" />
+                    <div>
+                      <h2 className="text-base font-medium text-white">Client-led sharing</h2>
+                      <p className="text-sm text-white/65 mt-1">Community posts and private reflections stay out of this view. Use an explicit shared check-in or a client-approved conversation to plan support; participation or silence is not a risk score.</p>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Connections */}
                 {clientConnections && (
@@ -256,25 +170,6 @@ const ProviderSocialInsights = () => {
                   </div>
                 )}
 
-                {/* Feed Activity */}
-                {clientFeedActivity.length > 0 && (
-                  <div className="lux-card p-6 border border-white/10 bg-white/5">
-                    <h2 className="text-lg font-medium text-white mb-4">Recent Feed Activity</h2>
-                    <div className="space-y-3">
-                      {clientFeedActivity.slice(0, 5).map((post) => (
-                        <div key={post.id} className="p-3 rounded-lg border border-white/10 bg-white/5">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-medium text-white/70 capitalize">{post.type}</span>
-                            <span className="text-xs text-white/50">
-                              {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ""}
-                            </span>
-                          </div>
-                          <p className="text-sm text-white/80 line-clamp-2">{post.text}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -285,4 +180,3 @@ const ProviderSocialInsights = () => {
 };
 
 export default ProviderSocialInsights;
-

@@ -44,6 +44,11 @@ service cloud.firestore {
         || request.resource.data.isAdmin == (request.auth.token.get('admin', false) == true);
     }
 
+    function validInitialProviderType() {
+      return !('providerType' in request.resource.data)
+        || request.resource.data.providerType == request.auth.token.get('providerType', '');
+    }
+
     // Resources directory: signed-in read, admin write
     match /resources/{id} {
       allow read: if isSignedIn();
@@ -100,6 +105,22 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // Visit preparations are read and written through App-Check protected
+    // callables so field-level sharing, assignment, and revocation are checked
+    // together on the server. Never allow direct client reads of this collection.
+    match /client_visit_preparations/{preparationId} {
+      allow read, write: if false;
+    }
+
+    // Practitioner access and client sharing decisions are audited by trusted
+    // callables. Audit events are append-only and never available to clients.
+    match /practitioner_data_access_audit/{eventId} {
+      allow read, write: if false;
+    }
+    match /client_care_handoffs/{handoffId} {
+      allow read, write: if false;
+    }
+
     // Users may manage their own profile and private app data. Privilege fields
     // are immutable to the owner; trusted server/admin tooling must change them.
     match /users/{userId} {
@@ -108,11 +129,13 @@ service cloud.firestore {
         && request.resource.data.uid == userId
         && validInitialUserRole()
         && validInitialUserRoles()
-        && validInitialAdminFlag();
+        && validInitialAdminFlag()
+        && validInitialProviderType();
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.role == resource.data.role
         && request.resource.data.get('roles', []) == resource.data.get('roles', [])
+        && request.resource.data.get('providerType', null) == resource.data.get('providerType', null)
         && request.resource.data.isAdmin == resource.data.isAdmin;
       allow delete: if false;
 
@@ -136,6 +159,22 @@ service cloud.firestore {
     match /community_supporter_applications/{id} { allow read, write: if false; }
     match /community_supporters/{id} { allow read, write: if false; }
     match /community_support_audit/{id} { allow read, write: if false; }
+
+    // Peer community posts and reactions are callable-only. The callable
+    // verifies account status, runs Cherubim, rate-limits, and returns a
+    // public-safe projection; clients cannot bypass that path with Firestore.
+    match /social_feed/{postId} { allow read, write: if false; }
+    match /social_reactions/{reactionId} { allow read, write: if false; }
+
+    // Private friend groups, memberships, invite tokens, and audit records are
+    // callable-only. Invite URLs are single-use bearer links; clients never
+    // read or write group records directly from Firestore.
+    match /private_friend_circles/{circleId} { allow read, write: if false; }
+    match /private_friend_circles/{circleId}/{nested=**} { allow read, write: if false; }
+    match /private_friend_circle_invites/{inviteId} { allow read, write: if false; }
+    match /private_friend_circle_audit/{eventId} { allow read, write: if false; }
+    match /private_friend_circle_reports/{reportId} { allow read, write: if false; }
+    match /private_friend_circle_report_limits/{uid} { allow read, write: if false; }
 
     // Recovery meeting publication is read and written only by callable
     // functions so release pointers, source permissions, and revisions stay

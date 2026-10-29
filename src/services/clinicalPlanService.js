@@ -12,6 +12,7 @@ export async function buildClinicalPlan(answers) {
     rawText: answers.rawText || "",
     safety: answers.safety || "",
     traumaSensitive: Boolean(answers.traumaSensitive),
+    requestId: answers.requestId,
   };
   return callFunction("buildClinicalPlan", payload, { throwOnError: false });
 }

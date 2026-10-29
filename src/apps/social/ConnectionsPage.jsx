@@ -1,7 +1,7 @@
 // src/apps/social/ConnectionsPage.jsx
 // Connections page for friends, trusted partners, and blocked users
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { Users, UserCheck, AlertTriangle, UserPlus, X } from "lucide-react";
 import { getConnections, addTrustedPartner, blockUser, removeFriend } from "@/services/connectionsService";
@@ -16,11 +16,7 @@ const ConnectionsPage = ({ type: propType }) => {
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(null);
 
-  useEffect(() => {
-    loadConnections();
-  }, [userId]);
-
-  const loadConnections = async () => {
+  const loadConnections = useCallback(async () => {
     try {
       const conns = await getConnections(userId);
       setConnections(conns);
@@ -29,7 +25,11 @@ const ConnectionsPage = ({ type: propType }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    loadConnections();
+  }, [loadConnections]);
 
 
   const handleAddTrusted = async (targetId) => {

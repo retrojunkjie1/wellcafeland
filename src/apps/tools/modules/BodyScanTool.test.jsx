@@ -9,7 +9,7 @@ describe("BodyScanTool legacy route", () => {
   it("offers practical grounding choices without body ratings or written check-ins", () => {
     render(<BodyScanTool />);
 
-    expect(screen.getByText("No ratings or written answers. Skip anything that does not fit.")).toBeInTheDocument();
+    expect(screen.getByText(/Choose a small external anchor, hear an optional explanation/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Let something support you/ })).toBeInTheDocument();
     expect(screen.queryByRole("slider")).not.toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();

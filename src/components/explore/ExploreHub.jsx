@@ -40,7 +40,7 @@ const EXPLORE_SECTIONS = [
       },
       {
         id: "grounding-54321",
-        label: "Choose an Anchor",
+        label: "Reconnect with the room",
         icon: Mountain,
         toolType: "grounding",
       },

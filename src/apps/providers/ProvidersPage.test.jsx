@@ -40,7 +40,7 @@ describe("ProvidersPage", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "Filter by meeting preference" }), { target: { value: "online" } });
     fireEvent.change(screen.getByRole("combobox", { name: "Filter by cost" }), { target: { value: "free" } });
     fireEvent.change(screen.getByRole("textbox", { name: "Filter by city" }), { target: { value: "Denver" } });
-    fireEvent.change(screen.getByRole("textbox", { name: "Filter by state or region" }), { target: { value: "CO" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Filter by state, province, or region" }), { target: { value: "CO" } });
     fireEvent.click(screen.getByRole("button", { name: "Find support" }));
     await waitFor(() => expect(mocks.list).toHaveBeenLastCalledWith(expect.objectContaining({
       serviceFormat: "group", accessibilityOption: "low-sensory-option", deliveryOption: "online", costOption: "free", city: "Denver", region: "CO",
@@ -60,7 +60,7 @@ describe("ProvidersPage", () => {
     render(<MemoryRouter><ProvidersPage /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("tab", { name: /Nearby public listings/ }));
     fireEvent.change(screen.getByRole("textbox", { name: "Filter by city" }), { target: { value: "Denver" } });
-    fireEvent.change(screen.getByRole("textbox", { name: "Filter by state or region" }), { target: { value: "CO" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Filter by state, province, or region" }), { target: { value: "CO" } });
     fireEvent.click(screen.getByRole("button", { name: "Find support" }));
     expect(await screen.findByText("Jordan Example")).toBeTruthy();
     expect(screen.getByText("Public record · not reviewed")).toBeTruthy();

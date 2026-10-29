@@ -18,6 +18,16 @@ afterEach(() => {
 });
 
 describe("AdminWorkspaceAccessPage", () => {
+  it("keeps account lookup errors free of authentication-provider details", async () => {
+    mocks.findAdminWorkspaceAccount.mockRejectedValue(new Error("Firebase Authentication: auth/user-not-found"));
+    render(<MemoryRouter><AdminWorkspaceAccessPage /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText("Account email"), { target: { value: "person@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "Find account" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("We couldn’t find that account right now");
+    expect(alert).not.toHaveTextContent(/Firebase|Authentication|auth\//i);
+  });
+
   it("looks up an exact account and only grants workspace access after an explicit service choice", async () => {
     mocks.findAdminWorkspaceAccount.mockResolvedValue({ found: true, account: {
       uid: "client-1", email: "person@example.com", displayName: "Taylor", emailVerified: true,
@@ -70,7 +80,7 @@ describe("AdminWorkspaceAccessPage", () => {
   it("loads a collapsed, privacy-limited onboarding status list on demand", async () => {
     mocks.listAdminWorkspaceAccessEvents.mockResolvedValue({ events: [{
       eventId: "grant-1", email: "candidate@example.com", providerType: "bodywork",
-      applicationStatus: "pending", assignedAt: "2026-09-26T12:00:00.000Z",
+      applicationStatus: "pending", workspaceAccessActive: true, assignedAt: "2026-09-26T12:00:00.000Z",
     }] });
     render(<MemoryRouter><AdminWorkspaceAccessPage /></MemoryRouter>);
     expect(mocks.listAdminWorkspaceAccessEvents).not.toHaveBeenCalled();

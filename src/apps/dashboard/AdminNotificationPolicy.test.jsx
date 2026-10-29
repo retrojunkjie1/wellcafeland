@@ -3,6 +3,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import AdminNotificationPolicy from "./AdminNotificationPolicy";
 
+const { mockCallAgent } = vi.hoisted(() => ({ mockCallAgent: vi.fn() }));
+vi.mock("../../ai/agents/agentClient", () => ({ default: mockCallAgent }));
+
 const notifications = {
   enabled: true,
   riskAlerts: true,
@@ -34,5 +37,27 @@ describe("AdminNotificationPolicy", () => {
     expect(onChange).toHaveBeenNthCalledWith(1, "riskAlerts", false);
     expect(onChange).toHaveBeenNthCalledWith(2, "frequency", "low");
     expect(onChange).toHaveBeenNthCalledWith(3, "quietHours", { enabled: true, start: 21, end: 7 });
+  });
+
+  it("prepares an editable Towncrier draft without implying delivery", async () => {
+    mockCallAgent.mockResolvedValue({ result: { title: "A new practice", message: "[Add the practice details]", reviewNote: "Confirm details before sharing." } });
+    render(<AdminNotificationPolicy notifications={notifications} onChange={vi.fn()} />);
+
+    expect(screen.getByText("Draft only · not sent")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "Update type" }), { target: { value: "resource" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Audience" }), { target: { value: "clients" } });
+    fireEvent.click(screen.getByRole("button", { name: "Prepare announcement draft" }));
+
+    expect(await screen.findByText("A new practice")).toBeInTheDocument();
+    expect(mockCallAgent).toHaveBeenCalledWith("towncrier", { updateType: "resource", audience: "clients" });
+    expect(screen.getByText(/Confirm details before sharing/)).toBeInTheDocument();
+  });
+
+  it("shows a useful error when Towncrier cannot draft", async () => {
+    mockCallAgent.mockRejectedValue(new Error("Towncrier is paused by an administrator."));
+    render(<AdminNotificationPolicy notifications={notifications} onChange={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Prepare announcement draft" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Towncrier is paused");
   });
 });

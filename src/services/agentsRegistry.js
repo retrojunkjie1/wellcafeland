@@ -6,242 +6,36 @@
  * Tracks agent status, capabilities, health, and configuration
  */
 
-// Agent definitions with metadata
-export const AGENT_DEFINITIONS = {
-  seer: {
-    id: "seer",
-    name: "The Seer",
-    icon: "🔭",
-    description: "Reads telemetry & patterns. Observes how people use WellnessCafe and identifies trends.",
-    role: "Pattern Observer",
-    capabilities: ["telemetry_analysis", "pattern_detection", "usage_insights"],
-    status: "active", // active, inactive, error, maintenance
-    health: "unknown", // set to healthy only after a real execution
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null, // minutes, null = manual only
-      temperature: 0.7,
-      maxTokens: 1000,
-    },
-  },
-  oracle: {
-    id: "oracle",
-    name: "The Oracle",
-    icon: "🕯️",
-    description: "Fuses memory + question into deep guidance. Provides wisdom by connecting user context with long-term memory.",
-    role: "Wisdom Guide",
-    capabilities: ["memory_fusion", "contextual_guidance", "deep_insight"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.8,
-      maxTokens: 1200,
-    },
-  },
-  overseer: {
-    id: "overseer",
-    name: "The Overseer",
-    icon: "🧭",
-    description: "Turns insight into next-right-step plans. Orchestrates actions and creates structured session plans.",
-    role: "Action Orchestrator",
-    capabilities: ["plan_generation", "session_orchestration", "action_planning"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.6,
-      maxTokens: 1500,
-    },
-  },
-  sentinel: {
-    id: "sentinel",
-    name: "The Sentinel",
-    icon: "🛡️",
-    description: "Watches for risk and flags alerts. Monitors for triggers, escalation signals, and crisis indicators.",
-    role: "Risk Monitor",
-    capabilities: ["risk_detection", "alert_generation", "crisis_signals"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: true,
-      runInterval: 15, // Run every 15 minutes
-      temperature: 0.5,
-      maxTokens: 800,
-    },
-  },
-  cherubim: {
-    id: "cherubim",
-    name: "The Cherubim",
-    icon: "👼",
-    description: "Guardian of sacred spaces. Protects user privacy, ensures ethical AI use, and maintains boundaries.",
-    role: "Ethics Guardian",
-    capabilities: ["privacy_protection", "ethical_oversight", "boundary_enforcement"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.4,
-      maxTokens: 600,
-    },
-  },
-  healer_breathwork: {
-    id: "healer_breathwork",
-    name: "Breathwork Healer",
-    icon: "🌬️",
-    description: "Specialized in breathing exercises and breathwork practices. Guides users through various breathing techniques.",
-    role: "Breathwork Specialist",
-    capabilities: ["breathwork_guidance", "breathing_exercises", "nervous_system_regulation"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.6,
-      maxTokens: 1000,
-    },
-  },
-  healer_grounding: {
-    id: "healer_grounding",
-    name: "Grounding Healer",
-    icon: "🌍",
-    description: "Specialized in grounding techniques. Helps users return to their body and the present moment.",
-    role: "Grounding Specialist",
-    capabilities: ["grounding_techniques", "body_awareness", "present_moment_guidance"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.6,
-      maxTokens: 1000,
-    },
-  },
-  healer_mindfulness: {
-    id: "healer_mindfulness",
-    name: "Mindfulness Healer",
-    icon: "🧘",
-    description: "Specialized in mindfulness practices and meditation. Guides users in present-moment awareness.",
-    role: "Mindfulness Specialist",
-    capabilities: ["mindfulness_guidance", "meditation_instruction", "awareness_practices"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.7,
-      maxTokens: 1200,
-    },
-  },
-  healer_spiritual: {
-    id: "healer_spiritual",
-    name: "Spiritual Healer",
-    icon: "✨",
-    description: "Specialized in spiritual concepts and practices. Provides guidance on spiritual wellness without forcing beliefs.",
-    role: "Spiritual Guide",
-    capabilities: ["spiritual_guidance", "sacred_practices", "meaning_making"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.8,
-      maxTokens: 1400,
-    },
-  },
-  healer_acuwellness: {
-    id: "healer_acuwellness",
-    name: "Acuwellness Healer",
-    icon: "📍",
-    description: "Specialized in acupressure and acuwellness techniques. Guides users through pressure points and meridian work.",
-    role: "Acuwellness Specialist",
-    capabilities: ["acuwellness_guidance", "pressure_point_instruction", "meridian_work"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: false,
-      runInterval: null,
-      temperature: 0.6,
-      maxTokens: 1000,
-    },
-  },
-  towncrier: {
-    id: "towncrier",
-    name: "The Towncrier",
-    icon: "📢",
-    description: "Manages notifications and announcements. Delivers important messages, alerts, and system updates to users.",
-    role: "Notification Manager",
-    capabilities: ["notification_delivery", "alert_management", "announcement_system"],
-    status: "active",
-    health: "unknown",
-    lastRun: null,
-    runCount: 0,
-    avgResponseTime: 0,
-    errorCount: 0,
-    config: {
-      enabled: true,
-      autoRun: true,
-      runInterval: 5, // Check every 5 minutes
-      temperature: 0.5,
-      maxTokens: 500,
-    },
-  },
+// Operational display and local metrics are projected from the shared catalog.
+import agentCatalog from "../../functions/agentCatalog.json";
+
+const AGENT_ICONS = {
+  overseer: "🧭", sentinel: "🛡️", seer: "🔭", oracle: "🕯️", cherubim: "🪽",
+  healer: "♡", towncrier: "🔔", scribe: "✎", cartographer: "⌖", bridge: "⌁",
+  mirror: "◉", anchor: "⚓", breathkeeper: "〰️", shepherd: "♧", gatekeeper: "⌑",
+  rhythm: "♫", lantern: "✦", witness: "◌", pulse: "♥", steward: "◇", compass: "⌖",
+  gardener: "❀", translator: "文", hearth: "⌂", lighthouse: "☼",
 };
 
-// v2 resets prior client-simulated run and health counters; new metrics come from real execution events.
+export const AGENT_DEFINITIONS = Object.fromEntries(agentCatalog.agents.map((agent) => {
+  const ready = agent.readiness === "implemented";
+  return [agent.id, {
+    id: agent.id,
+    name: agent.name,
+    icon: AGENT_ICONS[agent.id] || "✦",
+    description: agent.notes,
+    role: agent.role,
+    capabilities: agent.produces,
+    status: ready ? "active" : "inactive",
+    health: "unknown",
+    lastRun: null,
+    runCount: 0,
+    avgResponseTime: 0,
+    errorCount: 0,
+    config: { enabled: ready, autoRun: false, runInterval: null, temperature: 0.6, maxTokens: 900 },
+  }];
+}));
+
 const STORAGE_KEY = "wc-agents-registry-v2";
 
 /**
@@ -255,6 +49,8 @@ export function loadAgentsRegistry() {
     if (!stored) return AGENT_DEFINITIONS;
 
     const parsed = JSON.parse(stored);
+    // Preserve prior Spiritual Healer metrics under the canonical Healer card.
+    if (!parsed.healer && parsed.healer_spiritual) parsed.healer = parsed.healer_spiritual;
     // Merge stored data with defaults (preserve structure)
     const merged = { ...AGENT_DEFINITIONS };
     Object.keys(parsed).forEach((agentId) => {
@@ -272,6 +68,14 @@ export function loadAgentsRegistry() {
           merged[agentId].health = "unknown";
         }
       }
+    });
+    // Client-side storage is not an operational control plane. Prevent old
+    // local toggles from making catalog-only agents appear active.
+    Object.values(merged).forEach((agent) => {
+      const definition = agentCatalog.agents.find((entry) => entry.id === agent.id);
+      const ready = definition?.readiness === "implemented";
+      agent.status = ready ? "active" : "inactive";
+      agent.config = { ...agent.config, enabled: ready, autoRun: false, runInterval: null };
     });
     return merged;
   } catch (err) {

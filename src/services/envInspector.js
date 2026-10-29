@@ -22,19 +22,15 @@ export function getEnvSummary() {
   const hasFunctionsURL = !!functionsUrl;
 
   // Check OpenAI
-  const hasOpenAIAccess = import.meta.env.VITE_OPENAI_HAS_AUDIO === "true" || 
-                         import.meta.env.VITE_OPENAI_API_KEY !== undefined;
-
-  // Check RapidAPI
-  const rapidApiKey = import.meta.env.VITE_RAPIDAPI_KEY;
-  const rapidApiHost = import.meta.env.VITE_RAPIDAPI_HOST;
-  const hasRapidAPI = !!(rapidApiKey && rapidApiHost);
+  // Provider credentials live in server-side Secret Manager and cannot be
+  // reliably inspected by a browser. Only expose the non-secret feature flag.
+  const hasOpenAIAccess = import.meta.env.VITE_OPENAI_HAS_AUDIO === "true";
 
   // Check features
   const hasVoice = hasOpenAIAccess || typeof window !== "undefined" && 
                    (window.speechSynthesis || window.SpeechRecognition || window.webkitSpeechRecognition);
   const hasVideo = true; // Video uses fallback URLs, always available
-  const hasDirectorySearch = hasRapidAPI || hasFunctionsURL; // Can work with either
+  const hasDirectorySearch = hasFirebase; // Resource search is server-owned.
   const hasProviderMode = true; // Provider mode is frontend-only, doesn't require backend
 
   // Version info
@@ -50,7 +46,6 @@ export function getEnvSummary() {
       hasFirestore,
       hasFunctionsURL,
       hasOpenAIAccess,
-      hasRapidAPI,
     },
     features: {
       hasVoice,
@@ -103,9 +98,6 @@ export function getStatusSummary() {
   }
   if (!summary.api.hasFunctionsURL) {
     warnings.push("Firebase Functions URL not set");
-  }
-  if (!summary.api.hasRapidAPI) {
-    warnings.push("RapidAPI not configured");
   }
   if (!summary.api.hasOpenAIAccess) {
     warnings.push("OpenAI access not available");

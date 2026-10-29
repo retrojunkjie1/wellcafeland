@@ -211,3 +211,27 @@ Every proposed tranche should identify the affected roles and compartments, its 
 - A phase is complete only when its exit gate is evidenced. “Built”, “deployed”, and “verified end-to-end” are separate statuses.
 
 **Immediate next build after this roadmap:** continue the client support journey across personal Daily Practice and real-world assistance while the separate practitioner test account is prepared. Then close the cross-role integration baseline with the client/practitioner/admin walkthrough and role-aware workspace entry; record account setup blockers separately from code defects.
+
+## 10. Long-term direction — voice-enabled wellness companion
+
+This direction supplements the existing Definition of Done and roadmap. It does not replace the active phase, change an iteration's acceptance criteria, or make hardware a release prerequisite. WellnessCafe should eventually offer a consistent, user-controlled wellness companion through the web, iPhone, Android, and a purpose-built physical companion.
+
+### Foundations to preserve in current work
+
+- Keep `callAgent(agentId, payload)` as the sole agent invocation path and `useAgentsRegistryStore` as the source of agent availability and operational metrics. Keep privileged decisions, authorization, and sensitive-data retrieval on the server.
+- Keep shared wellness journeys and safety rules reusable across interfaces; a new surface must not create a second, less-governed agent path.
+- Preserve text access alongside voice. Microphone capture must be user-started, with clear listening, review, send, playback, stop, and unavailable states. Voice handoffs remain explicit and feature-specific.
+- Keep ordinary preferences (such as preferred language, voice, and reminder choices) separate from journals, transcripts, check-ins, and other sensitive health or recovery information.
+- Treat persistent companion memory as a distinct, future capability. It requires explicit opt-in, a clear view of what is remembered and why, correction and deletion controls, bounded retention, and access limited to its stated purpose. Do not silently promote private content into memory or read sensitive content aloud.
+
+These are architecture constraints for work that touches conversations, agents, preferences, voice, or client surfaces. They do not authorize unrelated infrastructure work or expand the current production-agent smoke gate.
+
+### Later iterations and deferred capabilities
+
+1. Continue the web client and close the current client, practitioner, and admin acceptance gates.
+2. In a separately scoped mobile iteration, assess and implement iPhone and Android access while reusing the shared journeys, consent model, and server contracts.
+3. In a separately scoped companion iteration, improve opt-in voice continuity and add reviewable, user-controlled persistent memory only after its data lifecycle and access controls are designed and verified.
+4. Consider opt-in proactive check-ins only after explicit schedules, pause/disable controls, delivery boundaries, and safety behavior are accepted.
+5. Evaluate a stationary physical companion only after the software experience, privacy model, and user need are validated. Any custom hardware requires its own threat model and release gate.
+
+Always-on listening, background monitoring, cameras, robotics, and autonomous physical actions are explicitly deferred. No physical-device capability is implied by current web voice features or by the production-agent validation gate.

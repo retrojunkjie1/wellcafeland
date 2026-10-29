@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import ProviderClientsPage from "./ProviderClientsPage";
 
 const mocks = vi.hoisted(() => ({ navigate: vi.fn(), useSessionIdentity: vi.fn(), listAssignmentsForProvider: vi.fn(), getProviderClientOverview: vi.fn() }));
@@ -12,6 +12,34 @@ vi.mock("@/components/navigation/PageHeader", () => ({ default: ({ title, subtit
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("ProviderClientsPage", () => {
+  it("does not present a failed signed-in connection lookup as an empty client list", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isLoading: false, isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider.mockRejectedValue(
+      Object.assign(new Error("Unauthenticated"), { code: "functions/unauthenticated" }),
+    );
+
+    render(<ProviderClientsPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your connections aren’t available right now.");
+    expect(screen.queryByRole("heading", { name: "Your connections will appear here" })).toBeNull();
+    expect(screen.queryByText(/Unauthenticated|functions\/unauthenticated|sign in again/i)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  });
+
+  it("offers a retry after a temporary connection-list failure and shows the true empty state after recovery", async () => {
+    mocks.useSessionIdentity.mockReturnValue({ isLoading: false, isProvider: true, isAdmin: false, providerId: "provider-1", userId: "provider-1" });
+    mocks.listAssignmentsForProvider.mockRejectedValueOnce(new Error("temporary outage")).mockResolvedValueOnce([]);
+
+    render(<ProviderClientsPage />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("We couldn’t load your connections. Try again in a moment.");
+    expect(screen.queryByRole("heading", { name: "Your connections will appear here" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(await screen.findByRole("heading", { name: "Your connections will appear here" })).toBeTruthy();
+    expect(mocks.listAssignmentsForProvider).toHaveBeenCalledTimes(2);
+  });
+
   it("waits for account identity before deciding whether an admin can open client connections", async () => {
     mocks.useSessionIdentity.mockReturnValue({ isLoading: true, isProvider: false, isAdmin: false, providerId: null, userId: "admin-1" });
     const view = render(<ProviderClientsPage />);

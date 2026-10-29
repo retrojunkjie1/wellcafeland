@@ -2,9 +2,12 @@ const hasValue = (params, key) => Boolean(params.get(key)?.trim());
 
 export function getAssistanceEntry(search) {
   const params = search instanceof URLSearchParams ? search : new URLSearchParams(search);
-  const intent = `${params.get("query") || ""} ${params.get("priority") || ""}`.toLowerCase();
+  const intent = `${params.get("query") || ""} ${params.get("priority") || ""}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 
-  if (/\b(aa|na|a\.a\.|n\.a\.|alcoholics anonymous|narcotics anonymous)\b/.test(intent)) {
+  if (/\b(aa|na|a a|n a|alcoholics anonymous|narcotics anonymous)\b/.test(intent)) {
     return "meetings";
   }
   if (["priority", "domain", "query", "region"].some((key) => hasValue(params, key))) {

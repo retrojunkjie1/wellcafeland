@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/debug", () => ({ logDebug: vi.fn() }));
-vi.mock("@/lib/directoryCuratedFallback", () => ({ getCuratedFallback: mocks.getCuratedFallback }));
+vi.mock("@/lib/directoryCuratedFallback", () => ({ getCuratedFallback: mocks.getCuratedFallback, isUSLocation: (value = "") => /\b(?:united states|usa|denver|dallas|aurora|colorado|texas|california|oklahoma)\b|,\s*(?:CO|TX|CA|OK)$/i.test(value) }));
 vi.mock("@/services/apiBase", () => ({ buildApiUrl: (path) => `https://api.example.test${path}` }));
 vi.mock("@/services/aiSessionClient", () => ({ getAuthHeaders: mocks.getAuthHeaders }));
 vi.mock("@/data/resources", () => ({ listResources: mocks.listResources }));
@@ -65,5 +65,23 @@ describe("directory search availability", () => {
     expect(result).toMatchObject({ ok: true, meta: { fallback: "curated", subscriptionBlocked: true } });
     expect(result.items).toHaveLength(1);
     expect(result.error).toBeNull();
+  });
+
+  it("does not merge stored U.S. directory records into international results", async () => {
+    mocks.getCuratedFallback.mockReturnValue([{
+      id: "global-meetings",
+      name: "International recovery meetings",
+      description: "Search current online and country-level meeting directories.",
+      link: "https://example.test/global-meetings",
+      source: "Global directory",
+    }]);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(503, { ok: false, error: "Unavailable" })));
+
+    const result = await searchDirectory({ query: "recovery groups", domain: "assistance", location: "Dubai" });
+
+    expect(result.ok).toBe(true);
+    expect(result.items.map((item) => item.id)).toContain("global-meetings");
+    expect(mocks.listResources).not.toHaveBeenCalled();
+    expect(mocks.getCuratedFallback).toHaveBeenCalledWith("assistance", "recovery groups", "Dubai");
   });
 });

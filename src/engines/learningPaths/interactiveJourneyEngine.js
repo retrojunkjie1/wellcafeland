@@ -47,45 +47,50 @@ export function getJourneyNodes(topicId, tileId) {
     angleTitle: v.title,
     body: v.body,
     reflectionPrompt: v.reflectionPrompt,
+    followUps: Array.isArray(v.followUps) ? v.followUps : [],
     versionId: v.versionId || `v${i + 1}`,
     depthLevel: v.depthLevel || 1,
   }));
 }
 
+/** Build detail nodes that belong to one selected perspective. */
+export function getJourneyFollowUps(parentNode) {
+  const followUps = Array.isArray(parentNode?.followUps) ? parentNode.followUps : [];
+  return followUps.map((followUp, index) => ({
+    ...parentNode,
+    ...followUp,
+    nodeId: `${parentNode.nodeId}::detail-${index + 1}`,
+    versionId: `${parentNode.versionId}-detail-${index + 1}`,
+    angleTitle: followUp.title,
+    parentAngleTitle: parentNode.angleTitle,
+    detailPosition: index + 1,
+    detailCount: followUps.length,
+    depthLevel: (parentNode.depthLevel || 1) + 1,
+  }));
+}
+
 /**
- * Non-repeating angle picker
- * Strategy:
- * 1. Filter out visited nodes
- * 2. If all visited, filter out last shown
- * 3. If still empty, use all nodes (cycle complete)
- * @param {string} topicId
- * @param {string} tileId
- * @returns {object|null} Selected node
+ * Move to the next visible perspective for the separate “Surprise me” action.
+ * The “Show me another angle” action must use getJourneyFollowUps instead.
  */
-export function pickNextJourneyNode(topicId, tileId) {
-  const nodes = getJourneyNodes(topicId, tileId);
-  if (!nodes.length) return null;
+export function pickNextTopicJourneyNode(topicId, currentTileId, currentNodeId = null) {
+  const topic = getTopic(topicId);
+  if (!topic?.tiles?.length) return null;
 
-  const state = loadState();
-  const key = `${topicId}::${tileId}`;
-  const entry = state[key] || { last: null, visited: [] };
+  const nodes = topic.tiles.flatMap((tile) => getJourneyNodes(topicId, tile.id));
+  if (nodes.length < 2) return null;
 
-  const visitedSet = new Set(entry.visited);
-  const fresh = nodes.filter((n) => !visitedSet.has(n.nodeId));
+  const currentNodeIndex = currentNodeId
+    ? nodes.findIndex((node) => node.nodeId === currentNodeId)
+    : -1;
+  const currentTileIndexes = nodes
+    .map((node, index) => (node.tileId === currentTileId ? index : -1))
+    .filter((index) => index >= 0);
+  const startIndex = currentNodeIndex >= 0
+    ? currentNodeIndex + 1
+    : (currentTileIndexes.at(-1) ?? -1) + 1;
 
-  // Try fresh nodes first, then unvisited (excluding last), then all
-  let pool = fresh.length ? fresh : nodes.filter((n) => n.nodeId !== entry.last);
-  if (!pool.length) pool = nodes;
-
-  const chosen = pool[Math.floor(Math.random() * pool.length)];
-
-  state[key] = {
-    last: chosen.nodeId,
-    visited: Array.from(new Set([...visitedSet, chosen.nodeId])),
-  };
-  saveState(state);
-
-  return chosen;
+  return nodes[startIndex % nodes.length] || null;
 }
 
 /**
@@ -130,4 +135,3 @@ export function clearJourneyState() {
     // ignore
   }
 }
-

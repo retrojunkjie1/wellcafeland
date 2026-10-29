@@ -18,6 +18,8 @@ export const ROOT_SET = new Set(ROOT_ROUTES);
 
 // Route metadata: path-prefix => { title, parent, rootFallback }
 export const ROUTE_META = [
+  { pattern: "/forgot-password", title: "Reset password", parent: "/login", rootFallback: "/login" },
+  { pattern: "/reset-password", title: "Reset password", parent: "/login", rootFallback: "/login" },
   // Core roots
   { pattern: "/home", title: "Home", parent: null, rootFallback: "/home" },
   { pattern: "/my-sessions", title: "My sessions", parent: "/home", rootFallback: "/home" },
@@ -28,7 +30,7 @@ export const ROUTE_META = [
   { pattern: "/explore", title: "Explore", parent: "/home", rootFallback: "/home" },
 
   // Guide & Living
-  { pattern: "/guide", title: "Guide", parent: "/home", rootFallback: "/home" },
+  { pattern: "/guide", title: "Chat", parent: null, rootFallback: "/chat" },
   { pattern: "/living", title: "Living Guide", parent: "/home", rootFallback: "/home" },
   { pattern: "/living/v3", title: "Living Guide", parent: "/home", rootFallback: "/home" },
 
@@ -38,7 +40,7 @@ export const ROUTE_META = [
 
   // Tools
   { pattern: "/tools/classic", title: "Tools (Classic)", parent: "/tools", rootFallback: "/tools" },
-  { pattern: "/tools/grounding/54321", title: "Choose an Anchor", parent: "/tools", rootFallback: "/tools" },
+  { pattern: "/tools/grounding/54321", title: "Reconnect with the room", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/:toolId", title: "Tool", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-journal", title: "Voice Journal", parent: "/tools", rootFallback: "/tools" },
   { pattern: "/tools/voice-checkin", title: "Voice Check-In", parent: "/tools", rootFallback: "/tools" },
@@ -46,7 +48,6 @@ export const ROUTE_META = [
   // Assistance
   { pattern: "/assistance", title: "Assistance", parent: "/home", rootFallback: "/home" },
   { pattern: "/assistance/community", title: "Community support", parent: "/assistance", rootFallback: "/assistance" },
-  { pattern: "/assistance/request", title: "Request Assistance", parent: "/assistance", rootFallback: "/assistance" },
 
   // Support & Command
   { pattern: "/support", title: "Support", parent: "/home", rootFallback: "/home" },
@@ -63,6 +64,7 @@ export const ROUTE_META = [
 
   // Circles
   { pattern: "/circles", title: "Circles", parent: "/home", rootFallback: "/home" },
+  { pattern: "/circles/invite/:inviteToken", title: "Friend group invitation", parent: "/circles", rootFallback: "/circles" },
   { pattern: "/circles/:circleId", title: "Circle", parent: "/circles", rootFallback: "/circles" },
   { pattern: "/circles/:circleId/threads/new", title: "New Thread", parent: "/circles/:circleId", rootFallback: "/circles/:circleId" },
   { pattern: "/circles/:circleId/threads/:threadId", title: "Thread", parent: "/circles/:circleId", rootFallback: "/circles/:circleId" },
@@ -131,6 +133,7 @@ export const ROUTE_META = [
   { pattern: "/login", title: "Login", parent: null, rootFallback: "/home" },
   { pattern: "/signup", title: "Sign Up", parent: null, rootFallback: "/home" },
   { pattern: "/onboarding", title: "Onboarding", parent: null, rootFallback: "/home" },
+  { pattern: "/getting-started", title: "How to use WellnessCafe", parent: "/home", rootFallback: "/home" },
 ];
 
 // Find route meta by longest prefix match

@@ -1,16 +1,10 @@
 // src/experience/audio/AudioProvider.jsx
 // Phase 56: context provider exposing audio engine + helpers.
 
-import React, {createContext, useContext, useEffect, useMemo, useRef} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {AudioEngine} from "./AudioEngine.js";
 import {SPOKEN_GUIDANCE_REGISTRY} from "./spokenGuidance.js";
-
-const AudioContext = createContext(null);
-
-export function useAudio() {
-  const ctx = useContext(AudioContext);
-  return ctx;
-}
+import { AudioContext } from "./AudioContext.js";
 
 const DEFAULT_CUES = [
   ["cue_inhale", "/audio/cue_inhale.mp3"],
@@ -20,9 +14,7 @@ const DEFAULT_CUES = [
 ];
 
 export function AudioProvider({children}) {
-  const engineRef = useRef(null);
-  if (!engineRef.current) engineRef.current = new AudioEngine();
-  const engine = engineRef.current;
+  const [engine] = useState(() => new AudioEngine());
 
   useEffect(() => {
     DEFAULT_CUES.forEach(([id, src]) => {

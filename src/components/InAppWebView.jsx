@@ -2,7 +2,7 @@
 // Modal iframe for opening links in-app (no external nav by default)
 
 import React from "react";
-import { X, ExternalLink } from "lucide-react";
+import { ExternalLink, ArrowLeft } from "lucide-react";
 
 function getSourcePreview(url) {
   try {
@@ -68,10 +68,11 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg border border-white/20 text-white/70 hover:bg-white/10 transition"
-            aria-label="Close"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/20 px-3 text-sm text-white/80 hover:bg-white/10 transition"
+            aria-label="Return to WellnessCafe"
           >
-            <X className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to WellnessCafe</span>
           </button>
         </div>
       </div>
@@ -91,12 +92,22 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
             </section>
           </main>
         ) : (
-          <iframe
-            src={url}
-            title={displayTitle}
-            className="w-full h-full border-0"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          />
+          <main className="flex h-full items-center justify-center overflow-y-auto px-5 py-8">
+            <section className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl sm:p-9">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-200/80">External resource</p>
+              <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Continue to the organization’s website</h1>
+              <p className="mt-4 text-base leading-relaxed text-white/75">This provider’s website cannot be displayed inside WellnessCafe. Open it in a separate browser tab to view current information. Your search stays open here.</p>
+              <p className="mt-3 break-all text-sm text-white/45">{new URL(url).hostname}</p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-200 px-5 font-semibold text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+                  Open official resource <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                </a>
+                <button type="button" onClick={onClose} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-5 font-medium text-white/85 hover:bg-white/10">
+                  <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Return to results
+                </button>
+              </div>
+            </section>
+          </main>
         )}
       </div>
     </div>

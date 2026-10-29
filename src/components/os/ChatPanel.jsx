@@ -16,13 +16,12 @@ import DirectoryResultBlock from "./DirectoryResultBlock";
 import DirectoryResultsPanel from "@/components/directory/DirectoryResultsPanel";
 import IntentRenderer from "@/core/intent/IntentRenderer";
 import InAppWebView from "@/components/InAppWebView";
-import VoiceResponse from "./VoiceResponse";
 import VideoGuidance from "./VideoGuidance";
 import { searchResources } from "@/services/resourceSearch";
 import { getAuthHeaders, getAuthHeadersWithTimeout } from "@/services/aiSessionClient";
 import { callAI } from "@/services/aiClient";
 import { getConversationMemoryContext, rememberConversationTurn } from "@/services/conversationMemory";
-import { makeLivingMeta, detectRoleIntent, safeApproachForRole } from "@/lib/living";
+import { makeLivingMeta, detectRoleIntent } from "@/lib/living";
 import { useLivingSession } from "@/hooks/useLivingSession";
 import { offlineRespond } from "@/services/offlineGuide";
 import { getAIServiceFailureActions } from "@/services/aiFailureGuidance";
@@ -62,12 +61,9 @@ import ChatComposerBar from "@/components/system/ChatComposerBar";
 import ChatDock from "@/components/system/ChatDock";
 import VoiceCheckInModal from "@/components/tools/VoiceCheckInModal";
 import { useContinuityStore } from "@/engines/continuity/continuityStore";
-import { planResponse } from "@/engines/trust/responsePlanner";
 import { safeLocalStorage } from "@/lib/storage/safeLocalStorage";
 import GroundingModal from "@/components/chat/GroundingModal";
-import ThinkingOverlay from "@/components/presence/ThinkingOverlay";
-import useAutoSpeak from "@/components/presence/useAutoSpeak";
-import ComposerPresenceControls from "./ComposerPresenceControls";
+import ThinkingStatus from "./ThinkingStatus";
 import {parseExperienceSignal} from "@/core/experience/experienceSignal";
 
 // Phase 54K: simple hash for variation (no deps)
@@ -83,7 +79,7 @@ const STYLE_HINTS_54K = ["warm_concise", "coach", "clinical_calm", "grounded_spi
 
 const TOOL_NAMES = {
   breathing: "Breathing Exercise",
-  grounding: "Choose an Anchor",
+  grounding: "Reconnect with the room",
   journaling: "Journaling",
   "urge-surfing": "Urge Surfing",
   "body-scan": "Steady Ground",
@@ -256,7 +252,7 @@ const SIGNIN_ALTERNATIVE_BODY =
   "Your account is needed to schedule or message a practitioner. You can browse practitioners now, or sign in to continue.";
 
 // Helper: Convert base64 to Blob
-const ChatPanel = () => {
+const ChatPanel = ({ startConversation = false }) => {
   const navigate = useNavigate();
   const { messages, addMessage, updateLastAssistantMessage, injectToolIntoChat, openWorkspace, settings } = useOSStore();
   const allowEmotionAnalysis = settings?.allowEmotionFromChat === true;
@@ -265,23 +261,19 @@ const ChatPanel = () => {
   const { setThinking, isThinking } = useAIStore();
   const identity = useSessionIdentity();
   const living = useLivingSession();
-  const roleSetThisTurnRef = useRef(false);
   const { ingestUserDraft, pushAction, initThread } = useContinuityStore();
   const { isOnline } = useOnlineStatus();
   const isOffline = !isOnline;
   const [input, setInput] = useState("");
+  const [conversationReady, setConversationReady] = useState(startConversation);
   const [imageAttachment, setImageAttachment] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [faceScanPromptOpen, setFaceScanPromptOpen] = useState(false);
   const [voiceCheckInModalOpen, setVoiceCheckInModalOpen] = useState(false);
   const [pending, setPending] = useState(null);
-  const pendingPlanRef = useRef(null);
   const pendingStartMsRef = useRef(null);
   const [offlineQueueLength, setOfflineQueueLength] = useState(0);
-  const [expandedMessageIds, setExpandedMessageIds] = useState({});
-  const [speakError, setSpeakError] = useState(null);
   const [groundingModalOpen, setGroundingModalOpen] = useState(false);
-  const [overlayTick, setOverlayTick] = useState(0);
   const composerRef = useRef(null);
   const [composerH, setComposerH] = useState(0);
   const COMPOSER_MARGIN = 16;
@@ -304,29 +296,6 @@ const ChatPanel = () => {
   const offlineMessageQueueRef = useRef([]); // Message queue for offline sends
   const ingestDebounceRef = useRef(null);
   useEffect(() => { initThread(); }, [initThread]);
-
-  const { autoSpeakEnabled, setAutoSpeakEnabled } = useAutoSpeak({ messages, pending });
-
-  const speakLastAssistant = React.useCallback(() => {
-    if (pending) return;
-    const last = [...(messages || [])].reverse().find((m) => m.role === "assistant" && m.content);
-    if (!last) return;
-    try {
-      window.speechSynthesis?.cancel?.();
-      const u = new SpeechSynthesisUtterance(String(last.content));
-      u.rate = 1;
-      u.pitch = 1;
-      window.speechSynthesis?.speak?.(u);
-    } catch (e) {}
-  }, [messages, pending]);
-
-  useEffect(() => {
-    if (!pending) return;
-    const t = setInterval(() => setOverlayTick((v) => v + 1), 100);
-    return () => clearInterval(t);
-  }, [pending]);
-
-  const thoughtMsForOverlay = pending?.startedAt != null ? Math.max(0, Date.now() - pending.startedAt) : 0;
 
   useEffect(() => {
     const el = composerRef.current;
@@ -563,24 +532,16 @@ const ChatPanel = () => {
           const routeIntent = classifyRouteIntent(text, !!directoryQueries);
           lastTurnRef.current = { text, routeIntent, sourceMessageId: media?.sourceMessageId || null };
 
-          // Trust layer: plan (for reasoning envelope on success); then single pending indicator (Phase 54J)
+          // Keep the visible pending state tied to the actual request.
           const startMs = Date.now();
           pendingStartMsRef.current = startMs;
-          let plan;
-          try {
-            plan = await planResponse({ userText: text });
-          } catch (e) {
-            plan = { reply: { id: "pending", text: "", mode: "chat" }, reasoning: { role: "default", depth: "standard", safety: { risk: "low", crisis: false, disclaimers: [] }, checks: ["scope limits"], summary: ["Identify ask", "Offer next action"], confidence: 3, latencyMs: 0 } };
-          }
-          pendingPlanRef.current = plan;
           const pendingId = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : "wc_" + Date.now() + "_" + Math.random().toString(36).slice(2);
           setPending({ id: pendingId, startedAt: startMs, label: "Thinking", intent: directoryFallback ? "directory" : "chat", text });
 
-          // Phase 54I: Role intent — persist (approach shown on final message when showApproach)
+          // Preserve the requested conversation role without exposing internal planning details.
           const roleHit = detectRoleIntent(text);
           if (roleHit?.confidence >= 0.8) {
             living.setRole(roleHit.role);
-            roleSetThisTurnRef.current = true;
           }
 
         // Guest safe mode: try token with short wait (anonymous sign-in); if none, show helpful message (no dead-end)
@@ -665,7 +626,6 @@ const ChatPanel = () => {
             sessionStorage.setItem("wc_last_key_count", "0");
           }
         }
-        const showApproach = roleSetThisTurnRef.current || /how (are|you're) (thinking|approaching)/i.test(text) || /analy(z|s)e deeply/i.test(text);
         const res = await callAI("aiSession", {
           messages: messageHistory,
           mode,
@@ -687,7 +647,6 @@ const ChatPanel = () => {
             avoidRepeat: true,
             lastUserTextHash: textHash,
             ...nudgeMeta,
-            thoughtMs: livingMeta.thoughtMs,
             role: livingMeta.role,
             variationKey: livingMeta.variationKey,
             ...(routeIntent === "ALWAYS_ON_SUPPORT"
@@ -825,9 +784,10 @@ const ChatPanel = () => {
         const lastMsgIntent = res.intent && typeof res.intent === "object" ? res.intent : null;
         const lastMsgLinks = Array.isArray(res.links) ? res.links : [];
         const doneMs = Date.now();
-        const envelope = pendingPlanRef.current;
-        // Phase 55A: truthful thinking — MessageBubble shows "Thought for Xs" only when thoughtMs>=250
-        const thoughtMsRes = res.meta?.thoughtMs ?? livingMeta.thoughtMs ?? (pendingStartMsRef.current != null ? doneMs - pendingStartMsRef.current : null);
+        // Measure the visible request-to-reply time; generated metadata is not thinking time.
+        const responseDurationMs = pendingStartMsRef.current != null
+          ? Math.max(0, doneMs - pendingStartMsRef.current)
+          : null;
         const patch = {
           role: "assistant",
           type: "assistant_text",
@@ -836,17 +796,14 @@ const ChatPanel = () => {
           timestamp: doneMs,
           intent: lastMsgIntent,
           links: lastMsgLinks,
-          reasoning: envelope?.reasoning,
           meta: {
             pending: false,
             startMs: pendingStartMsRef.current,
             doneMs,
-            thoughtMs: thoughtMsRes,
+            responseDurationMs,
             ...nextMetaFromSignal,
-            ...(showApproach ? { approach: safeApproachForRole(living.role || "coach") } : {}),
           },
         };
-        roleSetThisTurnRef.current = false;
         if (import.meta.env.DEV && typeof window !== "undefined") {
           window.__wcLastAssistantMessage = patch;
           console.debug("[ChatPanel] assistantMessage", {
@@ -893,24 +850,6 @@ const ChatPanel = () => {
               }
             }, 500);
           }
-        }
-
-          // Phase 14: Voice intent detection (reuse lowerText from above)
-        if (
-          lowerText.includes("i want to talk it out") ||
-          lowerText.includes("can i speak instead") ||
-          lowerText.includes("i want voice support") ||
-          lowerText.includes("i want to talk") ||
-          lowerText.includes("let me speak")
-        ) {
-          setTimeout(() => {
-            addMessage("assistant", {
-              type: "system",
-              content: "Opening voice session workspace...",
-            });
-            openWorkspace("voice-session", "Voice Session", {});
-          }, 500);
-          return;
         }
 
         // Phase 14: Video request detection
@@ -1077,17 +1016,6 @@ const ChatPanel = () => {
       setThinking(false);
     }
   }, [messages, addMessage, injectToolIntoChat, setThinking, logEvent, openWorkspace, navigate, settings]);
-
-  const handleVoiceInputComplete = (audioBlob) => {
-    // Phase 14: Open voice session workspace when mic is held
-    if (audioBlob) {
-      openWorkspace({
-        type: "voice-session",
-        title: "Voice Session",
-        data: { audioBlob },
-      });
-    }
-  };
 
   const handleSend = async (voiceMessage = null) => {
     const outgoingImage = imageAttachment;
@@ -1410,9 +1338,9 @@ const ChatPanel = () => {
     await sendToAI(text, { imageUrl: outgoingImage?.dataUrl || "", sourceMessageId: messageForStore.id });
   };
 
-  const handleVoiceMessageComplete = ({ transcript, audioUrl, durationSeconds }) => {
+  const handleVoiceMessageComplete = ({ transcript }) => {
     setVoiceCheckInModalOpen(false);
-    void handleSend({ transcript, audioUrl, durationSeconds });
+    void handleSend({ transcript });
   };
 
   useEffect(() => {
@@ -1489,54 +1417,26 @@ const ChatPanel = () => {
   const handleCopyMessage = React.useCallback((messageOrContent) => {
     const content = typeof messageOrContent === "string" ? messageOrContent : (messageOrContent?.content ?? messageOrContent?.text ?? "");
     if (typeof navigator !== "undefined" && navigator.clipboard?.writeText && content) {
-      navigator.clipboard.writeText(typeof content === "string" ? content : "");
+      return navigator.clipboard.writeText(typeof content === "string" ? content : "").then(() => true).catch(() => false);
     }
+    return Promise.resolve(false);
   }, []);
 
-  const handleSaveMessage = React.useCallback((message) => {
+  const handleShareMessage = React.useCallback(async (message) => {
     const text = typeof message?.content === "string" ? message.content : message?.text || "";
-    if (!text) return;
-    const timestamp = Date.now();
-    const payload = { id: message?.id || `saved-${timestamp}`, role: message?.role ?? "assistant", text, timestamp };
-    const saveToLocal = () => {
+    if (!text) return false;
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        const list = JSON.parse(localStorage.getItem("wc_saved_messages") || "[]");
-        list.push(payload);
-        localStorage.setItem("wc_saved_messages", JSON.stringify(list));
-      } catch {}
-    };
-    if (identity?.userId && identity.mode === "account") {
-      import("firebase/firestore").then(({ collection, addDoc }) => {
-        import("@/firebase").then(({ db }) => {
-          addDoc(collection(db, "users", identity.userId, "savedMessages"), payload).catch(saveToLocal);
-        }).catch(saveToLocal);
-      }).catch(saveToLocal);
-    } else {
-      saveToLocal();
+        await navigator.share({ title: "WellnessCafe response", text });
+        return "shared";
+      } catch (error) {
+        if (error?.name === "AbortError") return "cancelled";
+        return false;
+      }
     }
-  }, [identity?.userId, identity?.mode]);
-
-  const handleSpeakMessage = React.useCallback((message) => {
-    const text = typeof message?.content === "string" ? message.content : message?.text || "";
-    if (!text) return;
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      setSpeakError("Speech isn't available on this device.");
-      if (typeof window !== "undefined") setTimeout(() => setSpeakError(null), 3000);
-      return;
-    }
-    setSpeakError(null);
-    try {
-      window.speechSynthesis.cancel();
-    } catch {}
-    const u = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.speak(u);
-  }, []);
-
-  const handleExpandMessage = React.useCallback((message) => {
-    const id = message?.id;
-    if (id == null) return;
-    setExpandedMessageIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, []);
+    const copied = await handleCopyMessage(text);
+    return copied ? "copied" : false;
+  }, [handleCopyMessage]);
 
   const handleContinueOffline = React.useCallback((msg) => {
     const turn = resolveChatActionTurn(useOSStore.getState().messages, msg, lastTurnRef.current);
@@ -1557,14 +1457,19 @@ const ChatPanel = () => {
     onOpenToolRoute: (route) => route && navigate(route),
     onContinueOffline: handleContinueOffline,
     onCopy: handleCopyMessage,
-    onSave: handleSaveMessage,
-    onSpeak: typeof window !== "undefined" && window.speechSynthesis ? handleSpeakMessage : undefined,
-    onExpand: handleExpandMessage,
-    expandedMessageIds,
+    onSpeak: true,
+    onShare: handleShareMessage,
   };
 
+  const beginConversation = React.useCallback(() => {
+    setConversationReady(true);
+    window.requestAnimationFrame(() => {
+      textareaRef.current?.focus({ preventScroll: true });
+    });
+  }, []);
+
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950">
+    <div className="flex min-h-0 flex-1 flex-col bg-slate-950">
       {/* Phase 19: Provider Monitor Strip */}
       <ProviderMonitorStrip />
       
@@ -1572,19 +1477,12 @@ const ChatPanel = () => {
       <IntelligencePulse />
       
       {/* Phase 54B: Thread continuity cue */}
-      <ThreadCueBar onContinue={() => textareaRef.current?.focus()} />
+      {(hasStarted || conversationReady) && <ThreadCueBar onContinue={beginConversation} />}
 
-      {/* Phase 54N: Speak fallback message when TTS unavailable */}
-      {speakError && (
-        <div className="px-4 py-2 text-center text-sm text-amber-400/90 bg-amber-500/10 border-b border-amber-500/20">
-          {speakError}
-        </div>
-      )}
-      
       {/* Welcome Screen (before conversation starts) */}
-      {!hasStarted && (
+      {!hasStarted && !conversationReady && (
         <WelcomeScreen
-          onContinueChat={() => textareaRef.current?.focus()}
+          onContinueChat={beginConversation}
           onAction={async (action) => {
             // Phase 17: Enrich welcome screen actions with emotion/risk too
             const userMessage = {
@@ -1822,20 +1720,29 @@ const ChatPanel = () => {
         />
       )}
 
+      {!hasStarted && conversationReady && (
+        <main className="flex min-h-0 flex-1 items-center justify-center px-5 py-6 text-center" aria-label="Start a conversation">
+          <div className="max-w-lg">
+            <p className="text-xl font-medium text-white sm:text-2xl">I’m here. What would you like to start with?</p>
+            <p className="mt-2 text-sm text-white/65">A few words is enough. You can also use the microphone when you’re ready.</p>
+          </div>
+        </main>
+      )}
+
       {/* Messages Area — Phase 55A: bottom padding so content is not hidden behind composer */}
       {hasStarted && (
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6" style={{ paddingBottom: composerH + COMPOSER_MARGIN }}>
+          <div className="mx-auto w-full max-w-3xl px-4 pt-4 sm:px-6" style={{ paddingBottom: composerH + COMPOSER_MARGIN }}>
             {/* Greeting Header (only show once when conversation starts) */}
             {messages.filter((m) => m.role === "user").length === 1 && (
-              <div className="mb-8 text-center animate-fade-in">
+              <div className="mb-4 text-center animate-fade-in">
                 <h2 className="text-2xl font-light text-white mb-2">
                   {greeting}
                 </h2>
                 <p className="text-base text-white/60">Living Guide</p>
               </div>
             )}
-            <div className="space-y-6">
+            <div className="space-y-3">
               {messages
                 .filter((m) => !(m?.meta?.kind === "thinking_placeholder" || (typeof m?.content === "string" && m.content.trim() === "Thinking…")))
                 .map((msg) => {
@@ -1894,13 +1801,8 @@ const ChatPanel = () => {
                 if (msg.role === "assistant" && msg.type) {
                   if (msg.type === "assistant_audio") {
                     return (
-                      <div key={msg.id} className="space-y-2 animate-fade-in">
+                      <div key={msg.id} className="animate-fade-in">
                         <MessageBubble message={{ ...msg, role: "assistant", content: msg.text || msg.content }} onAction={handleMessageAction} {...chatActionHandlers} />
-                        {msg.audioUrl && (
-                          <div className="ml-0 sm:ml-12 w-full sm:w-auto">
-                            <VoiceResponse text={msg.text || msg.content} audioUrl={msg.audioUrl} />
-                          </div>
-                        )}
                       </div>
                     );
                   }
@@ -2048,10 +1950,7 @@ const ChatPanel = () => {
                 <div className="flex items-start gap-3 animate-fade-in">
                   <div className="flex-1">
                     <div className="inline-block max-w-[85%] rounded-2xl bg-white/5 p-4">
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-wcGold" />
-                        <span className="text-base text-white/60">{pending.label ?? "Thinking"}</span>
-                      </div>
+                      <ThinkingStatus intent={pending.intent} startedAt={pending.startedAt} />
                     </div>
                   </div>
                 </div>
@@ -2101,16 +2000,11 @@ const ChatPanel = () => {
                   presentation="inline"
                   onClose={() => setVoiceCheckInModalOpen(false)}
                   mode="chat"
+                  autoStartOnOpen
                   onComplete={handleVoiceMessageComplete}
                 />
               ) : (
                 <div className="flex items-end gap-2 w-full">
-                  <ComposerPresenceControls
-                    pending={!!pending}
-                    onSpeakLast={speakLastAssistant}
-                    autoSpeakEnabled={autoSpeakEnabled}
-                    onToggleAutoSpeak={(v) => setAutoSpeakEnabled(!!v)}
-                  />
                   <ChatComposerBar
                     value={input}
                     onChange={(v) => {
@@ -2149,8 +2043,6 @@ const ChatPanel = () => {
       />
 
       <GroundingModal open={groundingModalOpen} onClose={() => setGroundingModalOpen(false)} />
-
-      <ThinkingOverlay show={!!pending && thoughtMsForOverlay >= 250} seconds={(thoughtMsForOverlay || 0) / 1000} />
 
       {/* In-app link preview (resource.preview intent) */}
       {webViewUrl && (

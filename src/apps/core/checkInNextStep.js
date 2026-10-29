@@ -6,8 +6,8 @@ const NEXT_STEPS = {
   "A check-in with someone I trust": {
     title: "Plan a check-in with someone you trust",
     detail: "Use the guide to find words for reaching out. It will not contact anyone for you.",
-    path: "/guide",
-    action: "Open the guide",
+    path: "/chat",
+    action: "Talk it through",
   },
   "Peer recovery support": {
     title: "Find a recovery meeting",
@@ -39,7 +39,7 @@ export function getCheckInNextStep(supportNeeded) {
   return NEXT_STEPS[supportNeeded] || {
     title: "Talk through one next step",
     detail: "You do not need to decide everything now. Start with what would feel useful.",
-    path: "/guide",
-    action: "Open the guide",
+    path: "/chat",
+    action: "Talk it through",
   };
 }

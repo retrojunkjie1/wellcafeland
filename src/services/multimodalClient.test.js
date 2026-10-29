@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { guideEngine } from "./multimodalClient";
+import { guideEngine, speakText, transcribeAudio } from "./multimodalClient";
 
 const mocks = vi.hoisted(() => ({ callAI: vi.fn() }));
 
@@ -11,7 +11,10 @@ vi.mock("@/core/system/intelligenceEngine", () => ({ observe: vi.fn(), interpret
 vi.mock("@/telemetry/telemetry", () => ({ trackLatency: vi.fn(), trackNetworkEvent: vi.fn() }));
 vi.mock("@/services/conversationMemory", () => ({ getConversationMemoryContext: vi.fn(), rememberConversationTurn: vi.fn() }));
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
 
 describe("guideEngine", () => {
   it("uses the authenticated AI client and forwards the recent conversation", async () => {
@@ -61,5 +64,54 @@ describe("guideEngine", () => {
       status: 503,
     });
     expect(result.content).toBeUndefined();
+  });
+});
+
+describe("transcribeAudio", () => {
+  it("forwards the browser Blob MIME type with the encoded audio", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, text: "Words from the recording." }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await transcribeAudio(new Blob(["audio-bytes"], { type: "audio/mp4;codecs=mp4a.40.2" }));
+
+    const request = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(result).toEqual({ ok: true, text: "Words from the recording." });
+    expect(request.mimeType).toBe("audio/mp4;codecs=mp4a.40.2");
+    expect(request.audio).toBeTruthy();
+  });
+});
+
+describe("speakText", () => {
+  it("preserves a safe server error code for the voice player", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => JSON.stringify({ ok: false, code: "APP_CHECK_INVALID", error: "App verification could not be confirmed." }),
+    }));
+
+    await expect(speakText("A short reply.")).resolves.toMatchObject({
+      ok: false,
+      status: 401,
+      code: "APP_CHECK_INVALID",
+      error: "App verification could not be confirmed.",
+    });
+  });
+
+  it("converts successful speech audio into a playable blob URL", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, audio: "YXVkaW8=", mimeType: "audio/mp3" }),
+    }));
+    const createObjectURL = vi.fn(() => "blob:wellnesscafe-audio");
+    vi.stubGlobal("URL", { ...URL, createObjectURL });
+
+    await expect(speakText("A short reply.")).resolves.toMatchObject({
+      ok: true,
+      audioUrl: "blob:wellnesscafe-audio",
+      audioBlob: expect.any(Blob),
+    });
   });
 });

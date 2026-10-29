@@ -1,112 +1,47 @@
-// src/services/aiModeration.js
-// AI moderation service for social content
+import { callAgent } from "@/ai/agents/agentClient";
+import { logError, logWarn } from "./logService";
 
-import { guideEngine } from "./multimodalClient";
-import { logError, logInfo } from "./logService";
+const MODERATION_UNAVAILABLE = "The message safety check is temporarily unavailable. Nothing was posted; please try again shortly.";
 
 /**
- * Moderate text content using AI
- * @param {string} text - Text to moderate
- * @returns {Promise<{ok: boolean, blocked: boolean, suggestion?: string, reason?: string}>}
+ * Check proposed peer content before it is written.
+ * Text is sent only to Cherubim for this single classification request. Logs
+ * contain the failure code, never the message or generated moderation text.
+ * If moderation cannot return a valid decision, callers must not post.
  */
 export async function moderateText(text) {
+  if (typeof text !== "string" || !text.trim()) {
+    return { ok: true, blocked: false };
+  }
+
   try {
-    if (!text || !text.trim()) {
-      return { ok: true, blocked: false };
+    const response = await callAgent("cherubim", { content: text.trim() });
+    const decision = response?.result;
+    if (typeof decision?.safe !== "boolean") {
+      logWarn("aiModeration", "Cherubim returned no valid decision", { code: "INVALID_MODERATION_OUTPUT" });
+      return { ok: false, blocked: false, reason: "INVALID_MODERATION_OUTPUT", suggestion: MODERATION_UNAVAILABLE };
     }
 
-    // Use guideEngine with moderation mode
-    const moderationPrompt = `Please moderate this message for safety. Check for:
-- Self-harm or suicide content
-- Harmful substance use encouragement
-- Violence or threats
-- Hate speech or discrimination
-- Explicit sexual content
-- Spam or scams
-
-Message to moderate: "${text}"
-
-Respond with JSON only:
-{
-  "safe": true/false,
-  "reason": "brief reason if unsafe",
-  "suggestion": "safe alternative message if unsafe"
-}`;
-
-    try {
-      const result = await guideEngine(moderationPrompt, {
-        mode: "moderation",
-      });
-
-      if (!result.ok) {
-        // If moderation API fails (network, timeout, etc.), fail-open: allow the post
-        logError("aiModeration", new Error("Moderation check failed"), { text });
-        return { ok: true, blocked: false };
-      }
-
-      // Parse AI response
-      const content = result.content || "";
-      let moderationResult;
-      
-      try {
-        // Try to extract JSON from response
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          moderationResult = JSON.parse(jsonMatch[0]);
-        } else {
-          // Fallback: check for keywords
-          const lowerContent = content.toLowerCase();
-          if (lowerContent.includes("safe: false") || lowerContent.includes("unsafe")) {
-            moderationResult = { safe: false, reason: "Content flagged", suggestion: "Please revise your message." };
-          } else {
-            moderationResult = { safe: true };
-          }
-        }
-      } catch (parseErr) {
-        // If JSON parsing fails, check for unsafe keywords directly
-        const unsafeKeywords = [
-          "kill myself", "suicide", "hurt myself", "hurt someone",
-          "use drugs", "get high", "overdose",
-          "violence", "threat", "harm",
-        ];
-        
-        const lowerText = text.toLowerCase();
-        const hasUnsafeKeyword = unsafeKeywords.some(kw => lowerText.includes(kw));
-        
-        if (hasUnsafeKeyword) {
-          moderationResult = {
-            safe: false,
-            reason: "Contains potentially harmful content",
-            suggestion: "If you're in crisis, please contact 988 or local emergency services. We're here to support you in a safe way.",
-          };
-        } else {
-          moderationResult = { safe: true };
-        }
-      }
-
-      if (moderationResult.safe === false) {
-        logInfo("aiModeration", "Content blocked", { reason: moderationResult.reason });
-        return {
-          ok: true,
-          blocked: true,
-          reason: moderationResult.reason || "Content flagged",
-          suggestion: moderationResult.suggestion || "Please revise your message.",
-        };
-      }
-
-      return { ok: true, blocked: false };
-    } catch (err) {
-      logError("aiModeration", err, { text });
-      // On error, default to allowing (but log it)
-      return { ok: true, blocked: false };
-    }
-  } catch (err) {
-    logError("aiModeration", err, { function: "moderateText" });
-    return { ok: false, blocked: false };
+    if (decision.safe) return { ok: true, blocked: false };
+    return {
+      ok: true,
+      blocked: true,
+      reason: typeof decision.reason === "string" ? decision.reason : "Please revise this message before sending it.",
+      suggestion: typeof decision.suggestion === "string" && decision.suggestion.trim()
+        ? decision.suggestion
+        : "Please revise this message before sending it.",
+    };
+  } catch (error) {
+    logError("aiModeration", new Error("Cherubim moderation request failed"), {
+      code: error?.code || "MODERATION_UNAVAILABLE",
+    });
+    return {
+      ok: false,
+      blocked: false,
+      reason: error?.code || "MODERATION_UNAVAILABLE",
+      suggestion: MODERATION_UNAVAILABLE,
+    };
   }
 }
 
-export default {
-  moderateText,
-};
-
+export default { moderateText };

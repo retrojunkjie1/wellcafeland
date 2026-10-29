@@ -208,7 +208,7 @@ export function AdminTelemetry() {
             <button type="button" disabled={reviewingSignalId === signal.id} onClick={() => reviewSignal(signal.id, "false_positive")} className="min-h-9 rounded-lg border border-white/10 px-3 text-xs text-white/75 hover:bg-white/[0.05] disabled:opacity-50">False positive</button>
           </div>
         </li>)}</ul>}
-        <p className="mt-3 text-xs leading-relaxed text-white/40">Only the account email, whether Firebase verified that email, signal type, count, and timestamps are shown. No message contents, recovery reflections, IP address, location, device fingerprint, or inferred cross-account identity is collected here. Signals expire after 30 days.</p>
+        <p className="mt-3 text-xs leading-relaxed text-white/40">Only the account email, whether that email has been verified, signal type, count, and timestamps are shown. No message contents, recovery reflections, IP address, location, device fingerprint, or inferred cross-account identity is collected here. Signals expire after 30 days.</p>
       </section>
 
       <form onSubmit={searchAccount} className="flex flex-col gap-2 sm:flex-row">

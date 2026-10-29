@@ -5,6 +5,7 @@
 import { create } from "zustand";
 import { normalizeMessage } from "@/core/system/messageNormalizer";
 import { ContextMemory } from "@/services/contextMemory";
+import { loadChatHistory, saveChatHistory, sanitizeChatMessage } from "./chatHistoryStorage";
 
 const MODES = {
   CHAT: "chat",
@@ -12,29 +13,10 @@ const MODES = {
   EXPLORE: "explore",
 };
 
-// Load chats from localStorage (only those with user messages)
-const loadChats = () => {
-  try {
-    const saved = localStorage.getItem("wc-os-chats");
-    if (!saved) return [];
-    const chats = JSON.parse(saved);
-    // Filter to only return chats with user messages
-    return chats.filter((chat) => chat.hasUserMessages === true);
-  } catch {
-    return [];
-  }
-};
-
-// Save chats to localStorage (only those with user messages)
-const saveChats = (chats) => {
-  try {
-    // Only save chats that have user messages
-    const validChats = chats.filter((chat) => chat.hasUserMessages === true);
-    localStorage.setItem("wc-os-chats", JSON.stringify(validChats));
-  } catch (err) {
-    console.warn("Failed to save chats:", err);
-  }
-};
+// Older chat histories could retain a voice recording after transcription.
+// loadChatHistory migrates those entries to transcript-only on this device.
+const loadChats = loadChatHistory;
+const saveChats = saveChatHistory;
 
 // Phase 34: Settings persistence helpers
 const SETTINGS_STORAGE_KEY = "wc-os-settings";
@@ -234,7 +216,7 @@ export const useOSStore = create((set, get) => ({
     }
 
     // Phase 25: Normalize message before storing
-    const normalizedMsg = normalizeMessage(msg);
+    const normalizedMsg = normalizeMessage(sanitizeChatMessage(msg));
     
     set((state) => {
       const newMessages = [...state.messages, normalizedMsg];
@@ -378,16 +360,8 @@ export const useOSStore = create((set, get) => ({
       });
       
       // Navigate to tool route (use navigate if available, fallback to location)
-      try {
-        // Try using React Router navigate if available
-        const { useNavigate } = await import("react-router-dom");
-        // Note: This won't work here as we're not in a component context
-        // Fallback to window.location
-        window.location.href = route;
-      } catch {
-        // Fallback: direct navigation
-        window.location.href = route;
-      }
+      // Zustand actions are outside React components, so use a direct route transition.
+      window.location.href = route;
       
       // Return tool message to confirm successful opening
       return toolMessage;
@@ -598,7 +572,7 @@ export const useOSStore = create((set, get) => ({
       saveLocalSettings(settings);
       if (!value) {
         const stripAnalysis = (message) => {
-          const { emotion, triggers, risk, trajectory, identity, relationship, humanMode, toneProfile, phrasingStyle, drift, crisisForecast, ...content } = message || {};
+          const { emotion: _emotion, triggers: _triggers, risk: _risk, trajectory: _trajectory, identity: _identity, relationship: _relationship, humanMode: _humanMode, toneProfile: _toneProfile, phrasingStyle: _phrasingStyle, drift: _drift, crisisForecast: _crisisForecast, ...content } = message || {};
           return content;
         };
         const messages = (state.messages || []).map(stripAnalysis);

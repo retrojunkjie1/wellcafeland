@@ -6,12 +6,14 @@ import React from "react";
 import { Sparkles, Wind, BookOpen, HeartHandshake } from "lucide-react";
 import { useDailyReflection } from "@/hooks/useDailyReflection";
 import { useTraumaPatterns } from "@/hooks/useTraumaPatterns";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 export function GentleSuggestionsStrip() {
   const dailyReflection = useDailyReflection();
   const trauma = useTraumaPatterns({ recentEvents: [], streakGaps: [] });
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Default tone (can be enhanced with emotion detection later)
   const toneLabel = "You seem to be in a fairly balanced place.";
@@ -23,7 +25,7 @@ export function GentleSuggestionsStrip() {
       label: "Take a 4-7-8 breath",
       description:
         "A few gentle cycles can help your nervous system downshift.",
-      onClick: () => navigate("/tools/breathing"),
+      onClick: () => navigateToTool(navigate, "/tools/breathing", location),
     },
     {
       id: "topic",
@@ -42,7 +44,7 @@ export function GentleSuggestionsStrip() {
       description:
         dailyReflection?.prompt ||
         "Take 60 seconds to put one feeling into words. It doesn't have to be neat.",
-      onClick: () => navigate("/tools/journaling"),
+      onClick: () => navigateToTool(navigate, "/tools/journaling", location),
     },
   ];
 
@@ -80,4 +82,3 @@ export function GentleSuggestionsStrip() {
     </section>
   );
 }
-

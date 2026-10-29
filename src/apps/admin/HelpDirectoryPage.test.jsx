@@ -3,18 +3,34 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), save: vi.fn(), status: vi.fn(), reviewCorrection: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), save: vi.fn(), status: vi.fn(), reviewCorrection: vi.fn(), refreshClaims: vi.fn() }));
 vi.mock("@/services/helpDirectory", () => ({ listHelpDirectoryForAdmin: mocks.list, saveHelpDirectoryDraft: mocks.save, setHelpDirectoryStatus: mocks.status, reviewHelpDirectoryCorrection: mocks.reviewCorrection }));
+vi.mock("@/hooks/useAdminClaim", () => ({ useAdminClaim: () => ({ refreshClaims: mocks.refreshClaims }) }));
 import HelpDirectoryPage from "./HelpDirectoryPage";
 
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe("HelpDirectoryPage", () => {
+  it("refreshes the signed-in admin claim before retrying a rejected directory read", async () => {
+    mocks.list.mockRejectedValueOnce({ code: "functions/unauthenticated" }).mockResolvedValueOnce({ listings: [] });
+    mocks.refreshClaims.mockResolvedValue(undefined);
+    render(<MemoryRouter><HelpDirectoryPage /></MemoryRouter>);
+
+    expect(await screen.findByRole("heading", { name: "Directory records weren’t loaded" })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Refresh access and services" }).at(-1));
+
+    await waitFor(() => expect(mocks.list).toHaveBeenCalledTimes(2));
+    expect(mocks.refreshClaims).toHaveBeenCalledTimes(1);
+    expect(mocks.refreshClaims.mock.invocationCallOrder[0]).toBeLessThan(mocks.list.mock.invocationCallOrder[1]);
+    expect(await screen.findByRole("heading", { name: "No draft resources in this view" })).toBeInTheDocument();
+  });
+
   it("creates a private draft and communicates that publishing is a separate step", async () => {
     mocks.list.mockResolvedValue({ listings: [] });
     mocks.save.mockResolvedValue({ id: "help-1", status: "draft" });
     render(<MemoryRouter><HelpDirectoryPage /></MemoryRouter>);
-    await screen.findByText("No draft listings");
+    await screen.findByRole("heading", { name: "No draft resources in this view" });
+    fireEvent.click(screen.getByText("Add a service"));
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "Northside Community Pantry" } });
     fireEvent.change(screen.getByLabelText("City"), { target: { value: "Denver" } });
     fireEvent.change(screen.getByLabelText("State code"), { target: { value: "CO" } });
@@ -24,6 +40,26 @@ describe("HelpDirectoryPage", () => {
     fireEvent.submit(screen.getByRole("button", { name: "Save private draft" }).closest("form"));
     await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ name: "Northside Community Pantry", city: "Denver", state: "CO", category: "housing" })));
     expect(await screen.findByRole("status")).toHaveTextContent(/will not appear in help search until a reviewer publishes it/i);
+  });
+
+  it("keeps draft intake available when the review queue cannot be read", async () => {
+    mocks.list.mockRejectedValue(new Error("Directory access is temporarily unavailable."));
+    mocks.save.mockResolvedValue({ id: "help-offline-1", status: "draft" });
+    render(<MemoryRouter><HelpDirectoryPage /></MemoryRouter>);
+    expect(await screen.findByRole("alert")).toHaveTextContent(/couldn’t load the directory records/i);
+
+    fireEvent.click(screen.getByText("Add a service"));
+    const saveButton = screen.getByRole("button", { name: "Save private draft" });
+    expect(saveButton).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "Northside Community Pantry" } });
+    fireEvent.change(screen.getByLabelText("City"), { target: { value: "Denver" } });
+    fireEvent.change(screen.getByLabelText("State code"), { target: { value: "CO" } });
+    fireEvent.change(screen.getByLabelText("Source organization"), { target: { value: "Northside Pantry" } });
+    fireEvent.change(screen.getByLabelText("Source page"), { target: { value: "https://northside.example.org/locations" } });
+    fireEvent.change(screen.getByLabelText(/Evidence this listing may be shared/i), { target: { value: "The organization publishes these service details for community use on its public location page." } });
+    fireEvent.submit(saveButton.closest("form"));
+
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledWith(expect.objectContaining({ name: "Northside Community Pantry", city: "Denver", countryCode: "US" })));
   });
 
   it("requires an explicit review note before publishing a listing", async () => {
@@ -44,7 +80,7 @@ describe("HelpDirectoryPage", () => {
   it("keeps the admin audit trail inspectable without exposing it to public search", async () => {
     mocks.list.mockResolvedValue({ listings: [], events: [{ id: "event-1", listingId: "help-1", listingName: "Northside Pantry", action: "publish", note: "Confirmed the current public location and verified the source-sharing terms.", createdAt: "2026-09-28T12:00:00.000Z" }] });
     render(<MemoryRouter><HelpDirectoryPage /></MemoryRouter>);
-    await screen.findByText("No draft listings");
+    await screen.findByRole("heading", { name: "No draft resources in this view" });
     fireEvent.click(screen.getByText(/Recent review activity/));
     expect(await screen.findByText(/Published · Northside Pantry/)).toBeInTheDocument();
     expect(screen.getByText(/verified the source-sharing terms/i)).toBeInTheDocument();

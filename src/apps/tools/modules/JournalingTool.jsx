@@ -2,12 +2,14 @@
 // Journal with mode selection and Firestore/localStorage fallback
 
 import React, { useState, useCallback } from "react";
-import { X, Save } from "lucide-react";
+import { Pause, Play, Save, Square, Volume2, X, Sparkles } from "lucide-react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/firebase";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
+import { useNaturalVoice } from "@/hooks/useNaturalVoice";
+import { callAgent } from "@/ai/agents/agentClient";
 
 const JOURNAL_MODES = [
   {
@@ -45,8 +47,87 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   const [text, setText] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [lastSpokenText, setLastSpokenText] = useState("");
+  const [scribeLoading, setScribeLoading] = useState(false);
+  const [scribeSuggestion, setScribeSuggestion] = useState(null);
+  const [scribeError, setScribeError] = useState("");
+  const [mirrorLoading, setMirrorLoading] = useState(false);
+  const [mirrorResult, setMirrorResult] = useState(null);
+  const [mirrorError, setMirrorError] = useState("");
   const [startTime] = useState(() => Date.now());
   const identity = useSessionIdentity();
+  const voice = useNaturalVoice("marin");
+  const isSpeaking = voice.status === "playing";
+  const isPreparing = voice.status === "preparing";
+  const isVoicePaused = voice.status === "paused";
+  const isVoiceUnavailable = voice.status === "unavailable";
+  const voiceProgress = Math.max(0, Math.min(1, voice.playbackProgress || 0));
+
+  const speakFixedPrompt = (textToSpeak) => {
+    setLastSpokenText(textToSpeak);
+    void voice.play(textToSpeak);
+  };
+
+  const speakModePrompts = () => {
+    if (!selectedMode) return;
+    speakFixedPrompt(`${selectedMode.name}. ${selectedMode.description} The prompts are optional. ${selectedMode.prompts.join(". ")}`);
+  };
+
+  const requestScribePrompt = async () => {
+    if (!selectedMode || scribeLoading) return;
+    setScribeLoading(true);
+    setScribeError("");
+    setScribeSuggestion(null);
+    try {
+      const response = await callAgent("scribe", {
+        question: `The person selected the journaling mode "${selectedMode.name}". Its purpose is: "${selectedMode.description}". Offer one fresh, optional journal question that fits this mode. Do not assume personal circumstances.`,
+      });
+      const result = response.result || response;
+      if (typeof result.prompt !== "string" || !result.prompt.trim()) {
+        throw new Error("Scribe did not return a usable prompt.");
+      }
+      setScribeSuggestion({
+        summary: typeof result.summary === "string" ? result.summary.trim() : "A prompt you can use or skip.",
+        prompt: result.prompt.trim().slice(0, 360),
+        followUp: typeof result.followUp === "string" ? result.followUp.trim().slice(0, 240) : "",
+      });
+    } catch (error) {
+      setScribeError(error?.message || "A fresh prompt could not be created. Your entry is unchanged.");
+    } finally {
+      setScribeLoading(false);
+    }
+  };
+
+  const useScribePrompt = () => {
+    if (!scribeSuggestion?.prompt) return;
+    setText((current) => `${current.trim() ? `${current.trim()}\n\n` : ""}${scribeSuggestion.prompt}\n`);
+    setMirrorResult(null);
+    setScribeSuggestion(null);
+  };
+
+  const requestMirrorReflection = async () => {
+    const content = text.trim();
+    if (!content || mirrorLoading) return;
+    setMirrorLoading(true);
+    setMirrorError("");
+    setMirrorResult(null);
+    try {
+      const response = await callAgent("mirror", { content });
+      const result = response.result || response;
+      if (![result.summary, result.reflection, result.question].every((value) => typeof value === "string" && value.trim())) {
+        throw new Error("Mirror did not return a complete reflection.");
+      }
+      setMirrorResult({
+        summary: result.summary.trim().slice(0, 180),
+        reflection: result.reflection.trim().slice(0, 500),
+        question: result.question.trim().slice(0, 240),
+      });
+    } catch (error) {
+      setMirrorError(error?.message || "The reflection could not be created. Your writing is unchanged.");
+    } finally {
+      setMirrorLoading(false);
+    }
+  };
 
   const getUserId = () => {
     if (identity.userId) return identity.userId;
@@ -92,6 +173,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
   const handleSave = async () => {
     if (!text.trim() || !selectedMode || isSaving) return;
 
+    voice.stop();
     setIsSaving(true);
     setSaveError("");
     const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
@@ -153,11 +235,13 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
 
   const addPrompt = (prompt) => {
     setText((current) => `${current.trim() ? `${current.trim()}\n\n` : ""}${prompt}\n`);
+    setMirrorResult(null);
   };
 
   const handleCancel = useCallback(() => {
+    voice.stop();
     safeCancel(onCancel);
-  }, [onCancel]);
+  }, [onCancel, voice]);
 
   // Mode selection
   if (!selectedMode) {
@@ -209,7 +293,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
       </div>
       <button
         type="button"
-        onClick={() => { setSelectedMode(null); setSaveError(""); }}
+        onClick={() => { voice.stop(); setSelectedMode(null); setSaveError(""); }}
         className="min-h-11 rounded-lg px-3 text-sm text-white/60 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
       >
         Change prompt
@@ -223,15 +307,91 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
           <button
             type="button"
             onClick={() => {
+              voice.stop();
               setSelectedMode(null);
               setText("");
             }}
             className="rounded-lg p-2 text-white/60 hover:text-white hover:bg-white/5 transition"
+            aria-label="Close journaling"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
+
+      <section className="rounded-2xl border border-emerald-100/15 bg-emerald-100/[0.035] p-4" aria-label="Spoken journaling prompts">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white">Listen before you write</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/60">Hear the mode description and optional prompts. Your journal entry is never read aloud.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => isSpeaking ? void voice.pause() : isVoicePaused ? void voice.resume() : speakModePrompts()} disabled={isPreparing} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-emerald-100/25 bg-emerald-100/[0.08] px-4 text-sm text-emerald-50 transition hover:bg-emerald-100/[0.14] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
+              {isPreparing ? <Volume2 aria-hidden="true" className="h-4 w-4 animate-pulse" /> : isSpeaking ? <Pause aria-hidden="true" className="h-4 w-4" /> : isVoicePaused ? <Play aria-hidden="true" className="h-4 w-4" /> : <Volume2 aria-hidden="true" className="h-4 w-4" />}
+              {isPreparing ? "Preparing voice…" : isSpeaking ? "Pause voice" : isVoicePaused ? "Resume voice" : voice.status === "finished" ? "Replay prompts" : "Hear prompts"}
+            </button>
+            {(isSpeaking || isVoicePaused || isPreparing) && <button type="button" onClick={voice.stop} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm text-white/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"><Square aria-hidden="true" className="h-3.5 w-3.5" /> Stop</button>}
+          </div>
+        </div>
+        {isSpeaking && <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Spoken prompt progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(voiceProgress * 100)}><span className="block h-full rounded-full bg-gradient-to-r from-emerald-200 to-amber-100 transition-[width] duration-100 ease-linear" style={{ width: `${voiceProgress * 100}%` }} /></div>}
+        <p role={isVoiceUnavailable ? "alert" : "status"} aria-live="polite" className={`mt-2 min-h-5 text-xs ${isVoiceUnavailable ? "text-amber-200" : "text-white/55"}`}>
+          {isVoiceUnavailable ? voice.error || "The spoken prompts could not play. You can still use the written prompts." : isPreparing ? "Preparing the natural voice…" : isSpeaking ? "Spoken prompts are playing." : isVoicePaused ? "Spoken prompts are paused." : voice.status === "finished" ? "Prompts complete. Your writing was not spoken." : lastSpokenText ? "You can replay the spoken prompts at any time." : "Audio starts only when you tap. Your entry is never included."}
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-sky-100/15 bg-sky-100/[0.035] p-4" aria-label="Optional Scribe prompt">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white">Need a different starting question?</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/60">Scribe uses only the journaling mode you chose. Your entry text is never sent.</p>
+          </div>
+          <button
+            type="button"
+            onClick={requestScribePrompt}
+            disabled={scribeLoading}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-sky-100/25 bg-sky-100/[0.08] px-4 text-sm text-sky-50 transition hover:bg-sky-100/[0.14] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
+          >
+            {scribeLoading ? "Creating a prompt…" : scribeSuggestion ? "Try another question" : "Suggest a fresh prompt"}
+          </button>
+        </div>
+        {scribeSuggestion && (
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/10 p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-sky-100/70">Optional question</p>
+            <p className="mt-2 text-base leading-relaxed text-white">{scribeSuggestion.prompt}</p>
+            {scribeSuggestion.followUp && <p className="mt-2 text-sm leading-relaxed text-white/65">If useful: {scribeSuggestion.followUp}</p>}
+            <button type="button" onClick={useScribePrompt} className="mt-3 min-h-10 rounded-full border border-white/15 px-4 text-sm text-white/85 hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">Use this question</button>
+          </div>
+        )}
+        {scribeError && <p role="alert" className="mt-3 text-sm text-amber-100">{scribeError}</p>}
+      </section>
+
+      <section className="rounded-2xl border border-violet-100/15 bg-violet-100/[0.035] p-4" aria-label="Optional Mirror reflection">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white">Want a gentle reflection?</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/60">Only when you tap: Mirror sends up to 2,000 characters of this entry for one optional reflection. It is not added to your saved entry.</p>
+          </div>
+          <button
+            type="button"
+            onClick={requestMirrorReflection}
+            disabled={!text.trim() || text.trim().length > 2000 || mirrorLoading}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-violet-100/25 bg-violet-100/[0.08] px-4 text-sm text-violet-50 transition hover:bg-violet-100/[0.14] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
+          >
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            {mirrorLoading ? "Preparing reflection…" : mirrorResult ? "Reflect again" : "Reflect this back"}
+          </button>
+        </div>
+        {text.trim().length > 2000 && <p className="mt-2 text-xs text-amber-100">Shorten the entry to 2,000 characters to request a reflection.</p>}
+        {mirrorResult && (
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/10 p-4" aria-live="polite">
+            <p className="text-xs font-medium uppercase tracking-wide text-violet-100/70">Optional reflection · you can correct or ignore this</p>
+            <p className="mt-2 text-sm leading-relaxed text-white/70">{mirrorResult.summary}</p>
+            <p className="mt-2 text-base leading-relaxed text-white">{mirrorResult.reflection}</p>
+            <p className="mt-3 text-sm leading-relaxed text-white/75">If useful: {mirrorResult.question}</p>
+          </div>
+        )}
+        {mirrorError && <p role="alert" className="mt-3 text-sm text-amber-100">{mirrorError}</p>}
+      </section>
 
       <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-4">
         <div className="space-y-2" aria-label="Optional writing prompts">
@@ -248,7 +408,11 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
         <textarea
           id="journal-entry"
           value={text}
-          onChange={(e) => setText(e.target.value.slice(0, 10000))}
+          onChange={(e) => {
+            setText(e.target.value.slice(0, 10000));
+            setMirrorResult(null);
+            setMirrorError("");
+          }}
           placeholder={selectedMode.placeholder}
           rows={12}
           maxLength={10000}

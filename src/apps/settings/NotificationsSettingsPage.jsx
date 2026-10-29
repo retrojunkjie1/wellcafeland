@@ -2,10 +2,10 @@ import React from "react";
 import { Bell, Mail, MessageCircle, Smartphone } from "lucide-react";
 import { useOSStore } from "@/stores/useOSStore";
 
-function TopicChoice({ label, description, checked, onChange, icon: Icon }) {
+function TopicChoice({ label, description, checked, onChange, icon: _Icon }) {
   return (
     <label className="flex min-h-[68px] cursor-pointer items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3 py-3 transition hover:border-white/20 sm:px-4">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-300/10 text-sky-200"><Icon className="h-4 w-4" /></span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-300/10 text-sky-200"><_Icon className="h-4 w-4" /></span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium text-white">{label}</span>
         <span className="mt-0.5 block text-xs leading-relaxed text-white/50">{description}</span>

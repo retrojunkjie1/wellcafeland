@@ -3,7 +3,7 @@
 
 import React from "react";
 
-const MAX_WIDTH = "max-w-3xl";
+const MAX_WIDTH = "max-w-5xl";
 const GAP = "gap-3";
 
 function DockSlot({ children }) {

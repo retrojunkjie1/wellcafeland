@@ -5,6 +5,25 @@
 ### Project overview
 WellnessCafe OS is a React 19 + Vite 7 SPA with Tailwind CSS v3 and Firebase backend. See `.cursorrules` for the full tech stack and coding conventions.
 
+### Definition of Done and release verification
+
+- Follow [`docs/runtime/DEFINITION_OF_DONE.md`](docs/runtime/DEFINITION_OF_DONE.md) for every feature, correction, or release. Work is not done when it only builds: the request must have observable acceptance criteria, relevant behavior/security tests, a production build, and a verified release when deployment is requested.
+- Run `npm run verify:release` before calling a feature release-ready. It runs the full UI/unit suite, Firestore Rules emulator suite, production build, Firebase predeploy checks, and whitespace/diff validation.
+- When changing Cloud Functions, authorization, consent, data access, or Firestore schema/rules, also run the directly relevant Functions emulator suites listed in `functions/package.json`; a passing browser/UI suite does not cover those server boundaries.
+- Do not update tests merely to silence a failure. Update stale assertions to current behavior only when the current behavior is intentional and remains covered; fix actual product regressions in the product code.
+- A failed or skipped required check blocks “done” and production deploy. If a check cannot run, record why and the exact remaining acceptance step; do not report it as passed.
+
+## Protect approved and committed behavior
+
+- Treat behavior already approved and committed as a compatibility contract. Preserve it by default; do not remove, replace, disable, or silently narrow it while adding new work.
+- Before changing an existing product path, identify its current behavior and regression coverage. Make additive changes where possible and keep prior data, IDs, routes, and user actions available.
+- Never delete, overwrite, hide, or silently reclassify an approved directory listing, route, feature, or user action. A change that intentionally alters or removes approved behavior requires explicit user authorization. Record the reason and migration/rollback implications in the change description, and add regression coverage for both retained and changed behavior.
+- After each completed, coherent user-approved work batch, run the relevant checks, inspect the staged diff, and commit a checkpoint before starting another batch. A “go on” request continues from that checkpoint; it does not authorize replacing or dropping prior work. Stage only files for the current batch, and preserve unrelated or in-progress changes.
+- Never rewrite published history: do not amend or rebase commits already on `main`, and do not force-push shared release branches.
+- Every pull request that changes an existing product file must carry the `approved-behavior-change` label, have one approving review from someone other than the author, and pass `approved-build-protection`. The label authorizes review of the diff; it does not itself authorize a behavior change. Confirm the intended base branch, narrow diff, and actual required-check settings before merge or deploy. A local commit or successful build is not a deployment.
+- A failed, missing, stale, or non-required check blocks merge and deployment. Do not bypass the gate.
+- Adding the label authorizes review of the diff; it does not replace explicit user authorization for an intentional behavior change.
+
 ### Running the frontend
 - **Dev server**: `npm run dev` (serves on `http://localhost:5173`, binds to `0.0.0.0`)
 - **Build**: `npm run build` (outputs to `dist/`)
@@ -21,4 +40,4 @@ Functions live in `/functions` with their own `package.json`. Install separately
 - The `.eslintignore` file triggers a deprecation warning; the eslint config already uses `globalIgnores`.
 - Vite proxy in `vite.config.js` forwards `/aiSession` to the Firebase Functions emulator by default; set `VITE_FIREBASE_FUNCTIONS_URL` in `.env` to override.
 - The `sharp` dev dependency triggers a native build; if `npm install` fails on `sharp`, ensure build tools are available (`apt install build-essential`).
-- No automated test framework is configured (no test runner in `package.json` scripts).
+- The full release gate is `npm run verify:release`; focused Vitest and Firebase emulator scripts are also available in `package.json`.

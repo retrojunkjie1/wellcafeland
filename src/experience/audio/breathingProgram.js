@@ -64,7 +64,9 @@ export function createBreathingScheduler({audio, onTick} = {}) {
     const id = phase === "inhale" ? "cue_inhale" : phase === "hold" ? "cue_hold" : "cue_exhale";
     try {
       audio?.play?.(id);
-    } catch (e) {}
+    } catch {
+      // Audio playback is optional; visual pacing remains available.
+    }
   };
 
   return {

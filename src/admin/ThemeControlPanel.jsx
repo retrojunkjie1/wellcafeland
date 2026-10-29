@@ -12,7 +12,7 @@ const ThemeControlPanel = () => {
 
   const setGlobalTheme=async(mode,override)=>{
     if(!db){
-      setError("Firebase not configured. Add Firebase config to .env to enable theme overrides.");
+      setError("Shared theme settings are temporarily unavailable. Please try again later.");
       return;
     }
     setSaving(true);
@@ -108,4 +108,3 @@ const ThemeControlPanel = () => {
 };
 
 export default ThemeControlPanel;
-

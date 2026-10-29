@@ -26,7 +26,7 @@ Defines what the pod (or automation on behalf of the pod) may write, where, and 
 | status | Only with Approval Gate | COMPLETE or similar only after gate. |
 | day | Yes | Increment or set per run policy. |
 | focus | Yes | Update to reflect current focus; keep aligned with CURRENT_PHASE. |
-| verify | Yes | List of verification commands; keep in sync with phase. |
+| verify | Yes | List of maintained focused-test and release-gate commands; keep current. |
 | manualTests | Yes | Checklist items; keep in sync with phase. |
 | blocked_work | Yes | Add/remove items; do not drop field. |
 | notes | Yes | Append or replace; do not delete constitutional notes. |

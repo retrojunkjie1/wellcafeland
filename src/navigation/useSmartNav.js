@@ -4,7 +4,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo } from "react";
 import { getRouteMeta, isRootRoute } from "./navConfig";
-import { matchPath } from "react-router-dom";
 
 const LAST_PATH_KEY = "wc_last_path";
 
@@ -24,26 +23,6 @@ function setLastKnownPath(pathname) {
   } catch {
     // ignore
   }
-}
-
-// Resolve parent path from pattern (handles dynamic params)
-function resolveParentPath(parentPattern, currentPathname, currentPattern) {
-  if (!parentPattern) return null;
-  if (!parentPattern.includes(":")) return parentPattern;
-
-  // Try to extract params from current pathname using currentPattern
-  if (currentPattern) {
-    const match = matchPath({ path: currentPattern }, currentPathname);
-    if (match?.params) {
-      let resolved = parentPattern;
-      for (const [key, value] of Object.entries(match.params)) {
-        resolved = resolved.replace(`:${key}`, value);
-      }
-      if (!resolved.includes(":")) return resolved;
-    }
-  }
-
-  return parentPattern;
 }
 
 export function useSmartNav() {
@@ -89,6 +68,13 @@ export function useSmartNav() {
       return;
     }
 
+    // A provider schedule opened directly still has one predictable return:
+    // the provider dashboard, never an unrelated browser-history entry.
+    if (pathname === "/provider/schedule") {
+      navigate("/provider/dashboard");
+      return;
+    }
+
     // 2) Try browser history
     try {
       if (window.history.length > 1) {
@@ -119,4 +105,3 @@ export function useSmartNav() {
     meta,
   };
 }
-

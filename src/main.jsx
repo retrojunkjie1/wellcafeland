@@ -7,13 +7,16 @@ import { ensureDevAuth } from "@/dev/ensureAuth";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { WcOsProvider } from "./core/WcOsProvider";
 import { initTheme } from "@/theme/themeStore";
-import { validateEnv, EnvErrorScreen } from "./config/envGuard.jsx";
+import { validateEnv } from "./config/envValidation.js";
+import { EnvErrorScreen } from "./config/envGuard.jsx";
 import { logDebug } from "@/lib/debug";
+import { installStaleBuildRecovery } from "@/lib/staleBuildRecovery";
 
 // Boot sequence: UI shell mounts FIRST, services initialize LAST
 // Any failure after UI mounts must NOT crash the app
 
 // Step 1: Initialize theme (must not throw)
+installStaleBuildRecovery();
 try {
   initTheme();
 } catch (err) {
@@ -26,7 +29,7 @@ const root = createRoot(document.getElementById("root"));
 // Step 3: Render app shell (must always render)
 root.render(
   <StrictMode>
-    <ErrorBoundary showDetails={true}>
+    <ErrorBoundary showDetails={import.meta.env.DEV}>
       <WcOsProvider>
         <AuthProvider>
           <App />

@@ -15,6 +15,8 @@ describe("assistance entry routing", () => {
 
   it("routes A.A. and N.A. requests to the dedicated meeting finder", () => {
     expect(getAssistanceEntry("?query=online%20NA%20meetings")).toBe("meetings");
+    expect(getAssistanceEntry("?query=A.A.%20meetings")).toBe("meetings");
+    expect(getAssistanceEntry("?query=N.A.%20meetings")).toBe("meetings");
     expect(getAssistanceEntry("?priority=programs&query=Alcoholics%20Anonymous")).toBe("meetings");
   });
 });

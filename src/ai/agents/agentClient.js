@@ -20,8 +20,9 @@ export async function callAgent(agentId, payload = {}) {
     throw new Error(`Agent "${agentId}" not found in registry`);
   }
 
-  if (!agent.enabledByDefault) throw new Error(`${agent.name} is not enabled.`);
-  const response = await callRegisteredAgent(agentId, payload);
+  if (!agent.handlerId) throw new Error(`${agent.name} does not have a production handler yet.`);
+  // The server remains authoritative for the live enable/pause control.
+  const response = await callRegisteredAgent(agent.handlerId, payload);
   return {
     ...response,
     agentId: agent.id,

@@ -1,5 +1,6 @@
 // src/utils/toolContract.js
 // Standardized tool interface contract
+import { recordPrivatePracticeCompletion } from "@/services/privatePracticeProgress";
 
 /**
  * Standard tool props interface
@@ -47,6 +48,11 @@ export function createToolResult(toolId, title, summary, data = {}, durationSeco
  * @param {ToolResult} result - Tool result object
  */
 export function safeComplete(onComplete, result) {
+  if (result?.type === "tool_result") {
+    // Progress is based on the user's explicit completion action, not analytics.
+    // Saving is best-effort and never delays the completion UI.
+    void recordPrivatePracticeCompletion().catch(() => {});
+  }
   if (onComplete && typeof onComplete === "function") {
     try {
       onComplete(result);
@@ -69,4 +75,3 @@ export function safeCancel(onCancel) {
     }
   }
 }
-

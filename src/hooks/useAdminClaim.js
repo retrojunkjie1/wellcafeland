@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getMyAdminAccess } from "@/services/adminAuthorization";
 
-const EMPTY_STATE = Object.freeze({ adminReady: false, isAdmin: false, claims: null });
+const EMPTY_STATE = Object.freeze({ adminReady: false, isAdmin: false, claims: null, accessError: null });
 let state = EMPTY_STATE;
 let authListener = null;
 let requestVersion = 0;
@@ -19,14 +19,16 @@ function subscribe(subscriber) {
   if (!authListener) {
     try {
       authListener = onAuthStateChanged(getAuth(), (user) => {
-        void loadAccess(user, true);
+        // Refresh the ID token so recently assigned Alpha claims are visible
+        // immediately after sign-in and when the app first opens.
+        void loadAccess(user, true, Boolean(user));
       }, () => {
         requestVersion += 1;
         pendingRequest = null;
-        publish({ adminReady: true, isAdmin: false, claims: null });
+        publish({ adminReady: true, isAdmin: false, claims: null, accessError: "auth-state-unavailable" });
       });
     } catch {
-      publish({ adminReady: true, isAdmin: false, claims: null });
+      publish({ adminReady: true, isAdmin: false, claims: null, accessError: "auth-state-unavailable" });
     }
   }
   return () => subscribers.delete(subscriber);
@@ -36,38 +38,43 @@ function getSnapshot() {
   return state;
 }
 
-async function loadAccess(user, force = false) {
+async function loadAccess(user, force = false, forceTokenRefresh = false) {
   if (!user) {
     requestVersion += 1;
     pendingRequest = null;
-    publish({ adminReady: true, isAdmin: false, claims: null });
+    publish({ adminReady: true, isAdmin: false, claims: null, accessError: null });
     return;
   }
 
   const uid = user.uid;
   if (!force && state.adminReady && state.claims?.uid === uid) return;
-  if (pendingRequest?.uid === uid) return pendingRequest.promise;
+  if (!forceTokenRefresh && pendingRequest?.uid === uid) return pendingRequest.promise;
 
   const version = ++requestVersion;
-  publish({ adminReady: false, isAdmin: false, claims: null });
+  publish({ adminReady: false, isAdmin: false, claims: null, accessError: null });
 
   const promise = (async () => {
     let tokenClaims = {};
+    let localAppCheckUnavailable = false;
     try {
-      const tokenResult = await user.getIdTokenResult(false);
+      const tokenResult = await user.getIdTokenResult(forceTokenRefresh);
       tokenClaims = tokenResult?.claims || {};
 
       let access;
       try {
         access = await getMyAdminAccess();
       } catch (accessError) {
-        // Local development may run a newer UI against Functions that have
-        // not yet been deployed. This fallback affects navigation only; server
-        // callables and Firestore rules remain the authorization boundary.
-        if (!import.meta.env.DEV) throw accessError;
+        const isLocalhost = typeof window !== "undefined"
+          && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+        // A Vite production preview on localhost still skips App Check. Keep
+        // the signed Alpha claim visible for workspace navigation, while
+        // making the unavailable server check explicit in the UI. This does
+        // not authorize callable functions or Firestore access.
+        if (!isLocalhost || tokenClaims.godAdmin !== true) throw accessError;
+        localAppCheckUnavailable = true;
         access = {
-          isAdmin: tokenClaims.godAdmin === true,
-          isGodAdmin: tokenClaims.godAdmin === true,
+          isAdmin: true,
+          isGodAdmin: true,
           scopes: [],
           regionalScopes: {},
         };
@@ -83,11 +90,23 @@ async function loadAccess(user, force = false) {
         adminRegionalScopes: access.regionalScopes || {},
         adminRegions: access.regions || [],
       };
-      publish({ adminReady: true, isAdmin: access.isAdmin === true, claims });
+      publish({
+        adminReady: true,
+        isAdmin: access.isAdmin === true,
+        claims,
+        accessError: localAppCheckUnavailable ? "local-app-check-unavailable" : null,
+      });
     } catch (error) {
       if (version !== requestVersion) return;
       if (import.meta.env.DEV) console.error("Failed to load admin access:", error);
-      publish({ adminReady: true, isAdmin: false, claims: null });
+      const isLocalhost = typeof window !== "undefined"
+        && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      publish({
+        adminReady: true,
+        isAdmin: false,
+        claims: { ...tokenClaims, uid, admin: false },
+        accessError: isLocalhost ? "local-app-check-unavailable" : error?.code || "access-check-failed",
+      });
     }
   })();
 
@@ -100,7 +119,7 @@ async function loadAccess(user, force = false) {
 }
 
 export function refreshAdminAccess() {
-  return loadAccess(getAuth().currentUser, true);
+  return loadAccess(getAuth().currentUser, true, true);
 }
 
 export function useAdminClaim() {

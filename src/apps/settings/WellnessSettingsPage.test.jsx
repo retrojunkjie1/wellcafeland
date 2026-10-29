@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/stores/useOSStore", () => ({ useOSStore: (selector) => selector(mocks.state) }));
 vi.mock("@/hooks/useSessionIdentity", () => ({ useSessionIdentity: () => mocks.identity }));
+vi.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: null }) }));
 vi.mock("@/services/conversationMemory", () => ({
   clearConversationMemory: mocks.clearMemory,
   hasAccountConversationMemory: () => mocks.hasMemory,

@@ -3,13 +3,18 @@
 // This is the SINGLE SOURCE OF TRUTH for Firebase configuration
 // All Firebase initialization must import from this file ONLY
 
-// Production project ID is HARDCODED to prevent wrong-project deployments
-const PROJECT_ID = "wellnesscafelanding";
+// Production project ID is pinned to prevent wrong-project deployments. Tests
+// use an isolated demo ID so accidental SDK requests can never target prod.
+const PROJECT_ID = import.meta.env.MODE === "test" ? "demo-wellnesscafe-test" : "wellnesscafelanding";
+const isTestMode = import.meta.env.MODE === "test";
 
 // Firebase configuration object
 // projectId is hardcoded, other values come from environment variables
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  // Firebase Auth requires a non-empty key even when tests never contact the
+  // service. Keep the fallback test-only and use a demo project so CI can
+  // initialize SDK consumers without production credentials.
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (isTestMode ? "wellnesscafe-test-key" : ""),
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
   projectId: PROJECT_ID, // Hardcoded to wellnesscafelanding
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
@@ -36,4 +41,3 @@ if (import.meta.env.DEV) {
     );
   }
 }
-

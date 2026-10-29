@@ -2,7 +2,7 @@
 // Phase 44: Topic memory integration
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Trophy, Clock } from "lucide-react";
 import { trackPageView, trackAction } from "../../services/telemetry";
 import {
@@ -13,9 +13,11 @@ import PageHeader from "@/components/navigation/PageHeader";
 import { listContentSummaries } from "@/services/contentService";
 import { CONTENT_SECTIONS } from "@/content/contentRegistry";
 import { getLastTopic } from "@/engines/memory/contentMemoryEngine";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 const RecoveryPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [lastSession, setLastSession] = useState(null);
   const [streak, setStreak] = useState({
     currentStreak: 0,
@@ -304,7 +306,7 @@ const RecoveryPage = () => {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                    onClick={() => navigateToTool(navigate, `/tools/${encodeURIComponent(item.id)}`, location)}
                     className={`text-left rounded-xl bg-card/50 border p-3 hover:bg-muted transition ${
                       isLastViewed 
                         ? "border-amber-400/40 bg-amber-400/5 ring-1 ring-amber-400/20" 
@@ -359,7 +361,7 @@ const RecoveryPage = () => {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => navigate(`/tools/${encodeURIComponent(item.id)}`)}
+                    onClick={() => navigateToTool(navigate, `/tools/${encodeURIComponent(item.id)}`, location)}
                     className={`text-left rounded-xl bg-card/50 border p-3 hover:bg-muted transition ${
                       isLastViewed 
                         ? "border-amber-400/40 bg-amber-400/5 ring-1 ring-amber-400/20" 

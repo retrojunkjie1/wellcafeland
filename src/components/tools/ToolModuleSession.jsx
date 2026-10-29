@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowLeft, ChevronDown, CircleCheck, HeartHandshake, HeartPulse } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, CircleCheck, HeartHandshake, HeartPulse } from "lucide-react";
 
 export default function ToolModuleSession({
   title,
@@ -7,7 +7,12 @@ export default function ToolModuleSession({
   onClose,
   onCheckIn,
   onFindSupport,
+  onViewProgress,
+  showProgressAction = false,
   completed = false,
+  completedTitle = "Practice complete",
+  completedDescription = "Thank you for taking this time. There’s no need to do anything else before you leave.",
+  onRestart,
   children,
 }) {
   return (
@@ -18,7 +23,7 @@ export default function ToolModuleSession({
         className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-lg pr-3 text-sm text-white/70 transition hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
-        Back to tools
+        Back to where you were
       </button>
 
       <header className="mb-6 space-y-2">
@@ -32,17 +37,29 @@ export default function ToolModuleSession({
           <div className="flex items-start gap-3">
             <CircleCheck aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-200" />
             <div>
-              <h2 className="text-lg font-medium text-white">Practice complete</h2>
-              <p className="mt-1 text-sm leading-relaxed text-white/65">Thank you for taking this time. There’s no need to do anything else before you leave.</p>
+              <h2 className="text-lg font-medium text-white">{completedTitle}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-white/65">{completedDescription}</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mt-6 min-h-11 rounded-full border border-white/15 px-5 text-sm text-white/85 transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
-          >
-            Return to tools
-          </button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            {onRestart && (
+              <button
+                type="button"
+                onClick={onRestart}
+                className="min-h-11 rounded-full bg-cyan-100 px-5 text-sm font-medium text-slate-950 transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                Try another option
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-11 rounded-full border border-white/15 px-5 text-sm text-white/85 transition hover:bg-white/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300"
+            >
+              Return to where you were
+            </button>
+            {onViewProgress && <button type="button" onClick={onViewProgress} className="inline-flex min-h-11 items-center gap-2 rounded-full px-4 text-sm text-amber-100/85 underline decoration-amber-100/25 underline-offset-4 hover:text-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">View my progress <ArrowRight aria-hidden="true" className="h-4 w-4" /></button>}
+          </div>
           {(onCheckIn || onFindSupport) && (
             <details className="mt-4 rounded-xl border border-white/10 bg-black/10 p-3 text-left">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg px-2 text-sm font-medium text-white/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300">
@@ -59,6 +76,7 @@ export default function ToolModuleSession({
       ) : (
         <section className="wc-tool-session-panel rounded-2xl border border-white/10 bg-white/[0.025] p-4 sm:p-6">
           {children}
+          {showProgressAction && onViewProgress && <div className="mt-5 border-t border-white/10 pt-4"><button type="button" onClick={onViewProgress} className="inline-flex min-h-11 items-center gap-2 rounded-full px-2 text-sm text-amber-100/85 underline decoration-amber-100/25 underline-offset-4 hover:text-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">View my progress <ArrowRight aria-hidden="true" className="h-4 w-4" /></button></div>}
         </section>
       )}
     </main>

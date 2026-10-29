@@ -71,6 +71,13 @@ async function clean() {
 }
 
 async function seedActiveConnection() {
+  await db.collection("users").doc(providerId).set({
+    uid: providerId,
+    role: "provider",
+    roles: ["provider"],
+    providerType: "therapist",
+    practitionerWorkspaceActive: true,
+  });
   await db.collection("clientProviderAssignments").doc(assignmentId).set({
     clientId,
     providerId,

@@ -37,17 +37,27 @@ function httpsUrl(value, label, required = false) {
 }
 
 function validateRecord(data = {}) {
+  const countryCode = clean(data.countryCode, 2).toUpperCase();
+  const country = clean(data.country, 100);
   const record = {
     name: clean(data.name, 140), category: clean(data.category, 24).toLowerCase(),
     description: clean(data.description, 500), address: clean(data.address, 240),
     city: clean(data.city, 100), state: clean(data.state, 2).toUpperCase(),
+    subdivision: clean(data.subdivision, 100), country, countryCode,
     postalCode: clean(data.postalCode, 12), phone: clean(data.phone, 40),
+    alternatePhone: clean(data.alternatePhone, 40), email: clean(data.email, 254),
     sourceName: clean(data.sourceName, 140), sourceUrl: httpsUrl(data.sourceUrl, "Source link", true),
     permissionBasis: clean(data.permissionBasis, 1000),
   };
   if (record.name.length < 2) throw new HttpsError("invalid-argument", "Enter the service name.");
   if (!CATEGORIES.has(record.category)) throw new HttpsError("invalid-argument", "Choose a supported help category.");
-  if (!record.city || !STATES.has(record.state)) throw new HttpsError("invalid-argument", "Enter the city and state where this service is located.");
+  if (!record.city || !record.country || !/^[A-Z]{2}$/.test(countryCode)) throw new HttpsError("invalid-argument", "Enter the city, country, and two-letter country code for this service.");
+  const countryName = new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode);
+  if (!countryName || countryName === countryCode) throw new HttpsError("invalid-argument", "Enter a valid ISO two-letter country code.");
+  if (normalizeArea(record.country) !== normalizeArea(countryName)) throw new HttpsError("invalid-argument", "Make sure the country name matches the selected two-letter country code.");
+  if (countryCode === "US" && !STATES.has(record.state)) throw new HttpsError("invalid-argument", "Choose a valid U.S. state code for a U.S. listing.");
+  if (countryCode !== "US" && record.state) throw new HttpsError("invalid-argument", "For non-U.S. listings, enter the province or region in the State, province, or region field.");
+  if (record.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.email)) throw new HttpsError("invalid-argument", "Enter a valid public service email address.");
   if (!record.sourceName || record.permissionBasis.length < 30) throw new HttpsError("failed-precondition", "Record the source and evidence that allows WellnessCafe to display this listing.");
   if (!data.checkedAt || !Number.isFinite(Date.parse(data.checkedAt))) throw new HttpsError("invalid-argument", "Record when the source and listing details were checked.");
   const checkedAt = new Date(data.checkedAt);
@@ -73,7 +83,16 @@ function resolveState(area) {
 
 function makeSearchTokens(record) {
   const fullState = Object.entries(STATE_NAMES).find(([, code]) => code === record.state)?.[0] || "";
-  return [...new Set(normalizeArea([record.city, record.state, fullState, record.postalCode].join(" ")).split(" ").filter(Boolean))];
+  return [...new Set(normalizeArea([record.city, record.subdivision, record.state, fullState, record.postalCode, record.country, record.countryCode].join(" ")).split(" ").filter(Boolean))];
+}
+
+async function requireListingScope(request, listing) {
+  if (listing.countryCode === "US") return requireAdminScope(request, "support_directory.manage", listing.state);
+  const access = await requireAdminScope(request, "support_directory.manage");
+  if (!access.isGodAdmin && !access.scopes.includes("support_directory.manage")) {
+    throw new HttpsError("permission-denied", "International listings require a platform-wide directory assignment.");
+  }
+  return access;
 }
 
 function enforceSearchRateLimit(request) {
@@ -118,8 +137,15 @@ function publicProjection(doc) {
     address: data.address || "",
     city: data.city,
     state: data.state,
+    subdivision: data.subdivision || "",
+    country: data.country || "",
+    countryCode: data.countryCode || "",
     postalCode: data.postalCode || "",
     phone: data.phone || "",
+    alternatePhone: data.alternatePhone || "",
+    email: data.email || "",
+    sourceName: data.sourceName || "",
+    sourceUrl: data.sourceUrl || "",
     checkedAt: data.checkedAt?.toDate?.().toISOString?.() || null,
     sourceManaged: true,
   };
@@ -127,8 +153,8 @@ function publicProjection(doc) {
 
 function rethrowDirectoryReadError(error) {
   const message = String(error?.message || "").toLowerCase();
-  if (message.includes("requires an index") && message.includes("building")) {
-    throw new HttpsError("unavailable", "The help directory is finishing setup. Please refresh in a few minutes.");
+  if (message.includes("requires an index")) {
+    throw new HttpsError("unavailable", "The local help directory is temporarily unavailable. Please try again shortly.");
   }
   throw error;
 }
@@ -187,22 +213,22 @@ const listHelpDirectoryForAdmin = onCall({ region: REGION, enforceAppCheck: true
 });
 
 const saveHelpDirectoryDraft = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const { uid: actorUid } = await requireAdminScope(request, "support_directory.manage");
   const data = request.data || {};
   const id = clean(data.id, 120);
   const record = validateRecord(data);
-  const access = await requireAdminScope(request, "support_directory.manage", record.state);
+  const { uid: actorUid, ...access } = await requireListingScope(request, record);
   const ref = id ? db.collection(COLLECTION).doc(id) : db.collection(COLLECTION).doc(crypto.randomUUID());
   const initial = id ? await ref.get() : null;
   if (id && !initial.exists) throw new HttpsError("not-found", "This listing is no longer available.");
   if (id && !access.isGodAdmin && !access.scopes.includes("support_directory.manage")) {
-    await requireAdminScope(request, "support_directory.manage", initial.get("state"));
+    const previous = initial.data();
+    await requireListingScope(request, { countryCode: previous.countryCode || "US", state: previous.state });
   }
   const now = FieldValue.serverTimestamp();
   await db.runTransaction(async (transaction) => {
     const current = id ? await transaction.get(ref) : null;
     if (id && !current.exists) throw new HttpsError("not-found", "This listing is no longer available.");
-    if (id && current.get("state") !== initial.get("state")) throw new HttpsError("aborted", "The listing changed while you were editing it. Refresh and try again.");
+    if (id && (current.get("state") !== initial.get("state") || (current.get("countryCode") || "US") !== (initial.get("countryCode") || "US"))) throw new HttpsError("aborted", "The listing changed while you were editing it. Refresh and try again.");
     const wasPublished = current?.get("status") === "published";
     transaction.set(ref, {
       ...record,
@@ -230,14 +256,15 @@ const setHelpDirectoryStatus = onCall({ region: REGION, enforceAppCheck: true },
   const ref = db.collection(COLLECTION).doc(id);
   const before = await ref.get();
   if (!before.exists) throw new HttpsError("not-found", "This listing is no longer available.");
-  const { uid: actorUid } = await requireAdminScope(request, "support_directory.manage", before.get("state"));
-  await requireAdminScope(request, "support_directory.manage", before.get("state"));
+  const listing = { countryCode: before.get("countryCode") || "US", state: before.get("state") };
+  const { uid: actorUid } = await requireListingScope(request, listing);
+  await requireListingScope(request, listing);
   const now = FieldValue.serverTimestamp();
   let nextStatus = "";
   await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) throw new HttpsError("not-found", "This listing is no longer available.");
-    if (snapshot.get("state") !== before.get("state")) throw new HttpsError("aborted", "The listing changed while you were reviewing it. Refresh and try again.");
+    if (snapshot.get("state") !== before.get("state") || (snapshot.get("countryCode") || "US") !== (before.get("countryCode") || "US")) throw new HttpsError("aborted", "The listing changed while you were reviewing it. Refresh and try again.");
     const previousStatus = snapshot.get("status");
     const sourceAge = snapshot.get("checkedAt")?.toDate ? (Date.now() - snapshot.get("checkedAt").toDate().getTime()) / 86400000 : Infinity;
     if (action === "publish") {
@@ -286,7 +313,7 @@ const searchPublicHelpListings = onCall({ region: REGION, enforceAppCheck: true 
   }
   const listings = snapshot.docs.filter((doc) => {
     const data = doc.data();
-    const location = normalizeArea([data.city, data.state, data.postalCode].join(" "));
+    const location = normalizeArea([data.city, data.subdivision, data.state, data.postalCode, data.country, data.countryCode].join(" "));
     return tokens.every((token) => location.includes(token));
   }).slice(0, 50).map(publicProjection);
   return { listings };
@@ -318,6 +345,9 @@ const reportHelpListingIssue = onCall({ region: REGION, enforceAppCheck: true },
       category: current.get("category"),
       city: current.get("city"),
       state: current.get("state"),
+      subdivision: current.get("subdivision") || "",
+      country: current.get("country") || "",
+      countryCode: current.get("countryCode") || "US",
       issue,
       details,
       status: "open",
@@ -340,8 +370,9 @@ const reviewHelpDirectoryCorrection = onCall({ region: REGION, enforceAppCheck: 
   if (!reportBefore.exists) throw new HttpsError("not-found", "This correction report is no longer available.");
   const linkedBefore = await db.collection(COLLECTION).doc(reportBefore.get("listingId")).get();
   if (!linkedBefore.exists) throw new HttpsError("not-found", "The reported service is no longer available.");
-  const { uid: actorUid } = await requireAdminScope(request, "support_directory.manage", linkedBefore.get("state") || reportBefore.get("state"));
-  await requireAdminScope(request, "support_directory.manage", linkedBefore.get("state") || reportBefore.get("state"));
+  const listing = { countryCode: linkedBefore.get("countryCode") || reportBefore.get("countryCode") || "US", state: linkedBefore.get("state") || reportBefore.get("state") };
+  const { uid: actorUid } = await requireListingScope(request, listing);
+  await requireListingScope(request, listing);
   const now = FieldValue.serverTimestamp();
   let status = "";
   await db.runTransaction(async (transaction) => {

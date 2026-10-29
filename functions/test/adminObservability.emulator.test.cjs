@@ -3,6 +3,9 @@ const { after, before, beforeEach, test } = require("node:test");
 
 process.env.GCLOUD_PROJECT = "demo-wellnesscafe-admin-observability";
 process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: process.env.GCLOUD_PROJECT });
+// The suite invokes the HTTP handler directly rather than through the Functions
+// emulator proxy, so make the App Check emulator bypass explicit for this test.
+process.env.FUNCTIONS_EMULATOR = "true";
 
 const admin = require("firebase-admin");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
@@ -63,7 +66,7 @@ test("review queue counts are admin-only aggregates and never return application
   ]);
 
   const result = await getQueueCounts(adminRequest);
-  assert.deepEqual(result, { practitioner: 1, communityGivers: 2 });
+  assert.deepEqual(result, { practitioner: 1, communityGivers: 2, meetingSources: 0 });
   assert.equal(JSON.stringify(result).includes("private@example.test"), false);
 });
 

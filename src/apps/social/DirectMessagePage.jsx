@@ -1,7 +1,7 @@
 // src/apps/social/DirectMessagePage.jsx
 // Direct messaging page (safe mode, text-only)
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Send, User, Circle } from "lucide-react";
 import { listDMThreads, listMessages, sendMessage } from "@/services/socialService";
@@ -19,24 +19,7 @@ const DirectMessagePage = () => {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    loadThreads();
-  }, [userId]);
-
-  useEffect(() => {
-    if (threadId) {
-      loadMessages();
-      // Refresh messages every 5 seconds
-      const interval = setInterval(loadMessages, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [threadId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const loadThreads = async () => {
+  const loadThreads = useCallback(async () => {
     try {
       const threadsData = await listDMThreads(userId);
       setThreads(threadsData);
@@ -45,16 +28,32 @@ const DirectMessagePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
-  const loadMessages = async () => {
+  const loadMessages = useCallback(async () => {
     try {
       const messagesData = await listMessages(threadId);
       setMessages(messagesData);
     } catch (err) {
       console.error("Failed to load messages:", err);
     }
-  };
+  }, [threadId]);
+
+  useEffect(() => {
+    loadThreads();
+  }, [loadThreads]);
+
+  useEffect(() => {
+    if (!threadId) return undefined;
+    loadMessages();
+    // Refresh messages every 5 seconds
+    const interval = setInterval(loadMessages, 5000);
+    return () => clearInterval(interval);
+  }, [threadId, loadMessages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !threadId || sending) return;

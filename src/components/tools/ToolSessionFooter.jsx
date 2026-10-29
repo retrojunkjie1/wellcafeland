@@ -3,24 +3,26 @@
 // Phase 43: Full Intelligent UI Activation Layer
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Compass, ArrowRight } from "lucide-react";
+import { navigateToTool } from "@/navigation/toolReturn";
 
 export function ToolSessionFooter({ toolId }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const suggestion =
     toolId === "breathing"
       ? {
           label: "Choose an anchor",
           text: "If another kind of support would help, choose one optional point of orientation in your surroundings.",
-          action: () => navigate("/tools/grounding"),
+          action: () => navigateToTool(navigate, "/tools/grounding", location),
         }
       : toolId === "grounding"
       ? {
           label: "Capture what shifted",
           text: "A two-minute journal can help your nervous system remember this calmer state.",
-          action: () => navigate("/tools/journaling"),
+          action: () => navigateToTool(navigate, "/tools/journaling", location),
         }
       : {
           label: "Check your signals",

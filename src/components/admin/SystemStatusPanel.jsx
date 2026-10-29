@@ -40,18 +40,18 @@ const SystemStatusPanel = () => {
   };
 
   const getStatusIcon = (ok, warning) => {
-    if (ok && !warning) {
-      return <CheckCircle2 className="h-4 w-4 text-green-400" />;
-    }
-    if (ok && warning) {
+    if (warning) {
       return <AlertCircle className="h-4 w-4 text-amber-400" />;
+    }
+    if (ok) {
+      return <CheckCircle2 className="h-4 w-4 text-green-400" />;
     }
     return <XCircle className="h-4 w-4 text-red-400" />;
   };
 
   const getStatusText = (ok, warning) => {
-    if (ok && !warning) return "OK";
-    if (ok && warning) return "Degraded";
+    if (warning) return "Degraded";
+    if (ok) return "OK";
     return "Error";
   };
 
@@ -116,7 +116,7 @@ const SystemStatusPanel = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-xs ${
-                  check.ok ? "text-green-400" : "text-red-400"
+                  check.warning ? "text-amber-400" : check.ok ? "text-green-400" : "text-red-400"
                 }`}>
                   {getStatusText(check.ok, check.warning)}
                 </span>

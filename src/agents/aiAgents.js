@@ -6,8 +6,9 @@
 // Legacy AI – restricted scope: Agent utilities only
 // This endpoint is used for agent orchestration, not primary conversational AI
 import { callAiSession } from "@/services/aiSessionClient";
+import agentCatalog from "../../functions/agentCatalog.json";
 
-export const LIVE_AGENT_IDS = new Set(["seer", "oracle", "overseer", "sentinel", "healer_spiritual"]);
+export const LIVE_AGENT_IDS = new Set(agentCatalog.agents.filter((agent) => agent.readiness === "implemented" && agent.handlerId).map((agent) => agent.handlerId));
 
 /**
  * Call an AI agent with payload
@@ -16,10 +17,20 @@ export const LIVE_AGENT_IDS = new Set(["seer", "oracle", "overseer", "sentinel",
  * @returns {Promise<object|null>} Agent response or null on error
  */
 export const callAgent = async (agent, payload = {}) => {
-  const response = await callAiSession({ mode: "agent", agent, ...payload });
+  const { mode: agentMode, ...agentPayload } = payload || {};
+  const response = await callAiSession({
+    ...agentPayload,
+    ...(agentMode ? { agentMode } : {}),
+    mode: "agent",
+    agent,
+  });
   if (!response || response.success !== true) {
     const message = response?.error?.message || response?.error || `Agent ${agent} did not complete successfully.`;
-    throw new Error(typeof message === "string" ? message : `Agent ${agent} did not complete successfully.`);
+    const error = new Error(typeof message === "string" ? message : `Agent ${agent} did not complete successfully.`);
+    error.code = response?.error?.code || "AGENT_ERROR";
+    error.status = response?.status || null;
+    error.retryAfterSeconds = Number(response?.retryAfterSeconds) || null;
+    throw error;
   }
   const result = response.result || {};
   const reply = result.phrases?.length
@@ -43,7 +54,7 @@ export const runOverseer = async (stateSnapshot,goal)=>{
   return await callAgent("overseer",{state:stateSnapshot,goal});
 };
 
-// 🛡️ The Sentinel: watches for risk and flags alerts
-export const runSentinel = async (telemetryBatch,thresholds)=>{
-  return await callAgent("sentinel",{telemetry:telemetryBatch,thresholds});
+// 🛡️ The Sentinel: returns a support route chosen explicitly by the person
+export const runSentinel = async (supportNeed)=>{
+  return await callAgent("sentinel",{supportNeed});
 };

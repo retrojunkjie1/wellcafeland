@@ -6,6 +6,8 @@ import { isRootRoute } from "../../navigation/navConfig";
 export function OSPageChrome() {
   const location = useLocation();
   const { canGoBack, back, crumbs, title } = useSmartNav();
+  const returnFromSharing = location.pathname === "/providers"
+    && location.state?.from?.pathname === "/settings/practitioner-sharing";
 
   // Hide chrome for root routes only
   if (isRootRoute(location.pathname)) return null;
@@ -32,7 +34,7 @@ export function OSPageChrome() {
               className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[10px] text-white/60 hover:bg-white/8 hover:text-white/80 active:scale-[0.98] transition"
             >
               <span className="text-xs leading-none">←</span>
-              <span className="uppercase tracking-wide">Back</span>
+              <span className="tracking-wide">{returnFromSharing ? "Back to sharing choices" : "Back"}</span>
             </button>
           ) : (
             <div />

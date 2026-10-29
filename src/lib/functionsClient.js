@@ -27,12 +27,12 @@ function getFunctionsInstance() {
  * @returns {Promise<any>} Function response data
  */
 export async function callFunction(functionName, data = null, options = {}) {
-  const { logToTelemetry = true, throwOnError = true } = options;
+  const { logToTelemetry = true, throwOnError = true, allowUnauthenticated = false } = options;
   
   const auth = getAuth();
   const user = auth.currentUser;
   
-  if (!user) {
+  if (!user && !allowUnauthenticated) {
     const error = new Error("User must be authenticated to call Cloud Functions");
     console.error(`[FunctionsClient] ${functionName}:`, error.message);
     
@@ -53,13 +53,13 @@ export async function callFunction(functionName, data = null, options = {}) {
   
   try {
     // Force refresh token to ensure latest claims
-    const idToken = await user.getIdToken(true);
+    const idToken = user ? await user.getIdToken(true) : null;
     
     if (logToTelemetry) {
       logTelemetry("function_call", {
         level: "info",
         functionName,
-        authenticated: true,
+        authenticated: !!user,
         hasToken: !!idToken,
       });
     }
@@ -125,4 +125,3 @@ export function isFunctionsAvailable() {
 export function getFunctionsURL() {
   return FUNCTIONS_URL || import.meta.env.VITE_FIREBASE_FUNCTIONS_URL || null;
 }
-

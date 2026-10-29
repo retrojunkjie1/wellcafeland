@@ -42,13 +42,16 @@ Examples:
 
 --------------------------------------------------
 
-# 4. VERIFICATION SCRIPTS PASS
+# 4. CURRENT VERIFICATION EVIDENCE
 
-All verification scripts associated with the phase must return PASS.
+The current release gate is `npm run verify:release`. It runs the maintained
+automated suites, Firebase Rules checks, production build, deployment preflight,
+and whitespace validation. It must pass before release readiness is claimed.
 
-Example:
-
-npm run phase55a:chatActions:verify
+For a focused change, run the relevant maintained test command as well. Use
+tests that exercise current behavior; retired phase-era source scanners and
+file-presence probes are not release gates. Add or update a behavioral test
+when changing user-visible or security-sensitive behavior.
 
 --------------------------------------------------
 

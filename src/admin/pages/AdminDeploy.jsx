@@ -1,11 +1,8 @@
 // src/admin/pages/AdminDeploy.jsx
 import React, { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { httpsCallable, getFunctions } from "firebase/functions";
-import app from "@/firebase";
 import { db } from "@/firebase";
 import { APP_VERSION } from "@/config/version";
-import { firebaseConfig } from "@/config/firebaseConfig";
 import { callAiSession } from "@/services/aiSessionClient";
 
 export function AdminDeploy() {
@@ -36,14 +33,14 @@ export function AdminDeploy() {
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-white">Deploy</h2>
       <p className="text-sm text-white/60">
-        Deployment is managed manually via CLI. Use <code className="text-xs bg-white/10 px-1 py-0.5 rounded">firebase deploy</code> to deploy hosting and functions.
+        This page shows the current release information for WellnessCafe.
       </p>
 
       <div className="space-y-4">
         <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-          <div className="text-xs text-white/60 mb-1">Expected Project ID</div>
+          <div className="text-xs text-white/60 mb-1">Product</div>
           <div className="text-sm font-medium text-white">
-            {firebaseConfig?.projectId || "N/A"}
+            WellnessCafe
           </div>
         </div>
 
@@ -56,17 +53,16 @@ export function AdminDeploy() {
           <div className="text-sm text-white/60">Loading deploy info...</div>
         ) : deployInfo?.lastDeployAt ? (
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <div className="text-xs text-white/60 mb-1">Last Backend Deploy (from Firestore)</div>
+            <div className="text-xs text-white/60 mb-1">Last service update</div>
             <div className="text-sm font-medium text-white">
               {deployInfo.lastDeployAt?.toDate?.()?.toLocaleString() || "Unknown"}
             </div>
-            <div className="text-xs text-white/40 mt-1">Note: This timestamp is manually updated after deployment.</div>
+            <div className="text-xs text-white/40 mt-1">This date may not reflect the latest release.</div>
           </div>
         ) : (
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-            <div className="text-xs text-white/60 mb-1">Last Deploy</div>
-            <div className="text-sm text-white/60">No deploy info found in Firestore</div>
-            <div className="text-xs text-white/40 mt-1">Deploy info must be manually recorded in /admin/deploy document.</div>
+            <div className="text-xs text-white/60 mb-1">Recent update</div>
+            <div className="text-sm text-white/60">No recent update is recorded.</div>
           </div>
         )}
       </div>
@@ -147,4 +143,3 @@ export function AdminDeploy() {
     </div>
   );
 }
-

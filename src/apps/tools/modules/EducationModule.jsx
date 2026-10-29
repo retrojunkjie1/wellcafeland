@@ -1,32 +1,9 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Volume2, VolumeX } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Volume2, Pause, Play, Square, Sparkles } from "lucide-react";
 import { createToolResult, safeComplete } from "@/utils/toolContract";
-
-// --- Local narration hook (safe, no external imports) ----------------------
-
-function useSimpleNarration() {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  const speak = (text) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    if (!text) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const stop = React.useCallback(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-  }, []);
-
-  return { isSpeaking, speak, stop };
-}
+import ToolCharacterGuide from "@/components/tools/ToolCharacterGuide";
+import { useNaturalVoice } from "@/hooks/useNaturalVoice";
+import { runWellnessExperience } from "@/ai/experience/experienceEngine";
 
 const TOPICS = [
   { id: "shame-and-recovery", label: "Shame and Recovery" },
@@ -37,6 +14,12 @@ const TOPICS = [
   { id: "boundaries-in-recovery", label: "Boundaries in Recovery" },
   { id: "grief-and-loss", label: "Grief and Loss" },
   { id: "self-compassion", label: "Self-Compassion" },
+];
+
+const TRANSLATION_LANGUAGES = [
+  { id: "es", label: "Spanish" },
+  { id: "fr", label: "French" },
+  { id: "pt", label: "Portuguese" },
 ];
 
 const TOPIC_CONTENT = {
@@ -171,9 +154,13 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
       : TOPICS[0].id
   );
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const { isSpeaking, speak, stop } = useSimpleNarration();
-
-  useEffect(() => () => stop(), [stop]);
+  const [lanternLoading, setLanternLoading] = useState(false);
+  const [lanternExplanation, setLanternExplanation] = useState(null);
+  const [lanternError, setLanternError] = useState("");
+  const [translationLanguage, setTranslationLanguage] = useState("es");
+  const [translationState, setTranslationState] = useState({ loading: false, error: "", text: "", language: "" });
+  const { status: voiceStatus, error: voiceError, playbackProgress, play, pause, resume, stop } = useNaturalVoice("marin");
+  const isSpeaking = voiceStatus === "playing";
 
   const selectedTopic = useMemo(
     () => TOPICS.find((t) => t.id === selectedId) || TOPICS[0],
@@ -199,18 +186,60 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
     if (!content || !content.understanding) return;
     if (!soundEnabled) return;
 
-    if (isSpeaking) {
-      stop();
+    if (voiceStatus === "playing") {
+      void pause();
+      return;
+    }
+    if (voiceStatus === "paused") {
+      void resume();
       return;
     }
 
-    const textToRead = `${selectedTopic.label}. ${content.understanding}`;
-    speak(textToRead);
+    const lesson = content.understanding.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    void play(`${selectedTopic.label}. ${lesson}`);
   };
 
   const handleToggleSound = () => {
-    if (isSpeaking) stop();
+    stop();
     setSoundEnabled((prev) => !prev);
+  };
+
+  const explainKeyIdea = async () => {
+    if (lanternLoading) return;
+    setLanternLoading(true);
+    setLanternError("");
+    setLanternExplanation(null);
+    try {
+      const { result } = await runWellnessExperience("learning.explanation", {
+        question: `Explain this general educational key idea in everyday language. Topic: ${selectedTopic.label}. Key idea: ${paragraphs[0] || ""}. Keep it brief, nonjudgmental, and distinct from personal medical advice.`,
+      });
+      if (![result.summary, result.takeaway, result.nextStep].every((value) => typeof value === "string" && value.trim())) {
+        throw new Error("The plain-language explanation was incomplete.");
+      }
+      setLanternExplanation({
+        summary: result.summary.trim().slice(0, 700),
+        takeaway: result.takeaway.trim().slice(0, 360),
+        nextStep: result.nextStep.trim().slice(0, 360),
+      });
+    } catch (error) {
+      setLanternError(error?.message || "The explanation could not load. The lesson is still available above.");
+    } finally {
+      setLanternLoading(false);
+    }
+  };
+
+  const translateKeyIdea = async () => {
+    if (translationState.loading) return;
+    setTranslationState({ loading: true, error: "", text: "", language: "" });
+    try {
+      const { result } = await runWellnessExperience("learning.translation", { topicId: selectedTopic.id, language: translationLanguage });
+      const translation = typeof result.translation === "string" ? result.translation.trim() : "";
+      if (!translation || translation.length > 1800) throw new Error("The translation was incomplete.");
+      const language = TRANSLATION_LANGUAGES.find((item) => item.id === translationLanguage)?.label || "Selected language";
+      setTranslationState({ loading: false, error: "", text: translation, language });
+    } catch {
+      setTranslationState({ loading: false, error: "The translation could not be prepared right now. The English key idea remains available above.", text: "", language: "" });
+    }
   };
 
   const handleComplete = () => safeComplete(onComplete, createToolResult(
@@ -222,6 +251,7 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
 
   return (
     <div className="wc-education space-y-5 px-4 pb-24 pt-5 text-foreground sm:space-y-6 sm:px-8 sm:pt-7">
+      {(voiceStatus === "playing" || voiceStatus === "paused" || voiceStatus === "preparing") && <ToolCharacterGuide compact mood={isSpeaking ? "listening" : "present"} speaking={isSpeaking} speakingProgress={playbackProgress} message={`I’m reading ${selectedTopic.label.toLowerCase()} with you.`} context="The guide follows the spoken explanation. Pause or stop whenever you want." />}
       <header className="max-w-3xl">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Learn at your pace</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Choose a topic</h1>
@@ -239,7 +269,7 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
                 key={topic.id}
                 type="button"
                 aria-pressed={isActive}
-                onClick={() => { stop(); setSelectedId(topic.id); }}
+                onClick={() => { stop(); setSelectedId(topic.id); setLanternExplanation(null); setLanternError(""); setTranslationState({ loading: false, error: "", text: "", language: "" }); }}
                 className="min-h-11 rounded-full border border-border bg-background/60 px-4 text-sm font-medium text-foreground transition hover:border-amber-400/70 hover:bg-muted aria-pressed:border-amber-400/70 aria-pressed:bg-amber-400/10 aria-pressed:text-foreground"
               >
                 {topic.label}
@@ -255,16 +285,23 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">A short starting point</p>
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">{selectedTopic.label}</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col gap-2 sm:items-end">
+            <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleReadAloud}
               disabled={!soundEnabled}
+              aria-label={voiceStatus === "playing" ? "Pause reading" : voiceStatus === "paused" ? "Resume reading" : "Read this topic aloud"}
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/60 px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSpeaking ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              {isSpeaking ? "Stop reading" : "Read aloud"}
+              {voiceStatus === "playing" ? <Pause size={16} /> : voiceStatus === "paused" ? <Play size={16} /> : <Volume2 size={16} />}
+              {voiceStatus === "preparing" ? "Preparing voice…" : voiceStatus === "playing" ? "Pause reading" : voiceStatus === "paused" ? "Resume reading" : voiceStatus === "finished" ? "Read again" : "Read aloud"}
             </button>
+            {(voiceStatus === "playing" || voiceStatus === "paused" || voiceStatus === "preparing") && (
+              <button type="button" onClick={stop} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/60 px-4 text-sm text-foreground transition hover:bg-muted">
+                <Square size={14} /> Stop
+              </button>
+            )}
             <button
               type="button"
               onClick={handleToggleSound}
@@ -274,6 +311,10 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
             >
               {soundEnabled ? "Voice on" : "Voice off"}
             </button>
+            </div>
+            <p role={voiceError ? "alert" : "status"} aria-live="polite" className={`min-h-5 text-sm ${voiceError ? "text-rose-300" : "text-muted-foreground"}`}>
+              {voiceError || (voiceStatus === "preparing" ? "Preparing the natural voice…" : voiceStatus === "playing" ? "Reading aloud. You can pause or stop at any time." : voiceStatus === "paused" ? "Reading paused." : "Natural voice is ready when you choose Read aloud.")}
+            </p>
           </div>
         </div>
 
@@ -282,6 +323,59 @@ const EducationModule = ({ onComplete, topic: initialTopic = null }) => {
           <p className="mt-2 max-w-[68ch] text-base leading-7 text-foreground sm:text-lg sm:leading-8">
             {renderInlineEmphasis(paragraphs[0] || "Choose a topic to begin.")}
           </p>
+          <div className="mt-4 border-t border-border/70 pt-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold text-foreground">Read this key idea in another language</p>
+                <p className="mt-1 max-w-[58ch] text-xs leading-relaxed text-muted-foreground">The English original stays above. Translator receives only this topic choice and the language you select; your reflection is not sent.</p>
+              </div>
+              <div className="flex flex-wrap items-end gap-2">
+                <label className="text-xs text-muted-foreground">Language
+                  <select aria-label="Translation language" value={translationLanguage} onChange={(event) => { setTranslationLanguage(event.target.value); setTranslationState({ loading: false, error: "", text: "", language: "" }); }} className="mt-1 block min-h-11 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400">
+                    {TRANSLATION_LANGUAGES.map((language) => <option key={language.id} value={language.id}>{language.label}</option>)}
+                  </select>
+                </label>
+                <button type="button" onClick={translateKeyIdea} disabled={translationState.loading} className="min-h-11 rounded-full border border-emerald-200/25 bg-emerald-100/[.08] px-4 text-sm font-medium text-foreground transition hover:bg-emerald-100/[.14] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400">
+                  {translationState.loading ? "Translating…" : translationState.text ? "Translate again" : "Translate key idea"}
+                </button>
+              </div>
+            </div>
+            {translationState.error && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-200">{translationState.error}</p>}
+            {translationState.text && <div className="mt-4 rounded-xl border border-emerald-200/20 bg-emerald-100/[.04] p-4" aria-live="polite">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-100/75">{translationState.language} · AI translation</p>
+              <p lang={translationLanguage} className="mt-2 text-base leading-7 text-foreground sm:text-lg sm:leading-8">{translationState.text}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">This is an AI-generated translation for general education. Keep the English original in view if a phrase is unclear; this is not a substitute for professional interpretation or clinical advice.</p>
+            </div>}
+          </div>
+        </section>
+
+        <section aria-label="Optional plain-language explanation" className="rounded-2xl border border-sky-200/20 bg-sky-100/[0.04] p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Sparkles aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-sky-200" />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Want this in everyday language?</h3>
+                <p className="mt-1 max-w-[58ch] text-sm leading-relaxed text-muted-foreground">Lantern can unpack the key idea. It receives this lesson topic and key idea only—no journal or reflection text.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={explainKeyIdea}
+              disabled={lanternLoading}
+              className="min-h-11 rounded-full border border-sky-200/25 bg-sky-100/[0.08] px-4 text-sm font-medium text-foreground transition hover:bg-sky-100/[0.14] disabled:cursor-wait disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400"
+            >
+              {lanternLoading ? "Preparing explanation…" : lanternExplanation ? "Explain it another way" : "Explain this idea"}
+            </button>
+          </div>
+          {lanternExplanation && (
+            <div className="mt-4 grid gap-3 border-t border-border/70 pt-4 sm:grid-cols-3">
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">In simple terms</p><p className="mt-1 text-sm leading-relaxed text-foreground">{lanternExplanation.summary}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Keep in mind</p><p className="mt-1 text-sm leading-relaxed text-foreground">{lanternExplanation.takeaway}</p></div>
+              <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">If useful</p><p className="mt-1 text-sm leading-relaxed text-foreground">{lanternExplanation.nextStep}</p></div>
+              <p className="text-xs leading-relaxed text-muted-foreground sm:col-span-3">General education only; this does not assess your health or replace advice from a qualified clinician.</p>
+            </div>
+          )}
+          {lanternError && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-200">{lanternError}</p>}
         </section>
 
         {paragraphs.length > 1 && (

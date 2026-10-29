@@ -40,7 +40,7 @@ export const ritualSequences = {
       },
       {
         type: "tool",
-        title: "Choose an Anchor",
+        title: "Reconnect with the room",
         body:
           "Choose one point of orientation, a familiar object, or a quieter space. You can switch or stop at any time.",
         toolKey: "ritual-grounding",

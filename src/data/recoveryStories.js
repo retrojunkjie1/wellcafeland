@@ -122,7 +122,7 @@ export const RECOVERY_STORIES = [
 ];
 
 export const RECOVERY_STORY_NEXT_STEPS = [
-  { id: "trusted-person", label: "Reach out to someone I trust", detail: "Start with one person and one simple ask.", path: "/guide", action: "Find a few words" },
+  { id: "trusted-person", label: "Reach out to someone I trust", detail: "Start with one person and one simple ask.", path: "/chat", action: "Find a few words" },
   { id: "peer-support", label: "Find peer support", detail: "Explore recovery meetings, online or nearby.", path: "/recovery/meetings", action: "Browse meetings" },
   { id: "professional", label: "Explore professional support", detail: "Look for a practitioner whose approach fits you.", path: "/providers", action: "Browse practitioners" },
   { id: "daily-rhythm", label: "Choose one steadying practice", detail: "Pick something that fits your day and energy.", path: "/tools", action: "Open Daily Practice" },

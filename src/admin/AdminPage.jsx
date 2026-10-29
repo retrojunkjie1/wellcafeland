@@ -15,9 +15,9 @@ import { AdminRiskForecast } from "./pages/AdminRiskForecast";
 import { AdminOverrides } from "./pages/AdminOverrides";
 import { AdminIncidents } from "./pages/AdminIncidents";
 import { AdminAudit } from "./pages/AdminAudit";
-import { AdminProviderNetwork } from "./pages/AdminProviderNetwork";
 import CommunityGiversReviewPage from "@/apps/admin/CommunityGiversReviewPage";
 import PractitionerApplicationsPage from "@/apps/admin/PractitionerApplicationsPage";
+import PractitionerNetworkPage from "@/apps/admin/PractitionerNetworkPage";
 import AdminRolesPage from "@/apps/admin/AdminRolesPage";
 import { useAdminClaim } from "@/hooks/useAdminClaim";
 
@@ -69,7 +69,7 @@ export function AdminPage() {
           case "audit":
             return <AdminAudit />;
           case "provider-network":
-            return <AdminProviderNetwork />;
+            return <PractitionerNetworkPage />;
           case "system":
             return <AdminSystem />;
           case "deploy":

@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { callAgent } from "../../agents/aiAgents";
 import { trackPageView } from "../../services/telemetry";
-import { Eye, Sparkles, Compass, Shield, Loader2, Send } from "lucide-react";
+import { Eye, Sparkles, Compass, Shield, Loader2, Send, BookOpen, Lightbulb, MapPin, Wind, ScanHeart, UsersRound, Sprout } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";
 
 const AGENTS = [
@@ -29,16 +29,6 @@ const AGENTS = [
     placeholder: "Ask for guidance or wisdom...",
   },
   {
-    id: "overseer",
-    name: "The Overseer",
-    icon: Compass,
-    description: "Creates structured plans and orchestrates your next right steps.",
-    color: "text-wcGold",
-    bgColor: "bg-wcGold/10",
-    borderColor: "border-wcGold/30",
-    placeholder: "Ask for a plan or structured guidance...",
-  },
-  {
     id: "sentinel",
     name: "The Sentinel",
     icon: Shield,
@@ -47,6 +37,94 @@ const AGENTS = [
     bgColor: "bg-red-400/10",
     borderColor: "border-red-400/30",
     placeholder: "Ask about risk assessment or safety...",
+  },
+  {
+    id: "scribe",
+    name: "Scribe",
+    icon: BookOpen,
+    description: "Offers one optional, focused reflection prompt for your own journal.",
+    color: "text-emerald-300",
+    bgColor: "bg-emerald-300/10",
+    borderColor: "border-emerald-300/30",
+    placeholder: "What would you like a reflection prompt about?",
+  },
+  {
+    id: "lantern",
+    name: "Lantern",
+    icon: Lightbulb,
+    description: "Explains a wellbeing topic in plain language and offers one optional next step.",
+    color: "text-amber-200",
+    bgColor: "bg-amber-200/10",
+    borderColor: "border-amber-200/30",
+    placeholder: "What would you like explained?",
+  },
+  {
+    id: "anchor",
+    name: "Anchor",
+    icon: MapPin,
+    description: "Offers one optional sensory grounding cue and opens the guided grounding practice.",
+    color: "text-teal-300",
+    bgColor: "bg-teal-300/10",
+    borderColor: "border-teal-300/30",
+    placeholder: "What would help you feel a little more present right now?",
+    toolPath: "/tools/grounding",
+    toolLabel: "Open grounding guide",
+  },
+  {
+    id: "breathkeeper",
+    name: "Breathkeeper",
+    icon: Wind,
+    description: "Offers a choice-led breath cue and opens the gentle paced breathing guide.",
+    color: "text-sky-300",
+    bgColor: "bg-sky-300/10",
+    borderColor: "border-sky-300/30",
+    placeholder: "What would make a breathing practice feel comfortable for you?",
+    toolPath: "/tools/breathing",
+    toolLabel: "Open breathing guide",
+  },
+  {
+    id: "mirror",
+    name: "Mirror",
+    icon: ScanHeart,
+    description: "Reflects your own words back gently, without assuming what they mean.",
+    color: "text-violet-300",
+    bgColor: "bg-violet-300/10",
+    borderColor: "border-violet-300/30",
+    placeholder: "What would you like reflected back?",
+  },
+  {
+    id: "shepherd",
+    name: "Shepherd",
+    icon: UsersRound,
+    description: "Helps you explore peer circles or trusted connections at your own pace.",
+    color: "text-lime-300",
+    bgColor: "bg-lime-300/10",
+    borderColor: "border-lime-300/30",
+    placeholder: "What kind of connection would feel comfortable?",
+    toolPath: "/circles",
+    toolLabel: "Explore peer circles",
+  },
+  {
+    id: "compass",
+    name: "Compass",
+    icon: Compass,
+    description: "Helps you choose one small next step that fits a value you name.",
+    color: "text-amber-200",
+    bgColor: "bg-amber-200/10",
+    borderColor: "border-amber-200/30",
+    placeholder: "What matters to you as you decide what to do next?",
+  },
+  {
+    id: "gardener",
+    name: "Gardener",
+    icon: Sprout,
+    description: "Helps you recognize an effort you describe, without pressure to feel positive.",
+    color: "text-lime-300",
+    bgColor: "bg-lime-300/10",
+    borderColor: "border-lime-300/30",
+    placeholder: "Is there an effort or small moment you'd like to recognize?",
+    toolPath: "/milestones",
+    toolLabel: "Open milestones",
   },
 ];
 
@@ -229,6 +307,75 @@ const AgentsPage = () => {
                       </div>
                     )}
 
+                    {response.invitation && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">A gentle option</p>
+                        <p className="text-sm text-white/80">{response.invitation}</p>
+                      </div>
+                    )}
+
+                    {response.reflection && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">A reflection</p>
+                        <p className="text-sm text-white/80">{response.reflection}</p>
+                      </div>
+                    )}
+
+                    {response.question && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">If you want to explore</p>
+                        <p className="text-sm text-white/80">{response.question}</p>
+                      </div>
+                    )}
+
+                    {response.takeaway && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">Takeaway</p>
+                        <p className="text-sm text-white/80">{response.takeaway}</p>
+                      </div>
+                    )}
+
+                    {response.value && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">A value to consider</p>
+                        <p className="text-sm text-white/80">{response.value}</p>
+                      </div>
+                    )}
+
+                    {response.choice && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">A small choice</p>
+                        <p className="text-sm text-white/80">{response.choice}</p>
+                      </div>
+                    )}
+
+                    {response.win && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">An effort to recognize</p>
+                        <p className="text-sm text-white/80">{response.win}</p>
+                      </div>
+                    )}
+
+                    {response.reinforcement && (
+                      <p className="text-sm text-white/70">{response.reinforcement}</p>
+                    )}
+
+                    {response.nextStep && !response.toolPath && (
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">Next step</p>
+                        <p className="text-sm text-white/80">{response.nextStep}</p>
+                      </div>
+                    )}
+
+                    {selectedAgent.toolPath && (
+                      <a
+                        href={selectedAgent.toolPath}
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/20 px-5 text-sm font-medium text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-wcGold"
+                      >
+                        {selectedAgent.toolLabel}
+                      </a>
+                    )}
+
                     {response.steps && Array.isArray(response.steps) && (
                       <div>
                         <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-2">Steps</p>
@@ -264,7 +411,7 @@ const AgentsPage = () => {
                       </div>
                     )}
 
-                    {!response.summary && !response.insights && !response.wisdom && !response.steps && (
+                    {!response.summary && !response.insights && !response.wisdom && !response.steps && !response.reflection && !response.invitation && !response.takeaway && !response.question && (
                       <pre className="text-xs text-white/60 overflow-auto">
                         {JSON.stringify(response, null, 2)}
                       </pre>
@@ -281,4 +428,3 @@ const AgentsPage = () => {
 };
 
 export default AgentsPage;
-

@@ -22,8 +22,8 @@ Defines the responsibilities, inputs, outputs, and fail-closed behavior of the a
 
 ### 3. Build Planner
 
-- **Responsibility:** Turn “next valid task” into an ordered list of verification steps and prerequisites; ensure no step violates DoD or phase rules.
-- **Input:** App Architect output, DEFINITION_OF_DONE, phase verification script names from CURRENT_PHASE / TODAY.
+- **Responsibility:** Turn “next valid task” into an ordered list of maintained behavior tests and prerequisites; ensure no step violates DoD or phase rules.
+- **Input:** App Architect output, DEFINITION_OF_DONE, focused-test and release-gate requirements from CURRENT_PHASE / TODAY.
 - **Output:** Ordered list of verification commands or checklist items; prerequisites (e.g. steward context rebuilt); no steps that conflict with prohibited work.
 
 ### 4. Work Packet Generator
@@ -34,8 +34,8 @@ Defines the responsibilities, inputs, outputs, and fail-closed behavior of the a
 
 ### 5. QA Sentinel
 
-- **Responsibility:** Run phase verification scripts and any packet-specific checks; block completion if any fail; report pass/fail.
-- **Input:** Task packet, list of verification commands (e.g. `npm run phase55a:chatActions:verify`, `npm run phase56.verify`), optional manual checklist.
+- **Responsibility:** Run required maintained behavioral tests and any packet-specific checks; block completion if any fail; report pass/fail.
+- **Input:** Task packet, maintained behavior-test commands (for example a focused Vitest suite), release-gate result when required, and optional manual checklist.
 - **Output:** Pass/fail result; list of failed checks; no side effects on repo except reporting.
 - **Fail closed:** If any required verification fails, QA Sentinel must report fail and orchestration must not mark task complete or advance phase.
 
@@ -65,7 +65,7 @@ Defines the responsibilities, inputs, outputs, and fail-closed behavior of the a
 | TODAY.json | docs/runtime/ | App Architect, Memory Updater |
 | PHASE_ROADMAP.md | docs/roadmap/ (in steward context) | App Architect |
 | DEFINITION_OF_DONE.md | docs/architecture/ (in steward context) | Build Planner, Approval Gate |
-| Phase verification scripts | scripts/*.verify.mjs | Build Planner, QA Sentinel |
+| Maintained behavior tests | Vitest suites and Firebase Rules emulator checks | Build Planner, QA Sentinel |
 
 --------------------------------------------------
 
@@ -87,7 +87,7 @@ Defines the responsibilities, inputs, outputs, and fail-closed behavior of the a
 
 - **Steward context:** Must exist, valid JSON, integrity.all_required_present and all_non_empty and today_json_valid true, stale false, age within max_context_age_minutes. Else do not run pod.
 - **TODAY.json:** Must exist, valid JSON, required fields present. Else App Architect must not emit allowed work; treat as pause.
-- **Verification scripts:** If a phase requires a script (e.g. phase56.verify), that script must exist and be runnable. If it fails, QA Sentinel must fail and task must not be marked complete.
+- **Verification:** Select maintained tests that exercise the changed behavior. A failed required test blocks task completion. Run `npm run verify:release` before release readiness is claimed. Retired phase-era source scanners are not authoritative gates.
 - **Memory updates:** Only apply updates that conform to MEMORY_CONTRACT.md. Else reject and do not write.
 
 --------------------------------------------------

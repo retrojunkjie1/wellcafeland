@@ -2,7 +2,7 @@
 // Full-screen voice session workspace
 
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Mic, MicOff, Play, Pause, Video, AlertCircle, CheckCircle } from "lucide-react";
 import { sendVoiceSession } from "@/services/multimodalClient";
 import { useOSStore } from "@/stores/useOSStore";
@@ -16,13 +16,16 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
   const addMessage = osStore?.addMessage || (() => {});
   const closeWorkspace = osStore?.closeWorkspace || (() => {});
   const [isRecording, setIsRecording] = useState(false);
-  const [, setAudioBlob] = useState(initialAudioBlob);
+  const [pendingRecording, setPendingRecording] = useState(initialAudioBlob);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState("");
+  const [serviceConsent, setServiceConsent] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [, setSessionData] = useState(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const waveformCanvasRef = useRef(null);
@@ -30,10 +33,20 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
   const analyserRef = useRef(null);
 
   useEffect(() => {
-    if (initialAudioBlob) {
-      handleProcessAudio(initialAudioBlob);
-    }
+    if (!initialAudioBlob) return;
+    setPendingRecording(initialAudioBlob);
+    setAudioPreviewUrl(URL.createObjectURL(initialAudioBlob));
   }, [initialAudioBlob]);
+
+  useEffect(() => () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    if (audioContextRef.current) void audioContextRef.current.close();
+  }, []);
+
+  useEffect(() => {
+    if (!audioPreviewUrl) return undefined;
+    return () => URL.revokeObjectURL(audioPreviewUrl);
+  }, [audioPreviewUrl]);
 
   useEffect(() => {
     if (isRecording) {
@@ -56,6 +69,7 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -78,15 +92,25 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        setAudioBlob(blob);
         stream.getTracks().forEach(track => track.stop());
-        handleProcessAudio(blob);
+        mediaStreamRef.current = null;
+        if (blob.size > 0) {
+          setPendingRecording(blob);
+          setAudioPreviewUrl(URL.createObjectURL(blob));
+          setServiceConsent(false);
+        }
       };
 
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
     } catch (err) {
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+      if (audioContextRef.current) {
+        void audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
       console.error("Failed to start recording:", err);
       alert("Microphone access denied. Please enable microphone permissions.");
     }
@@ -179,15 +203,35 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
           tags: result.tags,
           crisis: result.crisis,
         });
+        return true;
       } else {
         alert(result.error || "Failed to process voice session");
+        return false;
       }
     } catch (err) {
       console.error("Voice session processing error:", err);
       alert("Failed to process voice session. Please try again.");
+      return false;
     } finally {
       setProcessing(false);
     }
+  };
+
+  const sendReviewedRecording = async () => {
+    if (!pendingRecording || !serviceConsent || processing) return;
+    const sent = await handleProcessAudio(pendingRecording);
+    if (sent) {
+      setPendingRecording(null);
+      setServiceConsent(false);
+      setAudioPreviewUrl("");
+    }
+  };
+
+  const discardRecording = () => {
+    setAudioPreviewUrl("");
+    setPendingRecording(null);
+    setServiceConsent(false);
+    setRecordingTime(0);
   };
 
   const handleFinish = () => {
@@ -239,6 +283,9 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
         <div className="lux-shell py-10 space-y-6">
           {/* Recording Area */}
           <div className="flex flex-col items-center justify-center min-h-[300px]">
+            <div className="mb-5 w-full max-w-xl rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-white/70">
+              Your recording stays on this device until you choose to send it. Sending shares the audio for transcription and your words with the AI guide for a reply. The transcript and reply are then added to this chat, which is saved in this browser. If Guide conversation memory is on, the exchange is also saved to your account until you clear it. <Link to="/privacy" className="text-amber-200 underline underline-offset-4">Privacy details</Link>.
+            </div>
             {isRecording ? (
               <>
                 <div className="relative mb-6">
@@ -268,6 +315,19 @@ const VoiceSessionWorkspace = ({ initialAudioBlob = null }) => {
               <div className="text-center">
                 <div className="animate-spin rounded-full h-16 w-16 border-4 border-wcGold border-t-transparent mx-auto mb-4" />
                 <div className="text-white/70">Processing your voice...</div>
+              </div>
+            ) : pendingRecording ? (
+              <div className="w-full max-w-xl space-y-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-center text-sm font-medium text-white">Your recording is ready to review</p>
+                {audioPreviewUrl && <audio controls preload="metadata" src={audioPreviewUrl} className="w-full" aria-label="Play your voice session recording" />}
+                <label className="flex min-h-11 items-start gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-3 text-sm leading-relaxed text-white/75">
+                  <input type="checkbox" checked={serviceConsent} onChange={(event) => setServiceConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-amber-300" />
+                  I choose to send this recording for transcription and send my words to the AI guide for a reply.
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={discardRecording} disabled={processing} className="min-h-11 rounded-xl border border-white/15 bg-white/5 px-4 text-sm text-white hover:bg-white/10 disabled:opacity-50">Discard recording</button>
+                  <button type="button" onClick={sendReviewedRecording} disabled={!serviceConsent || processing} className="min-h-11 rounded-xl border border-amber-200/60 bg-amber-300 px-4 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50">{processing ? "Sending for transcription…" : "Send recording for a reply"}</button>
+                </div>
               </div>
             ) : !response ? (
               <div className="text-center">

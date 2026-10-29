@@ -16,10 +16,15 @@ describe("workspace role routing", () => {
 
   it("keeps admin and practitioner workspaces on the same privileged account", () => {
     const identity = { role: "admin", isAdmin: true, isGodAdmin: true, isProvider: true, roles: ["admin", "provider"] };
-    expect(getAvailableWorkspaces(identity)).toEqual(["practitioner", "admin"]);
+    expect(getAvailableWorkspaces(identity)).toEqual(["client", "practitioner", "giver", "admin"]);
     expect(resolveWorkspaceHome(identity, "practitioner")).toBe("/provider/dashboard");
     expect(resolveWorkspaceHome(identity)).toBe("/admin/console");
     expect(getWorkspaceForPath("/admin/console")).toBe("admin");
+  });
+
+  it("does not give the all-dashboard switcher to a delegated administrator", () => {
+    const identity = { isAdmin: true, adminScopes: ["practitioner.review"], roles: ["client"] };
+    expect(getAvailableWorkspaces(identity)).toEqual(["client", "admin"]);
   });
 
   it("adds an approved community-giver workspace alongside the same account roles", () => {

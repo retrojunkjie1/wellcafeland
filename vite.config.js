@@ -17,9 +17,10 @@ export default defineConfig(({ mode }) => {
       environment: "jsdom",
       setupFiles: "./src/test/setup.js",
       include: ["src/**/*.test.{js,jsx}"],
-      // Keep the JSDOM-heavy UI suite below the host's CPU limit so the
-      // default 5s interaction tests do not time out under worker contention.
+      // Keep the JSDOM-heavy UI suite below the host's CPU limit. Give async
+      // interactions enough headroom when two browser-like environments run.
       maxWorkers: 2,
+      testTimeout: 15_000,
     },
     resolve: {
       alias: {
@@ -72,6 +73,46 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             "framer-motion": ["framer-motion"],
+            // Keep the growing country-scoped directory data out of the
+            // shared fallback chunk so the two assets stay independently cacheable.
+            "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
+            // Keep local catalog records in regional assets as the directory grows.
+            // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
+            "texas-local-resource-directory": [
+              "./src/data/texasCitiesDirectory.js",
+              "./src/data/texasCitiesBatchTwo.js",
+              "./src/data/texasCitiesBatchThree.js",
+              "./src/data/texasCitiesBatchFour.js",
+              "./src/data/texasCitiesBatchFive.js",
+              "./src/data/texasCitiesBatchSix.js",
+              "./src/data/texasCitiesBatchSeven.js",
+              "./src/data/texasCitiesBatchEight.js",
+            ],
+            "us-regional-resource-directories": [
+              "./src/data/coloradoCitiesDirectory.js",
+              "./src/data/californiaDirectory.js",
+              "./src/data/floridaDirectory.js",
+              "./src/data/illinoisDirectory.js",
+              "./src/data/georgiaDirectory.js",
+              "./src/data/newYorkDirectory.js",
+              "./src/data/ohioDirectory.js",
+              "./src/data/pennsylvaniaDirectory.js",
+              "./src/data/arizonaDirectory.js",
+              "./src/data/oklahomaDirectory.js",
+              "./src/data/alabamaDirectory.js",
+              "./src/data/alaskaDirectory.js",
+              "./src/data/arkansasDirectory.js",
+              "./src/data/connecticutDirectory.js",
+            ],
+            "nigeria-resource-directory": ["./src/data/nigeriaRecoveryDirectory.js"],
+            "delaware-resource-directory": ["./src/data/delawareDirectory.js"],
+            "hawaii-resource-directory": ["./src/data/hawaiiDirectory.js"],
+            "idaho-resource-directory": ["./src/data/idahoDirectory.js"],
+            "indiana-resource-directory": ["./src/data/indianaDirectory.js"],
+            "iowa-resource-directory": ["./src/data/iowaDirectory.js"],
+            "kansas-resource-directory": ["./src/data/kansasDirectory.js"],
+            "louisiana-resource-directory": ["./src/data/louisianaDirectory.js"],
+            "maine-resource-directory": ["./src/data/maineDirectory.js"],
             "luxury-ui": [
               "./src/components/layout/AmbientOrbs",
               "./src/components/explore/CategoryChips",

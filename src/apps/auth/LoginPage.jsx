@@ -4,6 +4,17 @@ import { reload, sendEmailVerification, signInWithEmailAndPassword, signInAnonym
 import { auth } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../../components/Logo";
+import PasswordInput from "../../components/auth/PasswordInput";
+
+function safeInternalPath(value, origin) {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/";
+  try {
+    const target = new URL(value, origin);
+    return target.origin === origin ? `${target.pathname}${target.search}${target.hash}` : "/";
+  } catch {
+    return "/";
+  }
+}
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +25,10 @@ const LoginPage = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useAuth();
   const fromLocation = location.state?.from;
-  const destination = fromLocation?.pathname ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}` : "/";
+  const stateDestination = fromLocation?.pathname ? `${fromLocation.pathname}${fromLocation.search || ""}${fromLocation.hash || ""}` : "";
+  const queryDestination = new URLSearchParams(location.search).get("returnTo") || "";
+  const destination = safeInternalPath(stateDestination || queryDestination, window.location.origin);
+  const passwordResetComplete = new URLSearchParams(location.search).get("passwordReset") === "1";
 
   React.useEffect(() => {
     if (isAuthenticated && user && !user.isAnonymous && user.emailVerified) {
@@ -28,7 +42,7 @@ const LoginPage = () => {
     setLoading(true);
 
     if (!auth) {
-      setError("Authentication is not available. Please check your Firebase configuration.");
+      setError("Sign-in is temporarily unavailable. Please try again later or contact WellnessCafe support.");
       setLoading(false);
       return;
     }
@@ -67,8 +81,10 @@ const LoginPage = () => {
         errorMessage = "Incorrect password.";
       } else if (err.code === "auth/too-many-requests") {
         errorMessage = "Too many failed attempts. Please try again later.";
-      } else if (err.message) {
-        errorMessage = err.message;
+      } else if (err.code === "auth/network-request-failed") {
+        errorMessage = "We couldn’t connect just now. Check your internet connection and try again.";
+      } else if (err.code === "auth/invalid-credential") {
+        errorMessage = "The email or password doesn’t match. Check both and try again.";
       }
 
       setError(errorMessage);
@@ -82,7 +98,7 @@ const LoginPage = () => {
     setLoading(true);
 
     if (!auth) {
-      setError("Authentication is not available. Please check your Firebase configuration.");
+      setError("Guest access is temporarily unavailable. Please try again later.");
       setLoading(false);
       return;
     }
@@ -123,6 +139,11 @@ const LoginPage = () => {
               {error}
             </div>
           )}
+          {passwordResetComplete && !error && (
+            <p role="status" aria-live="polite" className="rounded-xl border border-emerald-200/20 bg-emerald-100/[0.05] px-4 py-3 text-sm leading-relaxed text-emerald-50">
+              Your password was updated. Sign in with your new password.
+            </p>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -143,13 +164,13 @@ const LoginPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="block text-xs font-medium text-muted-foreground">
-                Password
-              </label>
-              <input
+              <div className="flex items-center justify-between gap-3">
+                <label htmlFor="password" className="block text-xs font-medium text-muted-foreground">Password</label>
+                <Link to="/forgot-password" state={location.state} className="text-xs text-amber-400 underline underline-offset-2 hover:text-amber-300">Forgot password?</Link>
+              </div>
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

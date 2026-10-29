@@ -1,37 +1,36 @@
-// src/components/system/MarkdownLite.jsx
 // Safe Markdown-lite renderer (no HTML, no dangerouslySetInnerHTML).
 
 import React from "react";
 
-const wrapperClass = "wc-md text-[15px] sm:text-[16px] leading-relaxed text-white/85";
-const headingClass = "mt-3 font-medium tracking-wide text-white";
-const listClass = "mt-2 space-y-1 pl-5";
-const quoteClass = "mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white/75";
+const wrapperClass = "wc-md text-[15px] leading-[1.7] text-white/85 sm:text-base";
+const headingClass = "font-medium tracking-[-0.025em] text-white";
+const listClass = "my-3 space-y-2 pl-5 marker:text-amber-200/70";
+const quoteClass = "my-4 border-l-2 border-amber-200/60 bg-amber-100/[0.045] py-3 pl-4 pr-3 text-white/90 sm:pl-5";
 const codeClass = "rounded-md border border-white/10 bg-black/30 px-1 py-0.5 text-[0.95em] text-white/80";
-const highlightClass = "mt-3 rounded-2xl border border-amber-400/15 bg-amber-400/5 px-3 py-2 text-white/80";
+const highlightClass = "my-4 rounded-xl border border-amber-200/20 bg-amber-100/[0.055] px-4 py-3 text-white/90";
 
 function parseInline(str) {
-  if(!str) return [];
+  if (!str) return [];
   const out = [];
   let i = 0;
-  while(i < str.length) {
+  while (i < str.length) {
     const rest = str.slice(i);
     const bold = rest.match(/^\*\*(.+?)\*\*/);
     const italic = rest.match(/^(?!\*\*)\*(.+?)\*/);
     const code = rest.match(/^`([^`]+)`/);
-    if(bold) {
+    if (bold) {
       out.push({ type: "strong", text: bold[1] });
       i += bold[0].length;
-    } else if(italic) {
+    } else if (italic) {
       out.push({ type: "em", text: italic[1] });
       i += italic[0].length;
-    } else if(code) {
+    } else if (code) {
       out.push({ type: "code", text: code[1] });
       i += code[0].length;
     } else {
       const next = rest.search(/\*\*|(?!\*\*)\*|`/);
       const end = next === -1 ? rest.length : next;
-      if(end > 0) out.push({ type: "text", text: rest.slice(0, end) });
+      if (end > 0) out.push({ type: "text", text: rest.slice(0, end) });
       i += end || 1;
     }
   }
@@ -39,86 +38,98 @@ function parseInline(str) {
 }
 
 function renderInline(nodes) {
-  return nodes.map((n, i) => {
-    if(n.type === "strong") return <strong key={i}>{n.text}</strong>;
-    if(n.type === "em") return <em key={i}>{n.text}</em>;
-    if(n.type === "code") return <code key={i} className={codeClass}>{n.text}</code>;
-    return <React.Fragment key={i}>{n.text}</React.Fragment>;
+  return nodes.map((node, index) => {
+    if (node.type === "strong") return <strong key={index} className="font-semibold text-white">{node.text}</strong>;
+    if (node.type === "em") return <em key={index} className="text-white/95">{node.text}</em>;
+    if (node.type === "code") return <code key={index} className={codeClass}>{node.text}</code>;
+    return <React.Fragment key={index}>{node.text}</React.Fragment>;
   });
 }
 
+const isRule = (line) => /^\s*(?:---+|___+|\*\s*\*\s*\*\s*)\s*$/.test(line);
+const isListItem = (line) => /^\s*(?:[-*+]\s+|\d+\.\s+)/.test(line);
+const isBlockStart = (line) => /^\s{0,3}#{1,3}\s+/.test(line) || /^\s*!!\s+/.test(line) || /^\s*>/.test(line) || isRule(line) || isListItem(line);
+
 function parseBlocks(text) {
-  if(!text || typeof text !== "string") return [];
-  const lines = text.split("\n");
+  if (!text || typeof text !== "string") return [];
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const blocks = [];
   let i = 0;
-  while(i < lines.length) {
-    const line = lines[i];
-    const trimmed = line.trimEnd();
-    if(trimmed.startsWith("# ")) {
-      blocks.push({ type: "h3", raw: trimmed.slice(2) });
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { i++; continue; }
+
+    if (isRule(line)) {
+      blocks.push({ type: "rule" });
       i++;
-    } else if(trimmed.startsWith("## ")) {
-      blocks.push({ type: "h4", raw: trimmed.slice(3) });
-      i++;
-    } else if(trimmed.startsWith("!! ")) {
-      blocks.push({ type: "highlight", raw: trimmed.slice(3) });
-      i++;
-    } else if(trimmed.startsWith("> ")) {
-      blocks.push({ type: "quote", raw: trimmed.slice(2) });
-      i++;
-    } else if(trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-      const items = [];
-      while(i < lines.length) {
-        const l = lines[i];
-        const t = l.trimEnd();
-        if(t.startsWith("- ") || t.startsWith("* ")) {
-          items.push(t.slice(2));
-          i++;
-        } else if(t === "") {
-          i++;
-        } else break;
-      }
-      blocks.push({ type: "ul", items });
-    } else if(/^\d+\.\s/.test(trimmed)) {
-      const items = [];
-      while(i < lines.length) {
-        const l = lines[i];
-        const t = l.trimEnd();
-        const num = t.match(/^(\d+)\.\s(.+)$/);
-        if(num) {
-          items.push(num[2]);
-          i++;
-        } else if(t === "") {
-          i++;
-        } else break;
-      }
-      blocks.push({ type: "ol", items });
-    } else if(trimmed === "") {
-      blocks.push({ type: "br" });
-      i++;
-    } else {
-      blocks.push({ type: "p", raw: trimmed });
-      i++;
+      continue;
     }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      blocks.push({ type: heading[1].length === 1 ? "h2" : "h3", raw: heading[2] });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith("!! ")) {
+      blocks.push({ type: "highlight", raw: line.slice(3) });
+      i++;
+      continue;
+    }
+
+    if (line.startsWith(">")) {
+      const quote = [];
+      while (i < lines.length && /^\s*>/.test(lines[i])) quote.push(lines[i++].replace(/^\s*>\s?/, ""));
+      blocks.push({ type: "quote", raw: quote.join(" ").trim() });
+      continue;
+    }
+
+    if (isListItem(line)) {
+      const ordered = /^\d+\.\s+/.test(line);
+      const items = [];
+      while (i < lines.length) {
+        const item = lines[i].trim().match(ordered ? /^\d+\.\s+(.+)$/ : /^[-*+]\s+(.+)$/);
+        if (item) { items.push(item[1]); i++; }
+        else if (!lines[i].trim()) i++;
+        else break;
+      }
+      blocks.push({ type: ordered ? "ol" : "ul", items });
+      continue;
+    }
+
+    // A standalone quoted sentence reads more clearly as a callout than as inline punctuation.
+    const standaloneQuote = line.match(/^(?:"([^"]+)"|'([^']+)'|“([^”]+)”|‘([^’]+)’)$/);
+    const quotedText = standaloneQuote?.slice(1).find(Boolean);
+    if (quotedText?.trim()) {
+      blocks.push({ type: "quote", raw: quotedText.trim() });
+      i++;
+      continue;
+    }
+
+    const paragraph = [line];
+    i++;
+    while (i < lines.length && lines[i].trim() && !isBlockStart(lines[i].trim())) paragraph.push(lines[i++].trim());
+    blocks.push({ type: "p", raw: paragraph.join(" ") });
   }
   return blocks;
 }
 
 export default function MarkdownLite({ text }) {
-  if(!text) return null;
+  if (!text) return null;
   const blocks = parseBlocks(text);
   return (
     <div className={wrapperClass}>
-      {blocks.map((block, idx) => {
-        if(block.type === "h3") return <h3 key={idx} className={headingClass + " text-lg"}>{renderInline(parseInline(block.raw))}</h3>;
-        if(block.type === "h4") return <h4 key={idx} className={headingClass + " text-base"}>{renderInline(parseInline(block.raw))}</h4>;
-        if(block.type === "highlight") return <div key={idx} className={highlightClass}>{renderInline(parseInline(block.raw))}</div>;
-        if(block.type === "quote") return <blockquote key={idx} className={quoteClass}>{renderInline(parseInline(block.raw))}</blockquote>;
-        if(block.type === "ul") return <ul key={idx} className={listClass}>{block.items.map((item, j) => <li key={j}>{renderInline(parseInline(item))}</li>)}</ul>;
-        if(block.type === "ol") return <ol key={idx} className={listClass}>{block.items.map((item, j) => <li key={j}>{renderInline(parseInline(item))}</li>)}</ol>;
-        if(block.type === "br") return <br key={idx} />;
-        if(block.type === "p") return <p key={idx} className="mt-2 first:mt-0">{renderInline(parseInline(block.raw))}</p>;
+      {blocks.map((block, index) => {
+        if (block.type === "h2") return <h2 key={index} className={`${headingClass} mb-1 mt-5 text-xl first:mt-0 sm:text-2xl`}>{renderInline(parseInline(block.raw))}</h2>;
+        if (block.type === "h3") return <h3 key={index} className={`${headingClass} mb-1 mt-4 text-lg first:mt-0 sm:text-xl`}>{renderInline(parseInline(block.raw))}</h3>;
+        if (block.type === "highlight") return <div key={index} className={highlightClass}>{renderInline(parseInline(block.raw))}</div>;
+        if (block.type === "quote") return <blockquote key={index} className={quoteClass}>{renderInline(parseInline(block.raw))}</blockquote>;
+        if (block.type === "ul") return <ul key={index} className={`${listClass} list-disc`}>{block.items.map((item, itemIndex) => <li key={itemIndex} className="pl-1">{renderInline(parseInline(item))}</li>)}</ul>;
+        if (block.type === "ol") return <ol key={index} className={`${listClass} list-decimal`}>{block.items.map((item, itemIndex) => <li key={itemIndex} className="pl-1">{renderInline(parseInline(item))}</li>)}</ol>;
+        if (block.type === "rule") return <hr key={index} className="my-4 border-0 border-t border-white/10" />;
+        if (block.type === "p") return <p key={index} className="my-2 first:mt-0 last:mb-0">{renderInline(parseInline(block.raw))}</p>;
         return null;
       })}
     </div>

@@ -3,7 +3,7 @@
 // Phase 36B: Fully Integrated Experience
 // Phase 44: Memory Integration
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Wind, Heart, Timer, ArrowLeft, X } from "lucide-react";
 import { OrbAnimationController, OrbThemes } from "@/engines/tools/OrbEngine";
@@ -16,6 +16,8 @@ import ToolPanel from "@/components/tools/ToolPanel";
 import MetricCard from "@/components/tools/MetricCard";
 import { ToolSessionFooter } from "@/components/tools/ToolSessionFooter";
 import { useToolMemory } from "@/hooks/useToolMemory";
+
+const DEFAULT_BREATH_PATTERN = { inhale: 4, hold: 7, exhale: 8, pause: 0 };
 
 const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   const navigate = useNavigate();
@@ -32,6 +34,16 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   const [coherenceScore, setCoherenceScore] = useState(0);
   const [soundscapeVolume, setSoundscapeVolume] = useState(0.5);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const breathPattern = tool?.breathPattern || DEFAULT_BREATH_PATTERN;
+  const themeKey = tool?.theme?.toUpperCase() || "CALM";
+  const orbTheme = OrbThemes[themeKey] || OrbThemes.CALM;
+  const orbController = useMemo(() => new OrbAnimationController(breathPattern, orbTheme), [breathPattern, orbTheme]);
+  const breathCountRef = useRef(0);
+  const voiceEnabledRef = useRef(voiceEnabled);
+
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
 
   // Refs for engines
   const orbControllerRef = useRef(null);
@@ -42,25 +54,19 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
 
   // Initialize engines
   useEffect(() => {
-    // Initialize breath pattern (4-7-8 breathing)
-    const pattern = tool?.breathPattern || { inhale: 4, hold: 7, exhale: 8, pause: 0 };
-    const themeKey = tool?.theme?.toUpperCase() || 'CALM';
-    const theme = OrbThemes[themeKey] || OrbThemes.CALM;
-
-    // Create orb controller
-    const orb = new OrbAnimationController(pattern, theme);
-    orbControllerRef.current = orb;
-    orb.setCallbacks({
+    orbControllerRef.current = orbController;
+    orbController.setCallbacks({
       onPhaseChange: (phase) => {
         // Speak guidance
-        if (voiceEnabled && voiceRef.current) {
-          voiceRef.current.speakPhaseGuidance(phase, pattern);
+        if (voiceEnabledRef.current && voiceRef.current) {
+          voiceRef.current.speakPhaseGuidance(phase, breathPattern);
         }
         
         // Record breath
         if (phase === 'exhale' && metricsRef.current) {
           metricsRef.current.recordBreath(phase);
-          const newBreathCount = breathCount + 1;
+          const newBreathCount = breathCountRef.current + 1;
+          breathCountRef.current = newBreathCount;
           setBreathCount(newBreathCount);
           const newCoherence = metricsRef.current.getMetrics().coherenceScore;
           setCoherenceScore(newCoherence);
@@ -94,9 +100,7 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
     metricsRef.current = new MetricsEngine('breathing');
 
     return () => {
-      if (orbControllerRef.current) {
-        orbControllerRef.current.stop();
-      }
+      orbController.stop();
       if (soundscapeRef.current) {
         soundscapeRef.current.stop();
       }
@@ -107,7 +111,7 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
         clearInterval(timerRef.current);
       }
     };
-  }, [tool, voiceEnabled]);
+  }, [orbController, breathPattern, updateSession]);
 
   // Session timer
   useEffect(() => {
@@ -130,10 +134,10 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
   const handleBegin = async () => {
     setIsActive(true);
     setBreathCount(0);
+    breathCountRef.current = 0;
     setSessionTime(0);
 
     // Phase 44: Start memory session
-    const breathPattern = tool?.breathPattern || { inhale: 4, hold: 7, exhale: 8, pause: 0 };
     startSession({
       mode: tool?.mode || "guided",
       pattern: breathPattern,
@@ -351,9 +355,9 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
             )}
 
             {/* Breathing Orb */}
-            {orbControllerRef.current && (
+            {orbController && (
               <ToolOrb 
-                controller={orbControllerRef.current} 
+                controller={orbController}
                 theme={tool?.theme || "calm"} 
               />
             )}
@@ -431,4 +435,3 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
 };
 
 export default BreathingToolCinematic;
-

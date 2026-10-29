@@ -16,9 +16,10 @@ const NEED_DEV_AUTH = import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS 
 const ResourcesDetailPage = () => {
   const {id} = useParams()
   const navigate = useNavigate()
-  const [item,setItem] = useState(null)
-  const [loading,setLoading] = useState(true)
-  const [error,setError] = useState(null)
+  const [resourceState,setResourceState] = useState({ id: null, item: null, loading: true, error: null })
+  const item = resourceState.id === id ? resourceState.item : null
+  const loading = !id || resourceState.id !== id || resourceState.loading
+  const error = resourceState.id === id ? resourceState.error : null
   const [authReady,setAuthReady] = useState(!NEED_DEV_AUTH)
 
   useEffect(() => {
@@ -27,23 +28,14 @@ const ResourcesDetailPage = () => {
   },[])
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false)
-      setError("Invalid resource")
-      return
-    }
-    if (!authReady) return
-    setLoading(true)
-    setError(null)
+    if (!id || !authReady) return
     getResource(id)
       .then((r) => {
-        setItem(r);
-        setError(r ? null : "Not found");
+        setResourceState({ id, item: r, loading: false, error: r ? null : "Not found" });
       })
       .catch((err) => {
-        setError(err.message || "Failed to load");
+        setResourceState({ id, item: null, loading: false, error: err.message || "Failed to load" });
       })
-      .finally(() => setLoading(false))
   },[id,authReady])
 
   if (!authReady) {
@@ -52,6 +44,18 @@ const ResourcesDetailPage = () => {
         <p className="text-amber-200 text-sm">
           Auth emulator not ready. Start auth emulator or disable VITE_USE_EMULATORS.
         </p>
+      </div>
+    )
+  }
+
+  if (!id) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+        <p className="text-white/60 mb-4">Invalid resource</p>
+        <button type="button" onClick={() => navigate("/resources")} className="flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10">
+          <ArrowLeft className="h-4 w-4" />
+          Back to resources
+        </button>
       </div>
     )
   }

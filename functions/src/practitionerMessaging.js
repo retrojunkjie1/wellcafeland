@@ -56,10 +56,11 @@ function toMessage(doc) {
 }
 
 exports.listProviderConversationMessages = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await providerScheduling.requireProvider(request);
+  const providerId = await providerScheduling.requireProviderCapability(request, "client.messages.exchange");
   const clientId = typeof request.data?.clientId === "string" ? request.data.clientId.trim() : "";
   if (!clientId || clientId.length > 128) throw new HttpsError("invalid-argument", "Choose a connected client.");
   return db.runTransaction(async (transaction) => {
+    await providerScheduling.requireProviderCapabilityInTransaction(transaction, request, "client.messages.exchange");
     const connection = await transaction.get(activeConnectionQuery(clientId, providerId));
     requireActiveConnectionSnapshot(connection);
     const snapshot = await transaction.get(messageQuery(clientId, providerId));
@@ -68,7 +69,7 @@ exports.listProviderConversationMessages = onCall({ region: REGION, enforceAppCh
 });
 
 exports.sendProviderMessage = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
-  const providerId = await providerScheduling.requireProvider(request);
+  const providerId = await providerScheduling.requireProviderCapability(request, "client.messages.exchange");
   const clientId = typeof request.data?.clientId === "string" ? request.data.clientId.trim() : "";
   const content = typeof request.data?.content === "string" ? request.data.content.trim() : "";
   if (!clientId || clientId.length > 128) throw new HttpsError("invalid-argument", "Choose a connected client.");
@@ -76,6 +77,7 @@ exports.sendProviderMessage = onCall({ region: REGION, enforceAppCheck: true }, 
   await enforceMessageQuota(providerId);
   const ref = db.collection("conversations").doc(conversationId(clientId, providerId)).collection("messages").doc();
   await db.runTransaction(async (transaction) => {
+    await providerScheduling.requireProviderCapabilityInTransaction(transaction, request, "client.messages.exchange");
     const connection = await transaction.get(activeConnectionQuery(clientId, providerId));
     requireActiveConnectionSnapshot(connection);
     transaction.create(ref, {
@@ -118,8 +120,14 @@ exports.sendClientMessage = onCall({ region: REGION, enforceAppCheck: true }, as
   await enforceMessageQuota(clientId);
   const ref = db.collection("conversations").doc(conversationId(clientId, practitionerId)).collection("messages").doc();
   await db.runTransaction(async (transaction) => {
-    const connection = await transaction.get(activeConnectionQuery(clientId, practitionerId));
+    const [connection, practitionerAccount] = await Promise.all([
+      transaction.get(activeConnectionQuery(clientId, practitionerId)),
+      transaction.get(db.collection("users").doc(practitionerId)),
+    ]);
     requireActiveConnectionSnapshot(connection);
+    if (practitionerAccount.exists && practitionerAccount.get("practitionerWorkspaceActive") === false) {
+      throw new HttpsError("failed-precondition", "This practitioner is not currently receiving messages.");
+    }
     transaction.create(ref, {
       clientId,
       providerId: practitionerId,

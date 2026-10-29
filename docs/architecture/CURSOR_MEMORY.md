@@ -97,12 +97,15 @@ Interprets user input and attaches:
 - Video CDN / storage
 
 ## Development rules (locked phases)
-Work proceeds in locked phases with:
-- objective → tasks → verification script → manual test → pass gate
+Work proceeds in defined phases with:
+- objective → scoped tasks → maintained behavioral tests → release gate
+- focused tests for changed behavior; `npm run verify:release` before release readiness
+- manual checks only where automation cannot verify the real device or deployed environment
 Avoid:
 - duplicated UI controls
 - architectural loops
 - repeated implementations
+- retired phase-era source scanners as active quality gates
 Always move forward after verification passes.
 
 ## Current phase

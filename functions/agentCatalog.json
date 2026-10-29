@@ -1,0 +1,601 @@
+{
+  "version": 1,
+  "agents": [
+    {
+      "id": "overseer",
+      "name": "Overseer",
+      "role": "Operational review planner",
+      "scope": "system",
+      "triggersWhen": [
+        "admin.operations.review.requested"
+      ],
+      "consumes": [
+        "system.metrics.aggregate",
+        "system.riskSignals.aggregate",
+        "agentControls.aggregate",
+        "admin.reviewQueues.aggregate"
+      ],
+      "produces": [
+        "admin.operations.reviewPlan"
+      ],
+      "priority": 1,
+      "enabledByDefault": true,
+      "notes": "Prepares evidence-bounded operational review steps for authorized administrators. Uses aggregate snapshots only and never changes system configuration.",
+      "handlerId": "overseer",
+      "readiness": "implemented"
+    },
+    {
+      "id": "sentinel",
+      "name": "Sentinel",
+      "role": "Choice-led safety support router",
+      "scope": "user",
+      "triggersWhen": [
+        "support.route.selected"
+      ],
+      "consumes": [
+        "support.need.selected"
+      ],
+      "produces": [
+        "safety.supportRoute"
+      ],
+      "priority": 1,
+      "enabledByDefault": true,
+      "notes": "Returns established human-support routes from one explicit choice. Does not read free text, label risk, create a clinical record, or alert a practitioner.",
+      "handlerId": "sentinel",
+      "readiness": "implemented"
+    },
+    {
+      "id": "seer",
+      "name": "Seer",
+      "role": "Trajectory forecaster",
+      "scope": "user",
+      "triggersWhen": [
+        "chat.message.user",
+        "emotion.history.updated"
+      ],
+      "consumes": [
+        "emotionalHistory",
+        "message.emotion",
+        "message.triggers"
+      ],
+      "produces": [
+        "trajectory.drift",
+        "trajectory.cluster",
+        "trajectory.forecast"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Reads the emotional timeline and forecasts whether things are improving, declining, or becoming volatile.",
+      "handlerId": "seer",
+      "readiness": "implemented"
+    },
+    {
+      "id": "oracle",
+      "name": "Oracle",
+      "role": "Intervention selector",
+      "scope": "user",
+      "triggersWhen": [
+        "chat.message.user",
+        "signals.ready"
+      ],
+      "consumes": [
+        "message.content",
+        "message.emotion",
+        "message.triggers",
+        "message.risk",
+        "trajectory",
+        "humanMap.layers"
+      ],
+      "produces": [
+        "recommendation.tool",
+        "recommendation.style"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Chooses which tool or approach to suggest next, based on risk, triggers, and human map context.",
+      "handlerId": "oracle",
+      "readiness": "implemented"
+    },
+    {
+      "id": "cherubim",
+      "name": "Cherubim",
+      "role": "Boundary & guardrail agent",
+      "scope": "system",
+      "triggersWhen": [
+        "chat.message.user",
+        "chat.message.assistant"
+      ],
+      "consumes": [
+        "message.content",
+        "message.risk",
+        "policy.rules",
+        "safety.flags"
+      ],
+      "produces": [
+        "safety.contentGuards",
+        "safety.softRedirects"
+      ],
+      "priority": 1,
+      "enabledByDefault": true,
+      "notes": "Reviews peer-community messages for explicit harmful promotion, credible threats, targeted harassment, exploitation, and scams while allowing recovery disclosures and help-seeking.",
+      "handlerId": "cherubim",
+      "readiness": "implemented"
+    },
+    {
+      "id": "healer",
+      "name": "Healer",
+      "role": "Compassion & gentleness",
+      "scope": "user",
+      "triggersWhen": [
+        "affirmations.supportTopic.selected",
+        "affirmations.generate.requested"
+      ],
+      "consumes": [
+        "affirmations.supportTopic"
+      ],
+      "produces": [
+        "affirmations.summary",
+        "affirmations.optionalPhrases"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Creates a bounded set of optional, editable supportive phrases from the support topic the client explicitly selected.",
+      "handlerId": "healer_spiritual",
+      "readiness": "implemented"
+    },
+    {
+      "id": "towncrier",
+      "name": "Towncrier",
+      "role": "Announcements & updates",
+      "scope": "user",
+      "triggersWhen": [
+        "system.events",
+        "provider.message",
+        "resource.found"
+      ],
+      "consumes": [
+        "notifications.queue",
+        "system.changes"
+      ],
+      "produces": [
+        "notifications.toUser"
+      ],
+      "priority": 4,
+      "enabledByDefault": true,
+      "notes": "Drafts a plain-language, admin-reviewed service announcement from a fixed update category; does not publish or send it.",
+      "handlerId": "towncrier",
+      "readiness": "implemented"
+    },
+    {
+      "id": "scribe",
+      "name": "Scribe",
+      "role": "Reflection & journaling prompts",
+      "scope": "user",
+      "triggersWhen": [
+        "message.triggers.guilt",
+        "message.triggers.grief",
+        "message.triggers.regret"
+      ],
+      "consumes": [
+        "message.content",
+        "message.emotion",
+        "message.triggers"
+      ],
+      "produces": [
+        "prompt.journaling",
+        "recommendation.tool=journaling"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Offers gently-phrased prompts when writing or reflection would help process what just surfaced.",
+      "handlerId": "scribe",
+      "readiness": "implemented"
+    },
+    {
+      "id": "cartographer",
+      "name": "Cartographer",
+      "role": "Human Map maintainer",
+      "scope": "user",
+      "triggersWhen": [
+        "chat.message.user",
+        "humanMap.updateRequested"
+      ],
+      "consumes": [
+        "message.content",
+        "message.emotion",
+        "message.triggers",
+        "risk",
+        "trajectory"
+      ],
+      "produces": [
+        "humanMap.layers",
+        "humanMap.segments",
+        "humanMap.tags"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Builds a user-owned support map from choices the client explicitly selects; does not infer patterns or share it with practitioners.",
+      "handlerId": "cartographer",
+      "readiness": "implemented"
+    },
+    {
+      "id": "bridge",
+      "name": "Bridge",
+      "role": "Real-world connection agent",
+      "scope": "user",
+      "triggersWhen": [
+        "realHelp.contactPreparation.requested"
+      ],
+      "consumes": [
+        "support.category",
+        "contact.method"
+      ],
+      "produces": [
+        "contact.openingLine",
+        "contact.questions",
+        "contact.nextStep"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Prepares an optional opening line and questions for a client-selected real-help contact; does not search, contact services, or receive location or personal details.",
+      "handlerId": "bridge",
+      "readiness": "implemented"
+    },
+    {
+      "id": "mirror",
+      "name": "Mirror",
+      "role": "Gentle pattern naming",
+      "scope": "user",
+      "triggersWhen": [
+        "trajectory.cluster.detected",
+        "loop.detected"
+      ],
+      "consumes": [
+        "emotionalHistory",
+        "trajectory.cluster",
+        "trajectory.drift",
+        "message.content"
+      ],
+      "produces": [
+        "microReflections.patterns"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Gently reflects back repeating patterns (like loops or cycles) in language that feels kind and non-clinical.",
+      "handlerId": "mirror",
+      "readiness": "implemented"
+    },
+    {
+      "id": "anchor",
+      "name": "Anchor",
+      "role": "Grounding & body-based support",
+      "scope": "user",
+      "triggersWhen": [
+        "message.triggers.overwhelm",
+        "message.emotion.label=overwhelmed",
+        "risk.moderate"
+      ],
+      "consumes": [
+        "message.emotion",
+        "message.triggers",
+        "risk"
+      ],
+      "produces": [
+        "recommendation.tool=grounding",
+        "microNudges.bodyAwareness"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Leans toward body-based practices when the system senses overwhelm, collapse, or disconnection.",
+      "handlerId": "anchor",
+      "readiness": "implemented"
+    },
+    {
+      "id": "breathkeeper",
+      "name": "Breathkeeper",
+      "role": "Breath & nervous system agent",
+      "scope": "user",
+      "triggersWhen": [
+        "message.triggers.anxiety",
+        "message.emotion.label=anxious",
+        "panic.keywords"
+      ],
+      "consumes": [
+        "message.content",
+        "message.emotion",
+        "triggers"
+      ],
+      "produces": [
+        "recommendation.tool=breathing",
+        "breathing.scripts"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Handles breathing-based practices and chooses which pattern is most appropriate for the current state.",
+      "handlerId": "breathkeeper",
+      "readiness": "implemented"
+    },
+    {
+      "id": "shepherd",
+      "name": "Shepherd",
+      "role": "Connection & community agent",
+      "scope": "user",
+      "triggersWhen": [
+        "user explicitly requests connection guidance"
+      ],
+      "consumes": [
+        "user-selected social preference"
+      ],
+      "produces": [
+        "recommendation.circles",
+        "recommendation.connections"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Offers one optional next step from an explicit user-selected comfort preference; never infers isolation or contacts anyone.",
+      "handlerId": "shepherd",
+      "readiness": "implemented"
+    },
+    {
+      "id": "gatekeeper",
+      "name": "Gatekeeper",
+      "role": "Provider & care routing",
+      "scope": "provider",
+      "triggersWhen": [
+        "risk.high",
+        "provider.timeline.update"
+      ],
+      "consumes": [
+        "risk",
+        "humanMap.layers",
+        "providerRegistry",
+        "user.profile"
+      ],
+      "produces": [
+        "providerRouting.suggestions",
+        "providerTimeline.entries"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Prepares a consent-first next-step conversation from a practitioner-selected pathway; never receives client records, triages, makes referrals, or contacts anyone.",
+      "handlerId": "gatekeeper",
+      "readiness": "implemented"
+    },
+    {
+      "id": "rhythm",
+      "name": "Rhythm",
+      "role": "Daily rhythm & micro-habit agent",
+      "scope": "user",
+      "triggersWhen": [
+        "time.ofDay",
+        "streaks.updated",
+        "tool.usagePattern"
+      ],
+      "consumes": [
+        "usage.streaks",
+        "time.local",
+        "tool.usageHistory"
+      ],
+      "produces": [
+        "microNudges.routines",
+        "suggested.checkIns"
+      ],
+      "priority": 4,
+      "enabledByDefault": true,
+      "notes": "Looks at time-of-day and usage rhythm to suggest gentle check-ins and micro-practices.",
+      "handlerId": "rhythm",
+      "readiness": "implemented"
+    },
+    {
+      "id": "lantern",
+      "name": "Lantern",
+      "role": "Education & understanding",
+      "scope": "user",
+      "triggersWhen": [
+        "education.intent",
+        "message.triggers.confusion"
+      ],
+      "consumes": [
+        "message.content",
+        "message.triggers",
+        "education.catalog"
+      ],
+      "produces": [
+        "education.recommendations",
+        "education.snippets"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Recommends educational modules when the user is confused, curious, or asking to understand what's happening.",
+      "handlerId": "lantern",
+      "readiness": "implemented"
+    },
+    {
+      "id": "witness",
+      "name": "Witness",
+      "role": "Client-shared timeline facts",
+      "scope": "provider",
+      "triggersWhen": [
+        "practitioner.opens-client-shared-timeline"
+      ],
+      "consumes": [
+        "explicitly-shared.numeric-checkins",
+        "client-reported.practice-outcomes"
+      ],
+      "produces": [
+        "providerTimeline.factual-snapshot"
+      ],
+      "priority": 2,
+      "enabledByDefault": true,
+      "notes": "Builds a deterministic, consent-scoped timeline from numeric check-ins and practice outcomes. No free-text, diagnosis, risk scoring, inference, or external model processing.",
+      "handlerId": "witness",
+      "readiness": "implemented"
+    },
+    {
+      "id": "pulse",
+      "name": "Pulse",
+      "role": "System health monitor",
+      "scope": "system",
+      "triggersWhen": [
+        "healthCheck.run",
+        "api.error",
+        "latency.spike"
+      ],
+      "consumes": [
+        "health.metrics",
+        "api.errors",
+        "latency.stats"
+      ],
+      "produces": [
+        "health.status",
+        "health.alerts"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Keeps track of OS and API health so that human support and admins know when the system itself needs attention.",
+      "handlerId": "pulse",
+      "readiness": "implemented"
+    },
+    {
+      "id": "steward",
+      "name": "Steward",
+      "role": "Privacy & data guide",
+      "scope": "user",
+      "triggersWhen": [
+        "privacy.topic.requested"
+      ],
+      "consumes": [
+        "client-selected privacy topic"
+      ],
+      "produces": [
+        "privacy.explanation"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Explains verified privacy and data controls in plain language from a fixed user-selected topic; never receives private records or makes compliance guarantees.",
+      "handlerId": "steward",
+      "readiness": "implemented"
+    },
+    {
+      "id": "compass",
+      "name": "Compass",
+      "role": "Values-alignment agent",
+      "scope": "user",
+      "triggersWhen": [
+        "values.intent",
+        "identity.reflection"
+      ],
+      "consumes": [
+        "message.content",
+        "humanMap.values",
+        "goals"
+      ],
+      "produces": [
+        "reflection.valuesAligned",
+        "prompt.valuesCheck"
+      ],
+      "priority": 4,
+      "enabledByDefault": true,
+      "notes": "Helps bring the user back to their values, direction, and what kind of life they are trying to build.",
+      "handlerId": "compass",
+      "readiness": "implemented"
+    },
+    {
+      "id": "gardener",
+      "name": "Gardener",
+      "role": "Progress & small wins agent",
+      "scope": "user",
+      "triggersWhen": [
+        "tool.completed",
+        "streaks.updated",
+        "milestone.earned"
+      ],
+      "consumes": [
+        "tool.usageHistory",
+        "milestones",
+        "streaks"
+      ],
+      "produces": [
+        "microCelebrations",
+        "progress.stories"
+      ],
+      "priority": 4,
+      "enabledByDefault": true,
+      "notes": "Notices small wins, marks growth, and protects the user from only seeing their failures.",
+      "handlerId": "gardener",
+      "readiness": "implemented"
+    },
+    {
+      "id": "translator",
+      "name": "Translator",
+      "role": "Tone, culture, and language agent",
+      "scope": "user",
+      "triggersWhen": [
+        "chat.message.user",
+        "tone.mismatch.detected"
+      ],
+      "consumes": [
+        "selected learning topic",
+        "selected translation language"
+      ],
+      "produces": [
+        "translated key idea"
+      ],
+      "priority": 4,
+      "enabledByDefault": true,
+      "notes": "Faithfully translates a selected WellnessCafe learning key idea into a user-selected language without adding medical advice or personalizing from private text.",
+      "handlerId": "translator",
+      "readiness": "implemented"
+    },
+    {
+      "id": "hearth",
+      "name": "Hearth",
+      "role": "Loneliness & isolation agent",
+      "scope": "user",
+      "triggersWhen": [
+        "message.triggers.loneliness",
+        "message.triggers.abandonment"
+      ],
+      "consumes": [
+        "message.content",
+        "message.emotion",
+        "message.triggers"
+      ],
+      "produces": [
+        "microNudges.warmth",
+        "recommendation.socialOrTool"
+      ],
+      "priority": 3,
+      "enabledByDefault": true,
+      "notes": "Offers an optional warm moment based only on a client-selected support choice; never infers loneliness or initiates contact.",
+      "handlerId": "hearth",
+      "readiness": "implemented"
+    },
+    {
+      "id": "lighthouse",
+      "name": "Lighthouse",
+      "role": "Pre-crisis lookout",
+      "scope": "user",
+      "triggersWhen": [
+        "risk.rising",
+        "trajectory.declining",
+        "loop.anxiety"
+      ],
+      "consumes": [
+        "risk",
+        "trajectory",
+        "emotionalHistory",
+        "triggers"
+      ],
+      "produces": [
+        "earlyWarnings",
+        "gentleSafetyPrompts"
+      ],
+      "priority": 1,
+      "enabledByDefault": true,
+      "notes": "Offers optional early-support ideas based only on a cue the client explicitly selects; does not monitor, score, diagnose, or predict risk.",
+      "handlerId": "lighthouse",
+      "readiness": "implemented"
+    }
+  ]
+}

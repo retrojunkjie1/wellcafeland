@@ -7,7 +7,6 @@ import Loading from "./components/Loading";
 import { RouteTracker } from "./components/routing/RouteTracker";
 
 import { bootstrapMemory } from "./engines/memory/memoryOrchestrator";
-import { getAssistanceEntry } from "./apps/assistance/assistanceRoute";
 
 import ExperienceShell from "./system/ExperienceShell";
 
@@ -20,7 +19,6 @@ const ChatPage = lazy(() => import("./apps/chat/ChatPage"));
 const LivingGuidePage = lazy(() => import("./apps/living/LivingGuidePage"));
 const LivingGuidePageV3 = lazy(() => import("./apps/living/LivingGuidePageV3").then((module) => ({ default: module.LivingGuidePageV3 })));
 const SequencePage = lazy(() => import("./apps/sequences/SequencePage"));
-const AssistancePage = lazy(() => import("./apps/assistance/AssistancePage"));
 const CommandConsolePage = lazy(() => import("./apps/command/CommandConsolePage"));
 const WorkspacePage = lazy(() => import("./apps/workspace/WorkspacePage"));
 const RealHelpWorkspace = lazy(() => import("./apps/workspace/RealHelpWorkspace"));
@@ -30,28 +28,14 @@ const RecoveryMeetingSourcesAdminPage = lazy(() => import("./apps/admin/Recovery
 const HelpDirectoryAdminPage = lazy(() => import("./apps/admin/HelpDirectoryPage"));
 const MeetingDirectoryPolicyPage = lazy(() => import("./apps/legal/MeetingDirectoryPolicyPage"));
 const CommunityGivingPage = lazy(() => import("./apps/assistance/CommunityGivingPage"));
-const AssistanceHubPage = lazy(() => import("./apps/assistance/AssistanceHubPage"));
-const GuidePage = lazy(() => import("./apps/guide/GuidePage"));
+const AssistanceRoute = lazy(() => import("./apps/assistance/AssistanceEntryRoute"));
+const AssistanceRequestRedirect = lazy(() => import("./apps/assistance/AssistanceRequestRedirect"));
 const ResourcesListPage = lazy(() => import("./apps/resources/ResourcesListPage"));
 const ResourcesDetailPage = lazy(() => import("./apps/resources/ResourcesDetailPage"));
 
 const RealHelpRedirect = () => {
   const { search } = useLocation();
   return <Navigate to={`/assistance${search || ""}`} replace />;
-};
-
-const AssistanceRoute = () => {
-  const { search } = useLocation();
-  const entry = getAssistanceEntry(search);
-  if (entry === "meetings") {
-    return <Navigate to="/recovery/meetings" replace />;
-  }
-  // A general “find help” entry should let the person choose a need first.
-  // Only open the results workspace directly when the link carries intent.
-  if (entry === "hub") {
-    return <AssistanceHubPage />;
-  }
-  return <RealHelpWorkspace />;
 };
 
 const DirectoryRedirect = () => {
@@ -117,8 +101,10 @@ const SessionPreviewPage = lazy(() => import("./apps/ai/SessionPreviewPage"));
 const LoginPage = lazy(() => import("./apps/auth/LoginPage"));
 const SignupPage = lazy(() => import("./apps/auth/SignupPage"));
 const VerifyEmailPage = lazy(() => import("./apps/auth/VerifyEmailPage"));
+const ForgotPasswordPage = lazy(() => import("./apps/auth/ForgotPasswordPage"));
 
 const OnboardingPage = lazy(() => import("./apps/onboarding/OnboardingPage"));
+const GettingStartedPage = lazy(() => import("./apps/onboarding/GettingStartedPage"));
 const PlanStartPage = lazy(() => import("./apps/plan/PlanStartPage"));
 
 const AdminConsolePage = lazy(() => import("./apps/dashboard/AdminConsolePage"));
@@ -134,12 +120,19 @@ import { AdminGuard } from "./admin/AdminGuard";
 import { AdminShell } from "./admin/AdminShell";
 import { AdminPage } from "./admin/AdminPage";
 import GodEyeConsoleEntry from "./components/routing/GodEyeConsoleEntry";
+import RouteContentBoundary from "./components/routing/RouteContentBoundary";
+
+function RouteContentRecovery({ children }) {
+  const location = useLocation();
+  return <RouteContentBoundary resetKey={location.key}>{children}</RouteContentBoundary>;
+}
 
 // Phase 13: Social & Circles imports
 const CirclesPage = lazy(() => import("./apps/circles/CirclesPage"));
 const CircleDetailPage = lazy(() => import("./apps/circles/CircleDetailPage"));
 const CircleThreadPage = lazy(() => import("./apps/circles/CircleThreadPage"));
 const CircleThreadCreation = lazy(() => import("./apps/circles/CircleThreadCreation"));
+const PrivateFriendInvitePage = lazy(() => import("./apps/circles/PrivateFriendInvitePage"));
 const SocialFeedPage = lazy(() => import("./apps/social/SocialFeedPage"));
 const DirectMessagePage = lazy(() => import("./apps/social/DirectMessagePage"));
 const ConnectionsPage = lazy(() => import("./apps/social/ConnectionsPage"));
@@ -152,9 +145,10 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loading message="Loading…" /></div>}>
-        <RouteTracker />
-        <Routes>
+      <RouteContentRecovery>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950"><Loading message="Loading…" /></div>}>
+          <RouteTracker />
+          <Routes>
           {/* Preview - Standalone page, no layout */}
           <Route path="/preview/:token" element={<SessionPreviewPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -178,8 +172,8 @@ const App = () => {
           <Route path="/policies/meeting-directory" element={<MeetingDirectoryPolicyPage />} />
           <Route path="/assistance/community" element={<CommunityGivingPage />} />
           <Route path="/giver" element={<CommunityGivingPage initialMode="give" />} />
-          {/* Phase 70: Route unrouted AssistancePage */}
-          <Route path="/assistance/request" element={<AssistancePage />} />
+          {/* Keep old request links inside the canonical, location-aware help journey. */}
+          <Route path="/assistance/request" element={<AssistanceRequestRedirect />} />
           <Route path="/command" element={<CommandConsolePage />} />
           <Route path="/workspace/real-help" element={<RealHelpRedirect />} />
           <Route path="/workspace/:id" element={<WorkspacePage />} />
@@ -188,14 +182,18 @@ const App = () => {
           <Route path="/directory/:domain/:id" element={<DirectoryRedirect />} />
           <Route path="/resources" element={<ResourcesListPage />} />
           <Route path="/resources/:id" element={<ResourcesDetailPage />} />
-          <Route path="/guide" element={<GuidePage />} />
+          {/* Keep old bookmarks working while sending every guide entry to the canonical chat. */}
+          <Route path="/guide" element={<Navigate to="/chat" replace state={{ startConversation: true }} />} />
           {/* Phase A1: Canonical /living route */}
           <Route path="/living" element={<LivingGuidePageV3 />} />
           <Route path="/living/v3" element={<Navigate to="/living" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ForgotPasswordPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/getting-started" element={<GettingStartedPage />} />
           <Route path="/plan/start" element={<PlanStartPage />} />
 
           {/* Public Routes - Accessible in guest mode */}
@@ -211,6 +209,7 @@ const App = () => {
           <Route path="/tools/grounding/54321" element={<ToolRouteBoundary><Grounding54321 /></ToolRouteBoundary>} />
           <Route path="/support" element={<SupportHubPage />} />
           <Route path="/circles" element={<CirclesPage />} />
+          <Route path="/circles/invite/:inviteToken" element={<PrivateFriendInvitePage />} />
           <Route path="/circles/:circleId" element={<CircleDetailPage />} />
           <Route path="/circles/:circleId/threads/new" element={<CircleThreadCreation />} />
           <Route path="/circles/:circleId/threads/:threadId" element={<CircleThreadPage />} />
@@ -482,8 +481,9 @@ const App = () => {
         </Route>
 
           <Route path="*" element={<UnauthorizedPage />} />
-        </Routes>
-      </Suspense>
+          </Routes>
+        </Suspense>
+      </RouteContentRecovery>
     </BrowserRouter>
   );
 };
