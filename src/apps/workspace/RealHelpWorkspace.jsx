@@ -52,6 +52,10 @@ function toCuratedWorkspaceResource(resource, domain) {
     email: resource.email || null,
     resourceType: resource.resourceType || "",
     source: resource.sourceManaged ? (resource.sourceName || "WellnessCafe reviewed listing") : resource.source,
+    verified: resource.verified === true,
+    checkedAt: resource.checkedAt || null,
+    coverageScope: resource.coverageScope || null,
+    serviceArea: resource.serviceArea || "",
     address: resource.address || resource.locationLine || "",
     locationLabel: resource.locationLabel || (resource.address ? "Address" : "Service area"),
     city: resource.city || "",
@@ -60,7 +64,6 @@ function toCuratedWorkspaceResource(resource, domain) {
     region: resource.region || resource.country || "",
     locationLine: resource.locationLine || "",
     postalCode: resource.postalCode || "",
-    checkedAt: resource.checkedAt || null,
     sourceManaged: resource.sourceManaged === true,
     curated: true,
     verification: { status: "curated" },
@@ -471,7 +474,9 @@ const RealHelpWorkspace = () => {
     setFoodLocationMessage("");
     setResults([]);
     setSearchResponse(null);
-    setCuratedResults([]);
+    const localDirectoryResults = getCuratedFallback("food.essentials", query, selection.value)
+      .map((item) => toCuratedWorkspaceResource(item, "food"));
+    setCuratedResults(localDirectoryResults);
     try {
       const response = selection.kind === "state"
         ? await searchFoodDirectoryByState({ state: selection.stateCode, signal: controller.signal })
@@ -628,11 +633,16 @@ const RealHelpWorkspace = () => {
   const localFoodResults = activeTab === "food"
     ? allResults.filter((item) => item.isFoodDirectoryResult).sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
     : [];
+  const curatedFoodResults = activeTab === "food" && Boolean(region.trim() && isUSLocation(region))
+    ? allResults.filter((item) => !item.isFoodDirectoryResult)
+    : [];
+  const localCuratedFoodResults = curatedFoodResults.filter((item) => matchesHelpLocation(item, region));
+  const broaderCuratedFoodResults = curatedFoodResults.filter((item) => !matchesHelpLocation(item, region));
   const broaderFoodResults = localFoodResults.length
     ? allResults.filter((item) => !item.isFoodDirectoryResult)
     : [];
   const orderedResults = localFoodResults.length
-    ? [...localFoodResults, ...allResults.filter((item) => !item.isFoodDirectoryResult)]
+    ? localFoodResults
     : allResults;
   const visibleResults = localFoodResults.length && !showAllFoodResults
     ? orderedResults.slice(0, 6)
@@ -1006,6 +1016,59 @@ const RealHelpWorkspace = () => {
                 ))}
                 </div>
               </details>}
+              {activeTab === "food" && !internationalSearch && localCuratedFoodResults.length > 0 && (
+                <details className="mt-3 rounded-2xl border border-emerald-100/15 bg-emerald-100/[0.025] p-3 sm:p-4">
+                  <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-medium text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wcGold">
+                    <span>Additional local directory listings</span>
+                    <span className="shrink-0 text-xs text-white/50">{localCuratedFoodResults.length}</span>
+                  </summary>
+                  <p className="mt-1 text-xs leading-relaxed text-white/50">Directory contacts whose published location matches {region}. These are separate from nearby search results; confirm current distribution, eligibility, and hours before traveling.</p>
+                  <div role="list" aria-label="Additional local food directory listings" className="mt-3 space-y-2.5">
+                    {localCuratedFoodResults.map((item, index) => (
+                      <article key={item.id || `curated-food-${index}`} role="listitem" className="rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 sm:px-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-[15px] font-semibold leading-snug text-white sm:text-base">{item.name || item.title}</h3>
+                            <p className="mt-1 break-words text-sm leading-snug text-white/60">{item.address || item.locationLine || item.serviceArea || "Service area listed by the organization"}</p>
+                            {item.serviceArea && item.address && <p className="mt-1 text-xs text-white/45">Service area: {item.serviceArea}</p>}
+                          </div>
+                          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                            {item.phone && <a href={`tel:${item.phone}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-medium text-white"><PhoneCall className="h-3.5 w-3.5" />Call</a>}
+                            <button type="button" onClick={() => handleOpenDetail(item)} className="inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-medium text-white/75 hover:bg-white/10">Details</button>
+                          </div>
+                        </div>
+                        {(item.source || item.checkedAt) && <p className="mt-2 border-t border-white/[0.07] pt-2 text-xs text-white/45">Source: {getPublicSourceLabel(item.source)}{item.checkedAt ? ` · reviewed ${new Date(`${item.checkedAt}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}</p>}
+                      </article>
+                    ))}
+                  </div>
+                </details>
+              )}
+              {activeTab === "food" && !internationalSearch && broaderCuratedFoodResults.length > 0 && (
+                <details className="mt-3 rounded-2xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+                  <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-medium text-white/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wcGold">
+                    <span>Statewide and other-area directory listings</span>
+                    <span className="shrink-0 text-xs text-white/50">{broaderCuratedFoodResults.length}</span>
+                  </summary>
+                  <p className="mt-1 text-xs leading-relaxed text-white/50">These saved directory contacts serve a wider area or list a different location. Check the service area and current availability before traveling.</p>
+                  <div role="list" aria-label="Statewide and other-area food directory listings" className="mt-3 space-y-2.5">
+                    {broaderCuratedFoodResults.map((item, index) => (
+                      <article key={item.id || `broader-curated-food-${index}`} role="listitem" className="rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 sm:px-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-[15px] font-semibold leading-snug text-white sm:text-base">{item.name || item.title}</h3>
+                            <p className="mt-1 break-words text-sm leading-snug text-white/60">{item.address || item.locationLine || item.serviceArea || item.region || "Service area listed by the organization"}</p>
+                          </div>
+                          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                            {item.phone && <a href={`tel:${item.phone}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 text-xs font-medium text-white"><PhoneCall className="h-3.5 w-3.5" />Call</a>}
+                            <button type="button" onClick={() => handleOpenDetail(item)} className="inline-flex min-h-9 items-center rounded-lg px-3 text-xs font-medium text-white/75 hover:bg-white/10">Details</button>
+                          </div>
+                        </div>
+                        {(item.source || item.checkedAt) && <p className="mt-2 border-t border-white/[0.07] pt-2 text-xs text-white/45">Source: {getPublicSourceLabel(item.source)}{item.checkedAt ? ` · reviewed ${new Date(`${item.checkedAt}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}</p>}
+                      </article>
+                    ))}
+                  </div>
+                </details>
+              )}
               {requiresLocationProof && broaderLocationResults.length > 0 && (
                 <details open={showBroaderWhenNoLocalMatch || (isNigeriaLocation(region) && broaderLocationResults.length > 0) || (activeTab === "circles" && locatedResults.length === 0)} className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3">
                   <summary className="cursor-pointer text-sm font-medium text-white/75">{activeTab === "circles" ? `Online and wider-area recovery options (${broaderLocationResults.length})` : isNigeriaLocation(region) ? `Statewide, Nigeria-wide and other-city options (${broaderLocationResults.length})` : !hasUSSupportNumbers ? `More support organizations (${broaderLocationResults.length})` : activeTab === "funding" ? `Benefits and referral options (${broaderLocationResults.length})` : activeTab === "emergency" ? `24/7 and wider-area support (${broaderLocationResults.length})` : `Other useful options (${broaderLocationResults.length})`}</summary>

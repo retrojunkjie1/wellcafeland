@@ -625,6 +625,57 @@ describe("real-world assistance search states", () => {
     expect(screen.getByRole("dialog")).not.toHaveTextContent("CC BY-SA 4.0");
   });
 
+  it("shows Los Angeles curated food contacts alongside nearby food search results", async () => {
+    mocks.getCuratedFallback.mockReturnValue([{
+      id: "ca-la-pantry",
+      name: "Los Angeles community pantry",
+      description: "A local food distribution contact. Call to confirm current hours.",
+      link: "https://pantry.example.org/locations",
+      source: "Los Angeles County food directory",
+      checkedAt: "2026-10-24",
+      city: "Los Angeles",
+      state: "CA",
+      address: "100 Main Street, Los Angeles, CA 90012",
+      phone: "213-555-0100",
+    }, {
+      id: "ca-statewide-pantry-referral",
+      name: "California statewide food referrals",
+      description: "Call to locate food support elsewhere in California.",
+      source: "California statewide food directory",
+      state: "CA",
+      coverageScope: "statewide",
+      locationLine: "Available statewide in California",
+      phone: "211",
+    }]);
+    mocks.suggestFoodLocations.mockResolvedValue({ ok: true, items: ["Los Angeles, CA"], error: null });
+    mocks.searchFoodDirectory.mockResolvedValue({ ok: true, totalAvailable: 1, items: [{
+      id: "feedam:la-1",
+      name: "Nearby Food Pantry",
+      title: "Nearby Food Pantry",
+      address: "200 Main Street, Los Angeles, CA 90012",
+      region: "Los Angeles, CA",
+      phone: "213-555-0199",
+      isFoodDirectoryResult: true,
+    }], error: null });
+
+    renderSearch("/assistance?priority=food&query=food");
+    fireEvent.change(screen.getByLabelText("Your area"), { target: { value: "Los Angeles, CA" } });
+    fireEvent.click(screen.getByRole("button", { name: "Find a place" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Los Angeles, CA" }));
+
+    expect(await screen.findByRole("heading", { name: "Nearby Food Pantry" })).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Additional local directory listings"));
+    const directoryList = await screen.findByRole("list", { name: "Additional local food directory listings" });
+    expect(within(directoryList).getByRole("heading", { name: "Los Angeles community pantry" })).toBeInTheDocument();
+    expect(within(directoryList).getByText("100 Main Street, Los Angeles, CA 90012")).toBeInTheDocument();
+    expect(within(directoryList).getByRole("link", { name: "Call" })).toHaveAttribute("href", "tel:213-555-0100");
+    expect(within(directoryList).getByText(/Los Angeles County food directory/)).toBeInTheDocument();
+    const widerList = await screen.findByRole("list", { name: "Statewide and other-area food directory listings" });
+    expect(within(widerList).getByRole("heading", { name: "California statewide food referrals" })).toBeInTheDocument();
+    expect(within(widerList).getByRole("link", { name: "Call" })).toHaveAttribute("href", "tel:211");
+    expect(mocks.getCuratedFallback).toHaveBeenCalledWith("food.essentials", "food", "Los Angeles, CA");
+  });
+
   it("keeps non-food help results scan-friendly and moves organization details behind Details", async () => {
     mocks.listHousingProviders.mockResolvedValue([{
       id: "housing-1",
