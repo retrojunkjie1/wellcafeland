@@ -8,6 +8,8 @@ Merged PR #107 (`1e1e27810fa9af42cb0595af81b13dcf75652a2e`) to remediate high-se
 
 The food-directory update preserves the existing saved-contact and wider-area sections. No provider availability or listing exhaustiveness is inferred from these releases. Full-system DoD remains open.
 
+PR #108 (`fcca199c1f0bf91b2850e95a459de7bc1ff09f67`) restored patched `undici` 8.12.3 and raised the Node 22 regression-gate runtime to 22.22.2. The required PR regression suite, production build, lint, dependency review, and verify checks passed. Production workflow `40934221607` completed successfully with tests, build, Firebase Hosting, and voice functions. GitHub Dependabot reported 17 open alerts at the post-merge check (0 high, 10 moderate, 7 low); this is a point-in-time count. A follow-up lockfile batch is updating compatible releases while preserving the existing application behavior. Current `npm audit` results for that batch show zero high or critical findings; some remaining moderate findings require major Firebase package upgrades, and `deepmerge` has no patched release in its current dependency path, so those need separate compatibility work.
+
 ### 2026-10-29 — Owner-led merge gate and critical dependency release (deployed)
 
 Updated the repository contribution guidance to match the active `main` ruleset: pull requests remain required, the human-approval count is zero, and the required checks are `approved-build-protection`, `dependency-review`, `lint`, and `verify`. Branch deletion and force pushes remain blocked. This preserves the owner’s ability to merge after required automated checks pass without waiting for a third-party approval. PR #103 merged as `63ab18668c2ff71eea9b24bd123b1188474bc848`.
