@@ -1,9 +1,12 @@
-// scripts/seedVerifiedProviders.js
-// Seed verified providers into Firestore (admin-only, dev/staging)
+// Seed verified providers into Firestore (admin-only, dev/staging).
+import { createRequire } from "node:module";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+const require = createRequire(import.meta.url);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const admin = require("firebase-admin");
-const fs = require("fs");
-const path = require("path");
+const admin = require("../functions/src/firebaseAdminCompat.cjs");
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -108,7 +111,7 @@ async function seedVerifiedProviders(confirmCode = null) {
 }
 
 // Run if called directly
-if (require.main === module) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const confirmCode = process.argv[2] || null;
   seedVerifiedProviders(confirmCode)
     .then((result) => {
@@ -121,5 +124,5 @@ if (require.main === module) {
     });
 }
 
-module.exports = { seedVerifiedProviders };
+export { seedVerifiedProviders };
 

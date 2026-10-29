@@ -7,7 +7,7 @@ process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: process.env.GCLOUD_PRO
 // emulator proxy, so make the App Check emulator bypass explicit for this test.
 process.env.FUNCTIONS_EMULATOR = "true";
 
-const admin = require("firebase-admin");
+const admin = require("../src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
 const db = admin.firestore();
 const operations = require("../src/agentOperations");

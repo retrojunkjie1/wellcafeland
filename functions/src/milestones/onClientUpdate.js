@@ -7,7 +7,7 @@
  */
 
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
-const admin = require("firebase-admin");
+const admin = require("../functions/src/firebaseAdminCompat.cjs");
 const { computeDaysSober } = require("./computeDaysSober");
 const {
   getEarnedMilestones,

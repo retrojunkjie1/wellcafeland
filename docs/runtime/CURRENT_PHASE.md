@@ -1,5 +1,9 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-10-29 — Firebase Admin v14 migration candidate (CI review pending)
+
+Prepared a separate upgrade to Firebase Admin 14.5.0 and Firebase Functions 7.4.0, using an internal modular-API facade for existing Functions and emulator fixtures. The repository did not use `firebase-functions-test`, so the unused package was removed; its published peer range excludes Admin v14 and otherwise prevents a clean install. Admin SDK namespace imports in Functions and maintenance scripts now route through the facade. Initial local checks confirmed the facade loads the modular v14 exports, exposes Firestore/Auth/App Check, server timestamps and app lifecycle, and all touched JavaScript files pass syntax checks. This is a migration candidate only: required GitHub checks and Functions emulator behavior must pass before merge or deployment. No production behavior or deployment is claimed as verified here.
+
 ### 2026-10-29 — Food directory visibility and dependency release follow-through
 
 Merged PR #106 (`bb050f5a1b16ee77265fc4b4fb7f58ee8a894c4d`) so the saved local food directory is open by default when relevant contacts are available. The directory remains collapsible. Required PR checks passed, and production workflow `40930393472` completed successfully with tests, build, Firebase Hosting, and the configured voice functions. The live Los Angeles Assistance route returned HTTP 200; this confirms route availability, not a submitted search or authenticated journey.

@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const { recordTrustedSupportActivity } = require("./supportActivity");
 const { requireVerifiedAccount } = require("./accountAccess");
 const { CAPABILITY_NAMES, getProviderCapabilities } = require("./practitionerWorkspacePolicy");

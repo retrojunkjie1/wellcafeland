@@ -7,7 +7,7 @@ process.env.FUNCTIONS_EMULATOR = "true";
 const originalApiKey = process.env.OPENAI_API_KEY;
 process.env.OPENAI_API_KEY = "test-key-client-agent-workflows-not-a-secret";
 
-const admin = require("firebase-admin");
+const admin = require("../src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
 const db = admin.firestore();
 const aiBrain = require("../aiBrain");

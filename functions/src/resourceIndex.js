@@ -1,7 +1,7 @@
 // functions/src/resourceIndex.js
 // Firestore resourceIndex collection management with idempotent upserts
 
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const db = admin.firestore();
 
 const COLLECTION_NAME = "resourceIndex";

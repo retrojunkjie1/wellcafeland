@@ -8,7 +8,7 @@ process.env.LIVEKIT_API_KEY = "test-livekit-key";
 process.env.LIVEKIT_API_SECRET = "test-livekit-secret-not-for-production";
 process.env.WELLNESSCAFE_VIDEO_ENABLED = "true";
 
-const admin = require("firebase-admin");
+const admin = require("../src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
 const db = admin.firestore();
 const auth = admin.auth();

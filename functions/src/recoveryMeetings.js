@@ -1,6 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const axios = require("axios");
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const { verifyHttpAppCheck } = require("./httpAppCheck");
 
 if (!admin.apps.length) admin.initializeApp();

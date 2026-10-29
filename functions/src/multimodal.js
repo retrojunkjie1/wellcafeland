@@ -3,7 +3,7 @@
 
 const { onRequest } = require("firebase-functions/v2/https");
 const { logger } = require("firebase-functions");
-const admin = require("firebase-admin");
+const admin = require("./firebaseAdminCompat.cjs");
 const OpenAI = require("openai");
 const fs = require("fs");
 const path = require("path");

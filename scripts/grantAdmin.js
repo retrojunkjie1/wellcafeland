@@ -1,4 +1,6 @@
-const admin = require("firebase-admin");
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const admin = require("../functions/src/firebaseAdminCompat.cjs");
 
 if (!admin.apps.length) {
   admin.initializeApp();

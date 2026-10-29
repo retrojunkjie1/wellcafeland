@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const admin = require("firebase-admin");
+const admin = require("../src/firebaseAdminCompat.cjs");
 
 function normalizeEmail(value) {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
