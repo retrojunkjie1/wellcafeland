@@ -68,38 +68,43 @@ function checkFirebaserc() {
 }
 
 function checkEnvFile() {
-  const envPaths = [
-    join(rootDir, ".env.production"),
-    join(rootDir, ".env"),
-  ];
+  const envPaths = [join(rootDir, ".env.production"), join(rootDir, ".env")];
+  const env = {};
+  let source = "process environment";
 
   for (const envPath of envPaths) {
-    const env = readEnvFile(envPath);
-    if (env && env.VITE_FIREBASE_PROJECT_ID) {
-      const projectId = env.VITE_FIREBASE_PROJECT_ID;
-      if (projectId !== REQUIRED_PROJECT_ID) {
-        console.error(`❌ ${envPath}: VITE_FIREBASE_PROJECT_ID is "${projectId}", expected "${REQUIRED_PROJECT_ID}"`);
-        return {
-          valid: false,
-          error: `Wrong project ID in ${envPath}: "${projectId}" (expected: "${REQUIRED_PROJECT_ID}")`,
-        };
-      }
-      const required = [
-        "VITE_FIREBASE_API_KEY",
-        "VITE_FIREBASE_AUTH_DOMAIN",
-        "VITE_FIREBASE_STORAGE_BUCKET",
-        "VITE_FIREBASE_MESSAGING_SENDER_ID",
-        "VITE_FIREBASE_APP_ID",
-        "VITE_FIREBASE_FUNCTIONS_URL",
-      ];
-      const missing = required.filter((key) => !env[key]);
-      if (missing.length) {
-        console.error(`❌ ${envPath}: missing Firebase web configuration: ${missing.join(", ")}`);
-        return { valid: false, error: `Missing Firebase web configuration in ${envPath}` };
-      }
-      console.log(`✅ ${envPath}: Firebase web configuration is present for "${projectId}"`);
-      return { valid: true, projectId };
+    const fileEnv = readEnvFile(envPath);
+    if (fileEnv) {
+      Object.assign(env, fileEnv);
+      if (fileEnv.VITE_FIREBASE_PROJECT_ID) source = envPath;
     }
+  }
+
+  Object.assign(env, process.env);
+  if (env.VITE_FIREBASE_PROJECT_ID) {
+    const projectId = env.VITE_FIREBASE_PROJECT_ID;
+    if (projectId !== REQUIRED_PROJECT_ID) {
+      console.error(`❌ ${source}: VITE_FIREBASE_PROJECT_ID is "${projectId}", expected "${REQUIRED_PROJECT_ID}"`);
+      return {
+        valid: false,
+        error: `Wrong project ID in ${source}: "${projectId}" (expected: "${REQUIRED_PROJECT_ID}")`,
+      };
+    }
+    const required = [
+      "VITE_FIREBASE_API_KEY",
+      "VITE_FIREBASE_AUTH_DOMAIN",
+      "VITE_FIREBASE_STORAGE_BUCKET",
+      "VITE_FIREBASE_MESSAGING_SENDER_ID",
+      "VITE_FIREBASE_APP_ID",
+      "VITE_FIREBASE_FUNCTIONS_URL",
+    ];
+    const missing = required.filter((key) => !env[key]);
+    if (missing.length) {
+      console.error(`❌ ${source}: missing Firebase web configuration: ${missing.join(", ")}`);
+      return { valid: false, error: `Missing Firebase web configuration in ${source}` };
+    }
+    console.log(`✅ ${source}: Firebase web configuration is present for "${projectId}"`);
+    return { valid: true, projectId };
   }
 
   console.error("❌ No .env or .env.production file found with Firebase web configuration");
