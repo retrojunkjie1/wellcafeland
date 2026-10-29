@@ -300,7 +300,7 @@ Return JSON only:
 // ==============================
 // ADMIN CALLABLE FUNCTIONS
 // ==============================
-const admin = require("firebase-admin");
+const admin = require("./src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) {
   admin.initializeApp();
 }
