@@ -16,7 +16,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are represented in the coverage calculator; 24 jurisdictions meet or exceed the 75-record floor. | In progress | Work through the 27 jurisdictions below the floor. Audit states above the planning range without deleting approved listings. |
+| United States | All 50 states plus DC are represented in the coverage calculator; 25 jurisdictions meet or exceed the 75-record floor. | In progress | Continue the multi-state queue: Kentucky, Maryland, Michigan, Minnesota and Mississippi. Keep source-backed local contacts, not generic routes, as the unit of useful progress. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -51,6 +51,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Maine | ME | 121 | Complete (initial floor met) |
 | Massachusetts | MA | 78 | Complete (initial floor met); source-reviewed, phone confirmation and exhaustive review remain open |
 | New York | NY | 123 | Complete (initial floor met) |
+| North Carolina | NC | 100 | Complete (initial floor met); 100 county DSS benefit-navigation contacts, source reviewed, not phone-confirmed |
 | Ohio | OH | 76 | Complete (initial floor met) |
 | Oklahoma | OK | 75 | Complete (initial floor met) |
 | Pennsylvania | PA | 75 | Complete (initial floor met) |
@@ -69,9 +70,23 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 
 These states currently have fewer than 75 records in the active U.S. six-category coverage calculation. This is a coverage-system gap; first check existing modules and legacy listings before adding anything, so working material is not duplicated or lost.
 
-Kentucky (KY), Maryland (MD), Michigan (MI), Minnesota (MN), Mississippi (MS), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Carolina (NC), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+Kentucky (KY), Maryland (MD), Michigan (MI), Minnesota (MN), Mississippi (MS), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
 
 Massachusetts's 78 state-linked records comprise 38 peer recovery support centers, 31 Community Behavioral Health Center listings, and 9 statewide routes for behavioral-health access, substance-use referral, housing, food, SNAP, health coverage, 988 and Mass 211. The state coverage calculator counts all 78; 59 are city-tagged and 19 are statewide or need a city selected through the official CBHC locator. Sources were reviewed on 2026-10-29. None of the listings is phone-confirmed, and the Commonwealth's published network totals are not an exhaustive directory claim.
+
+North Carolina's 100 records are the county-level Department of Social Services offices listed by NCDHHS, with each county's published office address, main phone, service area and direct county page. Their directory descriptions explain how to ask about Food and Nutrition Services (SNAP), Medicaid, Work First, child-care subsidies and other county social services. A statewide directory entry count is not proof that each program is open to every caller; eligibility and current intake must be confirmed with the county office. Records were source-reviewed 2026-10-29 and are not phone-confirmed. Source: [NCDHHS Local DSS Directory](https://www.ncdhhs.gov/divisions/social-services/local-dss-directory).
+
+### Next U.S. multi-state batch queue
+
+| State | Research anchor | Build focus |
+|---|---|---|
+| Kentucky | [CHFS county crisis and community mental-health directory](https://www.chfs.ky.gov/agencies/dbhdid/Pages/crisisnos.aspx) | County-specific crisis access and distinct regional provider contacts |
+| Maryland | [Behavioral Health Administration licensed-provider directory](https://health.maryland.gov/bha/Pages/BHA-Licensed-and-Certified-Providers-and-Programs.aspx) | Licensed, local behavioral-health sites with contact details; keep locator-only paths clearly labeled |
+| Michigan | [MDHHS county mental-health access map](https://www.michigan.gov/mdhhs/keep-mi-healthy/mentalhealth/mentalhealth/local-mental-health-services) | County-serving CMHSPs, crisis contacts and food distribution access |
+| Minnesota | [DHS county and Tribal crisis contacts](https://mn.gov/dhs/mental-health/adult-services/resources/crisis-contacts/) and [state food-shelf directory](https://mn.gov/adresources/search/?query=BD-1800.2000&query_label=Food+Pantries&query_type=taxonomy) | Direct local crisis lines plus named local food shelves across regions |
+| Mississippi | [Department of Mental Health crisis contacts](https://www.dmh.ms.gov/help/crisis-services/) | Regional mobile-crisis teams and clearly mapped county service areas |
+
+These are source leads for the next batch, not counted listings. Each jurisdiction remains in progress until distinct, relevant local contacts are actually added and the coverage calculator reaches the planning floor.
 
 ## Nigeria: states and Federal Capital Territory
 
