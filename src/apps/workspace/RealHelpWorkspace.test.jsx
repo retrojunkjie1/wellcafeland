@@ -664,7 +664,6 @@ describe("real-world assistance search states", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Los Angeles, CA" }));
 
     expect(await screen.findByRole("heading", { name: "Nearby Food Pantry" })).toBeInTheDocument();
-    fireEvent.click(screen.getByText("Additional local directory listings"));
     const directoryList = await screen.findByRole("list", { name: "Additional local food directory listings" });
     expect(within(directoryList).getByRole("heading", { name: "Los Angeles community pantry" })).toBeInTheDocument();
     expect(within(directoryList).getByText("100 Main Street, Los Angeles, CA 90012")).toBeInTheDocument();

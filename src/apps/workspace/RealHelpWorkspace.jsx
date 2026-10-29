@@ -1017,7 +1017,7 @@ const RealHelpWorkspace = () => {
                 </div>
               </details>}
               {activeTab === "food" && !internationalSearch && localCuratedFoodResults.length > 0 && (
-                <details className="mt-3 rounded-2xl border border-emerald-100/15 bg-emerald-100/[0.025] p-3 sm:p-4">
+                <details open className="mt-3 rounded-2xl border border-emerald-100/15 bg-emerald-100/[0.025] p-3 sm:p-4">
                   <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-medium text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wcGold">
                     <span>Additional local directory listings</span>
                     <span className="shrink-0 text-xs text-white/50">{localCuratedFoodResults.length}</span>
