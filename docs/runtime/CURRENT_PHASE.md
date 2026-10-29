@@ -1,5 +1,13 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-10-29 — Owner-led merge gate and critical dependency release (deployed)
+
+Updated the repository contribution guidance to match the active `main` ruleset: pull requests remain required, the human-approval count is zero, and the required checks are `approved-build-protection`, `dependency-review`, `lint`, and `verify`. Branch deletion and force pushes remain blocked. This preserves the owner’s ability to merge after required automated checks pass without waiting for a third-party approval. PR #103 merged as `63ab18668c2ff71eea9b24bd123b1188474bc848`.
+
+Patched the eight open critical dependency alerts across the root and Functions dependency trees. PR #104 merged as `081ae0363ae532fdbaa3bb5b04ab51ab26ccec6f`; its GitHub checks passed, including the complete `verify` workflow and dependency review. The parser dependency is pinned to `fast-xml-parser` 5.7.0 in both trees to address the then-current critical and subsequent advisory; callers should be revisited if XML entity-decoding semantics are relied on. GitHub’s Dependabot API reported zero open critical alerts after merge; high, medium, and low alerts remain and require separately scoped remediation.
+
+Production workflow `40913557090` for PR #103 and workflow `40914878806` for PR #104 both completed successfully, including tests, build, Firebase Hosting, and the configured voice functions (`aiSession`, `multimodalTts`, and `multimodalChat`). This confirms the release workflow, not authenticated end-to-end behavior for every role. The user’s uncommitted `RealHelpWorkspace.jsx` and `RealHelpWorkspace.test.jsx` changes in the primary checkout were preserved. Full-system DoD remains open.
+
 ### 2026-10-29 — U.S. food directory result continuity (Hosting and voice functions deployed)
 
 US city food searches now retain saved, source-reviewed WellnessCafe directory contacts alongside live nearby food matches. City-matched saved contacts and statewide/other-area referrals appear in separate labeled, collapsed sections with counts, call actions, and details access; nearby live results remain in their existing section. This prevents local saved pathways from being displaced when live results load and reduces the long expanded-list presentation. Regression coverage includes the Los Angeles city plus California statewide case. The counts represent saved directory records, not exhaustive service coverage; published access details still require confirmation with providers.
