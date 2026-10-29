@@ -1,5 +1,11 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-10-29 — U.S. food directory result continuity (local implementation)
+
+US city food searches now retain saved, source-reviewed WellnessCafe directory contacts alongside live nearby food matches. City-matched saved contacts and statewide/other-area referrals appear in separate labeled, collapsed sections with counts, call actions, and details access; nearby live results remain in their existing section. This prevents local saved pathways from being displaced when live results load and reduces the long expanded-list presentation. Regression coverage includes the Los Angeles city plus California statewide case. The counts represent saved directory records, not exhaustive service coverage; published access details still require confirmation with providers.
+
+Verification: the complete `RealHelpWorkspace` UI file passed (37 tests), the production Vite build passed, and `git diff --check` passed. A local `npm run verify:release` attempt was stopped after the full UI suite produced no progress for several minutes; the full release gate remains unverified locally. No deployment yet.
+
 ### 2026-10-25 — Regional U.S. resource directory expansion (Hosting deployed)
 
 Expanded curated regional resource coverage with new state catalogs for Alabama, Alaska, Arkansas, Connecticut, Delaware, Hawaii, Idaho, Indiana, Iowa, Kansas, Louisiana, Maine, and Oklahoma, plus four additional Texas city batches. Updated directory chunking and corrected city/state routing so statewide resources remain available alongside city-specific results without leaking unrelated city or state listings.
