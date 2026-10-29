@@ -1,10 +1,10 @@
 # WELLNESSCAFE — CURRENT PHASE
 
-### 2026-10-29 — U.S. food directory result continuity (local implementation)
+### 2026-10-29 — U.S. food directory result continuity (Hosting and voice functions deployed)
 
 US city food searches now retain saved, source-reviewed WellnessCafe directory contacts alongside live nearby food matches. City-matched saved contacts and statewide/other-area referrals appear in separate labeled, collapsed sections with counts, call actions, and details access; nearby live results remain in their existing section. This prevents local saved pathways from being displaced when live results load and reduces the long expanded-list presentation. Regression coverage includes the Los Angeles city plus California statewide case. The counts represent saved directory records, not exhaustive service coverage; published access details still require confirmation with providers.
 
-Verification: the complete `RealHelpWorkspace` UI file passed (37 tests), the production Vite build passed, and `git diff --check` passed. A local `npm run verify:release` attempt was stopped after the full UI suite produced no progress for several minutes; the full release gate remains unverified locally. No deployment yet.
+Verification: `RealHelpWorkspace.test.jsx` passed (37/37), the production Vite build passed, and `git diff --check` passed. The local `npm run verify:release` attempt was stopped after the full UI suite produced no progress for several minutes; PR #101's full `verify`, `approved-build-protection`, `lint`, and `dependency-review` checks passed on GitHub. PR #101 merged as `b37edfe939d0956cbbfe2401befe3687b194117a`; production workflow `40909416125` completed successfully, including Hosting and the declared voice-function targets. The live Los Angeles Assistance route returned HTTP 200; its deployed lazy-loaded `RealHelpWorkspace` bundle returned HTTP 200 and contains the local and wider-area directory section labels. `aiSession`, `multimodalChat`, and `multimodalTts` were active after deployment. The UI interaction itself was verified by the regression suite rather than a signed-in live browser session. Listings remain source-reviewed public records, not phone-confirmed or exhaustive coverage; full-system DoD remains open.
 
 ### 2026-10-25 — Regional U.S. resource directory expansion (Hosting deployed)
 
