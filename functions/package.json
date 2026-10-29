@@ -48,5 +48,8 @@
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"
   },
+  "overrides": {
+    "fast-xml-parser": "5.7.0"
+  },
   "private": true
 }
