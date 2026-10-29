@@ -1,7 +1,7 @@
 // functions/aiBrain.js
 // OpenAI GPT-4o-mini provider for aiSession (runSimpleChat, callOpenAIJSON, generateSession, handleAgent)
 
-const admin = require("firebase-admin");
+const admin = require("./src/firebaseAdminCompat.cjs");
 const { setCorsHeaders } = require("./corsHelper");
 const { AI_REQUEST_LIMITS, consumeAIRequestQuota } = require("./aiRateLimiter");
 const { recordAIQuotaBlock } = require("./src/securitySignals");
