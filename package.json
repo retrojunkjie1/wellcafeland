@@ -80,6 +80,7 @@
   },
   "overrides": {
     "fast-xml-parser": "5.7.0",
-    "@grpc/grpc-js": "1.14.7"
+    "@grpc/grpc-js": "1.14.7",
+    "qs": "6.17.1"
   }
 }
