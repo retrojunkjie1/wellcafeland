@@ -6919,7 +6919,325 @@ export const MISSISSIPPI_URGENT = [
   }
 ];
 
-export const MISSISSIPPI_FOOD = [
+const mississippiFoodListing = ({ id, name, city, address, phone, link, resourceType, serviceArea, description }) => ({
+  id,
+  name,
+  description,
+  city,
+  state: "MS",
+  address: address ?? null,
+  phone: phone ?? null,
+  link,
+  source: "Mississippi MAMA Food Service Directory",
+  serviceArea,
+  coverageScope: serviceArea.includes("County") ? "county" : "city",
+  resourceType,
+  locationLine: `${city} · ${resourceType} · contact the provider to confirm access`,
+  verified: true,
+  sourceReviewed: true,
+  phoneConfirmed: false,
+  exhaustiveCoverage: false,
+  checkedAt: "2026-10-30"
+});
+
+const MISSISSIPPI_FOOD_LOCAL = [
+  mississippiFoodListing({
+    id: "ms-beauvoir-food-pantry-biloxi", name: "Beauvoir United Methodist Food Pantry", city: "Biloxi",
+    address: "2113 Pass Road, Biloxi, MS 39531", phone: "228-388-1478", link: "https://www.beauvoirumc.org/",
+    resourceType: "community food pantry", serviceArea: "39531 ZIP code; Biloxi",
+    description: "Food pantry for individuals and families in need within ZIP code 39531. The state directory lists the second Wednesday of each month, 9:00 a.m.–12:00 p.m. Call before visiting to confirm the next distribution, service boundary, and any intake steps."
+  }),
+  mississippiFoodListing({
+    id: "ms-brookhaven-outreach-food", name: "Brookhaven Outreach Ministries — food assistance", city: "Brookhaven",
+    address: "101 E. Court Street, Brookhaven, MS 39601", phone: "601-833-1350", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "community food assistance", serviceArea: "Brookhaven and surrounding Southwest Mississippi communities",
+    description: "Community outreach organization offering food assistance alongside clothing and other essential-resource connections. The directory lists weekday office hours, 8:00 a.m.–5:00 p.m.; call first to ask how food support is currently provided, who can receive it, and whether an appointment or referral is needed."
+  }),
+  mississippiFoodListing({
+    id: "ms-care-now-food-pantry-holly-springs", name: "Care Now Food Pantry", city: "Holly Springs",
+    address: "168 S. Market Street, Holly Springs, MS 38635", phone: "662-544-1027", link: "https://www.carenowhs.org/",
+    resourceType: "food and diaper pantry", serviceArea: "Marshall County and neighboring communities; state directory says Marshall County residency is not required",
+    description: "Provides food and diapers. The state directory lists distributions on the second and fourth Wednesdays, 1:00–5:00 p.m., and says recipients do not have to live in Marshall County. Call to confirm the next date, available items, and any documents requested."
+  }),
+  mississippiFoodListing({
+    id: "ms-caring-hands-food-pantry-itta-bena", name: "Caring Hands Food Pantry", city: "Itta Bena",
+    address: "404 Front Street, Itta Bena, MS 38941", phone: "662-719-8559", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "community food pantry", serviceArea: "Itta Bena and nearby Leflore County communities",
+    description: "A local food-pantry contact listed by the state service directory. The directory directs visitors to the provider’s linked social page for distribution times. Call or check that page before traveling to confirm the next opening, eligibility, and current pickup instructions."
+  }),
+  mississippiFoodListing({
+    id: "ms-casserole-kitchen-starkville", name: "Casserole Kitchen — ECR monthly meal", city: "Starkville",
+    address: "105 N. Montgomery Street, Starkville, MS 39759", phone: "662-323-3483", link: "https://ecrstarkville.com/",
+    resourceType: "community meal", serviceArea: "Starkville and Oktibbeha County area",
+    description: "East Mississippi Community Resources provides a meal at Casserole Kitchen on the first Tuesday night of each month, according to the state directory. Call to confirm the current serving time, whether the meal is open to walk-ins, and any changes to the monthly schedule."
+  }),
+  mississippiFoodListing({
+    id: "ms-crosspointe-go-grocery-olive-branch", name: "Crosspointe Go Grocery", city: "Olive Branch",
+    address: "6356 Blocker Street, Olive Branch, MS 38654", phone: null, link: "https://www.google.com/maps/search/?api=1&query=6356+Blocker+Street+Olive+Branch+MS+38654",
+    resourceType: "free community pantry", serviceArea: "Olive Branch and nearby DeSoto County communities",
+    description: "The state service directory describes a free pantry stocked with dry goods. Posted distribution windows are Wednesdays, 12:00–1:00 p.m. and 6:00–7:00 p.m. No phone is published in the directory; verify the location and current schedule through the map listing before traveling."
+  }),
+  mississippiFoodListing({
+    id: "ms-edwards-fellowship-food-pantry-hattiesburg", name: "Edwards Street Fellowship Center — food pantry", city: "Hattiesburg",
+    address: "1919 Edwards Street, Hattiesburg, MS 39401", phone: "601-544-6149", link: "https://edwardsstreetfellowship.org/",
+    resourceType: "emergency and supplemental food pantry", serviceArea: "Covington, Forrest, Jasper, Jefferson Davis, Jones, Lamar, and Wayne counties",
+    description: "Provides emergency and supplemental food to eligible households. The state directory says eligibility follows Mississippi Food Network guidelines; listed hours are Monday–Wednesday, 9:00 a.m.–2:00 p.m., and Thursday–Friday, 9:00 a.m.–4:00 p.m. Call to confirm current intake, documents, and county coverage."
+  }),
+  mississippiFoodListing({
+    id: "ms-ever-reaching-food-pantry-pelahatchie", name: "Ever Reaching Community Outreach — food pantry", city: "Pelahatchie",
+    address: "306 N. Brooks Avenue, Pelahatchie, MS 39145", phone: "601-665-5720", link: "https://www.everreaching.org/",
+    resourceType: "monthly food pantry and essential goods", serviceArea: "Pelahatchie and surrounding Rankin County communities",
+    description: "Mississippi Food Network partner pantry offering monthly food assistance; the directory also lists baby items, clothing, household goods, and referrals. Posted hours are Tuesdays and Thursdays, 9:00 a.m.–1:00 p.m., except fifth weeks. Call to confirm distribution and intake before traveling."
+  }),
+  mississippiFoodListing({
+    id: "ms-feed-by-faith-kitchen-meridian", name: "Feed by Faith Food Kitchen", city: "Meridian",
+    address: "3401 5th Street, Meridian, MS 39301", phone: "601-483-8999", link: "https://feedbyfaith.org/",
+    resourceType: "prepared community meals", serviceArea: "Meridian and Lauderdale County area",
+    description: "Community meal provider serving people and families facing food insecurity. The state directory lists meal service Monday, Wednesday, and Friday, 11:30 a.m.–12:30 p.m. Call to confirm the schedule, serving location, and whether any registration is needed."
+  }),
+  mississippiFoodListing({
+    id: "ms-feed-my-sheep-gulfport", name: "Feed My Sheep — Gulfport meals", city: "Gulfport",
+    address: "2615 19th Street, Gulfport, MS 39501", phone: "228-864-2701", link: "https://feedmysheepgulfport.org/",
+    resourceType: "prepared meals and homebound meal contact", serviceArea: "Gulfport area; directory describes services for people experiencing homelessness, homebound residents, and others in need",
+    description: "Provides nourishment to people in need and can be contacted about meals for homebound residents. The state directory lists weekday service, 11:30 a.m.–12:30 p.m. Call to confirm the current serving arrangement, pickup details, and homebound eligibility."
+  }),
+  mississippiFoodListing({
+    id: "ms-feeding-gulf-coast-food-access", name: "Feeding the Gulf Coast — Mississippi food access", city: "Gulfport",
+    address: "1501 34th Street, Gulfport, MS 39501", phone: "228-896-6979", link: "https://www.feedingthegulfcoast.org/",
+    resourceType: "regional food bank and pantry referral", serviceArea: "Mississippi Gulf Coast and the organization’s wider regional network; confirm county coverage",
+    description: "Regional hunger-relief organization with food-assistance and child-nutrition programs. Mississippi Food Network directs residents of Perry, Greene, George, Jackson, Stone, Hancock, Pearl River, and Harrison counties to Feeding the Gulf Coast for local pantry and distribution referrals. Call or use its locator to find the active nearby site; this office is not represented as a walk-in pantry."
+  }),
+  mississippiFoodListing({
+    id: "ms-st-andrews-mission-food-ministries-mccomb", name: "St. Andrew’s Mission — food ministries and S.A.M.’s Diner", city: "McComb",
+    address: "104 S. Front Street, McComb, MS 39648", phone: "601-684-4678", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "soup kitchen and food pantry", serviceArea: "McComb and Pike County area; pantry service described for seniors and adults with disabilities",
+    description: "The state directory says S.A.M.’s Diner serves a hot meal to anyone who needs one on Mondays and Fridays, and the ministry operates a pantry for local seniors and adults with disabilities. Call to confirm meal times, pantry eligibility, and current intake arrangements."
+  }),
+  mississippiFoodListing({
+    id: "ms-frances-davidson-center-food-meridian", name: "Frances W. Davidson Center for Homelessness — food and basic needs", city: "Meridian",
+    address: "2900 Saint Paul Street, Meridian, MS 39301", phone: "601-483-4838", link: "https://www.findhelp.org/",
+    resourceType: "food and basic-needs access", serviceArea: "Lauderdale County; people experiencing homelessness, families, and domestic-abuse survivors",
+    description: "The state directory lists food along with temporary housing, showers, laundry, education, domestic-violence assistance, counseling, and medical aid. Published office hours are Monday–Friday, 8:00 a.m.–5:00 p.m. Call to ask whether food support is available to you today and how to access it."
+  }),
+  mississippiFoodListing({
+    id: "ms-gateway-rescue-mission-kitchen-jackson", name: "Gateway Rescue Mission — community kitchen", city: "Jackson",
+    address: "328 S. Gallatin Street, Jackson, MS 39203", phone: "601-353-5864", link: "https://gatewaymission.org/",
+    resourceType: "prepared meals", serviceArea: "Jackson and Hinds County; lunch is described for the general homeless population and anyone who is hungry",
+    description: "The mission says it serves breakfast and dinner to overnight shelter/program residents and lunch at noon to the general homeless population and anyone who is hungry. Call to confirm current meal days, entry point, and service hours before going."
+  }),
+  mississippiFoodListing({
+    id: "ms-ballas-family-kitchen-greenwood", name: "Ballas Family Community Kitchen", city: "Greenwood",
+    address: "432 Carrollton Avenue, Greenwood, MS 38930", phone: "662-455-4545", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "community meals", serviceArea: "Greenwood and Leflore County area",
+    description: "Community kitchen listing with weekday meal service, Monday–Friday, 11:30 a.m.–1:30 p.m. Call or check the linked provider page to confirm the current meal schedule, who can attend, and any service changes."
+  }),
+  mississippiFoodListing({
+    id: "ms-greenwood-community-food-pantry", name: "Greenwood Community Food Pantry", city: "Greenwood",
+    address: "2509 Browning Road Extension, Greenwood, MS 38930", phone: "662-897-8221", link: "https://greenwoodfoodpantry.org/",
+    resourceType: "food pantry and grocery boxes", serviceArea: "Greenwood and Leflore County area",
+    description: "Provides grocery boxes; the state directory describes flour or cornmeal, peanut butter, canned vegetables, pasta, bread, butter, and meat when available. Applications are listed Tuesdays and Wednesdays, 1:00–2:45 p.m.; pickup hours are listed until 3:00 p.m. Call to confirm current requirements and stock."
+  }),
+  mississippiFoodListing({
+    id: "ms-gulf-coast-community-ministries-food", name: "Gulf Coast Community Ministries — food pantry", city: "Gulfport",
+    address: "3916 15th Street, Gulfport, MS 39501", phone: "228-868-8202", link: "https://gulfcoastministry.org/",
+    resourceType: "food pantry and community services", serviceArea: "Gulfport and nearby Harrison County communities",
+    description: "Offers a food pantry for households experiencing food insecurity, alongside health, literacy, and clothing services. The state directory lists pantry hours Tuesday and Thursday, 9:00–11:30 a.m. Call to confirm intake requirements and current food availability."
+  }),
+  mississippiFoodListing({
+    id: "ms-hancock-county-food-pantry-bay-st-louis", name: "Hancock County Food Pantry", city: "Bay St. Louis",
+    address: "9972 MS-603, Bay St. Louis, MS 39520", phone: "228-363-3266", link: "https://www.hancockfoodpantry.org/",
+    resourceType: "county food pantry", serviceArea: "Hancock County households; directory lists one food visit per 30 days for qualifying households",
+    description: "Provides free food to eligible Hancock County families, with the directory describing service once every 30 days and income-based criteria. Posted hours are Monday–Friday, 9:00 a.m.–noon. Call to confirm current criteria, required documents, and distribution before visiting."
+  }),
+  mississippiFoodListing({
+    id: "ms-heartland-hands-pantry-horn-lake", name: "Heartland Hands Food Pantry", city: "Horn Lake",
+    address: "1621 Goodman Road West, Horn Lake, MS 38637", phone: "662-280-5365", link: "https://heartlandhands.org/",
+    resourceType: "food pantry", serviceArea: "Southaven and Horn Lake residents",
+    description: "The state directory says the pantry is generally available once per month to Southaven and Horn Lake residents; listed documents include photo ID, proof of residency, a pay stub, and a SNAP letter if applicable. Posted hours are Tuesday and Thursday, 10:00 a.m.–1:00 p.m. Call before traveling to confirm the document list and intake."
+  }),
+  mississippiFoodListing({
+    id: "ms-hearts-hands-ministry-byhalia", name: "Hearts and Hands Ministry — Marshall County pantry", city: "Byhalia",
+    address: "32 W. Brunswick Street, Byhalia, MS 38611", phone: "662-838-8899", link: "https://hhministriesbyhalia.org/",
+    resourceType: "food pantry and essentials", serviceArea: "Marshall County",
+    description: "Nonprofit pantry serving Marshall County; the directory also lists clothing and toys. Posted hours are Tuesdays and Fridays, noon–2:00 p.m. Call to confirm current pantry eligibility, available items, and any changes to the posted schedule."
+  }),
+  mississippiFoodListing({
+    id: "ms-hope-community-collective-columbia", name: "Hope Community Collective — Columbia groceries", city: "Columbia",
+    address: "1452 Highway 98 East, Columbia, MS 39429", phone: "601-724-3628", link: "https://www.hopecommunitycollective.com/",
+    resourceType: "supplemental groceries and community support", serviceArea: "Columbia and surrounding Marion County communities",
+    description: "Provides supplemental groceries to eligible participants. The state directory lists Thursdays, 5:30–7:00 p.m. Call or email admin@hopecommunityms.com to confirm eligibility, any pre-registration, and whether distribution is occurring that week."
+  }),
+  mississippiFoodListing({
+    id: "ms-hope-community-collective-foxworth", name: "Hope Community Collective — Foxworth food support", city: "Foxworth",
+    address: "96 MS-587, Foxworth, MS 39483", phone: "601-724-3628", link: "https://www.hopecommunitycollective.com/",
+    resourceType: "food assistance and recovery-informed community support", serviceArea: "Foxworth and surrounding Pearl River County area",
+    description: "State directory lists this Hope Community Collective site as a location offering food assistance alongside recovery and trauma-informed support. Distribution is listed for Tuesday evenings; call to confirm the exact time, eligibility, and current availability before traveling."
+  }),
+  mississippiFoodListing({
+    id: "ms-hope-community-collective-hattiesburg", name: "Hope Community Collective — Hattiesburg food support", city: "Hattiesburg",
+    address: "623 Main Street, Hattiesburg, MS 39401", phone: "601-724-3628", link: "https://www.hopecommunitycollective.com/",
+    resourceType: "food assistance and recovery-informed community support", serviceArea: "Hattiesburg and surrounding Forrest County area",
+    description: "State directory lists this site among Hope Community Collective’s locations offering food assistance and community support. Published office schedule is Monday–Thursday, 9:00 a.m.–3:00 p.m.; call to confirm how groceries are distributed, eligibility, and any appointment requirements."
+  }),
+  mississippiFoodListing({
+    id: "ms-hope-community-collective-tylertown", name: "Hope Community Collective — Tylertown food support", city: "Tylertown",
+    address: "102 Old Highway 98, Tylertown, MS 39667", phone: "601-724-3628", link: "https://www.hopecommunitycollective.com/",
+    resourceType: "food assistance and recovery-informed community support", serviceArea: "Tylertown and surrounding Walthall County area",
+    description: "State directory lists this location within Hope Community Collective’s South Mississippi service network, which includes food assistance. The directory does not give a reliable local food distribution window for this site; call first to confirm location access, schedule, and eligibility."
+  }),
+  mississippiFoodListing({
+    id: "ms-interfaith-council-poverty-hernando", name: "Interfaith Council on Poverty — food bank", city: "Hernando",
+    address: "1455 McIngvale Road, Hernando, MS 38632", phone: "662-429-5789", link: "https://interfaithcouncilonpoverty.com/gethelp.php",
+    resourceType: "food bank and family assistance", serviceArea: "Nesbit and Hernando-area low-income households",
+    description: "Food bank serving low-income households in the Nesbit and Hernando area; the provider requires applicants to meet its criteria. The state directory lists Monday, Wednesday, and Friday, 10:30 a.m.–noon. It directs applicants to Catholic Social Services at 662-429-5789 about pantry vouchers. Confirm eligibility and application steps before visiting."
+  }),
+  mississippiFoodListing({
+    id: "ms-loves-kitchen-meridian", name: "Love’s Kitchen of Meridian", city: "Meridian",
+    address: "801 18th Avenue, Meridian, MS 39301", phone: "601-693-1409", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "prepared meals and pantry services", serviceArea: "Meridian and Lauderdale County area",
+    description: "The state directory describes hot meals, pantry services, and essential-resource connections for individuals and families facing food insecurity. Posted meal hours are daily, 10:30 a.m.–noon. Call or check the provider page to confirm current service days and whether pantry groceries require a separate intake."
+  }),
+  mississippiFoodListing({
+    id: "ms-olive-branch-food-pantry", name: "Olive Branch Food Pantry", city: "Olive Branch",
+    address: "10947 Highway 178, Olive Branch, MS 38654", phone: "662-895-2913", link: "https://www.theobfoodpantry.com/",
+    resourceType: "drive-through food pantry", serviceArea: "Olive Branch and nearby DeSoto County communities",
+    description: "Drive-through grocery distribution. The provider’s directory entry asks visitors to bring proof of residence and a Social Security card for each household member. Posted pickup hours are Tuesday, 10:00 a.m.–noon, and Thursday, 6:00–8:00 p.m. Call to confirm current document requirements and availability."
+  }),
+  mississippiFoodListing({
+    id: "ms-our-daily-bread-food-pantry-wiggins", name: "Our Daily Bread Food Pantry", city: "Wiggins",
+    address: "734 Magnolia Drive South, Wiggins, MS 39577", phone: "601-928-1668", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "county food pantry", serviceArea: "Stone County",
+    description: "Food pantry listed by the state service directory for Stone County. Posted hours are Tuesdays and Thursdays, 1:00–4:00 p.m. Call before traveling to check current distribution, eligibility, and whether the pantry is accepting households that day."
+  }),
+  mississippiFoodListing({
+    id: "ms-oxford-community-market", name: "Oxford Community Market — fresh produce", city: "Oxford",
+    address: "Old Armory Pavilion, 1801 University Avenue, Oxford, MS 38655", phone: "662-816-7413", link: "https://www.oxfordcommunitymarket.com/",
+    resourceType: "local produce market and SNAP access", serviceArea: "Oxford and Lafayette County",
+    description: "Local fresh-produce market. The state directory lists a year-round Tuesday market, 3:00–6:30 p.m., and notes SNAP is accepted, with up to $20 in matching support described there. Call or check the market’s current information for seasonal changes, accepted payment, and match terms."
+  }),
+  mississippiFoodListing({
+    id: "ms-sacred-heart-southern-missions-tate-county", name: "Sacred Heart Southern Missions — Tate County food pantry", city: "Walls",
+    address: "6050 Highway 161, Walls, MS 38680", phone: "800-232-9079", link: "https://www.shsm.org/",
+    resourceType: "food pantry and direct assistance", serviceArea: "Tate County and the provider’s northern Mississippi service area",
+    description: "The state directory lists direct aid including food pantries, clothing, gasoline, rent and utility assistance, and help applying for benefits. Call the toll-free number to ask which pantry serves your ZIP code, its current schedule, eligibility, and any documents to bring."
+  }),
+  mississippiFoodListing({
+    id: "ms-salvation-army-hattiesburg-food", name: "Salvation Army — Hattiesburg food pantry", city: "Hattiesburg",
+    address: "5670 US 49, Hattiesburg, MS 39401", phone: "601-544-3684", link: "https://www.salvationarmyusa.org/",
+    resourceType: "food pantry and family assistance", serviceArea: "Hattiesburg and Forrest County area",
+    description: "The state directory lists pantry assistance alongside family services, rent and utility help, poverty relief, and disaster support. Listed office hours are Monday–Friday, 8:00 a.m.–4:00 p.m.; call to ask about pantry intake, service area, and current food distribution."
+  }),
+  mississippiFoodListing({
+    id: "ms-salvation-army-meridian-food", name: "Salvation Army — Meridian food pantry", city: "Meridian",
+    address: "1115 25th Avenue, Meridian, MS 39301", phone: "601-483-6156", link: "https://www.salvationarmyusa.org/",
+    resourceType: "food pantry and family assistance", serviceArea: "Meridian and Lauderdale County area",
+    description: "The state directory lists food pantry services alongside rent and utility assistance and other family and senior supports. Listed office hours are Monday–Thursday, 8:00 a.m.–3:00 p.m.; call to confirm pantry hours, intake requirements, and availability."
+  }),
+  mississippiFoodListing({
+    id: "ms-saucier-community-food-pantry", name: "Saucier Community Food Pantry", city: "Saucier",
+    address: "24135 Church Avenue, Saucier, MS 39574", phone: "228-832-3737", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "community food pantry", serviceArea: "Saucier and surrounding Harrison County communities; directory says it is open to all Mississippians",
+    description: "The state directory says the pantry is open to all Mississippians and describes the entrance as the alley behind the church from Third Street. Distribution times change; check the linked provider page or call before going to confirm an open date and pickup instructions."
+  }),
+  mississippiFoodListing({
+    id: "ms-seashore-mission-meals-biloxi", name: "Seashore Mission — meals and homeless resource center", city: "Biloxi",
+    address: "856 Division Street, Biloxi, MS 39530", phone: "228-331-1477", link: "https://www.seashoremission.org/",
+    resourceType: "prepared meals and basic-needs support", serviceArea: "Biloxi and Mississippi Gulf Coast; focused on people experiencing homelessness",
+    description: "The state directory describes breakfast and lunch on Sundays, Mondays, and Thursdays, plus clothing, hygiene supplies, showers, laundry, and housing referrals. Posted center hours are 8:00 a.m.–1:00 p.m. on those days. Call to confirm which meals are served and current access."
+  }),
+  mississippiFoodListing({
+    id: "ms-south-panola-food-pantry-batesville", name: "South Panola Food Pantry", city: "Batesville",
+    address: "201 Van Voris Street, Batesville, MS 38606", phone: "662-703-1739", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "community food pantry", serviceArea: "Batesville and Panola County",
+    description: "Nonprofit food pantry. The state directory says a local ID is needed to receive food and lists Tuesday and Wednesday, 8:00–10:00 a.m. Call to confirm acceptable identification, current service dates, and whether household registration is needed."
+  }),
+  mississippiFoodListing({
+    id: "ms-starkville-church-god-compassion-pantry", name: "Starkville Church of God Compassion Pantry", city: "Starkville",
+    address: "100 Locksley Way, Starkville, MS 39759", phone: "662-323-0352", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "grocery pantry", serviceArea: "Starkville and Oktibbeha County area",
+    description: "The state directory lists grocery-bag assistance and weekday hours of 8:00 a.m.–4:00 p.m. Call to confirm pantry intake, current hours, and whether groceries are distributed on site during all listed office hours."
+  }),
+  mississippiFoodListing({
+    id: "ms-stewpot-community-kitchen-jackson", name: "Stewpot Community Services — kitchen, pantry, and Meals on Wheels", city: "Jackson",
+    address: "1100 W. Capitol Street, Jackson, MS 39203", phone: "601-353-2759", link: "https://stewpot.org/",
+    resourceType: "community kitchen, food pantry, and older-adult meals", serviceArea: "Jackson and Hinds County; contact provider about pantry catchment and home-delivered meals",
+    description: "State directory lists a community kitchen, food pantry, Meals on Wheels, emergency shelter, and housing assistance. Posted office hours are Monday–Friday, 8:00 a.m.–4:00 p.m. Call to ask about meal service, pantry intake, and eligibility for home-delivered meals."
+  }),
+  mississippiFoodListing({
+    id: "ms-lord-is-my-help-ocean-springs", name: "The Lord Is My Help — food bank and hygiene essentials", city: "Ocean Springs",
+    address: "1205 DeSoto Street, Ocean Springs, MS 39564", phone: "228-872-2331", link: "https://www.thelordismyhelp.org/",
+    resourceType: "food bank and hygiene supplies", serviceArea: "Ocean Springs and Jackson County area",
+    description: "Food bank providing food and basic hygiene goods, including toothbrushes, toothpaste, combs, deodorant, and disposable razors. The state directory lists Monday–Friday, 9:00 a.m.–12:30 p.m. Call to confirm service area, current intake, and what is available."
+  }),
+  mississippiFoodListing({
+    id: "ms-lords-pantry-jackson", name: "The Lord’s Pantry — Central Mississippi food bank", city: "Jackson",
+    address: "2508 Emmett Avenue, Jackson, MS 39213", phone: "601-918-2887", link: "https://thelordspantry.org/",
+    resourceType: "regional food bank", serviceArea: "Central Mississippi; call to identify the local distribution route",
+    description: "Food bank serving Central Mississippi. The state directory lists contact numbers 601-918-2887 and 769-208-5836 but does not publish walk-in hours. Call to find the pantry or distribution serving your community and confirm eligibility and schedule before traveling."
+  }),
+  mississippiFoodListing({
+    id: "ms-natchez-stewpot", name: "The Natchez Stewpot — meals and food assistance", city: "Natchez",
+    address: "69 E. Franklin Street, Natchez, MS 39120", phone: "601-442-9413", link: "https://www.thenatchezstewpot.com/",
+    resourceType: "community meal and food bank", serviceArea: "Natchez and surrounding Adams County communities",
+    description: "Nonprofit food bank in southwest Mississippi. The state directory lists Monday–Saturday, 7:30 a.m.–2:00 p.m. Call to confirm whether current assistance is a prepared meal, grocery pickup, or both, and ask about intake and availability."
+  }),
+  mississippiFoodListing({
+    id: "ms-twelve-baskets-food-bank-gulfport", name: "Twelve Baskets Food Bank", city: "Gulfport",
+    address: "333 Cowan Road, Gulfport, MS 39507", phone: "228-822-0836", link: "https://www.mama.ms.gov/service-directory?category=4",
+    resourceType: "food bank and household essentials", serviceArea: "George, Hancock, Harrison, Jackson, Pearl River, and Perry counties",
+    description: "Provides food and essential products to families across six south Mississippi counties. The state directory lists weekday office hours Monday–Thursday, 8:00 a.m.–noon and 1:00–3:00 p.m. Call to confirm which distribution point serves your county, eligibility, and current stock."
+  }),
+  mississippiFoodListing({
+    id: "ms-alfa-pantry-box-hernando", name: "Alfa Insurance Food Pantry Box", city: "Hernando",
+    address: "105 E. Center Street, Hernando, MS 38632", phone: null, link: "https://www.google.com/maps/search/?api=1&query=105+E+Center+Street+Hernando+MS+38632",
+    resourceType: "24-hour community pantry box", serviceArea: "Hernando and nearby DeSoto County communities",
+    description: "The state directory describes an accessible-at-any-time blessing box stocked with dry goods, with no stated eligibility requirements. No phone is published; check the map pin and confirm that the box is accessible and stocked before making a special trip."
+  }),
+  mississippiFoodListing({
+    id: "ms-bullfrog-corner-blessing-box-horn-lake", name: "Bullfrog Corner Blessing Box", city: "Horn Lake",
+    address: "1751 Dancy Boulevard, Horn Lake, MS 38637", phone: null, link: "https://www.google.com/maps/search/?api=1&query=1751+Dancy+Boulevard+Horn+Lake+MS+38637",
+    resourceType: "24-hour community pantry box", serviceArea: "Horn Lake and nearby DeSoto County communities",
+    description: "The state directory lists an accessible-at-any-time blessing box stocked with dry goods and no stated requirements. No phone is published; confirm the location is accessible and stocked before traveling specifically for it."
+  }),
+  mississippiFoodListing({
+    id: "ms-center-hill-elementary-blessing-box-olive-branch", name: "Center Hill Elementary Blessing Box", city: "Olive Branch",
+    address: "13662 Center Hill Road, Olive Branch, MS 38654", phone: null, link: "https://www.google.com/maps/search/?api=1&query=13662+Center+Hill+Road+Olive+Branch+MS+38654",
+    resourceType: "community pantry box", serviceArea: "Olive Branch and nearby DeSoto County communities",
+    description: "The state directory describes a free, accessible-at-any-time box stocked with dry goods and no stated requirements. Because the location is on a school campus, access may be affected by campus rules or closures; check before visiting and do not enter restricted areas."
+  }),
+  mississippiFoodListing({
+    id: "ms-first-baptist-pantry-box-olive-branch", name: "First Baptist Church Free Pantry", city: "Olive Branch",
+    address: "9155 Highland Street, Olive Branch, MS 38654", phone: null, link: "https://www.google.com/maps/search/?api=1&query=9155+Highland+Street+Olive+Branch+MS+38654",
+    resourceType: "community pantry box", serviceArea: "Olive Branch and nearby DeSoto County communities",
+    description: "The state directory lists a free pantry stocked with dry goods and describes it as accessible at any time with no requirements. No phone is listed; verify access and current stocking through the location information before making a special trip."
+  }),
+  mississippiFoodListing({
+    id: "ms-first-cumberland-pantry-box-olive-branch", name: "First Cumberland Presbyterian Church Blessing Box", city: "Olive Branch",
+    address: "8161 Germantown Road, Olive Branch, MS 38654", phone: null, link: "https://www.google.com/maps/search/?api=1&query=8161+Germantown+Road+Olive+Branch+MS+38654",
+    resourceType: "community pantry box", serviceArea: "Olive Branch and nearby DeSoto County communities",
+    description: "The state directory lists a free dry-goods blessing box described as accessible at any time without requirements. No phone is published; check current accessibility and stocking before traveling specifically for this location."
+  }),
+  mississippiFoodListing({
+    id: "ms-heartland-church-pantry-box-southaven", name: "Heartland Church Free Pantry", city: "Southaven",
+    address: "3580 Getwell Road, Southaven, MS 38672", phone: null, link: "https://www.google.com/maps/search/?api=1&query=3580+Getwell+Road+Southaven+MS+38672",
+    resourceType: "community pantry box", serviceArea: "Southaven and nearby DeSoto County communities",
+    description: "The state directory lists a free pantry stocked with dry goods and accessible at any time without requirements. No phone is listed; verify that the pantry remains accessible and stocked before making a special trip."
+  }),
+  mississippiFoodListing({
+    id: "ms-olive-branch-maples-methodist-pantry-box", name: "Olive Branch Maples Methodist Church Blessing Box", city: "Olive Branch",
+    address: "8745 Goodman Road, Olive Branch, MS 38654", phone: null, link: "https://www.google.com/maps/search/?api=1&query=8745+Goodman+Road+Olive+Branch+MS+38654",
+    resourceType: "community pantry box", serviceArea: "Olive Branch and nearby DeSoto County communities",
+    description: "The state directory lists this location as a free, dry-goods pantry box accessible at any time without requirements. No phone is published; confirm the box is on public-facing grounds, accessible, and stocked before traveling."
+  }),
+  mississippiFoodListing({
+    id: "ms-shadow-oaks-pantry-box-horn-lake", name: "Shadow Oaks Pantry Box", city: "Horn Lake",
+    address: "3780 Shadow Oaks Parkway, Horn Lake, MS 38637", phone: null, link: "https://www.google.com/maps/search/?api=1&query=3780+Shadow+Oaks+Parkway+Horn+Lake+MS+38637",
+    resourceType: "community pantry box", serviceArea: "Horn Lake and nearby DeSoto County communities",
+    description: "The state directory lists a free dry-goods pantry box described as accessible at any time with no requirements. The address is associated with an elementary school; access can be limited by campus policies or school closures. Confirm access and do not enter restricted areas."
+  })
+];
+
+export const MISSISSIPPI_FOOD_LEGACY = [
   {
     "id": "ms-mississippi-food-network",
     "name": "Mississippi Food Network — food assistance and pantry locator",
@@ -6961,6 +7279,8 @@ export const MISSISSIPPI_FOOD = [
     "checkedAt": "2026-10-30"
   }
 ];
+
+export const MISSISSIPPI_FOOD = [...MISSISSIPPI_FOOD_LOCAL, ...MISSISSIPPI_FOOD_LEGACY];
 
 export const MINNESOTA_URGENT = [
   {
