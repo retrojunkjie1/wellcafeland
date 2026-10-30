@@ -168,6 +168,35 @@ export const NEW_MEXICO_URGENT = [reviewed({
   description: "New Mexico's state crisis resource page lists the statewide Crisis and Access Line for mental-health crisis response and connection to care. Call for current local options and follow the counselor's safety instructions. For immediate danger requiring emergency response, call 911.",
 })];
 
+const nmFoodRows = [
+  ["roadrunner", "Roadrunner Food Bank", "Albuquerque", "505-349-5340", "https://www.rrfb.org/", "Bernalillo, Catron, Chaves, Doña Ana, Eddy, Grant, Hidalgo, Lea, Lincoln, Luna, Otero, Sandoval, Sierra, Socorro, Torrance, and Valencia"],
+  ["eastern", "Food Bank of Eastern New Mexico", "Clovis", "575-763-6130", "https://www.fbenm.org/", "Curry, De Baca, Guadalupe, Quay, and Roosevelt"],
+  ["echo", "ECHO Food Bank", "Farmington", "505-326-3770", "https://echoinc.org/", "San Juan"],
+  ["community-pantry", "The Community Pantry", "Gallup", "505-726-8068", "https://thecommunitypantry.org/", "Cibola and McKinley"],
+  ["food-depot", "The Food Depot", "Santa Fe", "505-471-1633", "https://thefooddepot.org/", "Colfax, Harding, Los Alamos, Mora, Rio Arriba, San Miguel, Santa Fe, Taos, and Union"],
+];
+export const NEW_MEXICO_FOOD = nmFoodRows.map(([id, name, city, phone, link, counties]) => reviewed({
+  id: `nm-food-${id}`, name: `${name} — regional food bank and pantry locator`, state: "NM", city, phone, link,
+  source: "New Mexico Association of Food Banks, Find Food Near You", serviceArea: counties, coverageScope: "regional food bank network",
+  resourceType: "regional food bank and local pantry referral", locationLine: `${city} · serving ${counties} · ask for nearest pantry or meal site`,
+  description: `The New Mexico Association of Food Banks identifies ${name} as the regional food bank serving ${counties}. Contact the food bank or use its local food finder to locate community pantries, senior centers, Pueblo partners, and other distribution sites. Confirm the nearest location, hours, service area, and current availability before traveling. This regional contact is not itself a promise of food at this address.`,
+}));
+
+const nmActionAgencies = [
+  ["southern", "Community Action Agency of Southern New Mexico", "Las Cruces", "Doña Ana, Grant, Hidalgo, Luna, Sierra", "https://www.caasnm.org/", "Food assistance, nutrition, case management, income support, and youth services"],
+  ["eastern-plains", "Eastern Plains Community Action Agency", "Clovis", "Curry, De Baca, Harding, Guadalupe, Quay, Roosevelt, Union", "https://www.epcaa.org/", "Emergency food assistance, utility support, Head Start, and pre-K"],
+  ["echo-action", "Economic Council Helping Others (ECHO)", "Farmington", "San Juan", "https://echoinc.org/", "Food assistance, senior food programs, utility and rent assistance, and family services"],
+  ["help-nm", "HELP New Mexico", "Albuquerque", "Bernalillo, Catron, Chaves, Cibola, Colfax, Doña Ana, Grant, Hidalgo, Los Alamos, Luna, McKinley, Mora, Otero, Rio Arriba, San Juan, San Miguel, Sandoval, Santa Fe, Sierra, Socorro, Taos, Torrance", "https://www.helpnm.com/", "Food assistance, supportive housing, rent and utility assistance, employment, and family supports"],
+  ["midwest", "Mid West New Mexico Community Action Program", "Grants", "Catron, Cibola, McKinley, Socorro, Valencia", "https://www.ourkidzrock.com/", "Food assistance, supportive housing, income management, and utility or rent assistance"],
+  ["southeast", "Southeast New Mexico Community Action Corporation", "Artesia", "Chaves, Eddy, Lea, Lincoln, Otero", "https://www.snmcac.com/", "Senior support, child and family programs, direct care, and utility or rent assistance"],
+];
+export const NEW_MEXICO_COMMUNITY_ACTION = nmActionAgencies.map(([id, name, city, counties, link, programs]) => reviewed({
+  id: `nm-action-${id}`, name: `${name} — community action and family support`, state: "NM", city, link,
+  source: "New Mexico Association of Community Partners, Find Help", serviceArea: counties, coverageScope: "multi-county community action agency",
+  resourceType: "community action, benefits, and family support agency", locationLine: `${city} · serves ${counties}`,
+  description: `New Mexico Association of Community Partners lists ${name} as serving ${counties}. Published program areas include ${programs.toLowerCase()}. Contact the agency to ask which programs are active in your county, current intake routes, eligibility, documentation, and availability. Service lists and county coverage can change; confirm directly.`,
+}));
+
 const ndClinicSource = "https://www.hhs.nd.gov/service-locations/behavioral-health-clinics";
 const ndClinics = [
   ["west-central", "West Central Behavioral Health Clinic", "Bismarck", "1237 W. Divide Ave., Suite 5, Bismarck, ND 58501", "888-328-2662", "West Central region"],
@@ -218,6 +247,50 @@ export const NORTH_DAKOTA_URGENT = ndClinics.map(([id, name, city, address, phon
   source: "North Dakota Health and Human Services Regional Behavioral Health Clinics directory", serviceArea, coverageScope: "multi-county regional crisis access", resourceType: "24-hour behavioral-health crisis service",
   locationLine: `${city} · regional crisis access for ${serviceArea} · call before traveling`,
   description: `North Dakota HHS states its eight regional clinics provide 24/7 crisis and residential services. This clinic serves ${serviceArea}; the published contact is ${phone}. Call to connect with the local crisis response and confirm whether an in-person visit is appropriate. Call or text 988 for immediate mental-health crisis support; call 911 for immediate danger.`,
+}));
+
+const ndFoodSites = [
+  ["bismarck-dream-center", "Dream Center", "Bismarck", "1805 Park Ave, Bismarck, ND", "701-955-2150", "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance"],
+  ["bismarck-great-plains", "Great Plains Food Bank — Bismarck", "Bismarck", "1315 S 20th St, Bismarck, ND", "701-751-6188", "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance"],
+  ["fargo-emergency-food-pantry", "Emergency Food Pantry", "Fargo", "1101 4th Ave N, Fargo, ND", "701-237-9337", "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance"],
+  ["fargo-great-plains", "Great Plains Food Bank — Fargo", "Fargo", "1720 3rd Ave N, Fargo, ND", "701-232-6219", "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance"],
+  ["grand-forks-salvation-army", "Salvation Army Grand Forks — food assistance", "Grand Forks", "1600 University Ave, Grand Forks, ND", "701-775-2597", "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance"],
+  ["grand-forks-st-joseph", "St. Joseph's Social Care Food Pantry", "Grand Forks", "620 8th Ave S, Grand Forks, ND", "701-795-8614", "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance"],
+];
+export const NORTH_DAKOTA_FOOD = ndFoodSites.map(([id, name, city, address, phone, link]) => reviewed({
+  id: `nd-food-${id}`, name: `${name} — local food assistance`, state: "ND", city, address, phone, link,
+  source: "North Dakota HHS Community Resource Guide, Food and Income Assistance", serviceArea: `${city}, North Dakota`, coverageScope: "city food assistance contact",
+  resourceType: "food pantry or food assistance contact", locationLine: `${address} · call to confirm current hours, intake, and food availability`,
+  description: `North Dakota HHS lists ${name} at ${address}, phone ${phone}, among local food resources. Contact the organization to confirm hours, eligibility or service area, appointment requirements, and current food availability before traveling. HHS also notes mobile food pantries and other nutrition support for rural communities; use the linked state guide or call 211 if this location is not accessible.`,
+}));
+
+const orFoodNetworks = [
+  ["access", "ACCESS Food Share", "Medford", "Jackson County", "https://www.accesshelps.org/"],
+  ["capeco", "CAPECO Food Share", "Pendleton", "Umatilla and Morrow counties", "https://www.capeco-works.org/"],
+  ["clatsop", "Clatsop Community Action Regional Food Bank", "Astoria", "Clatsop County", "https://ccaservices.org/"],
+  ["columbia-pacific", "Columbia Pacific Food Bank", "St. Helens", "Columbia County", "https://www.cpfoodbank.org/"],
+  ["community-connection", "Community Connection of Northeast Oregon", "La Grande", "Union, Baker, and Wallowa region", "https://ccno.org/"],
+  ["food-for-lane", "FOOD for Lane County", "Eugene", "Lane County", "https://www.foodforlanecounty.org/"],
+  ["food-share-lincoln", "Food Share of Lincoln County", "Newport", "Lincoln County", "https://foodsharelc.org/"],
+  ["josephine", "Josephine County Food Bank", "Grants Pass", "Josephine County", "https://www.jocofoodbank.org/"],
+  ["klamath-lake", "Klamath-Lake Counties Food Bank", "Klamath Falls", "Klamath and Lake counties", "https://klamathfoodbank.org/"],
+  ["linn-benton", "Linn Benton Food Share", "Corvallis", "Linn and Benton counties", "https://communityservices.us/"],
+  ["marion-polk", "Marion Polk Food Share", "Salem", "Marion and Polk counties", "https://www.marionpolkfoodshare.org/"],
+  ["neighborimpact", "NeighborImpact Food Program", "Redmond", "Central Oregon region", "https://www.neighborimpact.org/"],
+  ["south-coast", "South Coast Food Share", "Coos Bay", "Coos and Curry counties", "https://www.orcca.us/"],
+  ["ucan", "United Community Action Network Food Bank", "Roseburg", "Douglas and Josephine counties", "https://www.ucancap.org/"],
+  ["ycap", "YCAP Regional Food Bank", "McMinnville", "Yamhill County", "https://www.yamhillcap.org/"],
+  ["portland-metro", "Oregon Food Bank — Portland Metro Services", "Portland", "Portland Metro", "https://www.oregonfoodbank.org/find-support/food-support-network"],
+  ["washington-county", "Oregon Food Bank — Washington County Services", "Beaverton", "Washington County", "https://www.oregonfoodbank.org/find-support/food-support-network"],
+  ["southeast", "Oregon Food Bank — Southeast Oregon Services", "Ontario", "Southeast Oregon", "https://www.oregonfoodbank.org/find-support/food-support-network"],
+  ["tillamook", "Tillamook County Food Bank", "Tillamook", "Tillamook County", "https://www.oregonfoodbank.org/find-support/food-support-network"],
+  ["columbia-gorge", "Columbia Gorge Food Bank", "The Dalles", "Wasco, Hood River, and Sherman counties", "https://www.oregonfoodbank.org/find-support/food-support-network"],
+];
+export const OREGON_FOOD = orFoodNetworks.map(([id, name, city, serviceArea, link]) => reviewed({
+  id: `or-food-${id}`, name: `${name} — regional food assistance network`, state: "OR", city, link,
+  source: "Oregon Food Bank, Food Support Network directory", serviceArea, coverageScope: "regional food bank network",
+  resourceType: "regional food bank and pantry locator", locationLine: `${city} · serving ${serviceArea} · contact or use food finder for a nearby site`,
+  description: `Oregon Food Bank lists ${name} as a regional network organization serving ${serviceArea}. Regional food banks coordinate local partner agencies and food sites; this listing is a route to the network, not a claim that food is distributed at this address. Use the [Oregon Food Bank Food Finder](https://foodfinder.oregonfoodbank.org/) or contact the organization to locate a nearby site and confirm its hours, eligibility, and current availability.`,
 }));
 
 const orSource = "https://www.oregon.gov/oya/Pages/OregonResourcesbyCounty.aspx";
@@ -307,6 +380,68 @@ export const RHODE_ISLAND_FOOD = [reviewed({
   locationLine: "Statewide · search local pantry and meal sites · confirm hours before travel",
   description: "Rhode Island BHDDH directs residents to the Community Food Bank's statewide member-agency directory for food pantries and meal sites. Use the finder to locate a nearby provider or call 401-942-6325 for guidance. Call the selected site to confirm hours, service area, eligibility, and current food availability before traveling.",
 })];
+
+const riAccessPoints = [
+  ["community-care", "Community Care Alliance Regional Access Point", "Woonsocket", "245 Main Street, Woonsocket, RI", "401-445-4237", "Monday–Friday, 9 a.m.–3 p.m.", "Housing problem solving and assessment; mental-health, substance-use, healthcare and street-outreach referrals; documents, transportation and family support"],
+  ["crossroads", "Crossroads Regional Access Point", "Providence", "160 Broad Street, Providence, RI", "401-865-6215", "Monday–Friday, 8:30 a.m.–4:30 p.m.", "Housing problem solving and assessment; mental-health, substance-use, healthcare and street-outreach referrals; documents, transportation, education, employment, SOAR and SNAP referrals"],
+  ["newport", "Newport Mental Health Regional Access Point", "Middletown", "42 Valley Road, Middletown, RI", "401-846-1213 ext. 9105", "Monday and Friday, 8 a.m.–4:30 p.m.; Tuesday and Thursday, 8 a.m.–7 p.m.", "Housing problem solving and assessment; referrals for mental health, substance use, healthcare and street outreach; connection to outreach and emergency services"],
+  ["opendoors-pawtucket", "OpenDoors Pawtucket Regional Access Point", "Pawtucket", "1139 Main Street, Pawtucket, RI", "401-214-5542", "Monday–Friday, 9 a.m.–3 p.m.", "Housing assessment and referrals for mental health, substance use, healthcare, and street outreach; documentation services"],
+  ["shower-to-empower", "Shower to Empower Regional Access Point", "Mobile, Providence / Pawtucket / Woonsocket / West Warwick", "Multiple scheduled community locations; check state page before visiting", "", "Monday, Tuesday, and Friday, 8:30–11 a.m.; Wednesday and Thursday, 9 a.m.–noon", "Mobile housing problem-solving and assessments; referrals for mental health, substance use, healthcare and documentation; check the state page or email the listed contact to confirm the day’s site"],
+  ["warm-center", "WARM Center Regional Access Point", "Westerly", "16 High Street, Westerly, RI", "401-596-9276", "Monday–Friday, 7 a.m.–10 p.m.", "Housing problem solving and assessment; referrals for mental health, substance use, healthcare and street outreach; documentation and transportation support"],
+  ["sojourner", "Sojourner House Victim Service Provider Regional Access Point", "Providence", "1570 Westminster Street, Providence, RI", "401-765-3232", "Monday–Friday, 9 a.m.–5 p.m.", "Housing problem solving and assessment; referrals for mental health, substance use and street outreach; services for survivors of domestic violence, sexual assault, and trafficking; SOAR and workforce support"],
+];
+export const RHODE_ISLAND_HOUSING = riAccessPoints.map(([id, name, city, address, phone, hours, services]) => reviewed({
+  id: `ri-housing-access-${id}`, name: `${name} — housing navigation and homelessness prevention`, state: "RI", city, address, phone,
+  link: "https://housing.ri.gov/resources/individuals-experiencing-homelessness", source: "Rhode Island Executive Office of Housing, Regional Access Points (page updated October 15, 2026)",
+  serviceArea: "Rhode Island homelessness response system", coverageScope: "regional access point", resourceType: "regional homelessness access and housing navigation",
+  locationLine: `${address} · ${hours} · call before visiting to confirm access`,
+  description: `Rhode Island EOH lists ${name} at ${address}, phone ${phone}. Published hours: ${hours}. Services include ${services.toLowerCase()}. The state says Regional Access Points can connect people to housing-related supports across Rhode Island; service offerings differ by site. Call ahead for current intake, walk-in availability, and access instructions. If reaching a location is difficult, call a Regional Access Point for phone-based connection and ask about street outreach.`,
+}));
+
+const riProvidencePantries = [
+  ["your-neighborhood", "Your Neighborhood Food Pantry", "533 Branch Avenue", "Tuesday 11 a.m.–1 p.m.; Thursday 4–7 p.m.; Saturday 11 a.m.–1 p.m.", "Serves ZIP codes 02903, 02904, and 02908; weekly visits; accessible; Spanish spoken"],
+  ["womens-refugee-care", "Women's Refugee Care", "570 Broad Street", "Saturday 10 a.m.–2 p.m.", "Fish and produce; serves 02907 and refugees from the Great Lakes region of Africa; Swahili, Kirundi, Kinyarwanda, Lingala, and French spoken; use rear parking-lot entrance on Howard Avenue"],
+  ["west-end", "West End Community Center Pantry", "109 Bucklin Street", "Monday–Wednesday and Friday 9 a.m.–3 p.m.; last Thursday 9 a.m.–3 p.m.", "Monthly visits; accessible entrance; Spanish spoken"],
+  ["washington-park", "Washington Park Community Center Pantry", "42 Jillson Street", "Monday–Thursday 10 a.m.–1 p.m.", "Washington Park neighborhood; monthly visits; accessible; Spanish interpreters available"],
+  ["st-thomas", "St. Thomas Church Food Pantry", "65 Fruit Hill Avenue", "Tuesday 9–11:30 a.m.", "Monthly visits; enter on the left side of the rectory"],
+  ["st-peter-andrew", "St. Peter & St. Andrew Food Pantry", "70 Pemberton Street", "Saturday 10–11:30 a.m.", "Up to twice monthly; accessible front ramp; Spanish spoken"],
+  ["mary-house", "St. Patrick Church Mary House Food Pantry", "244 Smith Street", "Tuesday 4–6 p.m. and Thursday 9–11 a.m. during the second and third weeks of the month", "Smith Hill area; monthly visits; accessible; Spanish-speaking volunteers"],
+  ["martin-de-porres", "St. Martin de Porres Senior Center Food Pantry", "160 Cranston Street", "Friday 9 a.m.–noon", "Providence residents and senior-center members; weekly; accessible"],
+  ["st-edward", "St. Edward Food & Wellness Center", "1001 Branch Avenue", "Wednesday 10 a.m.–noon and 5–6 p.m.", "Providence North End ZIP codes 02904 and 02908; weekly; Spanish-speaking volunteers"],
+  ["st-charles", "St. Charles of Borromeo Pantry", "178 Dexter Street", "Tuesday 10 a.m.–noon", "Serves ZIP codes 02907 and 02909; weekly; accessible; English and Spanish"],
+  ["st-anthony", "St. Anthony Mission Church Pantry of Assumption BVM", "549 Plainfield Street", "Tuesday, Wednesday, and Friday 10–11 a.m.", "Annex and Silver Lake areas, ZIP 02909; monthly; Spanish spoken"],
+  ["st-raymond", "Society of St. Vincent de Paul — St. Raymond", "1240 North Main Street", "Saturday 9–11 a.m.", "Serves ZIP codes 02904, 02906, and 02860; weekly; Portuguese and Spanish translators on first and third Saturdays"],
+  ["silver-lake", "Silver Lake Community Center Pantry", "529 Plainfield Street", "Monday–Thursday 9 a.m.–noon", "Silver Lake residents; monthly; accessible; Spanish spoken"],
+  ["scalabrini", "Scalabrini Dukcevich Center", "300 Laurel Hill Avenue", "Wednesday 4–6 p.m.", "Serves ZIP codes 02903, 02907, 02909, 02910, and 02920; weekly; Spanish, Portuguese, Italian, and French; accessible"],
+  ["salvation-army", "Salvation Army Providence Corps Food Pantry", "386 Broad Street", "Wednesday 9–11:30 a.m.; new guests Thursday 9 a.m.–noon", "Providence, Johnston, and Cranston residents; monthly; accessible; Spanish spoken"],
+  ["olneyville", "Olneyville Food Center", "261 Manton Avenue", "Tuesday and Thursday 9 a.m.–2 p.m.; Wednesday 9 a.m.–1 p.m.; Friday 9 a.m.–noon", "Providence ZIP codes 02908 and 02909; twice monthly; accessible; Spanish spoken"],
+  ["refugee-dream", "Refugee Dream Center Food Pantry", "747 Broad Street", "Wednesday 1–4 p.m.", "Primarily serves immigrants and refugees; confirm current intake before travel"],
+  ["spanish-sda", "Providence Spanish SDA Pantry", "131 Elmwood Avenue", "Second and fourth Thursday 2:30–5:30 p.m.", "Accessible; Spanish spoken"],
+  ["project-outreach", "Project Outreach Food Pantry", "1520 Broad Street", "Wednesday and Thursday 8–11 a.m.", "Serves ZIP codes 02905 and 02907; weekly; Spanish spoken; short prayer is optional"],
+  ["our-lady-rosary", "Our Lady of the Rosary Pantry", "17 Traverse Street", "Last Wednesday 6–8 p.m. and last Saturday 9–11 a.m.; closed holidays", "Providence residents; monthly; Saturday includes registered TEFAP distribution; Portuguese spoken"],
+  ["meals-on-wheels", "Meals on Wheels of Rhode Island Food Pantry", "70 Bath Street", "Tuesday 10 a.m.–2 p.m. or by appointment", "Rhode Island residents age 60 and older; home-delivered meals also available; Spanish, Kurdish, and Polish; accessible"],
+  ["mcauley-house", "McAuley House Food Pantry", "622 Elmwood Avenue", "Monday and Wednesday 11 a.m.–1 p.m.", "McAuley Village residents and registered McAuley House guests; registration required; Spanish, Creole, French, and Portuguese; accessible"],
+  ["maranatha", "Maranatha Food Pantry of Church of God", "1040 Atwells Avenue", "Friday 9 a.m.–noon", "Residents of ZIP codes 02908 and 02909; weekly; accessible front ramp"],
+  ["love-divine", "Love Divine Pantry", "28 Candace Street", "Third Saturday noon–2 p.m.; emergency delivery may be available in Smith Hill", "Call the organization to ask about delivery and current access"],
+  ["lighthouse-cdc", "Lighthouse Community Development Corporation Pantry", "11 Hawthorne Street", "Second and fourth Saturday 9 a.m.–noon", "Serves all Rhode Island residents; twice monthly; accessible; French and Spanish"],
+  ["chester-kosher", "JCS-Louis and Goldie Chester Kosher Pantry", "1165 North Main Street", "By appointment; first and third Wednesday, Thursday, and Friday of each month", "Kosher and Halal food; emergency food bags by appointment; up to twice monthly; accessible"],
+  ["interfaith-food", "Interfaith Food Ministry", "95 Hathaway Center #61", "Saturday; call to confirm current schedule", "ZIP 02910 and South Elmwood residents; monthly; Spanish interpreters available"],
+  ["higher-ground", "Higher Ground International Food Pantry", "21 Peace Street", "Third Thursday 9 a.m.–2 p.m.", "West African community focus; all are welcome; monthly; accessible; Spanish spoken"],
+  ["gateway-capital-city", "Gateway Healthcare Capital City Community Center Pantry", "285A Chad Brown Street", "Monday 9 a.m.–1:30 p.m.; Wednesday 9:30 a.m.–12:30 p.m.", "Providence ZIP codes 02904 and 02908; monthly groceries and weekly Wednesday produce; bring reusable bags; accessible; Spanish spoken"],
+  ["federal-hill", "Federal Hill House Pantry", "35 Swiss Street", "Tuesday–Friday 9 a.m.–1 p.m.", "Providence ZIP codes 02903, 02905, 02907, 02908, and 02909; twice monthly; accessible ramp"],
+  ["first-unitarian", "Community Food Share — First Unitarian Church", "1 Benevolent Street", "Third Monday 2:30–5 p.m.", "All Rhode Island cities and towns welcome; accessible; Spanish-speaking volunteers"],
+  ["community-action", "Community Action Partnership of Providence Pantry", "550 Hartford Avenue", "By appointment Wednesday or Thursday", "Providence residents; up to twice monthly; accessible; Spanish and French Creole interpreters"],
+  ["camp-street", "Camp Street Ministries Food Distribution", "190 1/2 Camp Street", "Wednesday 11 a.m.–2 p.m. and Friday noon–2 p.m.", "Weekly curbside food distribution"],
+  ["better-lives", "Better Lives RI Food Cupboard", "12 Abbott Park Place", "Monday 3–6 p.m.; Tuesday and Wednesday 9 a.m.–1 p.m.", "Providence residents; twice monthly; R-Line stop one block away; accessible parking details on city listing; Spanish spoken"],
+  ["assembly-shalom", "Assembly Pentecostal Church of God Shalom Pantry", "145 Chad Brown Street", "Saturday 11 a.m.–12:30 p.m.", "Weekly; accessible; Spanish spoken"],
+];
+export const RHODE_ISLAND_LOCAL_FOOD = riProvidencePantries.map(([id, name, address, hours, accessNotes]) => reviewed({
+  id: `ri-food-providence-${id}`, name: `${name} — Providence food pantry`, state: "RI", city: "Providence", address: `${address}, Providence, RI`,
+  link: "https://www.providenceri.gov/food-pantries/", source: "City of Providence Food Pantries directory (current public listing)",
+  serviceArea: "Providence and the neighborhood or ZIP-code limits described by the city", coverageScope: "local food pantry",
+  resourceType: "food pantry and grocery support", locationLine: `${address} · ${hours}`,
+  description: `The City of Providence lists ${name} at ${address}. Published hours: ${hours}. Access details: ${accessNotes}. Pantry schedules and eligibility can change; confirm directly with the pantry or use the city’s linked live spreadsheet before traveling. No phone number is published in the city listing text for this provider.`,
+}));
 export const RHODE_ISLAND_URGENT = [reviewed({
   id: "ri-bh-link-988", name: "BH Link — Rhode Island 24/7 behavioral-health crisis support", state: "RI", city: "Statewide", phone: "988", link: "https://bhddh.ri.gov/mental-health/licensed-treatment-providers", source: "Rhode Island BHDDH, Community Mental Health Centers and crisis information", serviceArea: "Statewide, Rhode Island", coverageScope: "statewide", resourceType: "24/7 call, text, and crisis connection", locationLine: "Call or text 988 · statewide confidential support and connection to care",
   description: "Rhode Island BHDDH identifies BH Link through 988 for confidential crisis support and connection to care. People under 18 can call 855-KIDLINK. Call or text 988 to reach trained crisis counselors; for immediate danger, call 911.",
