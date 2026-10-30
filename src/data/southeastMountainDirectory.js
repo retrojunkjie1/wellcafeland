@@ -488,7 +488,30 @@ export const TENNESSEE_FOOD = [
   source: "Tennessee Department of Human Services Community Resources / named food-bank service finder",
   serviceArea, resourceType: "food-bank and partner-pantry referral",
   description: `Use ${name}'s official food finder to identify the partner pantry, meal site, or mobile distribution serving ${serviceArea}. Tennessee's TEFAP guidance says local agencies set their own distribution days, pickup points, and eligibility, and advises calling ahead because times and stock may change. The food bank office or warehouse is not necessarily a public walk-in distribution site.`,
-}));
+})).concat([
+  record({
+    id: "tn-food-northeast-second-harvest", state: "TN", name: "Second Harvest Food Bank of Northeast Tennessee — county food finder", city: "Kingsport",
+    address: "1020 Jericho Drive, Kingsport, TN 37663", phone: "423-279-0430", link: "https://netfoodbank.org/help/",
+    source: "Tennessee Department of Human Services, SNAP Outreach Partner Network and Community Resources",
+    serviceArea: "Carter, Greene, Hancock, Hawkins, Johnson, Sullivan, Unicoi, and Washington counties",
+    resourceType: "regional food-bank and local pantry referral",
+    description: "Tennessee lists Second Harvest Food Bank of Northeast Tennessee at 1020 Jericho Drive in Kingsport, phone 423-279-0430, serving eight named Northeast Tennessee counties. Use its official help page to find the food pantry or distribution serving your address; call ahead to confirm hours, eligibility, required documents, and current availability. The warehouse address is not represented as a walk-in food distribution site.",
+  }),
+  record({
+    id: "tn-food-bledsoe-county-food-bank", state: "TN", name: "Bledsoe County Food Bank — local food assistance contact", city: "Pikeville",
+    address: "84 Cumberland Avenue, Pikeville, TN 37367", phone: "423-447-3325", link: "https://www.bledsoefoodbank.org/",
+    source: "Tennessee First Lady's Office, Tennessee Serves — Where to Serve",
+    serviceArea: "Bledsoe County and Pikeville area", resourceType: "local food-bank contact",
+    description: "The Tennessee First Lady's Office lists Bledsoe County Food Bank at 84 Cumberland Avenue in Pikeville, phone 423-447-3325. Contact the organization to confirm pantry hours, household eligibility, documents, distribution location, and current food availability before traveling; this listing does not confirm walk-in access or stock.",
+  }),
+  record({
+    id: "tn-food-grundy-county-food-bank", state: "TN", name: "Grundy County FoodBank — local food assistance contact", city: "Tracy City",
+    address: "P.O. Box 1683, Tracy City, TN 37387", phone: "931-592-3631", link: "https://grundyfoodbank.wordpress.com/",
+    source: "Tennessee First Lady's Office, Tennessee Serves — Where to Serve",
+    serviceArea: "Grundy County", resourceType: "local food-bank contact",
+    description: "The Tennessee First Lady's Office lists Grundy County FoodBank in Tracy City, phone 931-592-3631. The published address is a post office box, not a public pickup location. Call to ask for the current distribution site and schedule, eligibility, documents, and availability before traveling.",
+  }),
+]);
 
 const utMentalSource = "https://sumh.utah.gov/contact/location-map/";
 const utCenters = [
@@ -641,6 +664,51 @@ export const VERMONT_FOOD = [record({
   coverageScope: "statewide food access locator", resourceType: "live local food shelf and meal-site directory",
   description: "Vermont Foodbank's finder connects residents to more than 200 partner food shelves, meal sites, and food-access organizations across Vermont. Search by location to see the local site's current address and contact details. The Foodbank notes schedules and availability can change; contact the selected site before traveling to confirm hours, service area, eligibility, documents, and whether an appointment or referral is needed. This record is a statewide locator, not 200 separately verified listings.",
 })];
+
+const vtCrisisSource = "https://mentalhealth.vermont.gov/get-help-now";
+const vtUrgentCareSource = "https://mentalhealth.vermont.gov/programs-services/crisis-services";
+export const VERMONT_URGENT = [
+  record({
+    id: "vt-urgent-howard-center", state: "VT", name: "Howard Center Mental Health Urgent Care — walk-in crisis support", city: "Burlington",
+    address: "1 South Prospect Street, Burlington, VT 05401", phone: "802-488-6482", link: vtUrgentCareSource,
+    source: "Vermont Department of Mental Health, Community-based Crisis Services", serviceArea: "Chittenden County and nearby communities",
+    resourceType: "weekday walk-in mental-health urgent care",
+    description: "Vermont DMH lists Howard Center Mental Health Urgent Care at 1 South Prospect Street in Burlington, phone 802-488-6482. The state page says walk-ins are welcome Monday through Friday, 9 a.m.–5 p.m. Call before traveling to confirm today's hours and access. This is a community urgent-care alternative for mental-health crises, not an emergency department; for immediate danger or urgent medical, fire, or police response, call 911. Call or text 988 for 24/7 crisis support.",
+  }),
+  record({
+    id: "vt-urgent-washington-access-hub", state: "VT", name: "Washington County Mental Health Access Hub — adult walk-in support", city: "Montpelier",
+    address: "34 Barre Street, Downing Street entrance, Montpelier, VT", phone: "802-302-3200", link: vtUrgentCareSource,
+    source: "Vermont Department of Mental Health, Community-based Crisis Services", serviceArea: "Washington County",
+    resourceType: "adult walk-in crisis assessment, peer support, and referral",
+    description: "Vermont DMH lists the Access Hub at 34 Barre Street (Downing Street entrance) in Montpelier, phone 802-302-3200. Published hours are Monday–Thursday 7 a.m.–7 p.m. and Friday 7 a.m.–4 p.m.; the service is for adults 18 and older and offers peer counseling, assessment, brief treatment, and referrals. Call to confirm current hours and access before traveling. For immediate danger or urgent medical needs, call 911; call or text 988 for 24/7 crisis support.",
+  }),
+  record({
+    id: "vt-urgent-front-porch", state: "VT", name: "NKHS Front Porch — 24/7 mental-health urgent care", city: "Newport City",
+    address: "235 Lakemont Road, Newport City, VT", phone: "802-624-4016", link: vtUrgentCareSource,
+    source: "Vermont Department of Mental Health, Community-based Crisis Services", serviceArea: "Northeast Kingdom",
+    resourceType: "24/7 walk-in mental-health crisis care",
+    description: "Vermont DMH lists NKHS Front Porch at 235 Lakemont Road in Newport City, phone 802-624-4016. The state describes it as open 24/7, accepting walk-ins, and providing immediate mental-health care for adults and families in crisis. Call to confirm access and current operating arrangements. For immediate danger or urgent medical needs, call 911; call or text 988 for crisis support.",
+  }),
+  ...[
+    ["clara-martin", "Clara Martin Center", "Randolph", "800-639-6360", "Orange County and surrounding areas"],
+    ["addison", "Counseling Service of Addison County", "Middlebury", "802-388-7641", "Addison County"],
+    ["howard", "Howard Center", "Burlington", "802-488-7777", "Chittenden County"],
+    ["hrs", "Health Care and Rehabilitation Services", "Springfield", "800-622-4235", "Southeastern Vermont"],
+    ["lamoille", "Lamoille County Mental Health Services", "Morrisville", "802-888-5026", "Lamoille County"],
+    ["northwestern", "Northwestern Counseling and Support Services", "St. Albans", "802-524-6554", "Franklin and Grand Isle counties"],
+    ["nekhs-derby", "Northeast Kingdom Human Services — crisis line, Derby", "Derby", "802-334-6744", "Caledonia, Essex, and Orleans counties"],
+    ["nekhs-st-johnsbury", "Northeast Kingdom Human Services — crisis line, St. Johnsbury", "St. Johnsbury", "802-748-3181", "Caledonia, Essex, and Orleans counties"],
+    ["rutland", "Rutland Mental Health Services", "Rutland", "802-775-1000", "Rutland County"],
+    ["ucs-manchester", "United Counseling Service — crisis line, Manchester", "Manchester", "802-362-3950", "Bennington County"],
+    ["ucs-bennington", "United Counseling Service — crisis line, Bennington", "Bennington", "802-442-5491", "Bennington County"],
+    ["washington", "Washington County Mental Health Services", "Barre", "802-229-0591", "Washington County"],
+  ].map(([id, name, city, phone, serviceArea]) => record({
+    id: `vt-urgent-line-${id}`, state: "VT", name, city, phone, link: vtCrisisSource,
+    source: "Vermont Department of Mental Health, Get Help Now", serviceArea,
+    resourceType: "local community mental-health agency crisis line",
+    description: `Vermont DMH publishes ${phone} as ${name}'s crisis-line contact for ${serviceArea}. Call for local mental-health crisis support and to ask whether mobile response or another in-person option is available in your area. Vermont DMH also lists 988 as a statewide 24/7 call, text, and chat option. For immediate danger or urgent medical, fire, or police response, call 911. Confirm the local line and response options directly; this listing does not promise dispatch or capacity.`,
+  })),
+];
 
 // Additional active slice: named local sites and regional housing/benefit routes.
 const sdFoodSource = "https://dakotaathome.sd.gov/search?query=BD-1800.2000&query_label=Food+Pantries&query_type=taxonomy";
