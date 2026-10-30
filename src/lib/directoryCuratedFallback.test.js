@@ -9,6 +9,31 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("routes the source-reviewed five-state expansion into the matching categories and locations", () => {
+    const mo = getCuratedFallback("programs", "community behavioral health", "St. Louis, MO");
+    expect(mo).toContainEqual(expect.objectContaining({ id: "mo-treatment-adapt-stl", state: "MO", city: "St. Louis", phone: "888-657-3201" }));
+    expect(mo.map(({ id }) => id)).not.toContain("mt-treatment-aware-missoula");
+
+    expect(getCuratedFallback("programs", "community behavioral health", "Missoula, MT"))
+      .toContainEqual(expect.objectContaining({ id: "mt-treatment-aware-missoula", state: "MT", city: "Missoula" }));
+    expect(getCuratedFallback("programs", "walk-in behavioral health", "Nebraska"))
+      .toContainEqual(expect.objectContaining({ id: "ne-treatment-region-6", state: "NE", coverageScope: "region" }));
+    expect(getCuratedFallback("housing", "emergency shelter", "Laconia, NH"))
+      .toContainEqual(expect.objectContaining({ id: "nh-housing-carey-house", state: "NH", city: "Laconia" }));
+    expect(getCuratedFallback("food.essentials", "food pantry", "Las Vegas, NV"))
+      .toContainEqual(expect.objectContaining({ id: "nv-food-city-impact-las-vegas", state: "NV", city: "Las Vegas" }));
+    expect(getCuratedFallback("food.essentials", "food pantry", "Nebraska"))
+      .toContainEqual(expect.objectContaining({ id: "ne-food-pantry-referrals", state: "NE", coverageScope: "state" }));
+    expect(getCuratedFallback("housing", "shelter outreach", "Nebraska"))
+      .toContainEqual(expect.objectContaining({ id: "ne-unsheltered-referrals", state: "NE" }));
+    expect(getCuratedFallback("grants", "food healthcare assistance", "Nebraska"))
+      .toContainEqual(expect.objectContaining({ id: "ne-iserve-assistance", state: "NE" }));
+    expect(getCuratedFallback("hotlines", "family support", "Nebraska"))
+      .toContainEqual(expect.objectContaining({ id: "ne-family-helpline", state: "NE" }));
+
+    const sources = [mo[0], getCuratedFallback("housing", "emergency shelter", "Laconia, NH").find(({ id }) => id === "nh-housing-carey-house")];
+    expect(sources.every(({ sourceReviewed, phoneConfirmed, exhaustiveCoverage }) => sourceReviewed && !phoneConfirmed && !exhaustiveCoverage)).toBe(true);
+  });
   it("returns source-reviewed Corpus Christi contacts across all six support categories", () => {
     const cases = [
       ["programs", "addiction treatment", "corpus-christi-cenikor-addiction-treatment"],
@@ -854,7 +879,9 @@ describe("category fallback pathways", () => {
       expect(getCuratedFallback(category, "", region).map((resource) => resource.id)).toContain(id);
     }
 
-    expect(getCuratedFallback("food.essentials", "", "Nebraska")).toEqual([]);
+    expect(getCuratedFallback("food.essentials", "", "Nebraska")).toEqual([
+      expect.objectContaining({ id: "ne-food-pantry-referrals", state: "NE", coverageScope: "state" }),
+    ]);
     expect(getUSStateCoverage("Nevada").find((category) => category.id === "hotlines").statewideRoutes)
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
   });
