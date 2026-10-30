@@ -67,11 +67,13 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Texas | TX | 340 | Above initial range; preserve and audit |
 | North Carolina | NC | 270 | Above initial range; 118 treatment locations, 20 regional housing routes, 8 food contacts, 5 peer options, 19 urgent-support routes and 100 county benefits offices. The initial range is a planning guide, not a cap. |
 
-### Below the 75-record floor
+### Below target or category-balance floor
 
-These states currently have fewer than 75 records in the active U.S. six-category coverage calculation. This is a coverage-system gap; first check existing modules and legacy listings before adding anything, so working material is not duplicated or lost.
+These jurisdictions still fail the active U.S. completion condition: at least 75 distinct records and at least five records in each of the six categories. Some may exceed 75 total while remaining incomplete because one category dominates. Inspect existing modules before adding anything, so working material is not duplicated or lost.
 
-Kentucky (KY), Maryland (MD), Michigan (MI), Minnesota (MN), Mississippi (MS), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+Maryland (MD), Michigan (MI), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+
+Kentucky (KY) currently has 120 county Family Support benefit-office records, but five other categories remain below the five-record minimum. Minnesota (MN) has 91 county/Tribal crisis access routes, while its other categories still need local research. Mississippi (MS) has 162 county benefits and Community Action locations, above the planning range but concentrated in benefits/community assistance; it remains incomplete until category balance is addressed.
 
 Massachusetts's 78 state-linked records comprise 38 peer recovery support centers, 31 Community Behavioral Health Center listings, and 9 statewide routes for behavioral-health access, substance-use referral, housing, food, SNAP, health coverage, 988 and Mass 211. The state coverage calculator counts all 78; 59 are city-tagged and 19 are statewide or need a city selected through the official CBHC locator. Sources were reviewed on 2026-10-29. None of the listings is phone-confirmed, and the Commonwealth's published network totals are not an exhaustive directory claim.
 
@@ -199,3 +201,15 @@ For each new directory batch:
 - U.S. jurisdiction list, category floor and counts: `src/data/usDirectoryCoverage.js`
 - Nigeria states and coverage: `src/data/nigeriaRecoveryDirectory.js`, `src/data/nigeriaDirectoryCoverage.js`
 - International countries, subdivisions, cities, source links and records: `src/data/internationalSupportDirectory.js`
+
+### Current five-state research batch (October 30, 2026)
+
+The first implementation slice adds local access routes from three of the five queued states; Maryland and Michigan remain in research and are not being represented as built by this batch.
+
+- **Kentucky:** 120 county Family Support offices from the CHFS local-office selector, with physical address, shared customer-service phone, and county service area. These are benefits access points only; one office is not counted as separate food, housing, or treatment resources.
+- **Mississippi:** 85 MDHS county-office contacts and 77 distinct Community Action Agency locations from MDHS. The CAA listings are grouped with benefits/community assistance and tell people to call to confirm which programs are active; they do not promise a grant, utility payment, or eligibility.
+- **Minnesota:** 87 county and 4 Tribal Nation crisis-service access contacts from DHS. These are local crisis routes; shared regional providers are presented as the published county/Tribal contacts and are not described as 91 independent clinics.
+
+This slice does **not** satisfy the full six-category floor for any of the three states. Treatment, peer support, housing, food and benefits still require category-specific research where not listed above. Maryland and Michigan also still need usable local records. The five-state batch remains in progress; no state is marked complete. Source-reviewed is not phone-confirmed or exhaustive.
+
+Sources: [Kentucky CHFS local Family Support offices](https://prd.webapps.chfs.ky.gov/Office_Phone/index.aspx), [Mississippi MDHS contact and local-office directory](https://www.mdhs.ms.gov/contact/), [Minnesota DHS county and Tribal crisis contacts](https://mn.gov/dhs/mental-health/adult-services/resources/crisis-contacts/).
