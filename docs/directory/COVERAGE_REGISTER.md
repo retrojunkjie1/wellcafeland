@@ -71,7 +71,19 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 
 These jurisdictions still fail the active U.S. completion condition: at least 75 distinct records and at least five records in each of the six categories. Some may exceed 75 total while remaining incomplete because one category dominates. Inspect existing modules before adding anything, so working material is not duplicated or lost.
 
-Maryland (MD), Michigan (MI), Missouri (MO), Montana (MT), Nebraska (NE), Nevada (NV), New Hampshire (NH), New Jersey (NJ), New Mexico (NM), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+Maryland (MD), Michigan (MI), New Jersey (NJ), New Mexico (NM), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+
+The source-reviewed five-state batch added 74 distinct records to the active catalog on 2026-10-30. Every state remains **in progress**; none meets the six-category balance or the 75-record minimum. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
+
+| State | Total | Categories covered in this batch | Remaining work |
+|---|---:|---|---|
+| Missouri (MO) | 10 | Food & essentials: 10 | Treatment, peer, housing, benefits, urgent support; expand food toward 75–125 total |
+| Montana (MT) | 17 | Housing: 8; food: 9 | Treatment, peer, benefits, urgent support; expand all categories toward 75–125 total |
+| Nebraska (NE) | 34 | Housing: 34 | Treatment, peer, food, benefits, urgent support; expand all categories toward 75–125 total |
+| Nevada (NV) | 3 | Food: 2; urgent support: 1 statewide 988 route | Treatment, peer, housing, benefits; expand food and all other categories toward 75–125 total |
+| New Hampshire (NH) | 10 | Treatment & recovery: 10 | Peer, housing, food, benefits, urgent support; expand all categories toward 75–125 total |
+
+Sources: [Missouri DSS Find an Office](https://dss.mo.gov/dss-map), [Montana DPHHS Emergency Solutions Grant providers](https://dphhs.mt.gov/HCSD/EmergencySolutionsGrant/ServiceProviders), [Montana DPHHS TEFAP recipient agencies](https://prod-dphhs.mt.gov/hcsd/TheEmergencyFoodAssistanceProgram), [Nebraska DHHS homeless assistance providers](https://dhhs.ne.gov/Pages/Nebraska-Homeless-Assistance-Program-Recipients.aspx), [Food Bank of Northern Nevada](https://www.fbnn.org/gethelp/), [Three Square food assistance](https://www.threesquare.org/contact-us), [Nevada 988 crisis response](https://www.dpbh.nv.gov/programs/bh-wellness-and-prevention-bbhwp/crisis-response/), and [New Hampshire DHHS Community Mental Health Centers](https://www.dhhs.nh.gov/sites/g/files/ehbemt476/files/documents2/bmhs-list-map.pdf). These are source-reviewed contacts, not phone-confirmed, availability-confirmed, or exhaustive coverage.
 
 Kentucky (KY) currently has 120 county Family Support benefit-office records, but five other categories remain below the five-record minimum. Minnesota (MN) has 96 records: 91 county/Tribal crisis access routes and 5 regional TEFAP food-bank referrals; four other categories still need local research. Mississippi (MS) has 204 records: 85 MDHS county-benefits contacts, 77 Community Action Agency locations, 12 regional mental-health/substance-use centers, 2 food-bank routes, and 28 mobile-crisis/stabilization contacts, above the planning range; peer and housing coverage remain unbuilt, and category balance still fails.
 

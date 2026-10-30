@@ -841,4 +841,21 @@ describe("category fallback pathways", () => {
     const texas = getCuratedFallback("peer", "", "Dallas, TX");
     expect(texas.some((resource) => resource.id.startsWith("colorado-") || resource.id.startsWith("denver-") || resource.id.startsWith("aurora-"))).toBe(false);
   });
+
+  it("serves the new five-state directory batch from the selected state and tracks partial coverage", () => {
+    const checks = [
+      ["food.essentials", "Missouri", "mo-food-red-star-cape-girardeau"],
+      ["food.essentials", "Montana", "mt-food-povarello-center-missoula"],
+      ["housing", "Nebraska", "ne-housing-siena-francis-omaha"],
+      ["food.essentials", "Nevada", "nv-food-three-square-las-vegas"],
+      ["programs", "New Hampshire", "nh-treatment-greater-manchester"],
+    ];
+    for (const [category, region, id] of checks) {
+      expect(getCuratedFallback(category, "", region).map((resource) => resource.id)).toContain(id);
+    }
+
+    expect(getCuratedFallback("food.essentials", "", "Nebraska")).toEqual([]);
+    expect(getUSStateCoverage("Nevada").find((category) => category.id === "hotlines").statewideRoutes)
+      .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
+  });
 });
