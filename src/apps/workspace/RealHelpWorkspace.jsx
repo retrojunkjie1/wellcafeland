@@ -669,6 +669,13 @@ const RealHelpWorkspace = () => {
       ? { label: "Explore community support", action: () => navigate("/assistance/community") }
       : { label: "Choose another support option", action: () => navigate("/assistance") };
   const internationalSearch = Boolean(region.trim() && !hasUSSupportNumbers);
+  const getLocatedGroupHeading = (item) => {
+    if (item.county) return `${item.county} County`;
+    if (item.coverageScope === "region") return "Regional service routes";
+    if (["state", "statewide"].includes(item.coverageScope)) return "Statewide services";
+    if (item.serviceArea) return item.serviceArea;
+    return item.city ? `${item.city}${item.state ? `, ${item.state}` : ""}` : "Other service contacts";
+  };
 
   return (
     <div className="flex h-screen flex-col bg-slate-950 text-white">
@@ -935,15 +942,18 @@ const RealHelpWorkspace = () => {
                 </section>
               )}
 
-              {locatedResults.length > 0 && <details open className="rounded-2xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
+              {locatedResults.length > 0 && <details open={locatedResults.length <= 12} className="rounded-2xl border border-white/10 bg-white/[0.02] p-3 sm:p-4">
                 <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-lg text-sm font-medium text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wcGold">
-                  <span className="flex items-center gap-2">{activeTab === "food" ? "Nearby food support" : requiresLocationProof ? "Local and location-matched support" : "Nearby support resources"}<ChevronDown className="h-4 w-4 text-white/50" aria-hidden="true" /></span>
+                  <span className="flex items-center gap-2">{activeTab === "food" ? "Nearby food support" : requiresLocationProof ? "Local and location-matched support" : "Nearby support resources"}<ChevronDown className="h-4 w-4 text-white/50" aria-hidden="true" />{locatedResults.length > 12 && <span className="text-xs font-normal text-white/50">Open to browse by service area</span>}</span>
                   <span className="shrink-0 text-xs text-white/50">{locatedResults.length} listing{locatedResults.length === 1 ? "" : "s"}</span>
                 </summary>
                 <div role="list" aria-label={activeTab === "food" ? "Food support results" : requiresLocationProof ? "Location-matched support resources" : "Nearby support resources"} className="mt-3 space-y-2.5">
-                {locatedResults.map((item, index) => (
+                {locatedResults.map((item, index) => {
+                  const groupHeading = getLocatedGroupHeading(item);
+                  const previousHeading = index > 0 ? getLocatedGroupHeading(locatedResults[index - 1]) : null;
+                  return <React.Fragment key={item.id || index}>
+                  {locatedResults.length > 12 && groupHeading !== previousHeading && <h3 className="pt-3 text-xs font-semibold uppercase tracking-[0.12em] text-wcGold/75">{groupHeading}</h3>}
                   <article
-                    key={item.id || index}
                     role="listitem"
                     className="group rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 transition-colors hover:border-wcGold/30 hover:bg-white/[0.055] sm:px-4"
                   >
@@ -1013,7 +1023,8 @@ const RealHelpWorkspace = () => {
                       </details>
                     )}
                   </article>
-                ))}
+                  </React.Fragment>;
+                })}
                 </div>
               </details>}
               {activeTab === "food" && !internationalSearch && localCuratedFoodResults.length > 0 && (

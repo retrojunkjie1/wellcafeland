@@ -1,22 +1,23 @@
 # WellnessCafe resource directory coverage register
 
-**Last reconciled:** 2026-10-29  
+**Last reconciled:** 2026-10-30
 **Purpose:** the working source of truth for where the directory is live, which subnational areas it represents, and what still needs research. Update this register in the same change as every directory batch.
 
 ## Status rules
 
-- **Complete (initial floor met)** means the U.S. coverage calculator reports 75–125 distinct state-linked records across the six directory categories. It does not mean every provider has confirmed by phone, every town is covered, or coverage is exhaustive.
+- **Complete (initial floor met)** means the U.S. coverage calculator reports 75–125 distinct state-linked records across the six support categories and at least five records in each category. It does not mean every provider has confirmed by phone, every town is covered, or coverage is exhaustive.
 - **Above initial range** means the state has more than 125 distinct records. Preserve those records and audit for category balance and duplicates; do not remove working listings to force the count down.
 - **In progress** means the current catalog has fewer than 75 distinct state-linked records, or a country/subdivision has not had its local coverage reviewed.
 - **Planned** means research and source review have not started. No listing count is implied.
 - Countrywide referral lines and search portals stay separate from local service contacts. They do not count toward the U.S. state floor unless the coverage calculator explicitly state-links them.
+- Each support category is presented separately; do not mix food, housing, treatment, peer support, benefits, and urgent support into a single undifferentiated list. Large results are grouped by county or service area and collapsed until opened.
 - “Source reviewed” does not mean phone-confirmed, currently accepting clients, vacancy-confirmed, eligibility-confirmed, or exhaustive. Keep those limits visible to users.
 
 ## Country register
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are represented in the coverage calculator; 25 jurisdictions meet or exceed the 75-record floor. | In progress | Continue the multi-state queue: Kentucky, Maryland, Michigan, Minnesota and Mississippi. Keep source-backed local contacts, not generic routes, as the unit of useful progress. |
+| United States | All 50 states plus DC are represented in the coverage calculator. State progress now requires both 75–125 total records and at least 5 records in every category; use the live audit for current balances. | In progress | Continue the multi-state queue: Kentucky, Maryland, Michigan, Minnesota and Mississippi. Keep source-backed local contacts, not generic routes, as the unit of useful progress. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -51,7 +52,6 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Maine | ME | 121 | Complete (initial floor met) |
 | Massachusetts | MA | 78 | Complete (initial floor met); source-reviewed, phone confirmation and exhaustive review remain open |
 | New York | NY | 123 | Complete (initial floor met) |
-| North Carolina | NC | 100 | Complete (initial floor met); 100 county DSS benefit-navigation contacts, source reviewed, not phone-confirmed |
 | Ohio | OH | 76 | Complete (initial floor met) |
 | Oklahoma | OK | 75 | Complete (initial floor met) |
 | Pennsylvania | PA | 75 | Complete (initial floor met) |
@@ -65,6 +65,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Hawaii | HI | 152 | Above initial range; preserve and audit |
 | Kansas | KS | 126 | Above initial range; preserve and audit |
 | Texas | TX | 340 | Above initial range; preserve and audit |
+| North Carolina | NC | 270 | Above initial range; 118 treatment locations, 20 regional housing routes, 8 food contacts, 5 peer options, 19 urgent-support routes and 100 county benefits offices. The initial range is a planning guide, not a cap. |
 
 ### Below the 75-record floor
 
@@ -74,7 +75,7 @@ Kentucky (KY), Maryland (MD), Michigan (MI), Minnesota (MN), Mississippi (MS), M
 
 Massachusetts's 78 state-linked records comprise 38 peer recovery support centers, 31 Community Behavioral Health Center listings, and 9 statewide routes for behavioral-health access, substance-use referral, housing, food, SNAP, health coverage, 988 and Mass 211. The state coverage calculator counts all 78; 59 are city-tagged and 19 are statewide or need a city selected through the official CBHC locator. Sources were reviewed on 2026-10-29. None of the listings is phone-confirmed, and the Commonwealth's published network totals are not an exhaustive directory claim.
 
-North Carolina's 100 records are the county-level Department of Social Services offices listed by NCDHHS, with each county's published office address, main phone, service area and direct county page. Their directory descriptions explain how to ask about Food and Nutrition Services (SNAP), Medicaid, Work First, child-care subsidies and other county social services. A statewide directory entry count is not proof that each program is open to every caller; eligibility and current intake must be confirmed with the county office. Records were source-reviewed 2026-10-29 and are not phone-confirmed. Source: [NCDHHS Local DSS Directory](https://www.ncdhhs.gov/divisions/social-services/local-dss-directory).
+North Carolina is now organized into six separate categories rather than displaying only its benefits directory. Its current active-catalog snapshot is 270 records: 118 treatment/walk-in clinic locations, 5 peer/community options, 20 regional coordinated-entry housing routes, 8 food contacts, 100 county DSS benefits contacts, and 19 urgent/mobile-crisis routes. Most new contacts come from NCDHHS directories and maps; the peer group includes NCDHHS, NAMI North Carolina and RHA sources. Walk-in clinics are county-labeled, housing and mobile-crisis records consolidate repeated agency numbers into regional routes, and food contacts include regional food-bank locators. The 270 total is above the initial 125 planning range; records are retained rather than removed to force a target. These listings are source-reviewed, not phone-confirmed or exhaustive. Confirm intake, hours, eligibility, availability, and service area with each organization. Crisis locations or schedules can change; use the published provider channel to confirm before traveling. Sources: [NCDHHS Open Access / Walk-In Clinics](https://www.ncdhhs.gov/divisions/mental-health-developmental-disabilities-and-substance-use-services/crisis-services/open-access-walk-clinics), [NCDHHS Mobile Crisis Teams](https://www.ncdhhs.gov/divisions/mental-health-developmental-disabilities-and-substance-use-services/crisis-services/find-mobile-crisis-team), [NCDHHS Food Access Maps](https://www.ncdhhs.gov/divisions/child-and-family-well-being/food-and-nutrition-services-food-stamps/north-carolina-state-nutrition-action-coalition/food-access-maps), [NCDHHS Coordinated Entry Contact Directory](https://www.ncdhhs.gov/ce-contact-infoxlsx-0/open), [NCDHHS Peer Warmline](https://www.ncdhhs.gov/divisions/mental-health-developmental-disabilities-and-substance-use-services/crisis-services/peer-warmline), [NAMI North Carolina](https://www.nami.org/find-your-local-nami/north-carolina/), [RHA Peer Living Rooms](https://rhahealthservices.org/services/behavioral-health-services/behavioral-health-north-carolina/peer-living-rooms/), and [NCDHHS Local DSS Directory](https://www.ncdhhs.gov/divisions/social-services/local-dss-directory).
 
 ### Next U.S. multi-state batch queue
 
