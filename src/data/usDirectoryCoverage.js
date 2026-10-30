@@ -15,6 +15,7 @@ export const US_DIRECTORY_CATEGORIES = [
 export const US_DIRECTORY_TARGET = {
   minimumRecordsPerState: 75,
   upperPlanningRangePerState: 125,
+  minimumRecordsPerCategoryPerState: 5,
 };
 
 export const US_JURISDICTIONS = [
@@ -39,11 +40,12 @@ export function getUSStateCoverage(stateName) {
     const localRecords = dedupe(US_LOCAL_RESOURCE_CATALOG[category.id] || [])
       .filter((record) => record.state === jurisdiction.code);
     const searchRecords = dedupe(getCuratedFallback(category.id, "", jurisdiction.state));
-    const countywideRoutes = searchRecords.filter((record) => record.state === jurisdiction.code && record.coverageScope === "county");
-    const statewideRoutes = searchRecords.filter((record) => record.state === jurisdiction.code && !record.city && record.coverageScope !== "county");
+    const countywideRoutes = searchRecords.filter((record) => record.state === jurisdiction.code && !record.city && record.coverageScope === "county");
+    const regionalRoutes = searchRecords.filter((record) => record.state === jurisdiction.code && !record.city && record.coverageScope === "region");
+    const statewideRoutes = searchRecords.filter((record) => record.state === jurisdiction.code && !record.city && ["state", "statewide"].includes(record.coverageScope));
     const nationwideRoutes = searchRecords.filter((record) => !record.state && !record.city);
     const localContacts = localRecords.filter((record) => Boolean(record.city));
-    return { ...category, records: dedupe([...localRecords, ...countywideRoutes, ...statewideRoutes]), localContacts, countywideRoutes, statewideRoutes, nationwideRoutes };
+    return { ...category, records: dedupe([...localRecords, ...countywideRoutes, ...regionalRoutes, ...statewideRoutes]), localContacts, countywideRoutes, regionalRoutes, statewideRoutes, nationwideRoutes };
   });
   return categories;
 }
@@ -58,14 +60,20 @@ export const US_DIRECTORY_COVERAGE = US_JURISDICTIONS.map(({ state, code }) => {
     : stateLinkedRecordCount <= US_DIRECTORY_TARGET.upperPlanningRangePerState
       ? "in-range"
       : "above-range";
+  const categoriesBelowMinimum = categories
+    .filter((category) => category.records.length < US_DIRECTORY_TARGET.minimumRecordsPerCategoryPerState)
+    .map((category) => ({ id: category.id, label: category.label, count: category.records.length }));
+  const categoryBalanced = categoriesBelowMinimum.length === 0;
   return {
     state,
     code,
     categories,
     stateLinkedRecordCount,
     targetStatus,
-    meetsMinimum: targetStatus !== "below-minimum",
-    localContacts: categories.reduce((sum, category) => sum + category.localContacts.length, 0),
+    categoryBalanced,
+    categoriesBelowMinimum,
+    meetsMinimum: targetStatus !== "below-minimum" && categoryBalanced,
+    localContacts: dedupe(categories.flatMap((category) => category.localContacts)).length,
     categoriesWithLocalContacts: categories.filter((category) => category.localContacts.length > 0).length,
   };
 });
@@ -77,6 +85,7 @@ export const US_COVERAGE_TOTALS = {
   statesAboveTargetRange: US_DIRECTORY_COVERAGE.filter((entry) => entry.targetStatus === "above-range").length,
   statesBelowMinimum: US_DIRECTORY_COVERAGE.filter((entry) => entry.targetStatus === "below-minimum").length,
   statesAtMinimum: US_DIRECTORY_COVERAGE.filter((entry) => entry.meetsMinimum).length,
+  statesCategoryBalanced: US_DIRECTORY_COVERAGE.filter((entry) => entry.categoryBalanced).length,
   stateLinkedRecords: US_DIRECTORY_COVERAGE.reduce((sum, entry) => sum + entry.stateLinkedRecordCount, 0),
   jurisdictionsWithLocalContacts: US_DIRECTORY_COVERAGE.filter((entry) => entry.localContacts > 0).length,
   localContacts: US_DIRECTORY_COVERAGE.reduce((sum, entry) => sum + entry.localContacts, 0),
