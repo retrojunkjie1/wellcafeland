@@ -580,6 +580,23 @@ export const UTAH_FOOD_REGIONAL = [
   serviceArea, resourceType: "county food bank and food-box assistance",
   description: `Southeastern Utah Association of Local Governments lists ${name} at ${address}${phone ? `, phone ${phone}` : ""}. Its directory states this food bank provides emergency food assistance in ${serviceArea}; published service details include food boxes with application requirements. Confirm operating hours, eligibility, required documents, and current pickup arrangements before visiting.`,
 }));
+export const UTAH_FOOD_LOCAL = [
+  ["crossroads-downtown", "Crossroads Urban Center — Downtown food and diaper assistance", "Salt Lake City", "347 South 400 East, Salt Lake City, UT 84111", "801-364-7765", "Monday–Friday, 9 a.m.–5 p.m.", "https://www.crossroadsurbancenter.org/"],
+  ["crossroads-westside", "Crossroads Urban Center — Westside food and diaper assistance", "Salt Lake City", "1358 West Indiana Avenue (840 South), Salt Lake City, UT 84104", "801-935-4079", "Monday–Friday, 9 a.m.–5 p.m.", "https://www.crossroadsurbancenter.org/"],
+  ["hildegardes", "Hildegarde’s Food Pantry", "Salt Lake City", "231 East 100 South, Salt Lake City, UT 84111", "801-328-2303", "Tuesday, Wednesday, Friday 11 a.m.–1:30 p.m.; Thursday 5–6:30 p.m.", "https://stmarksutah.org/"],
+  ["lebwohl", "Lebwohl Food Pantry — Jewish Family Service", "Salt Lake City", "495 East 4500 South, Suite 100, Salt Lake City, UT 84107", "801-746-4334", "Tuesday 11 a.m.–3 p.m.; Wednesday and Thursday 1–3 p.m.; Friday 11 a.m.–1 p.m.", "https://jfsutah.org/"],
+  ["saint-andrew", "Saint Andrew Food Pantry", "Riverton", "11835 South 3600 West, Riverton, UT 84065", "801-253-6034", "Thursday 5–7 p.m.", "https://www.standrewut.com/"],
+  ["st-james", "St. James Food Bank", "Midvale", "7486 South Union Park Avenue, Midvale, UT 84047", "801-566-1311", "Second and fourth Sunday of each month at 1 p.m.", "https://www.stjamesutah.com/"],
+  ["tabithas-way-saratoga-springs", "Tabitha’s Way — Saratoga Springs Pantry", "Saratoga Springs", "1509 Commerce Drive, Suite 200, Saratoga Springs, UT 84045", "801-692-1881 ext. 301", "Contact pantry for current hours", "https://tabithasway.org/"],
+  ["tabithas-way-pleasant-grove", "Tabitha’s Way — Pleasant Grove Pantry", "Pleasant Grove", "675 West Garden Drive, Suite 100, Pleasant Grove, UT 84062", "801-692-1881", "Contact pantry for current hours", "https://tabithasway.org/"],
+  ["tabithas-way-spanish-fork", "Tabitha’s Way — Spanish Fork Pantry", "Spanish Fork", "50 East 100 North, Spanish Fork, UT 84660", "801-709-8573", "Contact pantry for current hours", "https://tabithasway.org/"],
+].map(([id, name, city, address, phone, publishedHours, link]) => record({
+  id: `ut-food-local-${id}`, state: "UT", name, city, address, phone, link,
+  source: id.startsWith("tabithas-way") ? "Utah County Health Department, Community Assistance Programs — Food Assistance" : "Salt Lake County Health Department, Community Resources — Food, Diaper, and Nutrition Assistance",
+  serviceArea: city === "Salt Lake City" ? "Salt Lake County; ask the provider about residency and service boundaries" : "Utah County; ask the provider about residency and service boundaries",
+  resourceType: "named community food pantry and essential-needs contact",
+  description: `${name} is listed by the ${id.startsWith("tabithas-way") ? "Utah County Health Department" : "Salt Lake County Health Department"} as a local source of food assistance${id.startsWith("crossroads") || id === "hildegardes" || id === "lebwohl" || id === "saint-andrew" || id === "st-james" ? " and diapers" : ""}. Published address: ${address}; phone: ${phone}; posted schedule: ${publishedHours}. ${id.startsWith("tabithas-way") ? "The county advises first-time visitors to pre-register online so the household's food can be prepared. " : ""}Call or check the provider's current information before traveling to confirm hours, intake, eligibility, household requirements, accessibility, and same-day availability; posted schedules and supplies may change.`,
+}));
 export const UTAH_PEER = [
   ["weber", "Utah Recovery Community Center — Weber County", "Ogden", "893 24th Street, Suite 300, Ogden, UT 84401", "385-263-1600", "Weber County and surrounding communities"],
   ["salt-lake", "Utah Recovery Community Center — Salt Lake County", "Salt Lake City", "180 East 2100 South, Suite 100, Salt Lake City, UT 84115", "385-210-0320", "Salt Lake County and surrounding communities"],
