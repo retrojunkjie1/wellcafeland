@@ -539,6 +539,23 @@ export const UTAH_URGENT = [record({
   link: "https://www.wasatch.org/locations/", source: "Wasatch Behavioral Health, Locations and Crisis Services",
   serviceArea: "Utah County youth and families", resourceType: "youth crisis assessment and stabilization",
   description: "Wasatch Behavioral Health describes CY FAST as a Children, Youth and Family Assessment Stabilization Team providing mobile outreach, respite, group therapy, and family support. Published contact: 801-852-2131 at 1185 E. 300 North, Provo. Call to discuss age range, referral, and immediate access. For immediate danger, call 911; call or text 988 for crisis support.",
+}), record({
+  id: "ut-youth-smr", state: "UT", name: "Utah Stabilization and Mobile Response — child and family crisis support", city: "Statewide", phone: "1-833-723-3326",
+  link: "https://sumh.utah.gov/services/treatment/child-mental-health/", source: "Utah Department of Health and Human Services, Contacts and Child Mental Health Services",
+  serviceArea: "Statewide; children and youth ages 0–20 and their families", coverageScope: "statewide crisis access",
+  resourceType: "youth and family stabilization and mobile response",
+  description: "Utah DHHS lists Stabilization and Mobile Response for families with children and youth ages 0–20 who are experiencing challenges. Call 1-833-SAFE-FAM (1-833-723-3326) or review the state child-mental-health page to ask about eligibility, intake, and whether a local response is available. For mental-health crisis response anywhere in Utah, 988 can also connect to mobile crisis outreach teams; call 911 for immediate danger or urgent medical needs.",
+}), record({
+  id: "ut-ywca-survivor-crisis-line", state: "UT", name: "YWCA Utah — 24/7 survivor crisis line and safety support", city: "Salt Lake City", address: "322 East 300 South, Salt Lake City, UT 84111", phone: "801-537-8600",
+  link: "https://www.ywcautah.org/survivor-services", source: "YWCA Utah, Survivor Services",
+  serviceArea: "Utah; survivors of domestic and family violence", resourceType: "24/7 domestic-violence crisis and survivor-support line",
+  description: "YWCA Utah publishes a 24-hour crisis line at 801-537-8600 for people seeking safety and family-violence services; its survivor-services page says support is available to women, men, and children regardless of sexual orientation. Call for confidential crisis support, safety planning, and shelter or service referrals. Confirm current service options with the advocate. For immediate danger, call 911.",
+}), record({
+  id: "ut-trevor-youth-crisis", state: "UT", name: "The Trevor Project — 24/7 LGBTQ+ youth crisis support", city: "Statewide", phone: "1-866-488-7386",
+  link: "https://www.thetrevorproject.org/get-help/", source: "Utah Department of Health and Human Services Contacts; The Trevor Project Get Help",
+  serviceArea: "Utah callers; LGBTQ+ young people under age 25", coverageScope: "statewide crisis access",
+  resourceType: "specialized LGBTQ+ youth crisis counseling by phone, text, and chat",
+  description: "Utah DHHS lists The Trevor Project for suicide or self-harm support. The organization says its free, confidential crisis counselors are available 24/7 to LGBTQ+ young people under 25 by phone at 1-866-488-7386, by text (START to 678-678), or online chat. This specialized service complements Utah 988 and is not a substitute for emergency medical help; call 911 for immediate danger.",
 })];
 const utFoodSource = "https://www.utahfoodbank.org/get-help/";
 const utFood = [
