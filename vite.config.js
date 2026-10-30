@@ -78,6 +78,10 @@ export default defineConfig(({ mode }) => {
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
+            "kentucky-minnesota-mississippi-directory": ["./src/data/kentuckyMississippiMinnesotaDirectory.js"],
+            "maryland-directory": ["./src/data/marylandDirectory.js"],
+            "massachusetts-directory": ["./src/data/massachusettsDirectory.js"],
+            "north-carolina-support-directory": ["./src/data/northCarolinaSupportDirectory.js"],
             "texas-local-resource-directory": [
               "./src/data/texasCitiesDirectory.js",
               "./src/data/texasCitiesBatchTwo.js",
@@ -88,7 +92,7 @@ export default defineConfig(({ mode }) => {
               "./src/data/texasCitiesBatchSeven.js",
               "./src/data/texasCitiesBatchEight.js",
             ],
-            "us-regional-resource-directories": [
+            "western-and-southern-state-directories": [
               "./src/data/coloradoCitiesDirectory.js",
               "./src/data/californiaDirectory.js",
               "./src/data/floridaDirectory.js",
@@ -96,6 +100,8 @@ export default defineConfig(({ mode }) => {
               "./src/data/georgiaDirectory.js",
               "./src/data/newYorkDirectory.js",
               "./src/data/ohioDirectory.js",
+            ],
+            "eastern-and-central-state-directories": [
               "./src/data/pennsylvaniaDirectory.js",
               "./src/data/arizonaDirectory.js",
               "./src/data/oklahomaDirectory.js",
