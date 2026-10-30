@@ -885,4 +885,29 @@ describe("category fallback pathways", () => {
     expect(getUSStateCoverage("Nevada").find((category) => category.id === "hotlines").statewideRoutes)
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
   });
+
+  it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
+    const batchChecks = [
+      ["Missouri", "mo-peer-beacon-sedalia", 12],
+      ["Montana", "mt-peer-narss-recovery-hall-ronan", 4],
+      ["Nebraska", "ne-peer-wellbeing-initiative-lincoln", 4],
+      ["Nevada", "nv-peer-recovery-support-warmline", 2],
+      ["New Hampshire", "nh-peer-white-horse-littleton", 22],
+    ];
+    for (const [state, firstId, expectedPeerCount] of batchChecks) {
+      const listings = getCuratedFallback("peer", "", state);
+      const prefix = { Missouri: "mo-peer-", Montana: "mt-peer-", Nebraska: "ne-peer-", Nevada: "nv-peer-", "New Hampshire": "nh-peer-" }[state];
+      expect(listings.map((resource) => resource.id)).toContain(firstId);
+      expect(listings.filter((resource) => resource.id.startsWith(prefix))).toHaveLength(expectedPeerCount);
+    }
+
+    expect(getCuratedFallback("food.essentials", "", "Missouri").map((resource) => resource.id)).toContain("mo-food-red-star-cape-girardeau");
+    expect(getCuratedFallback("housing", "", "New Hampshire").map((resource) => resource.id)).toContain("nh-housing-carey-house");
+    expect(getCuratedFallback("programs", "", "Montana").map((resource) => resource.id)).toContain("mt-treatment-aware-missoula");
+    expect(getCuratedFallback("hotlines", "", "Nevada").map((resource) => resource.id)).toContain("nv-988-crisis-support");
+    expect(getCuratedFallback("housing", "", "Nebraska").map((resource) => resource.id)).toContain("ne-housing-siena-francis-omaha");
+
+    const newPeerRecords = batchChecks.flatMap(([state]) => getCuratedFallback("peer", "", state).filter((resource) => /^(mo|mt|ne|nv|nh)-peer-/.test(resource.id)));
+    expect(newPeerRecords.every((resource) => resource.sourceReviewed && !resource.phoneConfirmed && !resource.exhaustiveCoverage)).toBe(true);
+  });
 });
