@@ -906,13 +906,17 @@ describe("category fallback pathways", () => {
       .toEqual(expect.arrayContaining(centers.map(([, id]) => expect.objectContaining({ id }))));
   });
 
-  it("routes five named Tennessee crisis centers to their cities without replacing statewide access", () => {
+  it("routes Tennessee's named crisis centers to their cities without replacing statewide access", () => {
     const centers = [
       ["Nashville, TN", "tn-nashville-crisis-treatment-center", "615-726-0125"],
       ["Memphis, TN", "tn-memphis-alliance-adult-crisis-wellness-center", "901-577-9400"],
       ["Memphis, TN", "tn-memphis-alliance-children-youth-crisis-center", "901-577-9400"],
       ["Knoxville, TN", "tn-knoxville-mcnabb-empath", "865-539-2409"],
       ["Johnson City, TN", "tn-johnson-city-turning-point-crisis-walk-in", "423-926-0940"],
+      ["Chattanooga, TN", "tn-vbh-chattanooga-crisis-walk-in", "423-634-8884"],
+      ["Cookeville, TN", "tn-vbh-cookeville-crisis-walk-in", "931-431-4123"],
+      ["Murfreesboro, TN", "tn-vbh-murfreesboro-crisis-walk-in", "615-898-0771"],
+      ["Morristown, TN", "tn-mcnabb-morristown-crisis-stabilization-unit", "423-273-5599"],
     ];
 
     for (const [region, id, phone] of centers) {
@@ -923,7 +927,7 @@ describe("category fallback pathways", () => {
     const statewide = getCuratedFallback("hotlines", "mobile crisis", "Tennessee");
     expect(statewide).toContainEqual(expect.objectContaining({ id: "tn-mobile-crisis-988", phone: "988" }));
     expect(getUSStateCoverage("Tennessee").find(({ id }) => id === "hotlines").records)
-      .toHaveLength(6);
+      .toHaveLength(10);
   });
 
   it("routes 22 state-listed South Dakota substance-use treatment contacts to their published communities", () => {
@@ -940,7 +944,9 @@ describe("category fallback pathways", () => {
 
     const coverage = getUSStateCoverage("South Dakota");
     expect(coverage.find(({ id }) => id === "programs").records).toHaveLength(33);
-    expect(coverage.reduce((sum, category) => sum + category.records.length, 0)).toBe(97);
+    expect(coverage.find(({ id }) => id === "hotlines").records)
+      .toContainEqual(expect.objectContaining({ id: "sd-crisis-sioux-falls-the-link", phone: "605-275-1000", city: "Sioux Falls" }));
+    expect(coverage.reduce((sum, category) => sum + category.records.length, 0)).toBe(98);
   });
 
   it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
