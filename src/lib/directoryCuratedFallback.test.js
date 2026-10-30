@@ -885,4 +885,86 @@ describe("category fallback pathways", () => {
     expect(getUSStateCoverage("Nevada").find((category) => category.id === "hotlines").statewideRoutes)
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
   });
+
+  it("adds four named Utah crisis receiving centers while retaining existing crisis routes", () => {
+    const centers = [
+      ["Layton, UT", "ut-davis-receiving-center", "801-991-1060"],
+      ["South Salt Lake, UT", "ut-gardner-crisis-care-center", "801-587-7988"],
+      ["Ogden, UT", "ut-mckay-dee-behavioral-health-access-center", "801-387-5543"],
+      ["Price, UT", "ut-four-corners-crisis-receiving-center", "435-637-5995"],
+    ];
+
+    for (const [region, id, phone] of centers) {
+      const results = getCuratedFallback("hotlines", "crisis receiving center", region);
+      expect(results).toContainEqual(expect.objectContaining({
+        id, state: "UT", phone, sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false,
+      }));
+    }
+    expect(getCuratedFallback("hotlines", "crisis receiving center", "Provo, UT"))
+      .toContainEqual(expect.objectContaining({ id: "ut-wasatch-crisis-center" }));
+    expect(getUSStateCoverage("Utah").find(({ id }) => id === "hotlines").records)
+      .toEqual(expect.arrayContaining(centers.map(([, id]) => expect.objectContaining({ id }))));
+  });
+
+  it("routes five named Tennessee crisis centers to their cities without replacing statewide access", () => {
+    const centers = [
+      ["Nashville, TN", "tn-nashville-crisis-treatment-center", "615-726-0125"],
+      ["Memphis, TN", "tn-memphis-alliance-adult-crisis-wellness-center", "901-577-9400"],
+      ["Memphis, TN", "tn-memphis-alliance-children-youth-crisis-center", "901-577-9400"],
+      ["Knoxville, TN", "tn-knoxville-mcnabb-empath", "865-539-2409"],
+      ["Johnson City, TN", "tn-johnson-city-turning-point-crisis-walk-in", "423-926-0940"],
+    ];
+
+    for (const [region, id, phone] of centers) {
+      expect(getCuratedFallback("hotlines", "crisis", region)).toContainEqual(expect.objectContaining({
+        id, state: "TN", phone, sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false,
+      }));
+    }
+    const statewide = getCuratedFallback("hotlines", "mobile crisis", "Tennessee");
+    expect(statewide).toContainEqual(expect.objectContaining({ id: "tn-mobile-crisis-988", phone: "988" }));
+    expect(getUSStateCoverage("Tennessee").find(({ id }) => id === "hotlines").records)
+      .toHaveLength(6);
+  });
+
+  it("routes 22 state-listed South Dakota substance-use treatment contacts to their published communities", () => {
+    const listings = getCuratedFallback("programs", "", "South Dakota");
+    const batch = listings.filter(({ id }) => id.startsWith("sd-sud-"));
+
+    expect(batch).toHaveLength(22);
+    expect(new Set(batch.map(({ id }) => id)).size).toBe(22);
+    expect(batch.every(({ state, city, address, phone, link, sourceReviewed, phoneConfirmed, exhaustiveCoverage }) =>
+      state === "SD" && city && address && phone && link?.startsWith("https://") && sourceReviewed && !phoneConfirmed && !exhaustiveCoverage
+    )).toBe(true);
+    expect(listings).toContainEqual(expect.objectContaining({ id: "sd-sud-dakotah-pride-agency-village", city: "Agency Village", phone: "605-698-3917" }));
+    expect(listings).toContainEqual(expect.objectContaining({ id: "sd-sud-rosebud-intensive-treatment", city: "Rosebud", phone: "605-747-5100" }));
+
+    const coverage = getUSStateCoverage("South Dakota");
+    expect(coverage.find(({ id }) => id === "programs").records).toHaveLength(33);
+    expect(coverage.reduce((sum, category) => sum + category.records.length, 0)).toBe(97);
+  });
+
+  it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
+    const batchChecks = [
+      ["Missouri", "mo-peer-beacon-sedalia", 12],
+      ["Montana", "mt-peer-narss-recovery-hall-ronan", 4],
+      ["Nebraska", "ne-peer-wellbeing-initiative-lincoln", 4],
+      ["Nevada", "nv-peer-recovery-support-warmline", 2],
+      ["New Hampshire", "nh-peer-white-horse-littleton", 22],
+    ];
+    for (const [state, firstId, expectedPeerCount] of batchChecks) {
+      const listings = getCuratedFallback("peer", "", state);
+      const prefix = { Missouri: "mo-peer-", Montana: "mt-peer-", Nebraska: "ne-peer-", Nevada: "nv-peer-", "New Hampshire": "nh-peer-" }[state];
+      expect(listings.map((resource) => resource.id)).toContain(firstId);
+      expect(listings.filter((resource) => resource.id.startsWith(prefix))).toHaveLength(expectedPeerCount);
+    }
+
+    expect(getCuratedFallback("food.essentials", "", "Missouri").map((resource) => resource.id)).toContain("mo-food-red-star-cape-girardeau");
+    expect(getCuratedFallback("housing", "", "New Hampshire").map((resource) => resource.id)).toContain("nh-housing-carey-house");
+    expect(getCuratedFallback("programs", "", "Montana").map((resource) => resource.id)).toContain("mt-treatment-aware-missoula");
+    expect(getCuratedFallback("hotlines", "", "Nevada").map((resource) => resource.id)).toContain("nv-988-crisis-support");
+    expect(getCuratedFallback("housing", "", "Nebraska").map((resource) => resource.id)).toContain("ne-housing-siena-francis-omaha");
+
+    const newPeerRecords = batchChecks.flatMap(([state]) => getCuratedFallback("peer", "", state).filter((resource) => /^(mo|mt|ne|nv|nh)-peer-/.test(resource.id)));
+    expect(newPeerRecords.every((resource) => resource.sourceReviewed && !resource.phoneConfirmed && !resource.exhaustiveCoverage)).toBe(true);
+  });
 });

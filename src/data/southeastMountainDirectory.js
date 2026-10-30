@@ -240,6 +240,37 @@ export const SOUTH_DAKOTA_TREATMENT = sdCenters.map(([id, name, city, address, p
   description: `South Dakota Behavioral Health identifies ${name} as a publicly funded community mental-health provider serving ${serviceArea}. The state describes services ranging from short-term counseling to outpatient care, case management, psychiatric medication monitoring, and telehealth. Published phone: ${phone}. Call to confirm service eligibility, fees or financial assistance, current intake, and telehealth options.`,
 }));
 
+const sdSubstanceUseSource = "https://sdbehavioralhealth.gov/substance-use/treatment";
+const sdSubstanceUsePrograms = [
+  ["buffalo-plains-rapid-city", "Buffalo Plains Recovery — outpatient substance-use treatment", "Rapid City", "330 Knollwood Drive, Rapid City, SD 57701", "605-460-6785", "https://buffaloplainsrecovery.com/", "Outpatient treatment; ask about assessment, modalities, and referral requirements"],
+  ["carroll-institute-sioux-falls", "Carroll Institute — substance-use treatment", "Sioux Falls", "310 S. First Avenue, Sioux Falls, SD 57104", "605-336-2556", "https://carrollinstitute.org/", "Call to ask about assessment and outpatient service options"],
+  ["choices-recovery-sioux-falls", "Choices Recovery Services — substance-use treatment", "Sioux Falls", "622 S. Minnesota Avenue, Sioux Falls, SD 57104", "605-334-1822", "https://www.choicesrecoveryservices.org/", "Call to ask about counseling, assessment, and current intake"],
+  ["compass-point-spearfish", "Compass Point — Northern Hills alcohol and drug services", "Spearfish", "710 E. Colorado Boulevard, Spearfish, SD 57783", "605-347-3003", "https://www.thecompasspoint.org/", "Northern Hills regional access; ask about assessment, service area, and available care"],
+  ["dakotah-pride-agency-village", "Dakotah Pride Treatment Center — Sisseton-Wahpeton Sioux Tribe", "Agency Village", "388 Dakota Avenue, Agency Village, SD 57262", "605-698-3917", "https://www.swo-nsn.gov/", "Tribal treatment program; contact the center to confirm eligibility, referral steps, and intake"],
+  ["bontreger-watertown", "Mark Bontreger — substance-use treatment", "Watertown", "525 5th Street SE, Suite 13, Watertown, SD 57201", "605-882-0800", "https://www.markbontreger.com/", "Call to confirm services, assessment, fees or insurance, and availability"],
+  ["first-step-sioux-falls", "First Step Counseling Services — substance-use treatment", "Sioux Falls", "4320 S. Louise Avenue, Unit 200, Sioux Falls, SD 57106", "605-361-1505", "https://takeyourfirststep.com/", "Call to ask about assessment, outpatient services, payment options, and intake"],
+  ["glory-house-sioux-falls", "Glory House — substance-use recovery services", "Sioux Falls", "4000 S. West Avenue, Sioux Falls, SD 57105", "605-988-9100", "https://glory-house.org/", "Ask about treatment and recovery service pathways, eligibility, and current intake"],
+  ["great-plains-youth-mobridge", "Great Plains Area Youth Regional Treatment Center", "Mobridge", "1401 10th Avenue W., Mobridge, SD 57601", "605-845-7181", "https://www.ihs.gov/greatplains/", "Youth-focused regional treatment center; contact the program to confirm age, tribal or referral eligibility, and intake"],
+  ["irecover-howard", "iRecover — substance-use treatment", "Howard", "103 S. Main Street, Howard, SD 57349", "605-772-2135", "https://www.irecover.us/", "Call to confirm treatment format, assessment process, and current availability"],
+  ["keystone-canton", "Keystone Treatment Center — Canton access", "Canton", "1010 E. Second Street, Canton, SD 57013", "605-987-5659", "https://www.keystonetreatment.com/", "Contact the center about levels of care, age eligibility, insurance or fees, and admission"],
+  ["lifeways-rapid-city", "Lifeways — substance-use treatment", "Rapid City", "1010 9th Street, Suite 2, Rapid City, SD 57701", "605-716-6555", "https://www.lifeways.us/", "Call to confirm services, assessment, and current intake"],
+  ["main-gate-winner", "Main Gate Counseling Services — substance-use treatment", "Winner", "208 S. Main Street, Winner, SD 57580", "605-842-0312", "https://yourfirststep.org/", "Call to ask about assessment, outpatient services, referral, and access"],
+  ["native-healing-rapid-city", "Native Healing Program — substance-use treatment", "Rapid City", "1205 E. Saint James Street, Rapid City, SD 57701", "605-342-8925", "https://www.nativehealingprogram.com/", "Contact the program to confirm population served, eligibility, and intake"],
+  ["new-dawn-vale", "New Dawn Center — substance-use treatment", "Vale", "19271 SD Highway 79, Vale, SD 57788", "605-309-5311", "https://newdawncentervales.wixsite.com/", "Call before traveling to confirm service model, eligibility, and intake"],
+  ["our-home-rediscovery-huron", "Our Home Rediscovery — substance-use treatment", "Huron", "334 3rd Street SW, Huron, SD 57350", "605-352-4368", "https://www.ourhomeinc.org/", "Call to confirm admission criteria, services, fees, and current availability"],
+  ["pennington-addiction-treatment-rapid-city", "Pennington County Addiction Treatment Services", "Rapid City", "321 Kansas City Street, Rapid City, SD 57701", "605-394-6128", "https://www.pennco.org/", "County program; call to confirm eligibility, referral steps, and service availability"],
+  ["project-recovery-sioux-falls", "Project Recovery — Sioux Falls substance-use treatment", "Sioux Falls", "3800 W. Technology Circle, Suite 201, Sioux Falls, SD 57106", "605-340-1234", "https://project-recovery.org/", "Treatment access at this published site; ask about assessment, services, payment, and intake"],
+  ["roads-rapid-city", "ROADS Outpatient Treatment Program", "Rapid City", "103 E. Omaha Street, Rapid City, SD 57701", "605-348-8026", "https://www.rehab.com/roads-inc-rapid-city", "Outpatient program listing; call to verify current operation, assessment, and intake"],
+  ["rosebud-intensive-treatment", "Rosebud Intensive Methamphetamine Treatment Program", "Rosebud", "225 N. BIA 9 Soldier Creek Road, Rosebud, SD 57570", "605-747-5100", "https://www.rosebudsiouxtribe-nsn.gov/", "Tribal program; contact the provider to confirm eligibility, referral, and current intake"],
+  ["sioux-falls-treatment-center", "Sioux Falls Treatment Center — substance-use treatment", "Sioux Falls", "2519 W. 8th Street, Sioux Falls, SD 57104", "605-332-3236", "https://www.baymark.com/locations/south-dakota/sioux-falls-treatment-center/", "Call to ask about assessment, treatment options, payment, and current availability"],
+  ["urban-indian-health-pierre", "South Dakota Urban Indian Health — Pierre treatment access", "Pierre", "339 S. Pierre Street, Pierre, SD 57501", "605-224-8841", "https://sduih.org/", "Contact the organization about services at this site, eligibility, and intake"],
+].map(([id, name, city, address, phone, link, accessNotes]) => record({
+  id: `sd-sud-${id}`, state: "SD", name, city, address, phone, link, source: "South Dakota Behavioral Health, Substance Use Treatment Services directory",
+  serviceArea: city, resourceType: "substance-use assessment and treatment access", coverageScope: "local",
+  description: `${name} is listed by South Dakota Behavioral Health as a substance-use treatment access point at ${address}. ${accessNotes}. Contact the provider to confirm current services, clinical fit, age and other eligibility, insurance or fees, referral requirements, and intake before traveling. This source-reviewed listing does not confirm an appointment or available placement.`,
+}));
+export const SOUTH_DAKOTA_SUBSTANCE_USE = sdSubstanceUsePrograms;
+
 const sdHousingSource = "https://sdbehavioralhealth.gov/recovery-housing";
 const sdHomes = [
   ["teen-challenge", "Teen Challenge of the Dakotas", "Brookings", "605-693-9753", "https://www.tcdakotas.org/", "adult recovery-oriented housing and services"],
@@ -505,6 +536,39 @@ export const TENNESSEE_URGENT = [record({
   serviceArea: "Statewide; adults, children, and youth", coverageScope: "statewide crisis access", resourceType: "24/7 mobile crisis connection",
   description: "Tennessee says mobile crisis response is available statewide for adults, children, and youth. Call or text 988 and press 0 to reach the crisis counselor who can connect you with the provider for your county; provider-specific lines are listed by the state. Mobile crisis may offer assessment, referral, stabilization, and follow-up. For immediate danger or urgent medical needs, call 911.",
 })];
+
+export const TENNESSEE_URGENT_LOCAL = [
+  record({
+    id: "tn-nashville-crisis-treatment-center", state: "TN", name: "Mental Health Cooperative — Walk-In Crisis Treatment Center", city: "Nashville", address: "250 Cumberland Bend, Nashville, TN 37228", phone: "615-726-0125",
+    link: "https://www.mhc-tn.org/our-services/emergency-psychiatric-services/", source: "Mental Health Cooperative, Emergency Psychiatric Services; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Nashville and Middle Tennessee; adult walk-in crisis care", resourceType: "24/7 adult walk-in psychiatric crisis evaluation and stabilization",
+    description: "Mental Health Cooperative lists its Walk-In Crisis Treatment Center at 250 Cumberland Bend and says it is open 24/7, 365 days a year, with no appointment needed for adults in crisis. The center describes on-site licensed clinicians and medical staff, psychiatric assessment, and connection to ongoing care. Its crisis response line is 615-726-0125; call first if you need help deciding whether to travel. Tennessee's state crisis service can also be reached by calling or texting 988 and pressing 0. For immediate danger or urgent medical needs, call 911.",
+  }),
+  record({
+    id: "tn-memphis-alliance-adult-crisis-wellness-center", state: "TN", name: "Alliance Healthcare Services — Adult Crisis Wellness Center", city: "Memphis", address: "3200 Broad Avenue, Memphis, TN 38112", phone: "901-577-9400",
+    link: "https://www.alliance-hs.org/clinics/crisis-wellness-center", source: "Alliance Healthcare Services, Crisis Wellness Center; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Memphis and Shelby County; adults 18 and older", resourceType: "24/7 adult walk-in crisis assessment, stabilization, and detox access",
+    description: "Alliance Healthcare Services says its Crisis Wellness Center is open 24/7 and accepts walk-ins without an appointment or insurance requirement. The adult center provides crisis assessment, 23-hour observation, stabilization, medication management, and medically monitored detox when appropriate, with follow-up connections. Its 24-hour crisis line is 901-577-9400; call to ask about the safest access route. For immediate danger or urgent medical needs, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+  record({
+    id: "tn-memphis-alliance-children-youth-crisis-center", state: "TN", name: "Alliance Healthcare Services — Children & Youth Crisis Wellness Center", city: "Memphis", address: "602 Malcomb Street, Memphis, TN", phone: "901-577-9400",
+    link: "https://www.alliance-hs.org/services/crisis-continuum", source: "Alliance Healthcare Services, Crisis Continuum; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Memphis and Shelby County; children and youth ages 4–17", resourceType: "24/7 youth walk-in crisis assessment and stabilization",
+    description: "Alliance Healthcare Services identifies a separate Children & Youth Crisis Wellness Center at 602 Malcomb Street for ages 4–17 and says the location operates 24/7. The provider describes a dedicated crisis continuum, including assessment and short-term stabilization; the listed 24-hour crisis line is 901-577-9400. Call before traveling to confirm age-specific intake, current entrance, and whether the young person should be brought in or receive mobile response. For immediate danger or urgent medical needs, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+  record({
+    id: "tn-knoxville-mcnabb-empath", state: "TN", name: "McNabb Center — EmPATH adult psychiatric crisis walk-in", city: "Knoxville", address: "1515 Saint Mary Street, Knoxville, TN 37917", phone: "865-539-2409",
+    link: "https://mcnabbcenter.org/empath/", source: "McNabb Center, EmPATH Unit; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Knoxville and East Tennessee; adults 18 and older", resourceType: "24/7 adult walk-in emergency psychiatric assessment and short-term stabilization",
+    description: "The McNabb Center says EmPATH is a 24/7, 365-day walk-in service for adults 18 and older experiencing a behavioral-health crisis. It provides psychiatric evaluation, medication assessment, therapeutic support, and transition planning; voluntary stays may last up to 23 hours. Published address: 1515 Saint Mary Street; phone: 865-539-2409. The provider says services are available regardless of ability to pay, though insurance is accepted. Call if you need help confirming the correct entrance or next step. For immediate medical emergencies, call 911.",
+  }),
+  record({
+    id: "tn-johnson-city-turning-point-crisis-walk-in", state: "TN", name: "Frontier Health — Turning Point 24-hour crisis walk-in center", city: "Johnson City", address: "208 East Unaka Avenue, Johnson City, TN 37601", phone: "423-926-0940",
+    link: "https://www.frontierhealth.org/24-hr-crisis-walk-in-center/", source: "Frontier Health, 24-hour Crisis Walk-In Center and Turning Point; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Northeast Tennessee; children age 7 and older and adults", resourceType: "24/7 walk-in psychiatric and substance-misuse crisis evaluation",
+    description: "Frontier Health says Turning Point is open 24/7, accepts walk-ins without an appointment, and serves adults and children age 7 and older experiencing a non-medical psychiatric or substance-misuse emergency. Published center phone: 423-926-0940; the provider also lists a 24-hour crisis hotline at 877-928-9062. Services include crisis assessment, safety planning, and connection to stabilization, detox, or other care when appropriate. Call to confirm the right route and age-specific service. For immediate medical emergencies, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+];
 export const TENNESSEE_FOOD = [
   ["second-harvest-east", "Second Harvest Food Bank of East Tennessee", "Maryville", "136 Harvest Lane, Maryville, TN 37801", "https://secondharvestetn.org/find-a-food-pantry/", "East Tennessee regional service area"],
   ["chattanooga", "Chattanooga Area Food Bank — pantry and mobile distribution finder", "Chattanooga", "2009 Curtain Pole Road, Chattanooga, TN", "https://chattfoodbank.org/hungry/", "Southeast Tennessee and northwest Georgia partner network"],
@@ -584,6 +648,35 @@ export const UTAH_URGENT = [record({
   resourceType: "specialized LGBTQ+ youth crisis counseling by phone, text, and chat",
   description: "Utah DHHS lists The Trevor Project for suicide or self-harm support. The organization says its free, confidential crisis counselors are available 24/7 to LGBTQ+ young people under 25 by phone at 1-866-488-7386, by text (START to 678-678), or online chat. This specialized service complements Utah 988 and is not a substitute for emergency medical help; call 911 for immediate danger.",
 })];
+
+// Local crisis receiving centers published by the Utah Association of Counties.
+// Existing statewide and Provo routes remain in UTAH_URGENT unchanged.
+export const UTAH_URGENT_RECEIVING_CENTERS = [
+  record({
+    id: "ut-davis-receiving-center", state: "UT", name: "Davis Behavioral Health — 24-hour receiving center", city: "Layton", address: "2250 North 1700 West, Building B, Layton, UT 84041", phone: "801-991-1060",
+    link: "https://www.dbhutah.org/about/facilities/the-receiving-center/", source: "Davis Behavioral Health, The Receiving Center; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Davis County and surrounding Wasatch Front communities", resourceType: "24-hour behavioral-health and substance-use crisis stabilization",
+    description: "Davis Behavioral Health describes this as a 24-hour crisis-response site for mental-health, substance-use, and other behavioral crises. Published services include assessment, physical-health screening, detox support, peer services, medication management, and connection to follow-up treatment. The Utah Association of Counties lists receiving centers as walk-in and free; call ahead to confirm the correct entrance, access, and current service availability. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+  record({
+    id: "ut-gardner-crisis-care-center", state: "UT", name: "Gardner Mental Health Crisis Care Center — adult walk-in crisis care", city: "South Salt Lake", address: "955 West 3300 South, South Salt Lake, UT 84119", phone: "801-587-7988",
+    link: "https://healthcare.utah.edu/hmhi/programs/crisis-diversion/crisis-care-center", source: "University of Utah Health, Mental Health Crisis Care Center; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Salt Lake County; adults age 18 and older", resourceType: "24/7 walk-in adult mental-health crisis care",
+    description: "University of Utah Health says the center provides 24/7 walk-in care for adults 18 and older, without an appointment, for mental-health crises that do not require emergency medical care. The center describes no-cost crisis services, stabilization, peer support, stays of up to 23 hours, and connection to longer-term care. The Utah Association of Counties publishes 801-587-7988 as the receiving-center contact. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+  record({
+    id: "ut-mckay-dee-behavioral-health-access-center", state: "UT", name: "McKay-Dee Hospital — Behavioral Health Access Center", city: "Ogden", address: "4401 Harrison Boulevard, Ogden, UT 84403", phone: "801-387-5543",
+    link: "https://intermountainhealthcare.org/locations/mckay-dee-hospital/behavioral-health-access-center", source: "Intermountain Health, Behavioral Health Access Center; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Weber County and the greater Wasatch Front", resourceType: "behavioral-health crisis assessment and stabilization access",
+    description: "Intermountain Health lists crisis stabilization, mental-health crisis care, psychiatric care, and addiction treatment at this access center, located across from the hospital emergency room. Published contact: 801-387-5543. The Utah Association of Counties identifies it as a receiving center; call before traveling to confirm current walk-in access, age scope, and whether this is the right setting for the situation. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+  record({
+    id: "ut-four-corners-crisis-receiving-center", state: "UT", name: "Four Corners Community Behavioral Health — 24-hour crisis receiving center", city: "Price", address: "575 East 100 South, Price, UT 84501", phone: "435-637-5995",
+    link: "https://www.fourcornersbh.com/crisis-services", source: "Four Corners Community Behavioral Health, Crisis Services; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Carbon, Emery, and Grand counties; center located in Carbon County", resourceType: "24-hour mental-health and substance-use stabilization and crisis receiving center",
+    description: "Four Corners Community Behavioral Health says its receiving center is open 24 hours a day, 365 days a year, and available to people in crisis after a brief screening. Published services include mental-health and substance-use stabilization, therapy, and case management; its mobile crisis team serves Carbon, Emery, and Grand counties. Published center contact: 435-637-5995. Call to confirm current access and the best route for your location. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+];
 const utFoodSource = "https://www.utahfoodbank.org/get-help/";
 const utFood = [
   ["hurricane", "Hurricane Valley Food Pantry", "Hurricane", "489 600 N, Hurricane, UT 84737", "435-767-0300", "Washington County"],
