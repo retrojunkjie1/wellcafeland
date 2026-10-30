@@ -926,6 +926,23 @@ describe("category fallback pathways", () => {
       .toHaveLength(6);
   });
 
+  it("routes 22 state-listed South Dakota substance-use treatment contacts to their published communities", () => {
+    const listings = getCuratedFallback("programs", "", "South Dakota");
+    const batch = listings.filter(({ id }) => id.startsWith("sd-sud-"));
+
+    expect(batch).toHaveLength(22);
+    expect(new Set(batch.map(({ id }) => id)).size).toBe(22);
+    expect(batch.every(({ state, city, address, phone, link, sourceReviewed, phoneConfirmed, exhaustiveCoverage }) =>
+      state === "SD" && city && address && phone && link?.startsWith("https://") && sourceReviewed && !phoneConfirmed && !exhaustiveCoverage
+    )).toBe(true);
+    expect(listings).toContainEqual(expect.objectContaining({ id: "sd-sud-dakotah-pride-agency-village", city: "Agency Village", phone: "605-698-3917" }));
+    expect(listings).toContainEqual(expect.objectContaining({ id: "sd-sud-rosebud-intensive-treatment", city: "Rosebud", phone: "605-747-5100" }));
+
+    const coverage = getUSStateCoverage("South Dakota");
+    expect(coverage.find(({ id }) => id === "programs").records).toHaveLength(33);
+    expect(coverage.reduce((sum, category) => sum + category.records.length, 0)).toBe(97);
+  });
+
   it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
     const batchChecks = [
       ["Missouri", "mo-peer-beacon-sedalia", 12],
