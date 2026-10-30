@@ -906,6 +906,26 @@ describe("category fallback pathways", () => {
       .toEqual(expect.arrayContaining(centers.map(([, id]) => expect.objectContaining({ id }))));
   });
 
+  it("routes five named Tennessee crisis centers to their cities without replacing statewide access", () => {
+    const centers = [
+      ["Nashville, TN", "tn-nashville-crisis-treatment-center", "615-726-0125"],
+      ["Memphis, TN", "tn-memphis-alliance-adult-crisis-wellness-center", "901-577-9400"],
+      ["Memphis, TN", "tn-memphis-alliance-children-youth-crisis-center", "901-577-9400"],
+      ["Knoxville, TN", "tn-knoxville-mcnabb-empath", "865-539-2409"],
+      ["Johnson City, TN", "tn-johnson-city-turning-point-crisis-walk-in", "423-926-0940"],
+    ];
+
+    for (const [region, id, phone] of centers) {
+      expect(getCuratedFallback("hotlines", "crisis", region)).toContainEqual(expect.objectContaining({
+        id, state: "TN", phone, sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false,
+      }));
+    }
+    const statewide = getCuratedFallback("hotlines", "mobile crisis", "Tennessee");
+    expect(statewide).toContainEqual(expect.objectContaining({ id: "tn-mobile-crisis-988", phone: "988" }));
+    expect(getUSStateCoverage("Tennessee").find(({ id }) => id === "hotlines").records)
+      .toHaveLength(6);
+  });
+
   it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
     const batchChecks = [
       ["Missouri", "mo-peer-beacon-sedalia", 12],

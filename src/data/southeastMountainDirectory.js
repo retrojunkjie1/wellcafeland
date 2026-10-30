@@ -505,6 +505,39 @@ export const TENNESSEE_URGENT = [record({
   serviceArea: "Statewide; adults, children, and youth", coverageScope: "statewide crisis access", resourceType: "24/7 mobile crisis connection",
   description: "Tennessee says mobile crisis response is available statewide for adults, children, and youth. Call or text 988 and press 0 to reach the crisis counselor who can connect you with the provider for your county; provider-specific lines are listed by the state. Mobile crisis may offer assessment, referral, stabilization, and follow-up. For immediate danger or urgent medical needs, call 911.",
 })];
+
+export const TENNESSEE_URGENT_LOCAL = [
+  record({
+    id: "tn-nashville-crisis-treatment-center", state: "TN", name: "Mental Health Cooperative — Walk-In Crisis Treatment Center", city: "Nashville", address: "250 Cumberland Bend, Nashville, TN 37228", phone: "615-726-0125",
+    link: "https://www.mhc-tn.org/our-services/emergency-psychiatric-services/", source: "Mental Health Cooperative, Emergency Psychiatric Services; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Nashville and Middle Tennessee; adult walk-in crisis care", resourceType: "24/7 adult walk-in psychiatric crisis evaluation and stabilization",
+    description: "Mental Health Cooperative lists its Walk-In Crisis Treatment Center at 250 Cumberland Bend and says it is open 24/7, 365 days a year, with no appointment needed for adults in crisis. The center describes on-site licensed clinicians and medical staff, psychiatric assessment, and connection to ongoing care. Its crisis response line is 615-726-0125; call first if you need help deciding whether to travel. Tennessee's state crisis service can also be reached by calling or texting 988 and pressing 0. For immediate danger or urgent medical needs, call 911.",
+  }),
+  record({
+    id: "tn-memphis-alliance-adult-crisis-wellness-center", state: "TN", name: "Alliance Healthcare Services — Adult Crisis Wellness Center", city: "Memphis", address: "3200 Broad Avenue, Memphis, TN 38112", phone: "901-577-9400",
+    link: "https://www.alliance-hs.org/clinics/crisis-wellness-center", source: "Alliance Healthcare Services, Crisis Wellness Center; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Memphis and Shelby County; adults 18 and older", resourceType: "24/7 adult walk-in crisis assessment, stabilization, and detox access",
+    description: "Alliance Healthcare Services says its Crisis Wellness Center is open 24/7 and accepts walk-ins without an appointment or insurance requirement. The adult center provides crisis assessment, 23-hour observation, stabilization, medication management, and medically monitored detox when appropriate, with follow-up connections. Its 24-hour crisis line is 901-577-9400; call to ask about the safest access route. For immediate danger or urgent medical needs, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+  record({
+    id: "tn-memphis-alliance-children-youth-crisis-center", state: "TN", name: "Alliance Healthcare Services — Children & Youth Crisis Wellness Center", city: "Memphis", address: "602 Malcomb Street, Memphis, TN", phone: "901-577-9400",
+    link: "https://www.alliance-hs.org/services/crisis-continuum", source: "Alliance Healthcare Services, Crisis Continuum; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Memphis and Shelby County; children and youth ages 4–17", resourceType: "24/7 youth walk-in crisis assessment and stabilization",
+    description: "Alliance Healthcare Services identifies a separate Children & Youth Crisis Wellness Center at 602 Malcomb Street for ages 4–17 and says the location operates 24/7. The provider describes a dedicated crisis continuum, including assessment and short-term stabilization; the listed 24-hour crisis line is 901-577-9400. Call before traveling to confirm age-specific intake, current entrance, and whether the young person should be brought in or receive mobile response. For immediate danger or urgent medical needs, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+  record({
+    id: "tn-knoxville-mcnabb-empath", state: "TN", name: "McNabb Center — EmPATH adult psychiatric crisis walk-in", city: "Knoxville", address: "1515 Saint Mary Street, Knoxville, TN 37917", phone: "865-539-2409",
+    link: "https://mcnabbcenter.org/empath/", source: "McNabb Center, EmPATH Unit; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Knoxville and East Tennessee; adults 18 and older", resourceType: "24/7 adult walk-in emergency psychiatric assessment and short-term stabilization",
+    description: "The McNabb Center says EmPATH is a 24/7, 365-day walk-in service for adults 18 and older experiencing a behavioral-health crisis. It provides psychiatric evaluation, medication assessment, therapeutic support, and transition planning; voluntary stays may last up to 23 hours. Published address: 1515 Saint Mary Street; phone: 865-539-2409. The provider says services are available regardless of ability to pay, though insurance is accepted. Call if you need help confirming the correct entrance or next step. For immediate medical emergencies, call 911.",
+  }),
+  record({
+    id: "tn-johnson-city-turning-point-crisis-walk-in", state: "TN", name: "Frontier Health — Turning Point 24-hour crisis walk-in center", city: "Johnson City", address: "208 East Unaka Avenue, Johnson City, TN 37601", phone: "423-926-0940",
+    link: "https://www.frontierhealth.org/24-hr-crisis-walk-in-center/", source: "Frontier Health, 24-hour Crisis Walk-In Center and Turning Point; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea: "Northeast Tennessee; children age 7 and older and adults", resourceType: "24/7 walk-in psychiatric and substance-misuse crisis evaluation",
+    description: "Frontier Health says Turning Point is open 24/7, accepts walk-ins without an appointment, and serves adults and children age 7 and older experiencing a non-medical psychiatric or substance-misuse emergency. Published center phone: 423-926-0940; the provider also lists a 24-hour crisis hotline at 877-928-9062. Services include crisis assessment, safety planning, and connection to stabilization, detox, or other care when appropriate. Call to confirm the right route and age-specific service. For immediate medical emergencies, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+];
 export const TENNESSEE_FOOD = [
   ["second-harvest-east", "Second Harvest Food Bank of East Tennessee", "Maryville", "136 Harvest Lane, Maryville, TN 37801", "https://secondharvestetn.org/find-a-food-pantry/", "East Tennessee regional service area"],
   ["chattanooga", "Chattanooga Area Food Bank — pantry and mobile distribution finder", "Chattanooga", "2009 Curtain Pole Road, Chattanooga, TN", "https://chattfoodbank.org/hungry/", "Southeast Tennessee and northwest Georgia partner network"],
