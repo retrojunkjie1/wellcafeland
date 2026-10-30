@@ -101,6 +101,26 @@ North Carolina is now organized into six separate categories rather than display
 
 ### Next U.S. multi-state batch queue
 
+### Active five-state build slice — October 30, 2026
+
+These five states now have larger, organized source-backed additions in the active catalog. Counts below are from `US_DIRECTORY_COVERAGE`, deduplicated by record ID across the six resource categories. The 75–125 range is a planning band, not a cap; entries are retained when valid records put a state above it. **None of these five is complete:** the category minimum is five records in every category, and a low count is a real research gap rather than a reason to multiply statewide hotlines.
+
+| State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support | Current state |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| South Carolina | 127 | 64 | 5 | 5 | 6 | 46 | 1 | Above planning band; urgent-support depth remains a research gap |
+| South Dakota | 26 | 11 | 3 | 10 | 0 | 1 | 1 | In progress; food, benefits, peer, and crisis depth remain gaps |
+| Tennessee | 173 | 150 | 7 | 0 | 4 | 11 | 1 | Above planning band; housing and local food access remain gaps |
+| Utah | 23 | 7 | 6 | 0 | 8 | 0 | 2 | In progress; housing and benefits remain gaps |
+| Vermont | 48 | 10 | 12 | 20 | 1 | 5 | 0 | In progress; food depth and local crisis access remain gaps |
+
+South Carolina now includes a county DSS benefits access route for all 46 counties, a county-specific community substance-use provider from the state recovery locator for all 46 counties, four named Courage Center peer sites plus ACCESS FAVOR, regional CoC/housing referrals, and food-bank routing. Tennessee includes the state BHSN provider-site list; its 150 treatment entries are physical provider locations, not 150 separate provider organizations. The BHSN program is eligibility-limited to qualifying uninsured Tennesseans, and callers must confirm age, eligibility, intake, and whether that specific location serves them. Vermont's statewide food shelf entry is one searchable locator for 200+ partner sites, not 200 locally verified records. Vermont shelter contacts use a source page dated February 2024 and remain labeled as leads requiring current-status checks.
+
+Current sources: [SC DSS SNAP Toolkit, county offices](https://dss.sc.gov/media/hxnn4gwz/snap-outreah-toolkit_01092026_v6.pdf), [SC DSS application assistance contact](https://dss.sc.gov/media/5001/mfi-dss-form-3800-april-2024.pdf), [Embrace Recovery SC county treatment and peer locator](https://embracerecoverysc.com/find-help/), [Courage Center locations](https://www.couragecentersc.org/locations), [ACCESS FAVOR](https://accessfavor.org/), [SC 211](https://www.uwasc.org/sc211), [Tennessee Behavioral Health Safety Net provider sites](https://www.tn.gov/behavioral-health/bhsn/safety-net-provider-contact-list.html), [Tennessee Peer Support Centers](https://www.tn.gov/behavioral-health/mental-health-services/peers/peer-support-centers.html), [Utah Recovery Community Center locations](https://www.utahrecovers.org/locations/), and [Vermont Foodbank food-shelf finder](https://www.vtfoodbank.org/access-food/find-a-food-shelf/).
+
+Next, keep this slice moving in parallel: fill South Dakota's food and local benefit pathways; add Tennessee's named housing and pantry access routes; add Utah housing and benefits contacts; strengthen Vermont food access from individually named partner sites where current hours/contact routes are published; and find South Carolina urgent routes only where the state publishes distinct, actionable local access. Preserve existing contacts and update this snapshot after the next batch.
+
+### Previously queued states after the active slice
+
 | State | Research anchor | Build focus |
 |---|---|---|
 | Kentucky | [CHFS county crisis and community mental-health directory](https://www.chfs.ky.gov/agencies/dbhdid/Pages/crisisnos.aspx) | Treatment, peer, housing, food and benefits contacts; preserve 120 existing benefits records |
