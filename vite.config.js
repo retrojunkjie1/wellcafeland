@@ -85,6 +85,7 @@ export default defineConfig(({ mode }) => {
             "midwest-mountain-state-directories": ["./src/data/midwestMountainDirectory.js"],
             "midwest-mountain-expansion": ["./src/data/midwestMountainExpansion.js"],
             "upper-midwest-directory-expansion": ["./src/data/upperMidwestDirectoryExpansion.js"],
+            "northeast-northwest-directory": ["./src/data/northeastNorthwestDirectory.js"],
             "texas-local-resource-directory": [
               "./src/data/texasCitiesDirectory.js",
               "./src/data/texasCitiesBatchTwo.js",
