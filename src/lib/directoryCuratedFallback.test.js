@@ -886,6 +886,26 @@ describe("category fallback pathways", () => {
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
   });
 
+  it("adds four named Utah crisis receiving centers while retaining existing crisis routes", () => {
+    const centers = [
+      ["Layton, UT", "ut-davis-receiving-center", "801-991-1060"],
+      ["South Salt Lake, UT", "ut-gardner-crisis-care-center", "801-587-7988"],
+      ["Ogden, UT", "ut-mckay-dee-behavioral-health-access-center", "801-387-5543"],
+      ["Price, UT", "ut-four-corners-crisis-receiving-center", "435-637-5995"],
+    ];
+
+    for (const [region, id, phone] of centers) {
+      const results = getCuratedFallback("hotlines", "crisis receiving center", region);
+      expect(results).toContainEqual(expect.objectContaining({
+        id, state: "UT", phone, sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false,
+      }));
+    }
+    expect(getCuratedFallback("hotlines", "crisis receiving center", "Provo, UT"))
+      .toContainEqual(expect.objectContaining({ id: "ut-wasatch-crisis-center" }));
+    expect(getUSStateCoverage("Utah").find(({ id }) => id === "hotlines").records)
+      .toEqual(expect.arrayContaining(centers.map(([, id]) => expect.objectContaining({ id }))));
+  });
+
   it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
     const batchChecks = [
       ["Missouri", "mo-peer-beacon-sedalia", 12],

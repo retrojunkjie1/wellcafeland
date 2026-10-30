@@ -584,6 +584,35 @@ export const UTAH_URGENT = [record({
   resourceType: "specialized LGBTQ+ youth crisis counseling by phone, text, and chat",
   description: "Utah DHHS lists The Trevor Project for suicide or self-harm support. The organization says its free, confidential crisis counselors are available 24/7 to LGBTQ+ young people under 25 by phone at 1-866-488-7386, by text (START to 678-678), or online chat. This specialized service complements Utah 988 and is not a substitute for emergency medical help; call 911 for immediate danger.",
 })];
+
+// Local crisis receiving centers published by the Utah Association of Counties.
+// Existing statewide and Provo routes remain in UTAH_URGENT unchanged.
+export const UTAH_URGENT_RECEIVING_CENTERS = [
+  record({
+    id: "ut-davis-receiving-center", state: "UT", name: "Davis Behavioral Health — 24-hour receiving center", city: "Layton", address: "2250 North 1700 West, Building B, Layton, UT 84041", phone: "801-991-1060",
+    link: "https://www.dbhutah.org/about/facilities/the-receiving-center/", source: "Davis Behavioral Health, The Receiving Center; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Davis County and surrounding Wasatch Front communities", resourceType: "24-hour behavioral-health and substance-use crisis stabilization",
+    description: "Davis Behavioral Health describes this as a 24-hour crisis-response site for mental-health, substance-use, and other behavioral crises. Published services include assessment, physical-health screening, detox support, peer services, medication management, and connection to follow-up treatment. The Utah Association of Counties lists receiving centers as walk-in and free; call ahead to confirm the correct entrance, access, and current service availability. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+  record({
+    id: "ut-gardner-crisis-care-center", state: "UT", name: "Gardner Mental Health Crisis Care Center — adult walk-in crisis care", city: "South Salt Lake", address: "955 West 3300 South, South Salt Lake, UT 84119", phone: "801-587-7988",
+    link: "https://healthcare.utah.edu/hmhi/programs/crisis-diversion/crisis-care-center", source: "University of Utah Health, Mental Health Crisis Care Center; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Salt Lake County; adults age 18 and older", resourceType: "24/7 walk-in adult mental-health crisis care",
+    description: "University of Utah Health says the center provides 24/7 walk-in care for adults 18 and older, without an appointment, for mental-health crises that do not require emergency medical care. The center describes no-cost crisis services, stabilization, peer support, stays of up to 23 hours, and connection to longer-term care. The Utah Association of Counties publishes 801-587-7988 as the receiving-center contact. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+  record({
+    id: "ut-mckay-dee-behavioral-health-access-center", state: "UT", name: "McKay-Dee Hospital — Behavioral Health Access Center", city: "Ogden", address: "4401 Harrison Boulevard, Ogden, UT 84403", phone: "801-387-5543",
+    link: "https://intermountainhealthcare.org/locations/mckay-dee-hospital/behavioral-health-access-center", source: "Intermountain Health, Behavioral Health Access Center; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Weber County and the greater Wasatch Front", resourceType: "behavioral-health crisis assessment and stabilization access",
+    description: "Intermountain Health lists crisis stabilization, mental-health crisis care, psychiatric care, and addiction treatment at this access center, located across from the hospital emergency room. Published contact: 801-387-5543. The Utah Association of Counties identifies it as a receiving center; call before traveling to confirm current walk-in access, age scope, and whether this is the right setting for the situation. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+  record({
+    id: "ut-four-corners-crisis-receiving-center", state: "UT", name: "Four Corners Community Behavioral Health — 24-hour crisis receiving center", city: "Price", address: "575 East 100 South, Price, UT 84501", phone: "435-637-5995",
+    link: "https://www.fourcornersbh.com/crisis-services", source: "Four Corners Community Behavioral Health, Crisis Services; Utah Association of Counties, Receiving Centers",
+    serviceArea: "Carbon, Emery, and Grand counties; center located in Carbon County", resourceType: "24-hour mental-health and substance-use stabilization and crisis receiving center",
+    description: "Four Corners Community Behavioral Health says its receiving center is open 24 hours a day, 365 days a year, and available to people in crisis after a brief screening. Published services include mental-health and substance-use stabilization, therapy, and case management; its mobile crisis team serves Carbon, Emery, and Grand counties. Published center contact: 435-637-5995. Call to confirm current access and the best route for your location. Call or text 988 for crisis routing; call 911 for immediate danger or urgent medical needs.",
+  }),
+];
 const utFoodSource = "https://www.utahfoodbank.org/get-help/";
 const utFood = [
   ["hurricane", "Hurricane Valley Food Pantry", "Hurricane", "489 600 N, Hurricane, UT 84737", "435-767-0300", "Washington County"],
