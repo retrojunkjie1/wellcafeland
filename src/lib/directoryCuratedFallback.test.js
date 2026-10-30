@@ -879,11 +879,41 @@ describe("category fallback pathways", () => {
       expect(getCuratedFallback(category, "", region).map((resource) => resource.id)).toContain(id);
     }
 
-    expect(getCuratedFallback("food.essentials", "", "Nebraska")).toEqual([
-      expect.objectContaining({ id: "ne-food-pantry-referrals", state: "NE", coverageScope: "state" }),
-    ]);
+    const nebraskaFood = getCuratedFallback("food.essentials", "", "Nebraska");
+    expect(nebraskaFood.map(({ id }) => id)).toEqual(expect.arrayContaining([
+      "ne-food-pantry-referrals",
+      "ne-food-center-for-people",
+      "ne-food-catholic-social-services",
+      "ne-food-asian-community-cultural-center",
+      "ne-food-bellevue-food-pantry",
+      "ne-food-tri-city-food-pantry",
+    ]));
+    expect(nebraskaFood.find(({ id }) => id === "ne-food-pantry-referrals")).toMatchObject({ state: "NE", coverageScope: "state" });
     expect(getUSStateCoverage("Nevada").find((category) => category.id === "hotlines").statewideRoutes)
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
+  });
+
+  it("adds sourced access contacts in all five states without claiming phone confirmation or completeness", () => {
+    const additions = [
+      ["hotlines", "Missouri", ["mo-crisis-kansas-city", "mo-crisis-cape-girardeau", "mo-crisis-sedalia"]],
+      ["hotlines", "Montana", ["mt-crisis-billings-community-center", "mt-crisis-many-rivers"]],
+      ["food.essentials", "Nebraska", ["ne-food-center-for-people", "ne-food-tri-city-food-pantry"]],
+      ["programs", "Nevada", ["nv-treatment-west-charleston", "nv-treatment-rawson-neal"]],
+      ["food.essentials", "New Hampshire", ["nh-food-centerpoint-concord", "nh-food-st-pauls-concord"]],
+    ];
+    for (const [category, state, ids] of additions) {
+      const records = getCuratedFallback(category, "", state);
+      const addedRecords = ids.map((id) => records.find((record) => record.id === id));
+      expect(addedRecords.every(Boolean)).toBe(true);
+      expect(addedRecords.every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
+    }
+
+    const expectedTotals = { Missouri: 77, Montana: 51, Nebraska: 53, Nevada: 33, "New Hampshire": 54 };
+    for (const [state, total] of Object.entries(expectedTotals)) {
+      const categories = getUSStateCoverage(state);
+      const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
+      expect(uniqueIds.size).toBe(total);
+    }
   });
 
   it("adds four named Utah crisis receiving centers while retaining existing crisis routes", () => {
