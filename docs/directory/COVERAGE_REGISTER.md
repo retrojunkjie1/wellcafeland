@@ -91,11 +91,11 @@ Each row gives the live count and categories below five. A zero indicates that t
 
 | State / jurisdiction | Code | Records | Categories below five (current count) |
 |---|---:|---:|---|
-| Virginia | VA | 0 | All six categories 0 |
-| Washington | WA | 0 | All six categories 0 |
-| West Virginia | WV | 0 | All six categories 0 |
-| Wisconsin | WI | 0 | All six categories 0 |
-| Wyoming | WY | 0 | All six categories 0 |
+| Virginia | VA | 122 | Funding/benefits: 115; food: 7; treatment, peer, housing, urgent support still below five |
+| Washington | WA | 95 | Funding/benefits: 95; other categories still need source-backed contacts |
+| West Virginia | WV | 122 | Funding/benefits: 109; treatment: 13; peer, housing, food, urgent support still below five |
+| Wisconsin | WI | 91 | Funding/benefits: 80; peer: 6; urgent support: 5; treatment, housing, food still below five |
+| Wyoming | WY | 108 | Food/essentials: 108; other categories still need source-backed contacts |
 
 The October 30 source-reviewed batch adds 94 distinct listings across Kentucky, Louisiana, Maine, Massachusetts, and Missouri. Each meets the initial 75-record floor and all six category minima; continued work remains necessary for local depth, provider confirmation, source freshness, and coverage beyond these contacts. Minnesota also meets the initial count and six-category balance floors. The current live snapshot for MT, NE, NV, NH and SC is recorded below; these milestones do not establish exhaustive or phone-confirmed coverage. Counts come from `US_DIRECTORY_COVERAGE` after wiring records into search:
 
@@ -134,7 +134,19 @@ North Carolina is now organized into six separate categories rather than display
 
 ### Next U.S. multi-state batch queue
 
-Next five states: Virginia, Washington, West Virginia, Wisconsin, and Wyoming. Each is currently below the 75-record floor in the live catalog; build all six categories with sourced local and statewide routes, preserve existing records, then reconcile actual counts before calling a state floor-met.
+Current five-state batch: Virginia, Washington, West Virginia, Wisconsin, and Wyoming. The active catalog has now been audited after wiring the sourced treatment, peer/community, housing, food/essentials, benefits, and urgent-support additions. All five states meet the 75-record floor and the five-record floor in every category. The batch has met its initial organized-directory threshold, not exhaustive coverage; continue deeper city/county work in the next batch. Exact live counts and category counts are below.
+
+| State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support | Current state |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Virginia | 152 | 6 | 9 | 8 | 7 | 115 | 7 | Starting floors met; deepen local coverage |
+| Washington | 131 | 7 | 6 | 5 | 8 | 95 | 10 | Starting floors met; deepen local coverage |
+| West Virginia | 146 | 13 | 8 | 7 | 5 | 108 | 5 | Starting floors met; deepen local coverage |
+| Wisconsin | 107 | 7 | 6 | 5 | 6 | 78 | 5 | Starting floors met; deepen local coverage |
+| Wyoming | 142 | 12 | 8 | 5 | 107 | 5 | 5 | Starting floors met; deepen local coverage |
+
+The additions use Virginia DBHDS CSB emergency contacts and peer-run recovery centers; Washington HCA acute-treatment sites and county-mapped behavioral-health crisis routes; West Virginia named shelters, local food access contacts, and statewide urgent-support routes; Wisconsin state-certified substance-use treatment locations; and Wyoming 211-listed shelters, 988 center schedules, DFS benefit-office routes, and peer-support programs. Mountaineer Food Bank's published address and phone are confirmed on its official contact page. Listings remain source-reviewed, not phone-confirmed; do not infer open beds, current intake, eligibility, or walk-in access from a directory record. Wyoming's two 988 centers have separate operating windows that together provide 24-hour call-center coverage, while callers can use 988 for call, text, and chat. The state totals are catalog counts and do not establish exhaustive statewide coverage.
+
+Sources: [Virginia DBHDS CSB emergency phone directory](https://www.dbhds.virginia.gov/library/community%20contracting/csb-emergencyphoneno.pdf), [Fairfax CSB peer-run recovery centers](https://www.fairfaxcounty.gov/community-services-board/recovery/peer-run-centers), [Norfolk peer recovery services](https://www.norfolk.gov/4209/Peer-Recovery-Services), [Washington HCA mental-health crisis lines](https://www.hca.wa.gov/free-or-low-cost-health-care/i-need-behavioral-health-support/mental-health-crisis-lines), [Washington HCA acute mental-health care](https://www.hca.wa.gov/free-or-low-cost-health-care/i-need-behavioral-health-support/acute-mental-health-care), [West Virginia Farm To You food pantry contacts](https://farmtoyouwv.org/community-resources/berkeley-county-weekly-food-pantries/), [West Virginia Agriculture food distribution contacts](https://agriculture.wv.gov/divisions/food-distribution-program/), [West Virginia DHHS homeless-services policy](https://bss.wv.gov/media/21052/download?inline=), [Wisconsin DHS certified substance-use program directory](https://www.dhs.wisconsin.gov/regulations/su/su-only-directory.pdf), [Wyoming 211 shelter directory](https://search.wyoming211.org/search?query=BH-1800.8500&query_label=Homeless+Shelters&query_type=taxonomy), [Wyoming DFS homeless services](https://dfs.wyo.gov/assistance-programs/home-utilities-energy-assistance/homeless-services/), [Wyoming 988 Lifeline](https://health.wyo.gov/behavioralhealth/mhsa/988-lifeline-in-wyoming/), and [Mountaineer Food Bank contact page](https://mountaineerfoodbank.org/contact-us/).
 
 ### Completed five-state checkpoint — New Jersey, New Mexico, North Dakota, Oregon, Rhode Island (October 30, 2026)
 
