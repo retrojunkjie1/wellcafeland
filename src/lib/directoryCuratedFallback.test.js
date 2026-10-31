@@ -5,6 +5,8 @@ import { matchesHelpLocation } from "@/services/helpLocationMatch";
 import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_PEER_RESOURCES, NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "@/data/nigeriaFiveJurisdictionExpansion";
 import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "@/data/nigeriaNextFiveStateExpansion";
+import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "@/data/nigeriaNifesCommunityExpansion";
+import { NIGERIA_PEER_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage } from "@/data/nigeriaDirectoryCoverage";
 
 vi.mock("@/services/foodDirectory", () => ({
@@ -28,13 +30,13 @@ describe("category fallback pathways", () => {
       Kaduna: coverage("Kaduna"),
       "Akwa Ibom": coverage("Akwa Ibom"),
       Ogun: coverage("Ogun"),
-    }).toEqual({ Enugu: 39, Bauchi: 35, Kaduna: 34, "Akwa Ibom": 26, Ogun: 57 });
+    }).toEqual({ Enugu: 39, Bauchi: 35, Kaduna: 35, "Akwa Ibom": 26, Ogun: 57 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Enugu").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 11, emergency: 6 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Bauchi").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Kaduna").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 5, circles: 4, housing: 3, food: 4, funding: 8, emergency: 10 });
+      .toEqual({ programs: 5, circles: 5, housing: 3, food: 4, funding: 8, emergency: 10 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Akwa Ibom").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Ogun").map(({ id, records: items }) => [id, items.length])))
@@ -44,6 +46,20 @@ describe("category fallback pathways", () => {
     expect(records.filter(({ id }) => id.startsWith("nifes-nacf-")).every(({ primaryCategory, description }) =>
       primaryCategory === "circles" && description.includes("faith-based") && description.includes("not clinical")
     )).toBe(true);
+  });
+
+  it("adds NIFES community contacts across Nigerian cities without labeling them as recovery care", () => {
+    const records = NIGERIA_NIFES_COMMUNITY_EXPANSION;
+    expect(records).toHaveLength(66);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(30);
+    expect(new Set(records.map(({ city }) => city)).size).toBe(60);
+    expect(records.every(({ link, source, phone, verified, description, resourceType }) =>
+      link === "https://nifes.org.ng/nacfnigeria/" && source.includes("NIFES") && /^\d{11}$/.test(phone) && verified &&
+      resourceType.includes("Faith-based") && description.includes("not clinical") && description.includes("whether non-associates may attend")
+    )).toBe(true);
+    expect(NIGERIA_PEER_RESOURCES.filter(({ id }) => id.startsWith("nigeria-nifes-nacf-"))).toHaveLength(66);
+    expect(getNigeriaStateCoverage("Kogi").find(({ id }) => id === "circles").localContacts)
+      .toHaveLength(3);
   });
 
   it("serves the next five-state Nigeria additions in their matching filters", () => {

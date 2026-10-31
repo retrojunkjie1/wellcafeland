@@ -1,5 +1,6 @@
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "./nigeriaFiveJurisdictionExpansion.js";
 import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "./nigeriaNextFiveStateExpansion.js";
+import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "./nigeriaNifesCommunityExpansion.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -16,6 +17,7 @@ const FEDERAL_HEALTH_DIRECTORY_URL = "https://health.gov.ng/specialty-hospitals/
 const reviewedExpansion = [
   ...NIGERIA_FIVE_JURISDICTION_EXPANSION,
   ...NIGERIA_NEXT_FIVE_STATE_EXPANSION,
+  ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
 ];
 const fiveJurisdiction = (category) => reviewedExpansion
   .filter((record) => record.primaryCategory === category);
@@ -235,6 +237,11 @@ export const NIGERIA_CITIES = [
   "Aba", "Uyo", "Onitsha", "Bauchi", "Yenagoa", "Makurdi", "Maiduguri", "Ogwashi-Uku",
   "Abakaliki", "Gombe", "Owerri", "Dutse", "Kaduna", "Katsina", "Birnin Kebbi", "Lokoja",
   "Ilorin", "Lafia", "Minna", "Akure", "Jos", "Sokoto",
+  "Gwagwalada", "Idah", "Ankpa", "Bida", "Kontagora", "Suleja", "Damaturu", "Yelwa",
+  "Gwallameji", "Azare", "Pankshin", "Vom", "Zawan", "Agbor", "Auchi", "Warri", "Abraka",
+  "Sapele", "Afikpo", "Ishiagu", "Nnewi", "Ijebu-Ode", "Kafanchan", "Keffi", "Owo",
+  "Ado-Ekiti", "Mokwa", "New Bussa", "Ede", "Iree", "Gusau", "Kaura Namoda", "Ogoja",
+  "Wukari", "Numan", "Mubi", "Zaria", "Dutsin-Ma",
 ];
 
 export const NIGERIA_STATES = [
@@ -595,4 +602,5 @@ export const NIGERIA_PEER_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "Nigeria-wide helpline and state commands · ask for a city-specific referral", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("circles").map((record) => ({ ...record, directoryRole: "meeting-finder" })),
+  ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
 ];

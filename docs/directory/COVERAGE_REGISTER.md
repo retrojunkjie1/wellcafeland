@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 54. | In progress | Continue the five-state batches and deepen local/category coverage; independently checked sources remain limited. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 460 state-linked records across six categories. Current counts range from 3 to 57. A 66-record NIFES batch gives 30 jurisdictions and 60 city/locality labels with source-listed local faith-based meetings. | In progress; no jurisdiction meets the 75-record and six-category floors. | Build distinct local contacts in all six categories in batches; source state- and city-specific care, housing, food, benefits, peer, and urgent routes. Keep faith-based meetings distinct from treatment and recovery care. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -96,17 +96,17 @@ As of 2026-10-31, the live `US_DIRECTORY_COVERAGE` snapshot reports 51 jurisdict
 
 ### Nigeria five-jurisdiction expansion — Lagos, Oyo, Rivers, Kano and FCT (October 31, 2026)
 
-This additive cohort wires 32 source-reviewed records into the existing Nigeria search categories without replacing existing records: Lagos 8, Oyo 5, Rivers 4, Kano 5, and FCT 10. Live calculator totals are now Lagos 21, Oyo 19, Rivers 14, Kano 8, and FCT 17. Category counts (treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support) are:
+This additive cohort wires 32 source-reviewed records into the existing Nigeria search categories without replacing existing records: Lagos 8, Oyo 5, Rivers 4, Kano 5, and FCT 10. These records remain preserved; the current catalog also includes later research. Current calculator totals in this cohort are Lagos 21, Oyo 21, Rivers 14, Kano 8, and FCT 19. Category counts (treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support) are:
 
 | Jurisdiction | Total | Treatment | Peer | Housing | Food | Funding | Urgent |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Lagos | 21 | 5 | 7 | 1 | 3 | 3 | 2 |
-| Oyo | 19 | 3 | 0 | 1 | 10 | 3 | 2 |
+| Oyo | 21 | 3 | 2 | 1 | 10 | 3 | 2 |
 | Rivers | 14 | 7 | 1 | 1 | 2 | 1 | 2 |
 | Kano | 8 | 3 | 0 | 0 | 2 | 2 | 1 |
-| Federal Capital Territory | 17 | 6 | 2 | 3 | 3 | 1 | 2 |
+| Federal Capital Territory | 19 | 6 | 4 | 3 | 3 | 1 | 2 |
 
-These are visible progress counts, not a completion claim. Peer additions are online/virtual Lagos and Abuja meetings; they do not establish in-person circles in those states. Several government contacts are referral or administrative routes, not direct service placements. Category gaps remain: Kano has no housing or peer listing; Oyo has no peer listing; Rivers has no funding listing; and FCT has no funding listing in this snapshot. No record is phone-confirmed and no coverage is exhaustive. Shelter availability, benefit eligibility, clinic intake and food distribution must be confirmed directly. Existing Rivers Safe Home and Oyo Women Safe House entries were retained rather than duplicated.
+These are visible progress counts, not a completion claim. Peer additions are online/virtual Lagos and Abuja meetings; they do not establish in-person circles in those states. Several government contacts are referral or administrative routes, not direct service placements. Category gaps remain: Kano has no housing or peer listing; Oyo has two source-reviewed NIFES faith-based community meetings, but no verified addiction-recovery peer-meeting listing; Rivers has no funding listing; and FCT has no funding listing in this snapshot. No record is phone-confirmed and no coverage is exhaustive. Shelter availability, benefit eligibility, clinic intake and food distribution must be confirmed directly. Existing Rivers Safe Home and Oyo Women Safe House entries were retained rather than duplicated.
 
 Sources: [SMART Recovery Global Lagos meetings](https://meetings.smartrecoveryglobal.org/meetings/1126/), [SMART Recovery Global Friday meeting](https://meetings.smartrecoveryglobal.org/meetings/1137/), [SMART Recovery Family & Friends](https://meetings.smartrecoveryglobal.org/meetings/1138/), [GriefShare Lagos group](https://find.griefshare.org/groups/304015), [Narcotics Anonymous Africa Abuja meetings](https://naafrica.org/meetings/abuja/), [Dorothy Njemanze Foundation survivor support](https://dnf.org.ng/report-abuse/), [Oyo State Emergency Management Agency](https://oysema.oyostate.gov.ng/operations-and-administration/), [Oyo State emergency information](https://oyostate.gov.ng/security/), [Oyo State Health Insurance Agency](https://oyshia.oy.gov.ng/faqs/), [Joyous Smiles food relief](https://jshf.org/services/food-relief-humanitarian-assistance/), [Rivers Red Cross branch](https://www.redcrossnigeria.org/rivers), [CEBECPEN mental-health contact](https://cebecpen.org/contact-us/), [NEMA zonal and territorial offices](https://nema.gov.ng/zonal-territorial-offices/), [Federal Ministry of Health specialty hospitals](https://health.gov.ng/specialty-hospitals/), [Bharif Foundation](https://bhariffoundation.org/), [Basiqat Kano food-basket programme](https://basiqat.org.ng/en/initiatives/food-basket-families-kano), [FIDA Kano legal clinic](https://fidakano.org.ng/?page_id=9), [Nigerian Red Cross branches](https://www.redcrossnigeria.org/get-involved/branches), [Garki Hospital mental-health department](https://garkihospital.com/departments/mental-health/), [LASUTH Psychiatry Department](https://www.lasuth.org.ng/department/clinical_department?clinical=Psychiatry), [WARIF survivor services and helpline](https://warifng.org/day-13-orangetheworld/), [Golan Helps food programmes](https://golanhelpsabujafoodbankinitiative.org/our-programmes), [Safe Haven Foundation shelter services](https://safehaven-foundation.org/services/), [WRAPA legal aid and counselling FAQ](https://www.wrapanigeria.org/faq/), [MAMA Centre contact and reporting](https://mamacentre.org.ng/contact-us/), [Limi Hospital mental-health clinic](https://www.limihospital.org/clinic-mental-health/), and [VGADA group therapy](https://www.vgadanigeria.com/services/group-therapy). The full source labels, caveats, and contact details are stored with the records.
 
@@ -275,25 +275,27 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 3 | Adamawa | 3 |
-| Akwa Ibom | 26 | Anambra | 4 |
-| Bauchi | 35 | Bayelsa | 3 |
-| Benue | 3 | Borno | 3 |
-| Cross River | 3 | Delta | 3 |
-| Ebonyi | 3 | Edo | 4 |
-| Ekiti | 2 | Enugu | 39 |
-| Gombe | 3 | Imo | 3 |
-| Jigawa | 3 | Kaduna | 34 |
-| Kano | 14 | Katsina | 3 |
-| Kebbi | 3 | Kogi | 3 |
-| Kwara | 3 | Lagos | 42 |
-| Nasarawa | 3 | Niger | 3 |
-| Ogun | 57 | Ondo | 3 |
-| Osun | 2 | Oyo | 30 |
-| Plateau | 3 | Rivers | 21 |
-| Sokoto | 4 | Taraba | 2 |
-| Yobe | 2 | Zamfara | 2 |
-| Federal Capital Territory | 17 | | |
+| Abia | 5 | Adamawa | 6 |
+| Akwa Ibom | 26 | Anambra | 6 |
+| Bauchi | 35 | Bayelsa | 4 |
+| Benue | 4 | Borno | 4 |
+| Cross River | 5 | Delta | 8 |
+| Ebonyi | 6 | Edo | 6 |
+| Ekiti | 3 | Enugu | 39 |
+| Gombe | 6 | Imo | 4 |
+| Jigawa | 3 | Kaduna | 35 |
+| Kano | 15 | Katsina | 5 |
+| Kebbi | 4 | Kogi | 6 |
+| Kwara | 4 | Lagos | 42 |
+| Nasarawa | 5 | Niger | 9 |
+| Ogun | 57 | Ondo | 5 |
+| Osun | 5 | Oyo | 32 |
+| Plateau | 8 | Rivers | 21 |
+| Sokoto | 5 | Taraba | 6 |
+| Yobe | 3 | Zamfara | 4 |
+| Federal Capital Territory | 19 | | |
+
+The October 31, 2026 NIFES addition contributes 66 city-level community-meeting records across 30 jurisdictions and 60 unique city/locality labels. These are faith-based meetings, not therapy, psychiatric care, or addiction recovery. NIFES publishes monthly, fortnightly, quarterly, and occasional schedules; callers should verify the next meeting, venue, and whether non-associates may attend. Unscheduled or undecided locations were excluded. Source: [NIFES Associates Community Fellowship centers in Nigeria](https://nifes.org.ng/nacfnigeria/).
 
 The Nigeria calculator reports independent-check evidence for Cross River, Edo, Kaduna, Ogun and Sokoto only. Other source-reviewed records are not independently checked by that measure.
 
@@ -301,19 +303,19 @@ The Nigeria calculator reports independent-check evidence for Cross River, Edo, 
 
 Added 32 source-reviewed records to the active Nigeria directory while preserving prior entries: 21 for Lagos and 11 for Oyo. The catalog totals are now Lagos 42 and Oyo 30, still below the user’s 75-record initial planning floor; neither state is complete. Lagos additions cover specialist psychiatry at FNPH Yaba and LUTH, survivor and child-protection support, eligibility-specific residential rehabilitation referral, public legal aid and mediation, health-insurance and livelihoods navigation, two food-bank contacts, disability-affairs navigation, disaster coordination, and eight named Lagos MiND community mental-health facilities in underserved LGAs. Oyo additions cover FIDA legal aid, Red Cross humanitarian referral, UCH psychiatry and emergency pathways, New World specialist care, a University of Ibadan student peer network, HIV/ARV counselling, primary-care navigation, targeted household cash-transfer enquiries, farmer credit, and sickle-cell family welfare/food support.
 
-The category counts after this cohort are Lagos 42 (17 treatment/health, 7 peer/community, 3 housing/legal access, 5 food, 5 funding/benefits, 5 urgent support) and Oyo 30 (7 treatment/health, 1 peer/community, 1 housing, 11 food, 5 funding/benefits, 5 urgent support). Category counts are based on each record’s single primary category; a resource may provide additional services. The Lagos MiND entries identify facilities in its published network and do not assert on-site psychiatry or 24/7 care. Survivor-support entries are referral-first; no confidential placement address is disclosed. Benefits, treatment intake, food availability, current clinic hours, and eligibility must be confirmed directly. All records remain source-reviewed, not phone-confirmed; no state coverage is exhaustive. Oyo’s peer-support category is no longer empty, but its single student chapter does not establish citywide or in-person public meeting coverage.
+The category counts after the Lagos/Oyo cohort were Lagos 42 (17 treatment/health, 7 peer/community, 3 housing/legal access, 5 food, 5 funding/benefits, 5 urgent support) and Oyo 30 (7 treatment/health, 1 peer/community, 1 housing, 11 food, 5 funding/benefits, 5 urgent support). The current catalog adds two Oyo faith-based NIFES community meetings, bringing its peer/community category to three. Category counts are based on each record’s single primary category; a resource may provide additional services. The Lagos MiND entries identify facilities in its published network and do not assert on-site psychiatry or 24/7 care. Survivor-support entries are referral-first; no confidential placement address is disclosed. Benefits, treatment intake, food availability, current clinic hours, and eligibility must be confirmed directly. All records remain source-reviewed, not phone-confirmed; no state coverage is exhaustive.
 
 Sources: [Federal Neuro-Psychiatric Hospital Yaba patient guide](https://fnphyaba.gov.ng/health-information/), [LUTH Psychiatry](https://luth.gov.ng/departments/psychiatry/), [Mirabel Centre services](https://mirabelcentre.org/how-we-help/), [Mirabel current location notice](https://mirabelcentre.org/contact-us/), [Cece Yara Child Advocacy Centre](https://ceceyara.org/about-us/), [The Real Woman Foundation Peace Villa](https://therealwoman.org/the-peace-villa/), [Lagos Bureau of Public Defender](https://opdlagosstate.org/contact.html), [Citizens’ Mediation Bureau](https://lagosstatemoj.org/cmc/), [LASHMA](https://www.lashma.com/), [LSETF](https://www.lsetf.ng/content/contact-us), [Communitywide Food Bank](https://communitywidefoodbank.org/contact-us), [Inner City Mission Food Banking Network](https://foodbank.theinnercitymission.net/contact/), [LASODA](https://officiallasoda.com/), [LASEMA](https://lasema.com.ng/contact/), [Lagos MiND facilities](https://lagosmind.org/facilities), [FIDA Oyo](https://fida.org.ng/oyo/), [Nigerian Red Cross Oyo Branch](https://www.redcrossnigeria.org/oyo), [UCH 2025 service charter](https://uch-ibadan.org.ng/wp-content/uploads/2025/04/SERVICE-CHARTER-HAND-BOOK-pdf-final_083057.pdf), [New World Specialist Hospital](https://www.newworldhospital.org/contacts), [Asido Campus Network](https://www.asidofoundation.com/impact/acn), [O.L.A. Catholic Hospital services](https://www.olacatholichospitalibadan.org/services), [Oyo PHC Board](https://oyophcb.oyostate.gov.ng/about-ministry/), [Oyo social-protection report](https://oyostate.gov.ng/oyo-govt-federal-govt-collaborate-to-alleviate-poverty/), [Oyo Agricultural Credit Corporation](https://accos.oyostate.gov.ng/2025/08/01/oyo-govt-approves-additional-loan-for-farmers/), and [The Elizabeth Foundation SS](https://www.elizabeth-foundationss.com/).
 
 ### Next five-state Nigeria expansion — Enugu, Bauchi, Kaduna, Akwa Ibom, and Ogun (October 31, 2026)
 
-The additive cohort now contains 175 distinct source-reviewed routes across these five states, with no prior records replaced. Calculator totals are Enugu 39, Bauchi 35, Kaduna 34, Akwa Ibom 26, and Ogun 57. The latest continuation adds 11 scheduled NIFES Associates Community Fellowship (NACF) meetings across the five states and three Federal Medical Centre contacts in Azare, Misau, and Abeokuta. NACF meetings are explicitly faith-based community meetups, not therapy or addiction treatment; venue details and access for non-associates must be confirmed with coordinators. The federal hospital contacts are general-care enquiry routes and do not establish specific specialty access or current capacity. Prior additions include residential-recovery contacts, welfare and SARC routes, survivor support, food/community services, benefits, legal aid, livelihood navigation, and Ogun hospital contacts. Ogun has 20 distinct General Hospital records with direct phone and email details published by the Hospitals Management Board, plus five separate state-hospital contacts. All five states remain below the requested 75-record floor; city/LGA coverage and category depth remain in progress.
+The original additive cohort contains 175 distinct source-reviewed routes across these five states, with no prior records replaced. Current calculator totals are Enugu 39, Bauchi 35, Kaduna 35, Akwa Ibom 26, and Ogun 57; one additional Kaduna faith-based community meeting is included in the broader NIFES expansion. The cohort adds 11 scheduled NIFES Associates Community Fellowship (NACF) meetings across the five states and three Federal Medical Centre contacts in Azare, Misau, and Abeokuta. NACF meetings are explicitly faith-based community meetups, not therapy or addiction treatment; venue details and access for non-associates must be confirmed with coordinators. The federal hospital contacts are general-care enquiry routes and do not establish specific specialty access or current capacity. Prior additions include residential-recovery contacts, welfare and SARC routes, survivor support, food/community services, benefits, legal aid, livelihood navigation, and Ogun hospital contacts. Ogun has 20 distinct General Hospital records with direct phone and email details published by the Hospitals Management Board, plus five separate state-hospital contacts. All five states remain below the requested 75-record floor; city/LGA coverage and category depth remain in progress.
 
 | State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Enugu | 39 | 15 | 3 | 1 | 3 | 11 | 6 |
 | Bauchi | 35 | 11 | 5 | 2 | 4 | 6 | 7 |
-| Kaduna | 34 | 5 | 4 | 3 | 4 | 8 | 10 |
+| Kaduna | 35 | 5 | 5 | 3 | 4 | 8 | 10 |
 | Akwa Ibom | 26 | 4 | 2 | 5 | 4 | 4 | 7 |
 | Ogun | 57 | 35 | 2 | 4 | 3 | 4 | 9 |
 
@@ -333,7 +335,7 @@ Sources: [Federal Ministry of Health teaching hospitals](https://health.gov.ng/t
 
 ### Kano and Rivers follow-up research — October 31, 2026
 
-Added 13 source-reviewed contacts to the active catalog while preserving the earlier listings: six in Kano and seven in Rivers. Kano now has 14 state-linked listings; Rivers has 21. The Kano additions include YADAF counselling/referral, Bayero University’s staff-and-student mental-health clinic, KSCHMA health-coverage enquiries, KASITDA statewide digital-skills cohorts, the Scholarships Board portal, and AKY-YEPE, whose official intake page currently says applications are closed. Rivers additions include a child-welfare Family Court emergency route, the statewide primary-care facility network, First Rivers psychiatry, ministry youth entrepreneurship training, the FIDA branch, Victor & Helen Foundation scholarship/skills enquiries, and IHVN’s Rivers clinical referral network. Sources: [YADAF](https://www.yadaf.org/), [Bayero University mental-health clinic](https://www.buk.edu.ng/mental_health_clinic), [NHIA state insurance agency directory](https://www.nhia.gov.ng/sshias/), [KASITDA services](https://kasitda.kn.gov.ng/help), [Kano Scholarships Board](https://kssbonline.org/), [AKY-YEPE intake status](https://empowerment.kanostate.gov.ng/Apply), [Rivers Family Court](https://www.judiciary.rv.gov.ng/family-court/), [Rivers Primary Health Care Board](https://www.rsphcmb.rv.gov.ng/), [First Rivers Hospital](https://firstrivers.com/contact/), [Rivers Ministry of Employment Generation](https://www.megee.rv.gov.ng/index.html), [FIDA Rivers](https://fida.org.ng/rivers/), [Victor & Helen Foundation](https://www.vhf.org.ng/home/), and [IHVN Rivers](https://ihvnigeria.org/where-we-work/rivers/). These are source-reviewed leads, not phone-confirmed services, current intake/capacity, eligibility decisions, or exhaustive coverage. Kano still has no verified housing/shelter contact or local peer-meeting schedule; Oyo has no verified peer listing; Rivers still lacks a verified local peer-meeting calendar and public food-distribution schedule; gaps remain open.
+Added 13 source-reviewed contacts to the active catalog while preserving the earlier listings: six in Kano and seven in Rivers. Kano now has 14 state-linked listings; Rivers has 21. The Kano additions include YADAF counselling/referral, Bayero University’s staff-and-student mental-health clinic, KSCHMA health-coverage enquiries, KASITDA statewide digital-skills cohorts, the Scholarships Board portal, and AKY-YEPE, whose official intake page currently says applications are closed. Rivers additions include a child-welfare Family Court emergency route, the statewide primary-care facility network, First Rivers psychiatry, ministry youth entrepreneurship training, the FIDA branch, Victor & Helen Foundation scholarship/skills enquiries, and IHVN’s Rivers clinical referral network. Sources: [YADAF](https://www.yadaf.org/), [Bayero University mental-health clinic](https://www.buk.edu.ng/mental_health_clinic), [NHIA state insurance agency directory](https://www.nhia.gov.ng/sshias/), [KASITDA services](https://kasitda.kn.gov.ng/help), [Kano Scholarships Board](https://kssbonline.org/), [AKY-YEPE intake status](https://empowerment.kanostate.gov.ng/Apply), [Rivers Family Court](https://www.judiciary.rv.gov.ng/family-court/), [Rivers Primary Health Care Board](https://www.rsphcmb.rv.gov.ng/), [First Rivers Hospital](https://firstrivers.com/contact/), [Rivers Ministry of Employment Generation](https://www.megee.rv.gov.ng/index.html), [FIDA Rivers](https://fida.org.ng/rivers/), [Victor & Helen Foundation](https://www.vhf.org.ng/home/), and [IHVN Rivers](https://ihvnigeria.org/where-we-work/rivers/). These are source-reviewed leads, not phone-confirmed services, current intake/capacity, eligibility decisions, or exhaustive coverage. Kano still has no verified housing/shelter contact or local peer-meeting schedule; Oyo has two source-reviewed NIFES faith-based community meetings, but no verified addiction-recovery peer-meeting listing; Rivers still lacks a verified local peer-meeting calendar and public food-distribution schedule; gaps remain open.
 
 ## Australia: states and territories
 
