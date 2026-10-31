@@ -908,11 +908,48 @@ describe("category fallback pathways", () => {
       expect(addedRecords.every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
     }
 
-    const expectedTotals = { Missouri: 77, Montana: 51, Nebraska: 53, Nevada: 33, "New Hampshire": 54 };
+    const expectedTotals = { Missouri: 88, Montana: 51, Nebraska: 53, Nevada: 33, "New Hampshire": 54 };
     for (const [state, total] of Object.entries(expectedTotals)) {
       const categories = getUSStateCoverage(state);
       const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
       expect(uniqueIds.size).toBe(total);
+    }
+  });
+
+  it("keeps the Kentucky, Louisiana, Maine, Massachusetts and Missouri batch source-linked and category-balanced", () => {
+    const batchExamples = [
+      ["Kentucky", "programs", "ky-treatment-brighton-women"],
+      ["Kentucky", "peer", "ky-peer-rcc-voices-hope"],
+      ["Kentucky", "food.essentials", "ky-food-network-gods-pantry"],
+      ["Louisiana", "peer", "la-peer-recovery-hub-baton-rouge"],
+      ["Louisiana", "housing", "la-housing-ce-baton-rouge"],
+      ["Louisiana", "grants", "la-benefit-liheap-total-community-action"],
+      ["Louisiana", "hotlines", "la-crisis-center-bridge-center"],
+      ["Maine", "programs", "me-program-chcs-bangor"],
+      ["Maine", "peer", "me-peer-recovery-bangor"],
+      ["Maine", "grants", "me-benefit-ofi-augusta"],
+      ["Massachusetts", "housing", "ma-ea-intake-brockton"],
+      ["Massachusetts", "food.essentials", "ma-food-bank-merrimack"],
+      ["Massachusetts", "grants", "ma-benefits-office-lawrence"],
+      ["Missouri", "housing", "mo-housing-ce-one-door-springfield"],
+      ["Missouri", "grants", "mo-benefits-fsd-osceola"],
+    ];
+    for (const [state, category, id] of batchExamples) {
+      const record = getCuratedFallback(category, "", state).find((item) => item.id === id);
+      expect(record, `${state} / ${category} / ${id}`).toMatchObject({
+        sourceReviewed: true,
+        phoneConfirmed: false,
+        exhaustiveCoverage: false,
+      });
+      expect(record.link).toMatch(/^https:\/\//);
+    }
+
+    const expectedTotals = { Kentucky: 178, Louisiana: 142, Maine: 137, Massachusetts: 95, Missouri: 88 };
+    for (const [state, total] of Object.entries(expectedTotals)) {
+      const categories = getUSStateCoverage(state);
+      const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
+      expect(uniqueIds.size).toBe(total);
+      expect(categories.every(({ records }) => records.length >= 5)).toBe(true);
     }
   });
 

@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are in the coverage calculator; live audit after this five-jurisdiction batch: 36 meet the current directory floor and 15 remain in progress. | In progress | Continue the under-floor and category-gap queue. Current batch: AR, DE, DC, IL and KS; all five meet the initial count and per-category floors while locality and source-depth work continues. |
+| United States | All 50 states plus DC are in the coverage calculator; live audit after the current five-state batch: 41 meet the current directory floor and 10 remain in progress. | In progress | Continue the under-floor and category-gap queue. Current batch: KY, LA, ME, MA and MO; all five meet the 75-record and six-category starting floors while source freshness, local depth and availability checks remain open. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -32,7 +32,7 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Meets the current directory floor: 36 jurisdictions
+### Meets the current directory floor: 41 jurisdictions
 
 “Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
@@ -75,17 +75,17 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Still in progress: 15 jurisdictions
+### Still in progress: 10 jurisdictions
 
 Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
 
 | State / jurisdiction | Code | Records | Categories below five (current count) |
 |---|---:|---:|---|
-| Kentucky | KY | 147 | Peer 0; food 0; treatment 0; recovery housing now 13 |
-| Louisiana | LA | 123 | Peer 2; housing 3; benefits 3; urgent 3 |
-| Maine | ME | 121 | Treatment 1; peer 2; benefits 2 |
-| Massachusetts | MA | 78 | Housing 1; food 1; benefits 2 |
-| Missouri | MO | 77 | Housing 0; benefits 0 |
+| Kentucky | KY | 178 | Meets count and all six category floors; locality and source-depth review remain open |
+| Louisiana | LA | 142 | Meets count and all six category floors; locality and source-depth review remain open |
+| Maine | ME | 137 | Meets count and all six category floors; local provider details and source freshness need review |
+| Massachusetts | MA | 95 | Meets count and all six category floors; city-level food and family-shelter routes added; local depth remains open |
+| Missouri | MO | 88 | Meets count and all six category floors; Coordinated Entry source dates and local access remain open |
 | Montana | MT | 51 | Peer 4; benefits 0 |
 | Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
 | Nevada | NV | 33 | Peer 2; housing 0; benefits 0; urgent 1 |
@@ -97,7 +97,7 @@ Each row gives the live count and categories below five. A zero indicates that t
 | Wisconsin | WI | 0 | All six categories 0 |
 | Wyoming | WY | 0 | All six categories 0 |
 
-The initial source-reviewed five-state batch added 74 distinct records, followed by 100 additional records and a further 98-contact cross-category expansion on 2026-10-30. The five most recent states remain under active directory development. Minnesota now meets the initial count and six-category balance floors, but this does not establish exhaustive coverage. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
+The source-reviewed batch recorded below adds 94 distinct listings across Kentucky, Louisiana, Maine, Massachusetts, and Missouri. Each of the five now meets the initial 75-record floor and all six category minima; continued work remains necessary for local depth, provider confirmation, source freshness, and coverage beyond these contacts. Minnesota now meets the initial count and six-category balance floors, but this does not establish exhaustive coverage. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
 
 | State | Total | Categories covered in this batch | Remaining work |
 |---|---:|---|---|
@@ -356,3 +356,14 @@ Added 88 named local benefit-navigation contacts: 87 county offices plus the Red
 ## October 30, 2026 — Minnesota housing-benefit access expansion
 
 Added 88 county and Tribal office contact routes for Minnesota Housing Support and Minnesota Supplemental Aid (MSA) Housing Assistance. Minnesota DHS directs people applying or asking questions about these programs to their county or Tribal office; the records carry published local office details from the DHS directory and describe the specific housing-benefit intake questions to ask. These are not shelter listings, confirmed placements, or guarantees of cash/rental assistance. The live catalog now reports 320 unique state-linked records: 22 treatment, 26 peer/community, 88 housing-benefit routes, 5 food, 88 health-coverage benefit routes, and 91 urgent-support routes. Minnesota clears the current 75-record and five-per-category floor, but deeper direct-provider, town-level, and availability review continues; do not interpret this as exhaustive statewide coverage or phone-confirmed service. Sources: [Minnesota DHS Housing contact page](https://mn.gov/dhs/housing-income/housing-services/about-contact/index1.jsp), [MSA Housing Assistance program details](https://mn.gov/dhs/housing-income/housing-services/programs-and-services/msa-housing-assistance/), [Housing Support program details](https://mn.gov/dhs/housing-income/income-assistance/housing-support/), and [Minnesota DHS county and Tribal office contact directory](https://mn.gov/dhs/health-care/contact-us/county-tribal-directory/).
+
+
+## October 30, 2026 — Kentucky, Louisiana, Maine, Massachusetts and Missouri batch
+
+Added 94 distinct, source-reviewed records without replacing earlier listings. The live `US_DIRECTORY_COVERAGE` audit reports Kentucky 178 (treatment 9, peer 15, housing 13, food 7, benefits 120, urgent 14); Louisiana 142 (107, 9, 6, 5, 9, 6); Maine 137 (5, 9, 45, 66, 7, 5); Massachusetts 95 (34, 38, 11, 5, 5, 33); and Missouri 88 (30, 12, 5, 10, 6, 25). All five clear both starting floors. Counts above 125 are retained; 125 is a planning range, not a removal cap.
+
+Kentucky adds nine named Recovery Kentucky treatment locations, 15 state-listed Recovery Community Centers, and seven food-bank network routes. Louisiana adds seven peer/community recovery contacts, three coordinated-entry access points, six parish/regional LIHEAP intake providers, and three named crisis receiving centers. Maine adds four DHHS-listed behavioral-health/recovery access leads, seven peer/recovery center contacts, and five DHHS Office for Family Independence district offices. Massachusetts adds ten EA family shelter intake offices, all four state-recognized regional food-bank contacts, and three named DTA offices. Missouri adds five coordinated-entry housing assessment routes and six Family Support Division offices.
+
+Cautions: the Massachusetts EA pathway is specifically for eligible families, not a general adult shelter, and in-person office days vary; call the state line before travel. Louisiana’s Bridge Center is a 24/7 adult walk-in center; the other crisis-center listings have their own age/intake criteria. Regional food banks route people through partner agencies and do not promise direct pickup. The Missouri Coordinated Entry source is dated March 2025; verify current access point and county coverage. Maine provider listings are access leads and require confirmation of current services, age limits, payer, and referral process. All records are source-reviewed, not phone-confirmed, capacity-confirmed, or exhaustive.
+
+Sources: [Kentucky CHFS Recovery Community Centers directory](https://www.chfs.ky.gov/agencies/dbhdid/Documents/Recovery%20Community%20Centers%2010.2025%20REVISED.pdf), [Kentucky Department of Corrections treatment locations](https://corrections.ky.gov/Divisions/ask/Pages/modalities.aspx), [Feeding Kentucky member food banks](https://feedingky.org/our-members/), [Louisiana recovery hubs and peer support](https://opioidhelpla.org/talk-to-someone-who-knows/), [START Corporation regional programs and contacts](https://www.startcorp.org/contact), [Louisiana Coordinated Entry regional contacts](https://laboscoc.org/baton-rouge-region), [Louisiana Housing Corporation energy assistance providers](https://www.lhc.la.gov/energy-assistance), [Louisiana DH health crisis receiving centers](https://ldh.la.gov/directory/category/444), [Maine DHHS Recovery Supports](https://www.maine.gov/dhhs/obh/support-services/substance-use-disorder-services/recovery-supports), [Maine DHHS behavioral-health provider listings](https://www3.maine.gov/dhhs/obh/support-services/mental-health-services/recovery-support-services-treatment), [Maine DHHS Office for Family Independence offices](https://www.maine.gov/dhhs/about/contact/offices), [Massachusetts EA family shelter intake offices](https://www.mass.gov/how-to/review-eligibility-apply-for-emergency-assistance-ea-family-shelter), [Massachusetts local food bank directory](https://www.mass.gov/how-to/find-a-local-food-bank), [Greater Boston Food Bank contact](https://www.gbfb.org/contact-us/), [Worcester County Food Bank contact](https://foodbank.org/contact/), [Food Bank of Western Massachusetts contact](https://www.foodbankwma.org/contact/), [Merrimack Valley Food Bank contact](https://mvfb.org/contact/), [Massachusetts DTA local offices](https://www.mass.gov/about-the-department-of-transitional-assistance-dta/locations), [Missouri Coordinated Entry access directory (March 2025)](https://www.endhomelessnessmo.org/_files/ugd/86919b_7e290d9ffc7c4054a45aaac95c2a73b6.pdf), and [Missouri DSS Find an Office](https://dss.mo.gov/dss-map).
