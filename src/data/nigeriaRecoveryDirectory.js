@@ -1,4 +1,5 @@
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "./nigeriaFiveJurisdictionExpansion.js";
+import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "./nigeriaNextFiveStateExpansion.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -12,7 +13,11 @@ const NDLEA_DIRECTORY_URL = "https://www.ndlea.gov.ng/rehabilitation";
 const CHECKED_AT = "2026-10-22";
 const FEDERAL_HEALTH_DIRECTORY_URL = "https://health.gov.ng/specialty-hospitals/";
 
-const fiveJurisdiction = (category) => NIGERIA_FIVE_JURISDICTION_EXPANSION
+const reviewedExpansion = [
+  ...NIGERIA_FIVE_JURISDICTION_EXPANSION,
+  ...NIGERIA_NEXT_FIVE_STATE_EXPANSION,
+];
+const fiveJurisdiction = (category) => reviewedExpansion
   .filter((record) => record.primaryCategory === category);
 
 const stateCommands = [
