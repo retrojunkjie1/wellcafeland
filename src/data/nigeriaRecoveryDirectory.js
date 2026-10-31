@@ -1,6 +1,7 @@
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "./nigeriaFiveJurisdictionExpansion.js";
 import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "./nigeriaNextFiveStateExpansion.js";
 import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "./nigeriaNifesCommunityExpansion.js";
+import { NIGERIA_NHIA_STATE_EXPANSION } from "./nigeriaNhiaStateExpansion.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -242,6 +243,7 @@ export const NIGERIA_CITIES = [
   "Sapele", "Afikpo", "Ishiagu", "Nnewi", "Ijebu-Ode", "Kafanchan", "Keffi", "Owo",
   "Ado-Ekiti", "Mokwa", "New Bussa", "Ede", "Iree", "Gusau", "Kaura Namoda", "Ogoja",
   "Wukari", "Numan", "Mubi", "Zaria", "Dutsin-Ma",
+  "Umuahia", "Yola", "Asaba", "Calabar",
 ];
 
 export const NIGERIA_STATES = [
@@ -498,6 +500,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "State and local-government implementation nationwide · ask about current local enrollment", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("funding"),
+  ...NIGERIA_NHIA_STATE_EXPANSION,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {

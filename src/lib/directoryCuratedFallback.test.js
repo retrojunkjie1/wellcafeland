@@ -6,6 +6,7 @@ import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_PEER_RESOURCES, NEW_YORK_URGENT_RE
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "@/data/nigeriaFiveJurisdictionExpansion";
 import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "@/data/nigeriaNextFiveStateExpansion";
 import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "@/data/nigeriaNifesCommunityExpansion";
+import { NIGERIA_NHIA_STATE_EXPANSION } from "@/data/nigeriaNhiaStateExpansion";
 import { NIGERIA_PEER_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage } from "@/data/nigeriaDirectoryCoverage";
 
@@ -30,13 +31,13 @@ describe("category fallback pathways", () => {
       Kaduna: coverage("Kaduna"),
       "Akwa Ibom": coverage("Akwa Ibom"),
       Ogun: coverage("Ogun"),
-    }).toEqual({ Enugu: 39, Bauchi: 35, Kaduna: 35, "Akwa Ibom": 26, Ogun: 57 });
+    }).toEqual({ Enugu: 40, Bauchi: 35, Kaduna: 36, "Akwa Ibom": 26, Ogun: 57 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Enugu").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 11, emergency: 6 });
+      .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 12, emergency: 6 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Bauchi").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Kaduna").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 5, circles: 5, housing: 3, food: 4, funding: 8, emergency: 10 });
+      .toEqual({ programs: 5, circles: 5, housing: 3, food: 4, funding: 9, emergency: 10 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Akwa Ibom").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Ogun").map(({ id, records: items }) => [id, items.length])))
@@ -60,6 +61,20 @@ describe("category fallback pathways", () => {
     expect(NIGERIA_PEER_RESOURCES.filter(({ id }) => id.startsWith("nigeria-nifes-nacf-"))).toHaveLength(66);
     expect(getNigeriaStateCoverage("Kogi").find(({ id }) => id === "circles").localContacts)
       .toHaveLength(3);
+  });
+
+  it("adds direct NHIA-listed state health-insurance routes without duplicating the six existing agency records", () => {
+    const records = NIGERIA_NHIA_STATE_EXPANSION;
+    expect(records).toHaveLength(31);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(31);
+    expect(records.every(({ id, primaryCategory, phone, address, source, link, directoryRole }) =>
+      id.startsWith("nigeria-nhia-state-scheme-") && primaryCategory === "funding" &&
+      /^\d{11}$/.test(phone) && address && source.includes("National Health Insurance Authority") &&
+      link === "https://www.nhia.gov.ng/sshias/" && directoryRole === "state-referral"
+    )).toBe(true);
+    for (const { state, id } of records) {
+      expect(getNigeriaStateCoverage(state).find(({ id }) => id === "funding").records.some((record) => record.id === id)).toBe(true);
+    }
   });
 
   it("serves the next five-state Nigeria additions in their matching filters", () => {

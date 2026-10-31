@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 460 state-linked records across six categories. Current counts range from 3 to 57. A 66-record NIFES batch gives 30 jurisdictions and 60 city/locality labels with source-listed local faith-based meetings. | In progress; no jurisdiction meets the 75-record and six-category floors. | Build distinct local contacts in all six categories in batches; source state- and city-specific care, housing, food, benefits, peer, and urgent routes. Keep faith-based meetings distinct from treatment and recovery care. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 491 state-linked records across six categories. Current counts range from 4 to 57. A 66-record NIFES batch gives 30 jurisdictions and 60 city/locality labels with source-listed local faith-based meetings; a 31-record NHIA batch adds direct health-insurance agency contacts across 31 jurisdictions. | In progress; no jurisdiction meets the 75-record and six-category floors. | Build distinct local contacts in all six categories in batches; source state- and city-specific care, housing, food, benefits, peer, and urgent routes. Keep faith-based meetings distinct from treatment and recovery care. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -275,27 +275,27 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 5 | Adamawa | 6 |
-| Akwa Ibom | 26 | Anambra | 6 |
-| Bauchi | 35 | Bayelsa | 4 |
-| Benue | 4 | Borno | 4 |
-| Cross River | 5 | Delta | 8 |
-| Ebonyi | 6 | Edo | 6 |
-| Ekiti | 3 | Enugu | 39 |
-| Gombe | 6 | Imo | 4 |
-| Jigawa | 3 | Kaduna | 35 |
-| Kano | 15 | Katsina | 5 |
-| Kebbi | 4 | Kogi | 6 |
-| Kwara | 4 | Lagos | 42 |
-| Nasarawa | 5 | Niger | 9 |
-| Ogun | 57 | Ondo | 5 |
-| Osun | 5 | Oyo | 32 |
-| Plateau | 8 | Rivers | 21 |
-| Sokoto | 5 | Taraba | 6 |
-| Yobe | 3 | Zamfara | 4 |
-| Federal Capital Territory | 19 | | |
+| Abia | 6 | Adamawa | 7 |
+| Akwa Ibom | 26 | Anambra | 7 |
+| Bauchi | 35 | Bayelsa | 5 |
+| Benue | 5 | Borno | 5 |
+| Cross River | 6 | Delta | 9 |
+| Ebonyi | 7 | Edo | 7 |
+| Ekiti | 4 | Enugu | 40 |
+| Gombe | 7 | Imo | 5 |
+| Jigawa | 4 | Kaduna | 36 |
+| Kano | 15 | Katsina | 6 |
+| Kebbi | 5 | Kogi | 7 |
+| Kwara | 5 | Lagos | 42 |
+| Nasarawa | 6 | Niger | 10 |
+| Ogun | 57 | Ondo | 6 |
+| Osun | 6 | Oyo | 32 |
+| Plateau | 9 | Rivers | 22 |
+| Sokoto | 6 | Taraba | 7 |
+| Yobe | 4 | Zamfara | 5 |
+| Federal Capital Territory | 20 | | |
 
-The October 31, 2026 NIFES addition contributes 66 city-level community-meeting records across 30 jurisdictions and 60 unique city/locality labels. These are faith-based meetings, not therapy, psychiatric care, or addiction recovery. NIFES publishes monthly, fortnightly, quarterly, and occasional schedules; callers should verify the next meeting, venue, and whether non-associates may attend. Unscheduled or undecided locations were excluded. Source: [NIFES Associates Community Fellowship centers in Nigeria](https://nifes.org.ng/nacfnigeria/).
+The October 31, 2026 NIFES addition contributes 66 city-level community-meeting records across 30 jurisdictions and 60 unique city/locality labels. These are faith-based meetings, not therapy, psychiatric care, or addiction recovery. NIFES publishes monthly, fortnightly, quarterly, and occasional schedules; callers should verify the next meeting, venue, and whether non-associates may attend. Unscheduled or undecided locations were excluded. Source: [NIFES Associates Community Fellowship centers in Nigeria](https://nifes.org.ng/nacfnigeria/). The same coverage snapshot adds 31 state health-insurance agency enquiry routes in the funding category, transcribed from NHIA’s public list; the existing agency listings in Akwa Ibom, Bauchi, Kano, Lagos, Ogun, and Oyo were retained without duplicates. These routes help people ask about enrollment and coverage but do not confirm eligibility, premiums, a current plan, or a specific provider network. Source: [NHIA State Social Health Insurance Agencies](https://www.nhia.gov.ng/sshias/).
 
 The Nigeria calculator reports independent-check evidence for Cross River, Edo, Kaduna, Ogun and Sokoto only. Other source-reviewed records are not independently checked by that measure.
 
