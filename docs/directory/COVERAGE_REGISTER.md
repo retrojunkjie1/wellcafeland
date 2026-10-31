@@ -278,21 +278,21 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Abia | 19 | Adamawa | 20 |
 | Akwa Ibom | 33 | Anambra | 18 |
 | Bauchi | 41 | Bayelsa | 16 |
-| Benue | 17 | Borno | 16 |
+| Benue | 17 | Borno | 21 |
 | Cross River | 23 | Delta | 23 |
 | Ebonyi | 25 | Edo | 20 |
 | Ekiti | 21 | Enugu | 49 |
 | Gombe | 21 | Imo | 18 |
-| Jigawa | 15 | Kaduna | 49 |
+| Jigawa | 16 | Kaduna | 49 |
 | Kano | 25 | Katsina | 21 |
 | Kebbi | 18 | Kogi | 18 |
 | Kwara | 17 | Lagos | 108 |
-| Nasarawa | 15 | Niger | 22 |
+| Nasarawa | 20 | Niger | 26 |
 | Ogun | 68 | Ondo | 17 |
-| Osun | 16 | Oyo | 43 |
+| Osun | 21 | Oyo | 43 |
 | Plateau | 18 | Rivers | 28 |
 | Sokoto | 19 | Taraba | 18 |
-| Yobe | 18 | Zamfara | 12 |
+| Yobe | 18 | Zamfara | 13 |
 | Federal Capital Territory | 38 | | |
 
 ### Low-coverage five-jurisdiction follow-up — October 31, 2026
@@ -371,6 +371,14 @@ Sources: [Federal Ministry of Health teaching hospitals](https://health.gov.ng/t
 ### Kano and Rivers follow-up research — October 31, 2026
 
 Added 13 source-reviewed contacts to the active catalog while preserving the earlier listings: six in Kano and seven in Rivers. Kano now has 14 state-linked listings; Rivers has 21. The Kano additions include YADAF counselling/referral, Bayero University’s staff-and-student mental-health clinic, KSCHMA health-coverage enquiries, KASITDA statewide digital-skills cohorts, the Scholarships Board portal, and AKY-YEPE, whose official intake page currently says applications are closed. Rivers additions include a child-welfare Family Court emergency route, the statewide primary-care facility network, First Rivers psychiatry, ministry youth entrepreneurship training, the FIDA branch, Victor & Helen Foundation scholarship/skills enquiries, and IHVN’s Rivers clinical referral network. Sources: [YADAF](https://www.yadaf.org/), [Bayero University mental-health clinic](https://www.buk.edu.ng/mental_health_clinic), [NHIA state insurance agency directory](https://www.nhia.gov.ng/sshias/), [KASITDA services](https://kasitda.kn.gov.ng/help), [Kano Scholarships Board](https://kssbonline.org/), [AKY-YEPE intake status](https://empowerment.kanostate.gov.ng/Apply), [Rivers Family Court](https://www.judiciary.rv.gov.ng/family-court/), [Rivers Primary Health Care Board](https://www.rsphcmb.rv.gov.ng/), [First Rivers Hospital](https://firstrivers.com/contact/), [Rivers Ministry of Employment Generation](https://www.megee.rv.gov.ng/index.html), [FIDA Rivers](https://fida.org.ng/rivers/), [Victor & Helen Foundation](https://www.vhf.org.ng/home/), and [IHVN Rivers](https://ihvnigeria.org/where-we-work/rivers/). These are source-reviewed leads, not phone-confirmed services, current intake/capacity, eligibility decisions, or exhaustive coverage. Kano still has no verified housing/shelter contact or local peer-meeting schedule; Oyo has two source-reviewed NIFES faith-based community meetings, but no verified addiction-recovery peer-meeting listing; Rivers still lacks a verified local peer-meeting calendar and public food-distribution schedule; gaps remain open.
+
+### Next low-coverage five-state research batch — Borno, Jigawa, Nasarawa, Osun and Zamfara — October 31, 2026
+
+This five-state continuation adds 17 distinct records: Borno (four), Jigawa (one), Nasarawa (five), Osun (five), and Zamfara (two), while four additional Niger State routes were found in the same research pass. No existing entries were removed or replaced. Catalog totals are Borno 21 (4 treatment/recovery, 1 peer/community, 1 housing/safe-place referral, 2 food/essentials, 3 funding/benefits, 10 urgent-support); Jigawa 16 (3, 0, 0, 1, 2, 10); Nasarawa 20 (3, 2, 2, 1, 2, 10); Osun 21 (3, 3, 1, 1, 2, 11); Zamfara 13 (1, 2, 0, 2, 2, 6); and Niger 26 (4, 6, 1, 1, 2, 12). Category order is treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Nigeria now has 1,004 state-linked category records across its 37 states and FCT. All remain in progress against the 75-record planning floor; several still have zero local listings in one or more categories.
+
+The new contacts include Maiduguri counselling and psychosocial support, community safe-space referral, local humanitarian and nutrition programmes; named Karu, Lafia and Keffi services; Ile-Ife survivor, student-counselling and ministry routes; Minna legal-aid, therapy and protection referrals; and a Jigawa state primary-care and nutrition navigation route. FINDEF’s Gusau office is a contact route for food-security and livelihood enquiries, not a current distribution point. Ministries and nonprofit offices are not represented as shelters; safe-house services do not establish present beds or capacity. Current intake, phone access, safety, eligibility, costs and availability are unconfirmed. The 2025 Zamfara Womanity Index reports a major shelter gap; the 2026 Q1 budget shows shelter construction funding, which is not evidence of an operating shelter, so Zamfara remains without a public shelter-intake listing. Jigawa also remains without a state-specific housing entry in this catalog. All new records are source-reviewed, not phone-confirmed or exhaustive.
+
+Sources: [Borno Ministry of Women Affairs](https://bomwasd.bornostate.gov.ng/), [Salama Centre Maiduguri](https://salamacentre.org/), [Hallmark Leadership Initiative](https://www.hallmarkleadership.org/), [Sirri Care Foundation programmes](https://www.sirricare.org/programs), [FRAD Foundation](https://fradfoundation.org/), [Jigawa Primary Health Care Development Agency](https://phc.moh.jg.gov.ng/), [Jigawa Ministry of Health contact](https://moh.jg.gov.ng/contact.php), [Nasarawa provider directory](https://invictusafrica.org/content/nasarawa/), [Osun provider directory](https://invictusafrica.org/content/osun/), [Niger provider directory](https://invictusafrica.org/content/niger/), [FINDEF programmes and contact](https://findef.org/), and [Zamfara 2025 Womanity Index](https://invictusafrica.org/wp-content/uploads/2025/12/Zamfara-1.pdf) / [2026 Q1 budget report](https://zamfara.gov.ng/wp-content/uploads/2026/04/Zamfara-State-2026-First-Quarter-Budget-Performance-Report.pdf).
 
 ## Australia: states and territories
 
