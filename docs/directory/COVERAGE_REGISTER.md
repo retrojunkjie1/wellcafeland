@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are in the coverage calculator; live audit: 25 meet the current directory floor and 26 remain in progress. | In progress | Continue the under-floor and category-gap queue. Latest batch: MO, MT, NE, NV and NH. Recheck live category counts before selecting the next batch. |
+| United States | All 50 states plus DC are in the coverage calculator; live audit after this five-state batch: 31 meet the current directory floor and 20 remain in progress. | In progress | Continue the under-floor and category-gap queue. Latest five-state batch: NJ, NM, ND, OR and RI; all five meet the initial count and per-category floors while locality and source-depth work continues. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -32,7 +32,7 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Meets the current directory floor: 26 jurisdictions
+### Meets the current directory floor: 31 jurisdictions
 
 “Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
@@ -54,18 +54,23 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
 | Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
 | Minnesota | MN | 320 | Meets floor; housing-benefit routes added across county/Tribal offices; deeper local-provider coverage remains open |
+| New Jersey | NJ | 137 | Meets current count and six-category floors; locality and phone review remain open |
+| New Mexico | NM | 76 | Meets current count and six-category floors; locality and phone review remain open |
 | New York | NY | 123 | Meets current directory floor |
 | North Carolina | NC | 270 | Meets floor; above planning range, preserve and audit |
+| North Dakota | ND | 79 | Meets current count and six-category floors; locality and phone review remain open |
 | Ohio | OH | 76 | Meets current directory floor |
 | Oklahoma | OK | 75 | Meets current directory floor |
+| Oregon | OR | 121 | Meets current count and six-category floors; locality and phone review remain open |
 | Pennsylvania | PA | 75 | Meets current directory floor |
+| Rhode Island | RI | 78 | Meets current count and six-category floors; locality and phone review remain open |
 | South Dakota | SD | 98 | Meets current directory floor |
 | Tennessee | TN | 221 | Meets floor; above planning range, preserve and audit |
 | Texas | TX | 340 | Meets floor; above planning range, preserve and audit |
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Still in progress: 25 jurisdictions
+### Still in progress: 20 jurisdictions
 
 Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
 
@@ -85,11 +90,6 @@ Each row gives the live count and categories below five. A zero indicates that t
 | Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
 | Nevada | NV | 33 | Peer 2; housing 0; benefits 0; urgent 1 |
 | New Hampshire | NH | 54 | Benefits 0; urgent 0 |
-| New Jersey | NJ | 81 | Treatment 0; peer 0; food 0; urgent 0 |
-| New Mexico | NM | 28 | Treatment 0; peer 0; urgent 1 |
-| North Dakota | ND | 79 | Meets 75-record floor; peer 17; housing 18; food 10; treatment 8; benefits 18; urgent 8 |
-| Oregon | OR | 89 | Peer 0; housing 0; benefits 0 |
-| Rhode Island | RI | 56 | Peer 3; benefits 0; urgent 1 |
 | South Carolina | SC | 127 | Urgent 1 |
 | Virginia | VA | 0 | All six categories 0 |
 | Washington | WA | 0 | All six categories 0 |
@@ -133,7 +133,25 @@ North Carolina is now organized into six separate categories rather than display
 
 ### Next U.S. multi-state batch queue
 
-### Active five-state build slice — October 30, 2026
+### Current five-state batch — October 30, 2026
+
+The current batch is New Jersey, New Mexico, North Dakota, Oregon, and Rhode Island. Counts below reflect the current state-linked catalog after the new unique records were wired into the six support categories. The 75–125 range is a planning band, not a cap. All five meet the initial 75-record and five-per-category floors; **none is marked exhaustive or finished**. City, rural-area, intake, and source-depth review remains active.
+
+| State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support | Current state |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| New Jersey | 137 | 18 | 23 | 60 | 6 | 21 | 9 | Initial count and category floors met; deepen local program and locality coverage |
+| New Mexico | 76 | 20 | 8 | 16 | 13 | 11 | 8 | Initial count and category floors met; deepen local and rural coverage |
+| North Dakota | 79 | 8 | 17 | 18 | 10 | 18 | 8 | Initial count and category floors met; deepen local and rural coverage |
+| Oregon | 121 | 36 | 11 | 11 | 20 | 10 | 33 | Initial count and category floors met; deepen city and county coverage |
+| Rhode Island | 78 | 9 | 10 | 7 | 36 | 10 | 6 | Initial count and category floors met; extend beyond Providence and validate service access |
+
+The additions include NJ community mental-health and psychiatric screening sites, recovery-community centers, regional food-bank contacts, and designated county screening routes; NM behavioral-health providers, peer-support options, crisis triage, and state-listed food resources; OR county peer and housing-navigation providers from the state BHRN directory plus ODHS Self-Sufficiency offices; and RI recovery centers, DHS and Community Action benefit-access offices, and specialized crisis/safety contacts. Oregon’s White Bird Clinic listing remains in the peer category and is excluded from housing because the cited OHA listing does not mark housing service there. Housing-navigation contacts describe access and stabilization support, not confirmed shelter beds. These records are source-reviewed, not phone-confirmed, and do not guarantee current intake, capacity, eligibility, or exhaustive local coverage.
+
+Current sources: [New Jersey DMHAS behavioral-health directory](https://www.nj.gov/humanservices/dmhas/documents/pdf/MH_Dir_COMPLETE.pdf), [NJ ReachNJ Recovery Centers](https://www.nj.gov/humanservices/reachnj/help/centers/), [NJ DHS 2026–27 Emergency Food Assistance network](https://www.nj.gov/humanservices/dds/documents/RD/2026/NJ_Resources_2026_2027_English.pdf); [Las Cumbres New Mexico behavioral-health provider directory](https://www.lascumbres-nm.org/behavioral-health-providers), [New Mexico Peer Support Services](https://yes.nm.gov/nmhr/s/opre-peer-support-services-page?language=en_US), [UNM Crisis Triage Center](https://unmhealth.org/services/behavioral-health/crisis-triage-center.html), [New Mexico OFRA food resource list](https://www.ofra.nm.gov/wp-content/uploads/2025/11/List-of-food-box-resources.pdf), [New Mexico Association of Community Partners](https://nmacp.org/help/); [Oregon Health Authority 2025–2029 BHRN directory](https://www.oregon.gov/oha/HSD/AMH/docs/BHRN-Directory.pdf), [Oregon ODHS Self-Sufficiency Office Finder](https://www.oregon.gov/odhs/Pages/office-finder.aspx?serviceid=26); [Rhode Island Recovery Community Centers](https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers), [Rhode Island DHS offices](https://dhs.ri.gov/about-us/dhs-offices), [Rhode Island Community Action Association locator](https://ricommunityaction.org/find-your-caa/), [Rhode Island Executive Office of Housing CAP directory](https://housing.ri.gov/resources/frequently-asked-questions-faq), and [BH Link](https://bhlink.org/). North Dakota’s sources and prior additions are documented below.
+
+### Previous five-state checkpoint — South Carolina, South Dakota, Tennessee, Utah, Vermont
+
+The following category snapshot and notes describe the prior cohort and are retained for continuity; it is not the current batch.
 
 These five states now have larger, organized source-backed additions in the active catalog. Counts below are from `US_DIRECTORY_COVERAGE`, deduplicated by record ID across the six resource categories. The 75–125 range is a planning band, not a cap; entries are retained when valid records put a state above it. **None of these five is complete:** the category minimum is five records in every category, and a low count is a real research gap rather than a reason to multiply statewide hotlines.
 
