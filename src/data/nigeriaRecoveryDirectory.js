@@ -10,6 +10,7 @@ import { NIGERIA_ORANGE_PAGES_OCT_2026_EXPANSION } from "./nigeriaOrangePagesOct
 import { NIGERIA_ORANGE_PAGES_FOLLOWUP } from "./nigeriaOrangePagesOct2026Followup.js";
 import { NIGERIA_NHRC_STATE_OFFICES } from "./nigeriaNhrcStateOfficesOct2026.js";
 import { NIGERIA_RED_CROSS_BRANCHES } from "./nigeriaRedCrossBranchOct2026.js";
+import { NIGERIA_FIDA_BRANCH_OCT_2026 } from "./nigeriaFidaBranchOct2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -31,6 +32,7 @@ const reviewedExpansion = [
   ...NIGERIA_ORANGE_PAGES_FOLLOWUP,
   ...NIGERIA_NHRC_STATE_OFFICES,
   ...NIGERIA_RED_CROSS_BRANCHES,
+  ...NIGERIA_FIDA_BRANCH_OCT_2026,
 ];
 const fiveJurisdiction = (category) => reviewedExpansion
   .filter((record) => record.primaryCategory === category);
