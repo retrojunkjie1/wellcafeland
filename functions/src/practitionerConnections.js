@@ -117,8 +117,8 @@ exports.endMyPractitionerConnection = onCall({ region: REGION, enforceAppCheck: 
     stagePractitionerAudit(transaction, db, {
       action: "practitioner_connection.ended",
       actorUid: clientId,
-      clientUid,
-      practitionerUid,
+      clientUid: clientId,
+      practitionerUid: practitionerId,
       scopeChanges: Object.entries(share.get("scopes") || {})
         .filter(([, enabled]) => enabled === true)
         .map(([scope]) => ({ scope, enabled: false })),

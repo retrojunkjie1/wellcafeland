@@ -248,7 +248,7 @@ const RealHelpWorkspace = () => {
             ...curated,
             ...(reviewed.listings || []).map((item) => toCuratedWorkspaceResource(item, activeTab)),
           ];
-        } catch (error) {
+        } catch {
           if (signal.aborted || reqId !== requestIdRef.current) return;
           // Firebase callable errors can contain provider, index, or internal
           // implementation details. Keep those out of the client interface.
@@ -685,11 +685,14 @@ const RealHelpWorkspace = () => {
           <div>
             <h1 className="text-lg font-medium text-white">Find Help</h1>
           </div>
-          {isAssistanceRoute ? (
-            hasUSSupportNumbers && <a href="tel:988" className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-rose-200/25 bg-rose-100/[0.06] px-2.5 text-[13px] font-semibold text-rose-100 hover:bg-rose-100/10 sm:px-4 sm:text-sm">Call or text 988</a>
-          ) : (
-            <button type="button" onClick={() => returnToPractice ? returnFromTool(navigate, returnToPractice) : navigate("/assistance")} className="min-h-11 rounded-lg px-2 text-sm text-white/60 hover:bg-white/5 hover:text-white">← {returnToPractice ? "Back to your practice" : "Back to support choices"}</button>
-          )}
+          <div className="flex items-center gap-2">
+            {isAssistanceRoute && hasUSSupportNumbers && <a href="tel:988" className="inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-rose-200/25 bg-rose-100/[0.06] px-2.5 text-[13px] font-semibold text-rose-100 hover:bg-rose-100/10 sm:px-4 sm:text-sm">Call or text 988</a>}
+            {returnToPractice ? (
+              <button type="button" onClick={() => returnFromTool(navigate, returnToPractice)} className="min-h-11 rounded-lg px-2 text-sm text-white/60 hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">← Back to your practice</button>
+            ) : !isAssistanceRoute ? (
+              <button type="button" onClick={() => navigate("/assistance")} className="min-h-11 rounded-lg px-2 text-sm text-white/60 hover:bg-white/5 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">← Back to support choices</button>
+            ) : null}
+          </div>
         </div>
       </div>
 

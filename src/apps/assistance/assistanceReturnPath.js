@@ -8,11 +8,13 @@ export function getPracticeReturnTarget(locationState) {
   const target = resolveToolReturnTarget(locationState, "");
   const pathname = target.pathname;
   if (typeof value === "string") {
-    const [path, ...queryParts] = value.split("?");
+    const match = value.match(/^([^?#]+)(\?[^#]*)?(#.*)?$/);
+    const path = match?.[1] || "";
     if (!/^\/tools\/[A-Za-z0-9._~%-]+$/.test(path)) return null;
-    return { pathname: path, search: queryParts.length ? `?${queryParts.join("?")}` : "", hash: "", state: null, scrollY: 0 };
+    return { pathname: path, search: match[2] || "", hash: match[3] || "", state: null, scrollY: 0 };
   }
   if (!/^\/tools\/[A-Za-z0-9._~%-]+$/.test(pathname)) return null;
+  if ((target.search && !target.search.startsWith("?")) || (target.hash && !target.hash.startsWith("#"))) return null;
   return target;
 }
 

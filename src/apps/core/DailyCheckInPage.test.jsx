@@ -1,11 +1,11 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import DailyCheckInPage from "./DailyCheckInPage";
 import { getCheckInNextStep } from "./checkInNextStep";
 
-const mocks = vi.hoisted(() => ({ storySuggestionsEnabled: false, savedTo: "account" }));
+const mocks = vi.hoisted(() => ({ storySuggestionsEnabled: false, savedTo: "account", supportNeeded: "Peer recovery support" }));
 
 vi.mock("@/stores/useOSStore", () => ({
   useOSStore: (selector) => selector({ settings: { recoveryStorySuggestionsEnabled: mocks.storySuggestionsEnabled } }),
@@ -14,7 +14,7 @@ vi.mock("@/stores/useOSStore", () => ({
 vi.mock("@/components/CheckIn", () => ({
   GUEST_CHECKINS_STORAGE_KEY: "wellnesscafe:guest-checkins",
   default: ({ onComplete }) => (
-    <button type="button" onClick={() => onComplete({ completed: true, cravingStatus: "yes", cravingIntensity: 8, supportNeeded: "Peer recovery support" }, { savedTo: mocks.savedTo })}>
+    <button type="button" onClick={() => onComplete({ completed: true, cravingStatus: "yes", cravingIntensity: 8, supportNeeded: mocks.supportNeeded, reflection: "private reflection must stay private" }, { savedTo: mocks.savedTo })}>
       Complete check-in
     </button>
   ),
@@ -22,8 +22,14 @@ vi.mock("@/components/CheckIn", () => ({
 
 function CurrentPath() {
   const location = useLocation();
-  return <output data-testid="current-path">{location.pathname}</output>;
+  return <output data-testid="current-path" data-return-to={JSON.stringify(location.state?.returnTo ?? null)}>{location.pathname}{location.search}{location.hash}</output>;
 }
+
+afterEach(() => {
+  mocks.storySuggestionsEnabled = false;
+  mocks.savedTo = "account";
+  mocks.supportNeeded = "Peer recovery support";
+});
 
 describe("daily check-in next step", () => {
   it("only offers a recovery story after check-in when the person enabled suggestions", () => {
@@ -77,6 +83,32 @@ describe("daily check-in next step", () => {
     fireEvent.click(screen.getByRole("button", { name: /complete check-in/i }));
     fireEvent.click(screen.getByRole("button", { name: /see my milestones/i }));
     expect(screen.getByTestId("current-path")).toHaveTextContent("/milestones");
+  });
+
+  it("hands Find Help only the validated practice return target, never check-in reflections", () => {
+    const returnTo = {
+      pathname: "/tools/grounding",
+      search: "?anchor=feet",
+      hash: "#next-step",
+      state: null,
+      scrollY: 120,
+    };
+    mocks.supportNeeded = "Help finding practical resources";
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/check-in", state: { from: "practice", returnTo } }]}>
+        <DailyCheckInPage />
+        <CurrentPath />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /complete check-in/i }));
+    fireEvent.click(screen.getByRole("button", { name: /find practical support/i }));
+
+    const currentPath = screen.getByTestId("current-path");
+    expect(currentPath).toHaveTextContent("/assistance");
+    expect(currentPath).not.toHaveTextContent("private reflection must stay private");
+    expect(currentPath).toHaveAttribute("data-return-to", JSON.stringify(returnTo));
+    expect(mocks.supportNeeded).toBe("Help finding practical resources");
   });
 
   it("routes only from the stated support preference, not mood or craving ratings", () => {

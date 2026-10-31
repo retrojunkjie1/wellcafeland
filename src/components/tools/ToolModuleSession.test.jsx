@@ -22,4 +22,14 @@ describe("ToolModuleSession completion handoff", () => {
     expect(onFindSupport).toHaveBeenCalledOnce();
     expect(onCheckIn).toHaveBeenCalledOnce();
   });
+
+  it("exposes the collapsed alternatives through a native keyboard-focusable disclosure", () => {
+    render(<ToolModuleSession title="Grounding" onClose={vi.fn()} onFindSupport={vi.fn()} onCheckIn={vi.fn()} completed />);
+
+    const summary = screen.getByText("Need another kind of support?").closest("summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary.closest("details")).not.toHaveAttribute("open");
+    summary.focus();
+    expect(summary).toHaveFocus();
+  });
 });

@@ -1,6 +1,6 @@
 # WellnessCafe resource directory coverage register
 
-**Last reconciled:** 2026-10-30
+**Last reconciled:** 2026-10-31
 **Purpose:** the working source of truth for where the directory is live, which subnational areas it represents, and what still needs research. Update this register in the same change as every directory batch.
 
 ## Status rules
@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are in the coverage calculator; 46 meet the current directory floor and 5 remain in progress. | In progress | Continue the five under-floor states and deepen locality/source review. Latest locality deepening: CO, MT, ND, OH and RI; all five meet the initial 75-record and six-category floors, with MT above the planning band. |
+| United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -32,7 +32,7 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Meets the current directory floor: 46 jurisdictions
+### Meets the current directory floor: 51 jurisdictions
 
 “Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
@@ -84,18 +84,17 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Texas | TX | 340 | Meets floor; above planning range, preserve and audit |
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
+| Virginia | VA | 152 | Above planning range; preserve all records; deepen local service and source review |
+| Washington | WA | 131 | Above planning range; preserve all records; deepen local service and source review |
+| West Virginia | WV | 146 | Above planning range; preserve all records; deepen local service and source review |
+| Wisconsin | WI | 107 | Meets current directory floor; deepen local service and source review |
+| Wyoming | WY | 142 | Above planning range; preserve all records; deepen local service and source review |
 
-### Still in progress: 5 jurisdictions
+### Current live reconciliation
 
-Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
+As of 2026-10-31, the live `US_DIRECTORY_COVERAGE` snapshot reports 51 jurisdictions meeting the current floor, 32 within the planning band, 19 above it, and none below it. The former five under-floor jurisdictions now meet the record and category floors; this clears the initial organized-directory milestone, not locality completeness, phone confirmation, or exhaustive coverage. The five-state Virginia/Washington/West Virginia/Wisconsin/Wyoming cohort is retained below as a source-history checkpoint, not a current gap list.
 
-| State / jurisdiction | Code | Records | Categories below five (current count) |
-|---|---:|---:|---|
-| Virginia | VA | 122 | Funding/benefits: 115; food: 7; treatment, peer, housing, urgent support still below five |
-| Washington | WA | 95 | Funding/benefits: 95; other categories still need source-backed contacts |
-| West Virginia | WV | 122 | Funding/benefits: 109; treatment: 13; peer, housing, food, urgent support still below five |
-| Wisconsin | WI | 91 | Funding/benefits: 80; peer: 6; urgent support: 5; treatment, housing, food still below five |
-| Wyoming | WY | 108 | Food/essentials: 108; other categories still need source-backed contacts |
+Current five-jurisdiction Nigeria cohort baseline from `NIGERIA_DIRECTORY_COVERAGE`: Lagos 13, Oyo 14, Rivers 10, Kano 3, and Federal Capital Territory 6 state-linked records. These are baseline counts, not completion claims; the next batch must add direct, source-backed local contacts across the six categories and separately record remaining source gaps.
 
 The October 30 source-reviewed batch adds 94 distinct listings across Kentucky, Louisiana, Maine, Massachusetts, and Missouri. Each meets the initial 75-record floor and all six category minima; continued work remains necessary for local depth, provider confirmation, source freshness, and coverage beyond these contacts. Minnesota also meets the initial count and six-category balance floors. The current live snapshot for MT, NE, NV, NH and SC is recorded below; these milestones do not establish exhaustive or phone-confirmed coverage. Counts come from `US_DIRECTORY_COVERAGE` after wiring records into search:
 
