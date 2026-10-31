@@ -6,7 +6,7 @@ import VoiceJournal from "./VoiceJournal";
 const { callAgent, transcribeAudio } = vi.hoisted(() => ({ callAgent: vi.fn(), transcribeAudio: vi.fn() }));
 
 vi.mock("@/services/multimodalClient", () => ({ transcribeAudio }));
-vi.mock("@/agents/aiAgents", () => ({ callAgent }));
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent }));
 vi.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: null }) }));
 vi.mock("@/firebase", () => ({ db: null }));
 vi.mock("firebase/firestore", () => ({ collection: vi.fn(), addDoc: vi.fn(), serverTimestamp: vi.fn() }));

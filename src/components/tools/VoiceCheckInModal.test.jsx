@@ -4,13 +4,13 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import VoiceCheckInModal from "./VoiceCheckInModal";
 import { detectEmotionFromText, transcribeAudio } from "@/services/multimodalClient";
-import { callAgent } from "@/agents/aiAgents";
+import { callAgent } from "@/ai/agents/agentClient";
 
 vi.mock("@/services/multimodalClient", () => ({
   detectEmotionFromText: vi.fn(),
   transcribeAudio: vi.fn(),
 }));
-vi.mock("@/agents/aiAgents", () => ({ callAgent: vi.fn() }));
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent: vi.fn() }));
 
 class MockMediaRecorder {
   state = "inactive";
@@ -122,6 +122,10 @@ describe("VoiceCheckInModal chat recording", () => {
     fireEvent.click(transcribe);
 
     expect(await screen.findByText("You can take this one step at a time.")).toBeInTheDocument();
+    expect(callAgent).toHaveBeenCalledWith("oracle", expect.objectContaining({
+      mode: "voice_check_in_reflection",
+      transcript: "I feel overwhelmed",
+    }));
     expect(onComplete).toHaveBeenCalledWith(expect.objectContaining({
       type: "tool_result",
       toolId: "voice-checkin",

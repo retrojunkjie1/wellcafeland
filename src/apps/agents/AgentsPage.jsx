@@ -2,7 +2,7 @@
 // User-facing page to interact with AI agents (Seer, Oracle, Overseer, Sentinel)
 
 import React, { useState, useEffect } from "react";
-import { callAgent } from "../../agents/aiAgents";
+import { callAgent } from "@/ai/agents/agentClient";
 import { trackPageView } from "../../services/telemetry";
 import { Eye, Sparkles, Compass, Shield, Loader2, Send, BookOpen, Lightbulb, MapPin, Wind, ScanHeart, UsersRound, Sprout } from "lucide-react";
 import PageHeader from "@/components/navigation/PageHeader";

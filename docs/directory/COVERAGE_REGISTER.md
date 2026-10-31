@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
+| Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 19. | In progress | Continue Abuja, Lagos, Oyo, Rivers and all remaining states; category depth and independently checked sources remain limited. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -94,7 +94,21 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 
 As of 2026-10-31, the live `US_DIRECTORY_COVERAGE` snapshot reports 51 jurisdictions meeting the current floor, 32 within the planning band, 19 above it, and none below it. The former five under-floor jurisdictions now meet the record and category floors; this clears the initial organized-directory milestone, not locality completeness, phone confirmation, or exhaustive coverage. The five-state Virginia/Washington/West Virginia/Wisconsin/Wyoming cohort is retained below as a source-history checkpoint, not a current gap list.
 
-Current five-jurisdiction Nigeria cohort baseline from `NIGERIA_DIRECTORY_COVERAGE`: Lagos 13, Oyo 14, Rivers 10, Kano 3, and Federal Capital Territory 6 state-linked records. These are baseline counts, not completion claims; the next batch must add direct, source-backed local contacts across the six categories and separately record remaining source gaps.
+### Nigeria five-jurisdiction expansion — Lagos, Oyo, Rivers, Kano and FCT (October 31, 2026)
+
+This additive cohort wires 32 source-reviewed records into the existing Nigeria search categories without replacing existing records: Lagos 8, Oyo 5, Rivers 4, Kano 5, and FCT 10. Live calculator totals are now Lagos 21, Oyo 19, Rivers 14, Kano 8, and FCT 17. Category counts (treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support) are:
+
+| Jurisdiction | Total | Treatment | Peer | Housing | Food | Funding | Urgent |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Lagos | 21 | 5 | 7 | 1 | 3 | 3 | 2 |
+| Oyo | 19 | 3 | 0 | 1 | 10 | 3 | 2 |
+| Rivers | 14 | 7 | 1 | 1 | 2 | 1 | 2 |
+| Kano | 8 | 3 | 0 | 0 | 2 | 2 | 1 |
+| Federal Capital Territory | 17 | 6 | 2 | 3 | 3 | 1 | 2 |
+
+These are visible progress counts, not a completion claim. Peer additions are online/virtual Lagos and Abuja meetings; they do not establish in-person circles in those states. Several government contacts are referral or administrative routes, not direct service placements. Category gaps remain: Kano has no housing or peer listing; Oyo has no peer listing; Rivers has no funding listing; and FCT has no funding listing in this snapshot. No record is phone-confirmed and no coverage is exhaustive. Shelter availability, benefit eligibility, clinic intake and food distribution must be confirmed directly. Existing Rivers Safe Home and Oyo Women Safe House entries were retained rather than duplicated.
+
+Sources: [SMART Recovery Global Lagos meetings](https://meetings.smartrecoveryglobal.org/meetings/1126/), [SMART Recovery Global Friday meeting](https://meetings.smartrecoveryglobal.org/meetings/1137/), [SMART Recovery Family & Friends](https://meetings.smartrecoveryglobal.org/meetings/1138/), [GriefShare Lagos group](https://find.griefshare.org/groups/304015), [Narcotics Anonymous Africa Abuja meetings](https://naafrica.org/meetings/abuja/), [Dorothy Njemanze Foundation survivor support](https://dnf.org.ng/report-abuse/), [Oyo State Emergency Management Agency](https://oysema.oyostate.gov.ng/operations-and-administration/), [Oyo State emergency information](https://oyostate.gov.ng/security/), [Oyo State Health Insurance Agency](https://oyshia.oy.gov.ng/faqs/), [Joyous Smiles food relief](https://jshf.org/services/food-relief-humanitarian-assistance/), [Rivers Red Cross branch](https://www.redcrossnigeria.org/rivers), [CEBECPEN mental-health contact](https://cebecpen.org/contact-us/), [NEMA zonal and territorial offices](https://nema.gov.ng/zonal-territorial-offices/), [Federal Ministry of Health specialty hospitals](https://health.gov.ng/specialty-hospitals/), [Bharif Foundation](https://bhariffoundation.org/), [Basiqat Kano food-basket programme](https://basiqat.org.ng/en/initiatives/food-basket-families-kano), [FIDA Kano legal clinic](https://fidakano.org.ng/?page_id=9), [Nigerian Red Cross branches](https://www.redcrossnigeria.org/get-involved/branches), [Garki Hospital mental-health department](https://garkihospital.com/departments/mental-health/), [LASUTH Psychiatry Department](https://www.lasuth.org.ng/department/clinical_department?clinical=Psychiatry), [WARIF survivor services and helpline](https://warifng.org/day-13-orangetheworld/), [Golan Helps food programmes](https://golanhelpsabujafoodbankinitiative.org/our-programmes), [Safe Haven Foundation shelter services](https://safehaven-foundation.org/services/), [WRAPA legal aid and counselling FAQ](https://www.wrapanigeria.org/faq/), [MAMA Centre contact and reporting](https://mamacentre.org.ng/contact-us/), [Limi Hospital mental-health clinic](https://www.limihospital.org/clinic-mental-health/), and [VGADA group therapy](https://www.vgadanigeria.com/services/group-therapy). The full source labels, caveats, and contact details are stored with the records.
 
 The October 30 source-reviewed batch adds 94 distinct listings across Kentucky, Louisiana, Maine, Massachusetts, and Missouri. Each meets the initial 75-record floor and all six category minima; continued work remains necessary for local depth, provider confirmation, source freshness, and coverage beyond these contacts. Minnesota also meets the initial count and six-category balance floors. The current live snapshot for MT, NE, NV, NH and SC is recorded below; these milestones do not establish exhaustive or phone-confirmed coverage. Counts come from `US_DIRECTORY_COVERAGE` after wiring records into search:
 
@@ -270,16 +284,16 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Ekiti | 2 | Enugu | 3 |
 | Gombe | 3 | Imo | 3 |
 | Jigawa | 3 | Kaduna | 4 |
-| Kano | 3 | Katsina | 3 |
+| Kano | 8 | Katsina | 3 |
 | Kebbi | 3 | Kogi | 3 |
-| Kwara | 3 | Lagos | 13 |
+| Kwara | 3 | Lagos | 21 |
 | Nasarawa | 3 | Niger | 3 |
 | Ogun | 3 | Ondo | 3 |
-| Osun | 2 | Oyo | 14 |
-| Plateau | 3 | Rivers | 10 |
+| Osun | 2 | Oyo | 19 |
+| Plateau | 3 | Rivers | 14 |
 | Sokoto | 4 | Taraba | 2 |
 | Yobe | 2 | Zamfara | 2 |
-| Federal Capital Territory | 6 | | |
+| Federal Capital Territory | 17 | | |
 
 The Nigeria calculator reports independent-check evidence for Cross River, Edo, Kaduna, Ogun and Sokoto only. Other source-reviewed records are not independently checked by that measure.
 

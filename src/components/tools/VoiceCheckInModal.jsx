@@ -6,7 +6,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, MicOff, Loader2, CheckCircle, X, Square, ArrowUp } from "lucide-react";
 import { detectEmotionFromText, transcribeAudio } from "@/services/multimodalClient";
-import { callAgent } from "@/agents/aiAgents";
+import { callAgent } from "@/ai/agents/agentClient";
 
 const isSecureContextOk = () => {
   if (typeof window === "undefined") return false;
