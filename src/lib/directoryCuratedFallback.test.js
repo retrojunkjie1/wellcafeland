@@ -12,7 +12,7 @@ vi.mock("@/services/foodDirectory", () => ({
 describe("category fallback pathways", () => {
   it("keeps the Nigeria five-jurisdiction source-review cohort distinct and honestly qualified", () => {
     const ids = NIGERIA_FIVE_JURISDICTION_EXPANSION.map(({ id }) => id);
-    expect(ids).toHaveLength(32);
+    expect(ids).toHaveLength(45);
     expect(new Set(ids).size).toBe(ids.length);
     expect(NIGERIA_FIVE_JURISDICTION_EXPANSION.every((item) =>
       item.sourceReviewed && item.verified && !item.phoneConfirmed && !item.exhaustiveCoverage && item.link && item.source
@@ -28,6 +28,11 @@ describe("category fallback pathways", () => {
       ["housing", "Abuja, Nigeria", "fct-dorothy-njemanze-survivor-shelter-referral"],
       ["peer", "Lagos, Nigeria", "lagos-smart-recovery-saturday-1126"],
       ["programs", "Kano, Nigeria", "kano-dawanau-federal-neuropsychiatric-hospital"],
+      ["programs", "Kano, Nigeria", "kano-yadaf-substance-use-counselling-referral"],
+      ["grants", "Kano, Nigeria", "kano-kschma-health-coverage-enrollment"],
+      ["programs", "Port Harcourt, Rivers", "rivers-first-rivers-hospital-psychiatry"],
+      ["hotlines", "Rivers, Nigeria", "rivers-family-court-child-welfare-emergency-contact"],
+      ["grants", "Rivers, Nigeria", "rivers-vhf-scholarship-skills-support"],
       ["programs", "Ikeja, Lagos", "lagos-lasuth-psychiatry-department"],
       ["hotlines", "Lagos, Nigeria", "lagos-warif-survivor-centre-helpline"],
       ["food.essentials", "Ibadan, Oyo", "oyo-joyous-smiles-food-relief"],
