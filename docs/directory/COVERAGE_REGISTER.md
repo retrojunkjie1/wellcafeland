@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 856 state-linked category records. Current counts range from 8 to 105. A 66-record NIFES batch gives 30 jurisdictions and 60 city/locality labels with source-listed local faith-based meetings; a 31-record NHIA batch adds direct health-insurance agency contacts across 31 jurisdictions; a 40-record SARC cohort adds local survivor-care centres across 23 jurisdictions; a 14-record NEMA cohort adds disaster-coordination office contacts across 14 jurisdictions; a 216-record FRSC cohort adds contact-bearing local road-safety unit commands across all 37 jurisdictions; the Lagos MiND follow-up adds the 49 remaining PHCs from its published 57-site mental-health network; and two Orange Pages batches add 46 distinct state-level or local survivor-support, legal, health, counselling, and skills-support contacts across nine jurisdictions. | In progress; Lagos has 105 category records but its housing category remains below five; no jurisdiction meets all count and six-category floors. | Build distinct local contacts in all six categories in batches; source state- and city-specific care, housing, food, benefits, peer, and urgent routes. Keep faith-based meetings distinct from treatment and recovery care. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 891 state-linked category records. Current counts range from 9 to 106. A 66-record NIFES batch gives 30 jurisdictions and 60 city/locality labels with source-listed local faith-based meetings; a 31-record NHIA batch adds direct health-insurance agency contacts across 31 jurisdictions; a 40-record SARC cohort adds local survivor-care centres across 23 jurisdictions; a 14-record NEMA cohort adds disaster-coordination office contacts across 14 jurisdictions; a 216-record FRSC cohort adds contact-bearing local road-safety unit commands across all 37 jurisdictions; the Lagos MiND follow-up adds the 49 remaining PHCs from its published 57-site mental-health network; two Orange Pages batches add 46 distinct state-level or local survivor-support, legal, health, counselling, and skills-support contacts across nine jurisdictions; and the October 31 NHRC cohort adds 35 previously missing state/FCT rights-complaint office routes, completing one published office route in each of the 37 tracked jurisdictions. | In progress; Lagos has 106 category records but its housing category remains below five; no jurisdiction meets all count and six-category floors. | Build distinct local contacts in all six categories in batches; source state- and city-specific care, housing, food, benefits, peer, and urgent routes. Keep faith-based meetings distinct from treatment and recovery care. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -275,29 +275,31 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 10 | Adamawa | 17 |
-| Akwa Ibom | 32 | Anambra | 15 |
-| Bauchi | 40 | Bayelsa | 11 |
-| Benue | 14 | Borno | 14 |
-| Cross River | 21 | Delta | 20 |
-| Ebonyi | 23 | Edo | 17 |
-| Ekiti | 18 | Enugu | 47 |
-| Gombe | 19 | Imo | 15 |
-| Jigawa | 11 | Kaduna | 49 |
-| Kano | 24 | Katsina | 10 |
-| Kebbi | 11 | Kogi | 15 |
-| Kwara | 14 | Lagos | 105 |
-| Nasarawa | 12 | Niger | 19 |
-| Ogun | 67 | Ondo | 11 |
-| Osun | 13 | Oyo | 42 |
-| Plateau | 15 | Rivers | 27 |
-| Sokoto | 11 | Taraba | 12 |
-| Yobe | 12 | Zamfara | 8 |
-| Federal Capital Territory | 35 | | |
+| Abia | 11 | Adamawa | 18 |
+| Akwa Ibom | 32 | Anambra | 16 |
+| Bauchi | 41 | Bayelsa | 12 |
+| Benue | 15 | Borno | 15 |
+| Cross River | 22 | Delta | 21 |
+| Ebonyi | 24 | Edo | 18 |
+| Ekiti | 19 | Enugu | 48 |
+| Gombe | 20 | Imo | 16 |
+| Jigawa | 12 | Kaduna | 49 |
+| Kano | 25 | Katsina | 11 |
+| Kebbi | 12 | Kogi | 16 |
+| Kwara | 15 | Lagos | 106 |
+| Nasarawa | 13 | Niger | 20 |
+| Ogun | 68 | Ondo | 12 |
+| Osun | 14 | Oyo | 43 |
+| Plateau | 16 | Rivers | 28 |
+| Sokoto | 12 | Taraba | 13 |
+| Yobe | 13 | Zamfara | 9 |
+| Federal Capital Territory | 36 | | |
 
 The October 31, 2026 NIFES addition contributes 66 city-level community-meeting records across 30 jurisdictions and 60 unique city/locality labels. These are faith-based meetings, not therapy, psychiatric care, or addiction recovery. NIFES publishes monthly, fortnightly, quarterly, and occasional schedules; callers should verify the next meeting, venue, and whether non-associates may attend. Unscheduled or undecided locations were excluded. Source: [NIFES Associates Community Fellowship centers in Nigeria](https://nifes.org.ng/nacfnigeria/). The same coverage snapshot adds 31 state health-insurance agency enquiry routes in the funding category, transcribed from NHIA’s public list; the existing agency listings in Akwa Ibom, Bauchi, Kano, Lagos, Ogun, and Oyo were retained without duplicates. These routes help people ask about enrollment and coverage but do not confirm eligibility, premiums, a current plan, or a specific provider network. Source: [NHIA State Social Health Insurance Agencies](https://www.nhia.gov.ng/sshias/). The August 2026 SARC batch adds 40 distinct center locations from a directory listing 52 centres in 25 states plus the FCT; 12 overlapping center records already existed and were retained. Listings identify published contacts and service locations, not phone-confirmed operation, current staffing, or shelter capacity. Source: [HerStoryOurStoryNG SARC directory resources](https://herstoryourstory.ng/resources/). The October 31 NEMA batch adds 14 distinct zonal and operations-office contacts across 14 jurisdictions, consolidating multiple staff contacts at the same office and retaining the existing Port Harcourt NEMA listing. The current official contacts page publishes office locality and phone, but not street addresses for the new entries; the linked service charter establishes disaster-coordination, search-and-rescue, and relief functions. These are coordination contacts, not dispatch lines or guarantees of rescue, shelter, or relief capacity. Call to verify the current office address, jurisdiction, and safe next steps. Sources: [NEMA Zonal & Territorial Offices](https://nema.gov.ng/zonal-territorial-offices/) and [NEMA Service Charter](https://nema.gov.ng/documentations/nema-service-charter.pdf).
 
 The October 31 FRSC cohort adds 216 unit-command records with a published phone number or email across all 37 jurisdictions. FRSC’s page introduction says it operates 209 unit commands, while the directory page contains 221 unit cards; 216 cards publish at least one direct contact and are imported here. Some units may share a broader locality, and no street address is supplied. The listings are local road-safety enquiry and coordination contacts, not a guarantee of dispatch, ambulance, rescue, or present response capacity. The linked FRSC contact page lists 122 for emergency contact; use it or Nigeria’s 112 line where available and safe, and confirm local coverage before travelling. Sources: [FRSC Unit Commands](https://frsc.gov.ng/commands/unit-commands/) and [FRSC Contact & Emergency](https://frsc.gov.ng/contact-us/).
+
+The October 31 NHRC cohort adds the 35 published state/FCT office contacts absent from the prior catalog; the two existing Kaduna and Akwa Ibom office records are retained, giving one NHRC state-office route for each of the 36 states plus the FCT. The current NHRC state-offices page publishes office addresses and phone numbers, while its site states that regional offices are present across the 36 states. The directory’s email fields are obfuscated, so no email was copied. These entries help users ask how to submit rights complaints and seek referrals; they are not emergency dispatch, legal representation, or confidential shelter intake. The published numbers and office access were not phone-confirmed; call first to verify current contact, complaint scope, safe communication, and hours. Source: [NHRC State Offices](https://nhrc.nigeriarights.gov.ng/regional-offices.html) and [NHRC official site](https://nhrc.nigeriarights.gov.ng/home.html).
 
 The next Lagos mental-health access cohort adds 49 distinct primary health centres, completing the 57 facilities named by Lagos MiND after preserving the eight PHC records already in the catalog. Each new record carries the source-published facility name, LGA/LCDA, ward, and address. The shared Lagos MiND helpline is a navigation route; it is not presented as a direct PHC line. The source describes trained primary-care workers and mental-health referrals, and states that the programme was integrated into Lagos State Ministry of Health strategy. It does not publish site-specific hours or establish a psychiatrist at every site, current walk-in intake, or 24/7 crisis care. Lagos now has 105 category records: 66 treatment/recovery, 7 peer/community, 3 housing/safe place, 5 food/essentials, 5 funding/benefits, and 19 urgent-support records. Its numeric count is above 75, but the housing category remains below the five-record floor, so Lagos is still in progress. Source: [Lagos MiND mental-health facility network](https://lagosmind.org/facilities).
 
