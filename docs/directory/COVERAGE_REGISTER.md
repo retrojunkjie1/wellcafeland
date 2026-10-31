@@ -5,8 +5,8 @@
 
 ## Status rules
 
-- **Complete (initial floor met)** means the U.S. coverage calculator reports 75–125 distinct state-linked records across the six support categories and at least five records in each category. It does not mean every provider has confirmed by phone, every town is covered, or coverage is exhaustive.
-- **Above initial range** means the state has more than 125 distinct records. Preserve those records and audit for category balance and duplicates; do not remove working listings to force the count down.
+- **Meets the current directory floor** means the U.S. coverage calculator reports at least 75 distinct state-linked records across the six support categories and at least five records in each category. Counts above 125 also meet this floor when category balance passes; the planning range is not a cap. This milestone does not mean every provider has confirmed by phone, every town is covered, or coverage is exhaustive.
+- **Above planning range** means the state has more than 125 distinct records. Preserve those records and audit for category balance and duplicates; do not remove working listings to force the count down.
 - **In progress** means the current catalog has fewer than 75 distinct state-linked records, or a country/subdivision has not had its local coverage reviewed.
 - **Planned** means research and source review have not started. No listing count is implied.
 - Countrywide referral lines and search portals stay separate from local service contacts. They do not count toward the U.S. state floor unless the coverage calculator explicitly state-links them.
@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are represented in the coverage calculator. State progress now requires both 75–125 total records and at least 5 records in every category; use the live audit for current balances. | In progress | Continue the multi-state queue across under-floor states. The latest addition covers NJ, NM, ND, OR and RI; do not revisit already-expanded states unless the live category audit shows a specific gap. |
+| United States | All 50 states plus DC are in the coverage calculator; live audit: 25 meet the current directory floor and 26 remain in progress. | In progress | Continue the under-floor and category-gap queue. Latest batch: MO, MT, NE, NV and NH. Recheck live category counts before selecting the next batch. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -32,47 +32,70 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Initial floor met: 75–125 records
+### Meets the current directory floor: 25 jurisdictions
+
+“Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
 | State / jurisdiction | Code | Records | Status |
 |---|---:|---:|---|
-| Alabama | AL | 87 | Complete (initial floor met) |
-| Alaska | AK | 124 | Complete (initial floor met) |
-| Arizona | AZ | 82 | Complete (initial floor met) |
-| Arkansas | AR | 119 | Complete (initial floor met) |
-| Colorado | CO | 80 | Complete (initial floor met) |
-| Connecticut | CT | 75 | Complete (initial floor met) |
-| Florida | FL | 121 | Complete (initial floor met) |
-| Georgia | GA | 76 | Complete (initial floor met) |
-| Idaho | ID | 113 | Complete (initial floor met) |
-| Illinois | IL | 112 | Complete (initial floor met) |
-| Indiana | IN | 115 | Complete (initial floor met) |
-| Iowa | IA | 108 | Complete (initial floor met) |
-| Louisiana | LA | 123 | Complete (initial floor met) |
-| Maine | ME | 121 | Complete (initial floor met) |
-| Maryland | MD | 76 | Initial floor met; source-reviewed starting coverage, with locality depth and phone confirmation still open |
-| Massachusetts | MA | 78 | Complete (initial floor met); source-reviewed, phone confirmation and exhaustive review remain open |
-| New York | NY | 123 | Complete (initial floor met) |
-| Ohio | OH | 76 | Complete (initial floor met) |
-| Oklahoma | OK | 75 | Complete (initial floor met) |
-| Pennsylvania | PA | 75 | Complete (initial floor met) |
+| Alabama | AL | 87 | Meets current directory floor |
+| Alaska | AK | 124 | Meets current directory floor |
+| Arizona | AZ | 82 | Meets current directory floor |
+| California | CA | 229 | Meets floor; above planning range, preserve and audit |
+| Colorado | CO | 80 | Meets current directory floor |
+| Connecticut | CT | 75 | Meets current directory floor |
+| Florida | FL | 121 | Meets current directory floor |
+| Georgia | GA | 76 | Meets current directory floor |
+| Hawaii | HI | 152 | Meets floor; above planning range, preserve and audit |
+| Idaho | ID | 113 | Meets current directory floor |
+| Indiana | IN | 115 | Meets current directory floor |
+| Iowa | IA | 108 | Meets current directory floor |
+| Maryland | MD | 76 | Meets current directory floor; deeper locality and phone review remain open |
+| Michigan | MI | 77 | Meets current directory floor; deeper locality review remains open |
+| Mississippi | MS | 286 | Meets floor; above planning range, preserve and audit |
+| New York | NY | 123 | Meets current directory floor |
+| North Carolina | NC | 270 | Meets floor; above planning range, preserve and audit |
+| Ohio | OH | 76 | Meets current directory floor |
+| Oklahoma | OK | 75 | Meets current directory floor |
+| Pennsylvania | PA | 75 | Meets current directory floor |
+| South Dakota | SD | 98 | Meets current directory floor |
+| Tennessee | TN | 221 | Meets floor; above planning range, preserve and audit |
+| Texas | TX | 340 | Meets floor; above planning range, preserve and audit |
+| Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
+| Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Above the 125-record planning range
+### Still in progress: 26 jurisdictions
 
-| State | Code | Records | Status |
+Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
+
+| State / jurisdiction | Code | Records | Categories below five (current count) |
 |---|---:|---:|---|
-| California | CA | 229 | Above initial range; preserve and audit |
-| Delaware | DE | 139 | Above initial range; preserve and audit |
-| Hawaii | HI | 152 | Above initial range; preserve and audit |
-| Kansas | KS | 126 | Above initial range; preserve and audit |
-| Texas | TX | 340 | Above initial range; preserve and audit |
-| North Carolina | NC | 270 | Above initial range; 118 treatment locations, 20 regional housing routes, 8 food contacts, 5 peer options, 19 urgent-support routes and 100 county benefits offices. The initial range is a planning guide, not a cap. |
-
-### Below target or category-balance floor
-
-These jurisdictions still fail the active U.S. completion condition: at least 75 distinct records and at least five records in each of the six categories. Some may exceed 75 total while remaining incomplete because one category dominates. Inspect existing modules before adding anything, so working material is not duplicated or lost.
-
-Michigan (MI), New Jersey (NJ), New Mexico (NM), North Dakota (ND), Oregon (OR), Rhode Island (RI), South Carolina (SC), South Dakota (SD), Tennessee (TN), Utah (UT), Vermont (VT), Virginia (VA), Washington (WA), West Virginia (WV), Wisconsin (WI), Wyoming (WY), and District of Columbia (DC).
+| Arkansas | AR | 119 | Peer 2; urgent 4 |
+| Delaware | DE | 139 | Peer 4 |
+| District of Columbia | DC | 0 | All six categories 0 |
+| Illinois | IL | 112 | Urgent 4 |
+| Kansas | KS | 126 | Food 4 |
+| Kentucky | KY | 134 | Treatment 0; peer 0; housing 0; food 0 |
+| Louisiana | LA | 123 | Peer 2; housing 3; benefits 3; urgent 3 |
+| Maine | ME | 121 | Treatment 1; peer 2; benefits 2 |
+| Massachusetts | MA | 78 | Housing 1; food 1; benefits 2 |
+| Minnesota | MN | 122 | Treatment 0; housing 0; benefits 0 |
+| Missouri | MO | 77 | Housing 0; benefits 0 |
+| Montana | MT | 51 | Peer 4; benefits 0 |
+| Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
+| Nevada | NV | 33 | Peer 2; housing 0; benefits 0; urgent 1 |
+| New Hampshire | NH | 54 | Benefits 0; urgent 0 |
+| New Jersey | NJ | 81 | Treatment 0; peer 0; food 0; urgent 0 |
+| New Mexico | NM | 28 | Treatment 0; peer 0; urgent 1 |
+| North Dakota | ND | 40 | Peer 0; housing 0 |
+| Oregon | OR | 89 | Peer 0; housing 0; benefits 0 |
+| Rhode Island | RI | 56 | Peer 3; benefits 0; urgent 1 |
+| South Carolina | SC | 127 | Urgent 1 |
+| Virginia | VA | 0 | All six categories 0 |
+| Washington | WA | 0 | All six categories 0 |
+| West Virginia | WV | 0 | All six categories 0 |
+| Wisconsin | WI | 0 | All six categories 0 |
+| Wyoming | WY | 0 | All six categories 0 |
 
 The initial source-reviewed five-state batch added 74 distinct records, followed by 100 additional records and a further 98-contact cross-category expansion on 2026-10-30. Every state remains **in progress**; none meets the six-category balance floor. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
 
