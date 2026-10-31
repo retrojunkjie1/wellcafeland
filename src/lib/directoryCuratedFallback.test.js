@@ -12,7 +12,7 @@ vi.mock("@/services/foodDirectory", () => ({
 describe("category fallback pathways", () => {
   it("keeps the Nigeria five-jurisdiction source-review cohort distinct and honestly qualified", () => {
     const ids = NIGERIA_FIVE_JURISDICTION_EXPANSION.map(({ id }) => id);
-    expect(ids).toHaveLength(45);
+    expect(ids).toHaveLength(77);
     expect(new Set(ids).size).toBe(ids.length);
     expect(NIGERIA_FIVE_JURISDICTION_EXPANSION.every((item) =>
       item.sourceReviewed && item.verified && !item.phoneConfirmed && !item.exhaustiveCoverage && item.link && item.source
@@ -31,6 +31,29 @@ describe("category fallback pathways", () => {
       ["programs", "Kano, Nigeria", "kano-yadaf-substance-use-counselling-referral"],
       ["grants", "Kano, Nigeria", "kano-kschma-health-coverage-enrollment"],
       ["programs", "Port Harcourt, Rivers", "rivers-first-rivers-hospital-psychiatry"],
+      ["programs", "Lagos", "lagos-federal-neuropsychiatric-hospital-yaba"],
+      ["programs", "Lagos", "lagos-luth-psychiatry-yaba-idi-araba"],
+      ["hotlines", "Ikeja, Lagos", "lagos-mirabel-sexual-assault-referral-centre"],
+      ["hotlines", "Lagos", "lagos-cece-yara-child-advocacy-centre"],
+      ["housing", "Magodo, Lagos", "lagos-real-woman-peace-villa-referral"],
+      ["programs", "Lagos", "lagos-bureau-public-defender-legal-aid"],
+      ["housing", "Lagos", "lagos-citizens-mediation-bureau"],
+      ["grants", "Lagos", "lagos-ilera-eko-health-insurance-navigation"],
+      ["grants", "Ikeja, Lagos", "lagos-state-employment-trust-fund"],
+      ["food.essentials", "Ikeja, Lagos", "lagos-communitywide-food-bank"],
+      ["food.essentials", "Ikeja, Lagos", "lagos-inner-city-mission-food-bank"],
+      ["programs", "Lagos", "lagos-disability-affairs-support-navigation"],
+      ["hotlines", "Lagos", "lagos-emergency-management-agency"],
+      ["programs", "Agege, Lagos", "lagos-mind-agege-sango-mental-health-phc"],
+      ["programs", "Badagry, Lagos", "lagos-mind-badagry-ajara-mental-health-phc"],
+      ["programs", "Oyo", "oyo-uch-psychiatry-and-addiction-care"],
+      ["hotlines", "Oyo", "oyo-uch-emergency-department"],
+      ["peer", "Ibadan, Oyo", "oyo-asido-campus-network-university-ibadan"],
+      ["programs", "Oyo", "oyo-ola-catholic-hospital-arv-counselling"],
+      ["programs", "Oyo", "oyo-primary-health-care-board-navigation"],
+      ["grants", "Oyo", "oyo-household-cash-transfer-enquiry"],
+      ["grants", "Oyo", "oyo-agricultural-credit-corporation-farmer-financing"],
+      ["food.essentials", "Oyo", "oyo-elizabeth-foundation-sickle-cell-food-welfare"],
       ["hotlines", "Rivers, Nigeria", "rivers-family-court-child-welfare-emergency-contact"],
       ["grants", "Rivers, Nigeria", "rivers-vhf-scholarship-skills-support"],
       ["programs", "Ikeja, Lagos", "lagos-lasuth-psychiatry-department"],

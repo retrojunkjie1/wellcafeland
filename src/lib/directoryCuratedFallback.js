@@ -553,7 +553,7 @@ export function getCuratedFallback(domain, query, region = "") {
         const treatmentResources = [
           ...localMatches(NIGERIA_LOCAL_RECOVERY_RESOURCES),
           ...(countryOnlySearch ? NIGERIA_STATE_RECOVERY_SERVICES : []),
-        ].filter((item) => /treatment|counsel|rehabilitation|addiction|detox|clinic|therapy|psychiatric|mental.health|hospital/i.test(`${item.resourceType || ""} ${item.name || ""}`) && !/meeting|peer support|mutual support/i.test(item.resourceType || ""));
+        ].filter((item) => /treatment|counsel|rehabilitation|addiction|detox|clinic|therapy|psychiatric|mental.health|hospital|legal|disability|primary.care|health|nutrition|employment|livelihood|skills|advocacy/i.test(`${item.resourceType || ""} ${item.name || ""}`) && !/meeting|peer support|mutual support/i.test(item.resourceType || ""));
         return [...treatmentResources, ...GLOBAL_TREATMENT_RESOURCES];
       }
       return GLOBAL_TREATMENT_RESOURCES;

@@ -286,16 +286,24 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Jigawa | 3 | Kaduna | 4 |
 | Kano | 14 | Katsina | 3 |
 | Kebbi | 3 | Kogi | 3 |
-| Kwara | 3 | Lagos | 21 |
+| Kwara | 3 | Lagos | 42 |
 | Nasarawa | 3 | Niger | 3 |
 | Ogun | 3 | Ondo | 3 |
-| Osun | 2 | Oyo | 19 |
+| Osun | 2 | Oyo | 30 |
 | Plateau | 3 | Rivers | 21 |
 | Sokoto | 4 | Taraba | 2 |
 | Yobe | 2 | Zamfara | 2 |
 | Federal Capital Territory | 17 | | |
 
 The Nigeria calculator reports independent-check evidence for Cross River, Edo, Kaduna, Ogun and Sokoto only. Other source-reviewed records are not independently checked by that measure.
+
+### Lagos and Oyo follow-up research — October 31, 2026
+
+Added 32 source-reviewed records to the active Nigeria directory while preserving prior entries: 21 for Lagos and 11 for Oyo. The catalog totals are now Lagos 42 and Oyo 30, still below the user’s 75-record initial planning floor; neither state is complete. Lagos additions cover specialist psychiatry at FNPH Yaba and LUTH, survivor and child-protection support, eligibility-specific residential rehabilitation referral, public legal aid and mediation, health-insurance and livelihoods navigation, two food-bank contacts, disability-affairs navigation, disaster coordination, and eight named Lagos MiND community mental-health facilities in underserved LGAs. Oyo additions cover FIDA legal aid, Red Cross humanitarian referral, UCH psychiatry and emergency pathways, New World specialist care, a University of Ibadan student peer network, HIV/ARV counselling, primary-care navigation, targeted household cash-transfer enquiries, farmer credit, and sickle-cell family welfare/food support.
+
+The category counts after this cohort are Lagos 42 (17 treatment/health, 7 peer/community, 3 housing/legal access, 5 food, 5 funding/benefits, 5 urgent support) and Oyo 30 (7 treatment/health, 1 peer/community, 1 housing, 11 food, 5 funding/benefits, 5 urgent support). Category counts are based on each record’s single primary category; a resource may provide additional services. The Lagos MiND entries identify facilities in its published network and do not assert on-site psychiatry or 24/7 care. Survivor-support entries are referral-first; no confidential placement address is disclosed. Benefits, treatment intake, food availability, current clinic hours, and eligibility must be confirmed directly. All records remain source-reviewed, not phone-confirmed; no state coverage is exhaustive. Oyo’s peer-support category is no longer empty, but its single student chapter does not establish citywide or in-person public meeting coverage.
+
+Sources: [Federal Neuro-Psychiatric Hospital Yaba patient guide](https://fnphyaba.gov.ng/health-information/), [LUTH Psychiatry](https://luth.gov.ng/departments/psychiatry/), [Mirabel Centre services](https://mirabelcentre.org/how-we-help/), [Mirabel current location notice](https://mirabelcentre.org/contact-us/), [Cece Yara Child Advocacy Centre](https://ceceyara.org/about-us/), [The Real Woman Foundation Peace Villa](https://therealwoman.org/the-peace-villa/), [Lagos Bureau of Public Defender](https://opdlagosstate.org/contact.html), [Citizens’ Mediation Bureau](https://lagosstatemoj.org/cmc/), [LASHMA](https://www.lashma.com/), [LSETF](https://www.lsetf.ng/content/contact-us), [Communitywide Food Bank](https://communitywidefoodbank.org/contact-us), [Inner City Mission Food Banking Network](https://foodbank.theinnercitymission.net/contact/), [LASODA](https://officiallasoda.com/), [LASEMA](https://lasema.com.ng/contact/), [Lagos MiND facilities](https://lagosmind.org/facilities), [FIDA Oyo](https://fida.org.ng/oyo/), [Nigerian Red Cross Oyo Branch](https://www.redcrossnigeria.org/oyo), [UCH 2025 service charter](https://uch-ibadan.org.ng/wp-content/uploads/2025/04/SERVICE-CHARTER-HAND-BOOK-pdf-final_083057.pdf), [New World Specialist Hospital](https://www.newworldhospital.org/contacts), [Asido Campus Network](https://www.asidofoundation.com/impact/acn), [O.L.A. Catholic Hospital services](https://www.olacatholichospitalibadan.org/services), [Oyo PHC Board](https://oyophcb.oyostate.gov.ng/about-ministry/), [Oyo social-protection report](https://oyostate.gov.ng/oyo-govt-federal-govt-collaborate-to-alleviate-poverty/), [Oyo Agricultural Credit Corporation](https://accos.oyostate.gov.ng/2025/08/01/oyo-govt-approves-additional-loan-for-farmers/), and [The Elizabeth Foundation SS](https://www.elizabeth-foundationss.com/).
 
 ### Kano and Rivers follow-up research — October 31, 2026
 
