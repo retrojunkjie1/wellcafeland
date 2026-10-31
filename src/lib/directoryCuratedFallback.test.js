@@ -3,12 +3,63 @@ import { getCuratedFallback, isUSLocation } from "./directoryCuratedFallback";
 import { getUSStateCoverage } from "@/data/usDirectoryCoverage";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
 import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_PEER_RESOURCES, NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
+import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "@/data/nigeriaFiveJurisdictionExpansion";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
 }));
 
 describe("category fallback pathways", () => {
+  it("keeps the Nigeria five-jurisdiction source-review cohort distinct and honestly qualified", () => {
+    const ids = NIGERIA_FIVE_JURISDICTION_EXPANSION.map(({ id }) => id);
+    expect(ids).toHaveLength(32);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(NIGERIA_FIVE_JURISDICTION_EXPANSION.every((item) =>
+      item.sourceReviewed && item.verified && !item.phoneConfirmed && !item.exhaustiveCoverage && item.link && item.source
+    )).toBe(true);
+  });
+
+  it("serves the source-reviewed Nigeria five-jurisdiction additions in their matching filters", () => {
+    const cases = [
+      ["grants", "Lagos", "lagos-island-lg-women-empowerment"],
+      ["grants", "Ibadan, Oyo", "oyo-women-affairs-social-welfare-referral"],
+      ["hotlines", "Oyo", "oyo-citizens-emergency-line-615"],
+      ["food.essentials", "Port Harcourt, Rivers", "rivers-carecircle-community-food-support"],
+      ["housing", "Abuja, Nigeria", "fct-dorothy-njemanze-survivor-shelter-referral"],
+      ["peer", "Lagos, Nigeria", "lagos-smart-recovery-saturday-1126"],
+      ["programs", "Kano, Nigeria", "kano-dawanau-federal-neuropsychiatric-hospital"],
+      ["programs", "Ikeja, Lagos", "lagos-lasuth-psychiatry-department"],
+      ["hotlines", "Lagos, Nigeria", "lagos-warif-survivor-centre-helpline"],
+      ["food.essentials", "Ibadan, Oyo", "oyo-joyous-smiles-food-relief"],
+      ["grants", "Ibadan, Oyo", "oyo-state-health-insurance-enrollment"],
+      ["food.essentials", "Kano, Nigeria", "kano-basiqat-monthly-food-baskets"],
+      ["programs", "Kano, Nigeria", "kano-fida-legal-clinic-counselling"],
+      ["hotlines", "Kano, Nigeria", "kano-red-cross-branch-referral"],
+      ["programs", "Port Harcourt, Rivers", "rivers-cebecpen-mental-health-consultation"],
+      ["food.essentials", "Abuja, Nigeria", "fct-golan-helps-foodbank-enquiries"],
+      ["housing", "Abuja, Nigeria", "fct-safe-haven-survivor-shelter"],
+      ["programs", "Abuja, Nigeria", "fct-wrapa-legal-counselling-support"],
+      ["hotlines", "Abuja, Nigeria", "fct-mama-centre-gbvr-support-line"],
+      ["programs", "Abuja, Nigeria", "fct-limi-hospital-mental-health-clinic"],
+      ["programs", "Abuja, Nigeria", "fct-vgada-online-group-therapy"],
+    ];
+
+    for (const [category, region, id] of cases) {
+      expect(getCuratedFallback(category, "", region).map(({ id: recordId }) => recordId), `${category} in ${region}`)
+        .toContain(id);
+    }
+
+    const survivor = getCuratedFallback("housing", "", "Abuja, Nigeria")
+      .find(({ id }) => id === "fct-dorothy-njemanze-survivor-shelter-referral");
+    expect(survivor).toMatchObject({ sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false });
+    expect(survivor.address).toBeUndefined();
+
+    const therapy = getCuratedFallback("programs", "addiction group therapy", "Abuja, Nigeria")
+      .find(({ id }) => id === "fct-vgada-online-group-therapy");
+    expect(therapy.description).toMatch(/not an independent peer fellowship/i);
+    expect(therapy).toMatchObject({ sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false });
+  });
+
   it("routes the source-reviewed five-state expansion into the matching categories and locations", () => {
     const mo = getCuratedFallback("programs", "community behavioral health", "St. Louis, MO");
     expect(mo).toContainEqual(expect.objectContaining({ id: "mo-treatment-adapt-stl", state: "MO", city: "St. Louis", phone: "888-657-3201" }));

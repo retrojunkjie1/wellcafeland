@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Mic, MicOff, Save, Loader2, CheckCircle } from "lucide-react";
 import { transcribeAudio } from "@/services/multimodalClient";
-import { callAgent } from "@/agents/aiAgents";
+import { callAgent } from "@/ai/agents/agentClient";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";

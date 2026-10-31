@@ -1,3 +1,5 @@
+import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "./nigeriaFiveJurisdictionExpansion.js";
+
 /**
  * Nigeria recovery and substance-use service contacts.
  *
@@ -9,6 +11,9 @@
 const NDLEA_DIRECTORY_URL = "https://www.ndlea.gov.ng/rehabilitation";
 const CHECKED_AT = "2026-10-22";
 const FEDERAL_HEALTH_DIRECTORY_URL = "https://health.gov.ng/specialty-hospitals/";
+
+const fiveJurisdiction = (category) => NIGERIA_FIVE_JURISDICTION_EXPANSION
+  .filter((record) => record.primaryCategory === category);
 
 const stateCommands = [
   ["abia", "Aba", "Old Party Secretariat, Ogbor Hill, Aba, Abia State", "08065536820"],
@@ -217,6 +222,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
     verified: true, city: "Lagos", state: "Lagos", country: "Nigeria", region: "Lagos, Nigeria",
     locationLine: "Lagos State · also lists 020 1410 6463 and WhatsApp 090 9000 6463", checkedAt: CHECKED_AT,
   },
+  ...fiveJurisdiction("programs"),
 ];
 
 export const NIGERIA_CITIES = [
@@ -288,6 +294,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
     phone: "+2348121133399", email: "info@womensafehouse.org", link: "https://www.womensafehouse.org/", source: "Women Safe House Sustenance Initiative · official site", verified: true,
     city: "Ibadan", state: "Oyo", country: "Nigeria", region: "Ibadan, Oyo, Nigeria", locationLine: "Ibadan · confidential shelter location; contact for safe referral; 24-hour shelter service described by organization", checkedAt: CHECKED_AT,
   },
+  ...fiveJurisdiction("housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -382,6 +389,7 @@ export const NIGERIA_FOOD_RESOURCES = [
     phone: "+2348021266483", alternatePhone: "+2348061995335", email: "info@nsipa.gov.ng", link: "https://nsipa.gov.ng/", source: "National Social Investment Programme Agency (NSIPA)", verified: true,
     country: "Nigeria", region: "Nigeria", locationLine: "Participating public primary schools nationwide · pupil eligibility applies", checkedAt: CHECKED_AT,
   },
+  ...fiveJurisdiction("food"),
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -477,6 +485,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
     phone: "+2348021266483", alternatePhone: "+2348061995335", email: "info@nsipa.gov.ng", link: "https://nsipa.gov.ng/", source: "National Social Safety Nets Coordinating Office (NASSCO) / NSIPA", verified: true,
     country: "Nigeria", region: "Nigeria", locationLine: "State and local-government implementation nationwide · ask about current local enrollment", checkedAt: CHECKED_AT,
   },
+  ...fiveJurisdiction("funding"),
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -539,6 +548,7 @@ export const NIGERIA_URGENT_RESOURCES = [
     phone: "08000333333", alternatePhone: "*6820#", link: "https://lagosstate.gov.ng/news/all/view/68fb599888319a643b69c28b", source: "Lagos State Domestic and Sexual Violence Agency (DSVA)", verified: true,
     city: "Lagos", state: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", locationLine: "Lagos State · 24-hour support is stated by the agency; safe-shelter access must be confirmed", checkedAt: CHECKED_AT,
   },
+  ...fiveJurisdiction("emergency"),
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
@@ -579,4 +589,5 @@ export const NIGERIA_PEER_RESOURCES = [
     phone: "080010203040", link: NDLEA_DIRECTORY_URL, source: "National Drug Law Enforcement Agency (NDLEA) · national helpline and state-command directory", verified: true,
     country: "Nigeria", region: "Nigeria", locationLine: "Nigeria-wide helpline and state commands · ask for a city-specific referral", checkedAt: CHECKED_AT,
   },
+  ...fiveJurisdiction("circles").map((record) => ({ ...record, directoryRole: "meeting-finder" })),
 ];
