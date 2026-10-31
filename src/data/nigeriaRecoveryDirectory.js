@@ -2,6 +2,7 @@ import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "./nigeriaFiveJurisdictionEx
 import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "./nigeriaNextFiveStateExpansion.js";
 import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "./nigeriaNifesCommunityExpansion.js";
 import { NIGERIA_NHIA_STATE_EXPANSION } from "./nigeriaNhiaStateExpansion.js";
+import { NIGERIA_SARC_AUG_2026_EXPANSION } from "./nigeriaSarcAug2026Expansion.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -244,6 +245,8 @@ export const NIGERIA_CITIES = [
   "Ado-Ekiti", "Mokwa", "New Bussa", "Ede", "Iree", "Gusau", "Kaura Namoda", "Ogoja",
   "Wukari", "Numan", "Mubi", "Zaria", "Dutsin-Ma",
   "Umuahia", "Yola", "Asaba", "Calabar",
+  "Ikot Ekpene", "Enugwu-Ukwu", "Ikang", "Ugep", "Ikom", "Ughelli", "Uromi",
+  "Oye", "Ikere-Ekiti", "Bwari", "Kalgo", "Igando", "Potiskum", "Nguru", "Gashua", "Geidam",
 ];
 
 export const NIGERIA_STATES = [
@@ -564,6 +567,7 @@ export const NIGERIA_URGENT_RESOURCES = [
     city: "Lagos", state: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", locationLine: "Lagos State · 24-hour support is stated by the agency; safe-shelter access must be confirmed", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("emergency"),
+  ...NIGERIA_SARC_AUG_2026_EXPANSION,
 ];
 
 export const NIGERIA_PEER_RESOURCES = [

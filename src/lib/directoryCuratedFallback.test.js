@@ -7,7 +7,8 @@ import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "@/data/nigeriaFiveJurisdict
 import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "@/data/nigeriaNextFiveStateExpansion";
 import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "@/data/nigeriaNifesCommunityExpansion";
 import { NIGERIA_NHIA_STATE_EXPANSION } from "@/data/nigeriaNhiaStateExpansion";
-import { NIGERIA_PEER_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
+import { NIGERIA_SARC_AUG_2026_EXPANSION } from "@/data/nigeriaSarcAug2026Expansion";
+import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage } from "@/data/nigeriaDirectoryCoverage";
 
 vi.mock("@/services/foodDirectory", () => ({
@@ -31,15 +32,15 @@ describe("category fallback pathways", () => {
       Kaduna: coverage("Kaduna"),
       "Akwa Ibom": coverage("Akwa Ibom"),
       Ogun: coverage("Ogun"),
-    }).toEqual({ Enugu: 40, Bauchi: 35, Kaduna: 36, "Akwa Ibom": 26, Ogun: 57 });
+    }).toEqual({ Enugu: 41, Bauchi: 35, Kaduna: 36, "Akwa Ibom": 27, Ogun: 57 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Enugu").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 12, emergency: 6 });
+      .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 12, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Bauchi").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Kaduna").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 5, circles: 5, housing: 3, food: 4, funding: 9, emergency: 10 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Akwa Ibom").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 7 });
+      .toEqual({ programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 8 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Ogun").map(({ id, records: items }) => [id, items.length])))
       .toEqual({ programs: 35, circles: 2, housing: 4, food: 3, funding: 4, emergency: 9 });
     expect(records.filter(({ id }) => id.startsWith("ogun-general-hospital-")).every(({ phone, email }) => phone && email)).toBe(true);
@@ -75,6 +76,26 @@ describe("category fallback pathways", () => {
     for (const { state, id } of records) {
       expect(getNigeriaStateCoverage(state).find(({ id }) => id === "funding").records.some((record) => record.id === id)).toBe(true);
     }
+  });
+
+  it("adds the missing August 2026 SARC locations as local urgent-care contacts without claiming phone confirmation", () => {
+    const records = NIGERIA_SARC_AUG_2026_EXPANSION;
+    const ids = records.map(({ id }) => id);
+    expect(records).toHaveLength(40);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(23);
+    expect(records.every(({ id, primaryCategory, city, state, address, phone, sourceReviewed, phoneConfirmed, exhaustiveCoverage, link, sourceEvidenceUrl, directoryRole }) =>
+      id.startsWith("nigeria-sarc-") && primaryCategory === "emergency" && city && state && address && /^0\d{10}$/.test(phone) &&
+      sourceReviewed && !phoneConfirmed && !exhaustiveCoverage && link === "https://herstoryourstory.ng/resources/" &&
+      sourceEvidenceUrl === "https://herstoryourstory.ng/download/2580/" && directoryRole === "local-service"
+    )).toBe(true);
+    expect(NIGERIA_URGENT_RESOURCES.filter(({ id }) => id.startsWith("nigeria-sarc-")).map(({ id }) => id)).toEqual(ids);
+    for (const { state, city, id } of records) {
+      const emergency = getNigeriaStateCoverage(state).find(({ id: categoryId }) => categoryId === "emergency");
+      expect(emergency.localContacts.some((record) => record.id === id && record.city === city)).toBe(true);
+    }
+    expect(getNigeriaStateCoverage("Cross River").find(({ id }) => id === "emergency").localContacts).toHaveLength(6);
+    expect(getNigeriaStateCoverage("Yobe").find(({ id }) => id === "emergency").localContacts).toHaveLength(5);
   });
 
   it("serves the next five-state Nigeria additions in their matching filters", () => {
