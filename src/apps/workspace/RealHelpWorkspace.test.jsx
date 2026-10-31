@@ -1,7 +1,7 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import RealHelpWorkspace from "./RealHelpWorkspace";
 import { dedupeResourceListings } from "./assistanceListingUtils";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
@@ -64,6 +64,11 @@ function SearchRouteControls() {
   return <><output aria-label="Current search URL">{location.pathname}{location.search}</output><button type="button" onClick={() => navigate(-1)}>Back to previous search</button></>;
 }
 
+function CurrentClientRoute() {
+  const location = useLocation();
+  return <output data-testid="current-client-route" data-state={JSON.stringify(location.state ?? null)}>{location.pathname}{location.search}{location.hash}</output>;
+}
+
 afterEach(() => cleanup());
 beforeEach(() => {
   vi.clearAllMocks();
@@ -94,6 +99,48 @@ beforeEach(() => {
 });
 
 describe("real-world assistance search states", () => {
+  it("returns from Find Help to the exact allowed local practice location", () => {
+    const returnTo = {
+      pathname: "/tools/grounding",
+      search: "?anchor=feet",
+      hash: "#next-step",
+      state: { from: "daily-practice" },
+      scrollY: 120,
+    };
+    const originalRequestAnimationFrame = window.requestAnimationFrame;
+    const originalScrollTo = window.scrollTo;
+    window.requestAnimationFrame = (callback) => { callback(0); return 1; };
+    window.scrollTo = vi.fn();
+
+    try {
+      render(
+        <MemoryRouter initialEntries={[{ pathname: "/assistance", search: "?priority=food&region=Denver%2C%20CO", state: { from: "practice", returnTo } }]}>
+          <Routes>
+            <Route path="/assistance" element={<><RealHelpWorkspace /><CurrentClientRoute /></>} />
+            <Route path="/tools/:toolId" element={<CurrentClientRoute />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /back to your practice/i }));
+
+      const route = screen.getByTestId("current-client-route");
+      expect(route).toHaveTextContent("/tools/grounding?anchor=feet#next-step");
+      expect(route).toHaveAttribute("data-state", JSON.stringify({ from: "daily-practice" }));
+      expect(window.scrollTo).toHaveBeenCalledWith(0, 120);
+    } finally {
+      window.requestAnimationFrame = originalRequestAnimationFrame;
+      window.scrollTo = originalScrollTo;
+    }
+  });
+
+  it("uses the support-choice fallback when no safe practice return context exists", () => {
+    renderSearch("/workspace/real-help?priority=food&region=Denver%2C%20CO");
+
+    expect(screen.getByRole("button", { name: /back to support choices/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /back to your practice/i })).not.toBeInTheDocument();
+  });
+
   it("keeps resource contact details in the app and omits the removed Bridge session", async () => {
     mocks.searchDirectory.mockResolvedValue({ ok: true, items: [{
       id: "local-program", title: "Local Recovery Program", description: "Substance use treatment and recovery program.", city: "Denver", state: "CO", locationLine: "Denver, CO", phone: "303-555-0100", url: "https://example.org/program",
