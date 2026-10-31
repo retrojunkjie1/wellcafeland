@@ -32,7 +32,7 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Meets the current directory floor: 25 jurisdictions
+### Meets the current directory floor: 26 jurisdictions
 
 “Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
@@ -53,6 +53,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Maryland | MD | 85 | Meets current directory floor; local food finders broaden county coverage; locality and phone review remain open |
 | Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
 | Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
+| Minnesota | MN | 320 | Meets floor; housing-benefit routes added across county/Tribal offices; deeper local-provider coverage remains open |
 | New York | NY | 123 | Meets current directory floor |
 | North Carolina | NC | 270 | Meets floor; above planning range, preserve and audit |
 | Ohio | OH | 76 | Meets current directory floor |
@@ -64,7 +65,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Still in progress: 26 jurisdictions
+### Still in progress: 25 jurisdictions
 
 Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
 
@@ -79,7 +80,6 @@ Each row gives the live count and categories below five. A zero indicates that t
 | Louisiana | LA | 123 | Peer 2; housing 3; benefits 3; urgent 3 |
 | Maine | ME | 121 | Treatment 1; peer 2; benefits 2 |
 | Massachusetts | MA | 78 | Housing 1; food 1; benefits 2 |
-| Minnesota | MN | 144 | Housing 0; benefits 0; treatment now 22 |
 | Missouri | MO | 77 | Housing 0; benefits 0 |
 | Montana | MT | 51 | Peer 4; benefits 0 |
 | Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
@@ -97,7 +97,7 @@ Each row gives the live count and categories below five. A zero indicates that t
 | Wisconsin | WI | 0 | All six categories 0 |
 | Wyoming | WY | 0 | All six categories 0 |
 
-The initial source-reviewed five-state batch added 74 distinct records, followed by 100 additional records and a further 98-contact cross-category expansion on 2026-10-30. The five most recent states remain **in progress**; none meets the six-category balance floor. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
+The initial source-reviewed five-state batch added 74 distinct records, followed by 100 additional records and a further 98-contact cross-category expansion on 2026-10-30. The five most recent states remain under active directory development. Minnesota now meets the initial count and six-category balance floors, but this does not establish exhaustive coverage. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
 
 | State | Total | Categories covered in this batch | Remaining work |
 |---|---:|---|---|
@@ -121,7 +121,7 @@ The next additive batch expanded four states with 78 distinct local/regional con
 
 Sources: [New Mexico Association of Food Banks](https://www.nmfoodbanks.org/home/), [New Mexico Association of Community Partners](https://nmacp.org/help/), [North Dakota HHS Food and Income Assistance](https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/food-assistance), [Oregon Food Bank Support Network](https://www.oregonfoodbank.org/find-support/food-support-network), [Oregon Food Finder](https://foodfinder.oregonfoodbank.org/), [Rhode Island Executive Office of Housing Regional Access Points](https://housing.ri.gov/resources/individuals-experiencing-homelessness), [City of Providence Food Pantries](https://www.providenceri.gov/food-pantries/), and [Rhode Island Community Food Bank regional resource directories](https://rifoodbank.org/community-resources/).
 
-Kentucky (KY) currently has 134 records: 120 county Family Support offices and 14 CMHC crisis access routes; peer, housing, food and treatment coverage still need local research. Maryland (MD) now has 76 records: 22 ACT contacts, 18 local homelessness/housing routes, 21 food and meal access listings, 5 peer-support services, 5 SNAP navigation providers, and 5 county/regional crisis contacts. It clears the initial 75-record floor and has at least five records in each of the six discovery categories, while remaining an early, source-reviewed directory rather than exhaustive statewide coverage. Michigan (MI) now has 77 records: 30 county HARA housing-assessment routes, 10 named SUD Health Home treatment-provider locations, 10 state-listed recovery community organizations, 7 regional food-bank routes, 10 household-energy benefits routes/programs, and 10 county 24-hour CMH crisis contacts. It meets the initial 75-record floor and all six category minima; food access and deeper city/county coverage remain active work. Minnesota (MN) has 122 records: 91 county/Tribal crisis access routes, 5 regional TEFAP food-bank referrals and 26 named peer/recovery community organizations; treatment, housing and benefits coverage remain open. Mississippi (MS) has 286 records: 85 MDHS county-benefits contacts, 77 Community Action Agency locations, 22 treatment/PACT contacts, 13 peer/recovery-support contacts, 10 housing and shelter routes, 51 food and meal contacts, and 28 mobile-crisis/stabilization contacts, above the planning range; food coverage now includes named local pantries, meal kitchens, food banks, markets, and community pantry boxes across the state. These totals are preserved; no state is marked complete.
+Kentucky (KY) currently has 134 records: 120 county Family Support offices and 14 CMHC crisis access routes; peer, housing, food and treatment coverage still need local research. Maryland (MD) now has 76 records: 22 ACT contacts, 18 local homelessness/housing routes, 21 food and meal access listings, 5 peer-support services, 5 SNAP navigation providers, and 5 county/regional crisis contacts. It clears the initial 75-record floor and has at least five records in each of the six discovery categories, while remaining an early, source-reviewed directory rather than exhaustive statewide coverage. Michigan (MI) now has 77 records: 30 county HARA housing-assessment routes, 10 named SUD Health Home treatment-provider locations, 10 state-listed recovery community organizations, 7 regional food-bank routes, 10 household-energy benefits routes/programs, and 10 county 24-hour CMH crisis contacts. It meets the initial 75-record floor and all six category minima; food access and deeper city/county coverage remain active work. Minnesota (MN) previously had 232 records, with housing as its only category below the five-record starting floor; the October 30 batch below adds 88 county/Tribal housing-benefit navigation routes. Its new snapshot is 320 (22 treatment, 26 peer, 88 housing, 5 food, 88 benefits, 91 urgent), meeting the initial numeric/category floors while deeper direct-provider and locality coverage remains ongoing. Mississippi (MS) has 286 records: 85 MDHS county-benefits contacts, 77 Community Action Agency locations, 22 treatment/PACT contacts, 13 peer/recovery-support contacts, 10 housing and shelter routes, 51 food and meal contacts, and 28 mobile-crisis/stabilization contacts, above the planning range; food coverage now includes named local pantries, meal kitchens, food banks, markets, and community pantry boxes across the state. These totals are preserved; no state is marked complete.
 
 Massachusetts's 78 state-linked records comprise 38 peer recovery support centers, 31 Community Behavioral Health Center listings, and 9 statewide routes for behavioral-health access, substance-use referral, housing, food, SNAP, health coverage, 988 and Mass 211. The state coverage calculator counts all 78; 59 are city-tagged and 19 are statewide or need a city selected through the official CBHC locator. Sources were reviewed on 2026-10-29. None of the listings is phone-confirmed, and the Commonwealth's published network totals are not an exhaustive directory claim.
 
@@ -286,7 +286,7 @@ For each new directory batch:
 
 ### Five-state directory batches (October 30, 2026)
 
-The current implementation slice now has source-reviewed records from all five queued states: Kentucky, Maryland, Michigan, Minnesota, and Mississippi. Each remains incomplete and none is represented as finished by this batch.
+The current implementation slice has source-reviewed records from all five queued states: Kentucky, Maryland, Michigan, Minnesota, and Mississippi. Minnesota now clears the initial count and category floors, while its locality depth remains open. Kentucky, Maryland, Michigan, and Mississippi remain below at least one category minimum.
 
 - **Kentucky:** 120 county Family Support offices from the CHFS local-office selector, with physical address, shared customer-service phone, and county service area. These are benefits access points only; one office is not counted as separate food, housing, or treatment resources.
 - **Mississippi:** 85 MDHS county-office contacts and 77 distinct Community Action Agency locations; 22 treatment/PACT contacts; 13 peer/recovery-support routes; 10 housing and shelter routes; 51 food and meal contacts, including named local pantries, meal kitchens, food banks, markets, and community pantry boxes; and 28 mobile-crisis/stabilization contacts. The CAA listings are grouped with benefits/community assistance and tell people to call to confirm which programs are active; they do not promise a grant, utility payment, or eligibility.
@@ -319,3 +319,12 @@ This batch adds 71 distinct source-reviewed records across Kentucky, Maryland, M
 The 13 Kentucky Recovery Kentucky entries are supportive recovery housing; applicants apply directly to the center and must confirm eligibility and openings. The 22 Minnesota providers are state-listed CCBHC services; contact each provider for local clinic, referral, payment, and intake details. The Mississippi records distinguish confidential shelter access from public locations and retain provider-specific cautions. Maryland's county pages and Michigan's TEFAP county agencies are finders/referral routes, not walk-in food sites. Michigan TEFAP eligibility is income- and residency-based; call to learn which active distribution serves the household. These are source-reviewed leads, not phone-confirmed, capacity-confirmed, or exhaustive coverage.
 
 Sources for the batch: [Kentucky Housing Corporation Recovery Kentucky center list](https://www.kyhousing.org/programs/recovery-kentucky), [Maryland Food Bank county food finders](https://mdfoodbank.org/find-food/), [Michigan MDE TEFAP county directory](https://www.michigan.gov/mde/services/food/food-distribution/household-food-distribution/the-emergency-food-assistance-program/where-can-i-get-tefap), [Michigan TEFAP eligibility and program overview](https://www.michigan.gov/mde/services/food/food-distribution/household-food-distribution/the-emergency-food-assistance-program), [Minnesota DHS CCBHC provider list](https://mn.gov/dhs/partners-and-providers/policies-procedures/behavioral-health/ccbhc/), and [Mississippi MAMA housing and safety directory](https://www.mama.ms.gov/service-directory?category=6).
+
+## October 30, 2026 — Minnesota benefits expansion
+
+Added 88 named local benefit-navigation contacts: 87 county offices plus the Red Lake Nation office published in the Minnesota DHS Health Care Programs county, Tribal, and state directory. Each record includes the published service-area name, office address, phone, and official destination link. These offices provide a local route for Medical Assistance and MinnesotaCare questions; they are not general cash-grant offices or a guarantee of eligibility or enrollment. Minnesota then had 232 distinct state-linked records, including 88 health-coverage benefit routes. Source-reviewed, not phone-confirmed or exhaustive. Source: [Minnesota DHS Health Care Programs county, Tribal, and state directory](https://mn.gov/dhs/health-care/contact-us/county-tribal-directory/).
+
+
+## October 30, 2026 — Minnesota housing-benefit access expansion
+
+Added 88 county and Tribal office contact routes for Minnesota Housing Support and Minnesota Supplemental Aid (MSA) Housing Assistance. Minnesota DHS directs people applying or asking questions about these programs to their county or Tribal office; the records carry published local office details from the DHS directory and describe the specific housing-benefit intake questions to ask. These are not shelter listings, confirmed placements, or guarantees of cash/rental assistance. The live catalog now reports 320 unique state-linked records: 22 treatment, 26 peer/community, 88 housing-benefit routes, 5 food, 88 health-coverage benefit routes, and 91 urgent-support routes. Minnesota clears the current 75-record and five-per-category floor, but deeper direct-provider, town-level, and availability review continues; do not interpret this as exhaustive statewide coverage or phone-confirmed service. Sources: [Minnesota DHS Housing contact page](https://mn.gov/dhs/housing-income/housing-services/about-contact/index1.jsp), [MSA Housing Assistance program details](https://mn.gov/dhs/housing-income/housing-services/programs-and-services/msa-housing-assistance/), [Housing Support program details](https://mn.gov/dhs/housing-income/income-assistance/housing-support/), and [Minnesota DHS county and Tribal office contact directory](https://mn.gov/dhs/health-care/contact-us/county-tribal-directory/).
