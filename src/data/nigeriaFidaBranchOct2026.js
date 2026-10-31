@@ -5,8 +5,10 @@
  */
 const CHECKED_AT = "2026-10-31";
 
-const branch = (record) => ({
-  ...record,
+const branch = (record) => {
+  const { branchName, slug, ...details } = record;
+  return {
+  ...details,
   country: "Nigeria",
   primaryCategory: "emergency",
   resourceType: "Women lawyers’ association · women’s and children’s legal-support enquiries",
@@ -17,12 +19,15 @@ const branch = (record) => ({
   phoneConfirmed: false,
   exhaustiveCoverage: false,
   verified: true,
-  description: `${record.branchName} is a FIDA Nigeria state branch with a publicly listed office and contact route. FIDA Nigeria describes free legal representation for eligible indigent women and children through its branch network. Contact the branch to confirm whether it can take the matter, eligibility, safe and confidential intake, appointment requirements, and any costs. This is a legal-support route, not emergency dispatch, clinical care, or shelter placement.`,
-  source: `FIDA Nigeria · ${record.state} Branch contact page`,
-  link: `https://fida.org.ng/${record.slug}/`,
-  locationLine: `${record.city}, ${record.state} · contact first to confirm legal-aid intake and a safe appointment route`,
-  region: `${record.city}, ${record.state}, Nigeria`,
-});
+  description: `${branchName} is a FIDA Nigeria state branch with a publicly listed contact route. FIDA Nigeria describes free legal representation for eligible indigent women and children through its branch network. Contact the branch to confirm whether it can take the matter, eligibility, safe and confidential intake, appointment requirements, and any costs. This is a legal-support route, not emergency dispatch, clinical care, or shelter placement.`,
+  source: `FIDA Nigeria · ${branchName} contact page`,
+  link: `https://fida.org.ng/${slug}/`,
+  locationLine: record.city
+    ? `${record.city}, ${record.state} · contact first to confirm legal-aid intake and a safe appointment route`
+    : `${record.state} State · contact first to confirm branch location, legal-aid intake, and a safe appointment route`,
+  region: record.city ? `${record.city}, ${record.state}, Nigeria` : `${record.state}, Nigeria`,
+  };
+};
 
 export const NIGERIA_FIDA_BRANCH_OCT_2026 = [
   branch({
@@ -108,5 +113,95 @@ export const NIGERIA_FIDA_BRANCH_OCT_2026 = [
     phone: "08033298380",
     alternatePhone: "08068691446",
     email: "fidaondostate@gmail.com",
+  }),
+  branch({
+    id: "adamawa-fida-state-legal-support",
+    name: "FIDA Adamawa State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Adamawa State Branch",
+    state: "Adamawa",
+    city: "Yola",
+    slug: "adamawa",
+    address: "Temporary office, care of the Chief Registrar, High Court of Justice, Yola, Adamawa State",
+    phone: "07032883660",
+    alternatePhone: "07033391999",
+    email: "jamilababuba@gmail.com",
+  }),
+  branch({
+    id: "anambra-fida-state-legal-support",
+    name: "FIDA Anambra State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Anambra State Branch",
+    state: "Anambra",
+    city: "Awka",
+    slug: "anambra",
+    address: "Family Law Centre, Anambra State Judiciary Headquarters, behind High Court Complex, Awka, Anambra State",
+    phone: "08033283339",
+    alternatePhone: "07063213916",
+    email: "amychuka2001@yahoo.co.uk",
+  }),
+  branch({
+    id: "delta-fida-state-legal-support",
+    name: "FIDA Delta State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Delta State Branch",
+    state: "Delta",
+    slug: "delta",
+    phone: "08023628278",
+    alternatePhone: "08038924160",
+    email: "fidadelta@fida.org.ng",
+  }),
+  branch({
+    id: "imo-fida-state-legal-support",
+    name: "FIDA Imo State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Imo State Branch",
+    state: "Imo",
+    city: "Owerri",
+    slug: "imo",
+    address: "Department of Public Prosecution, High Court Premises, Owerri, Imo State",
+    phone: "09161493224",
+    alternatePhone: "08037773910",
+    email: "fidaimostatebranch@gmail.com",
+  }),
+  branch({
+    id: "jigawa-fida-state-legal-support",
+    name: "FIDA Jigawa State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Jigawa State Branch",
+    state: "Jigawa",
+    slug: "jigawa",
+    phone: "08025252446",
+    alternatePhone: "08137835215",
+    email: "salehsadiya172@gmail.com",
+  }),
+  branch({
+    id: "katsina-fida-state-legal-support",
+    name: "FIDA Katsina State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Katsina State Branch",
+    state: "Katsina",
+    city: "Katsina",
+    slug: "katsina",
+    address: "Road J, Goruba Housing Estate, G.R.A., Katsina State",
+    phone: "08036573859",
+    alternatePhone: "08173835202",
+    email: null,
+  }),
+  branch({
+    id: "kebbi-fida-state-legal-support",
+    name: "FIDA Kebbi State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Kebbi State Branch",
+    state: "Kebbi",
+    slug: "kebbi",
+    phone: "08067860749",
+    alternatePhone: "08060749978",
+    email: "fidakebbi@fida.org.ng",
+  }),
+  branch({
+    id: "yobe-fida-state-legal-support",
+    name: "FIDA Yobe State Branch — women’s and children’s legal-support enquiries",
+    branchName: "FIDA Yobe State Branch",
+    state: "Yobe",
+    city: "Damaturu",
+    slug: "yobe",
+    address: "High Court No. 3 Complex, along Maiduguri Road, Damaturu, Yobe State",
+    phone: "08035980200",
+    alternatePhone: "08036764945",
+    email: "aishaisa24@gmail.com",
   }),
 ];
