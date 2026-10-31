@@ -15,7 +15,7 @@ describe("category fallback pathways", () => {
   it("keeps the next five-state Nigeria cohort source-reviewed and accurately qualified", () => {
     const records = NIGERIA_NEXT_FIVE_STATE_EXPANSION;
     const ids = records.map(({ id }) => id);
-    expect(records).toHaveLength(161);
+    expect(records).toHaveLength(175);
     expect(new Set(ids).size).toBe(ids.length);
     expect(new Set(records.map(({ state }) => state))).toEqual(new Set(["Enugu", "Bauchi", "Kaduna", "Akwa Ibom", "Ogun"]));
     expect(records.every((item) =>
@@ -28,18 +28,22 @@ describe("category fallback pathways", () => {
       Kaduna: coverage("Kaduna"),
       "Akwa Ibom": coverage("Akwa Ibom"),
       Ogun: coverage("Ogun"),
-    }).toEqual({ Enugu: 37, Bauchi: 30, Kaduna: 32, "Akwa Ibom": 24, Ogun: 54 });
+    }).toEqual({ Enugu: 39, Bauchi: 35, Kaduna: 34, "Akwa Ibom": 26, Ogun: 57 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Enugu").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 15, circles: 1, housing: 1, food: 3, funding: 11, emergency: 6 });
+      .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 11, emergency: 6 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Bauchi").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 9, circles: 2, housing: 2, food: 4, funding: 6, emergency: 7 });
+      .toEqual({ programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Kaduna").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 5, circles: 2, housing: 3, food: 4, funding: 8, emergency: 10 });
+      .toEqual({ programs: 5, circles: 4, housing: 3, food: 4, funding: 8, emergency: 10 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Akwa Ibom").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 4, circles: 0, housing: 5, food: 4, funding: 4, emergency: 7 });
+      .toEqual({ programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 7 });
     expect(Object.fromEntries(getNigeriaStateCoverage("Ogun").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 34, circles: 0, housing: 4, food: 3, funding: 4, emergency: 9 });
+      .toEqual({ programs: 35, circles: 2, housing: 4, food: 3, funding: 4, emergency: 9 });
     expect(records.filter(({ id }) => id.startsWith("ogun-general-hospital-")).every(({ phone, email }) => phone && email)).toBe(true);
+    expect(records.filter(({ id }) => id.startsWith("nifes-nacf-"))).toHaveLength(11);
+    expect(records.filter(({ id }) => id.startsWith("nifes-nacf-")).every(({ primaryCategory, description }) =>
+      primaryCategory === "circles" && description.includes("faith-based") && description.includes("not clinical")
+    )).toBe(true);
   });
 
   it("serves the next five-state Nigeria additions in their matching filters", () => {

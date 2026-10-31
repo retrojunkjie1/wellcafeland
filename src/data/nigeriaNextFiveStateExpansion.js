@@ -2121,6 +2121,54 @@ export const NIGERIA_NEXT_FIVE_STATE_EXPANSION = [
     region: `${city}, Ogun State, Nigeria`,
     locationLine: `${city} · call the hospital directly to confirm clinic access, hours, and fees`,
   })),
+  // NIFES Associates Community Fellowship (NACF): faith-based community
+  // meetings, not clinical care or addiction-recovery services. The source
+  // publishes schedules and coordinator contacts; confirm venue/access first.
+  ...[
+    ["enugu-city", "Enugu", "Enugu", "07034750185", "3rd Sunday monthly, 5:00 p.m.", "NIFES lists a monthly meeting; call the coordinator to confirm the current venue, whether non-associates may attend, and any changes to the schedule."],
+    ["enugu-nsukka", "Nsukka", "Nsukka", "08037804687", "2nd Thursday monthly, 5:00 p.m.", "NIFES lists a monthly meeting; call the coordinator to confirm the current venue, whether non-associates may attend, and any changes to the schedule."],
+    ["bauchi-yelwa", "Yelwa", "Bauchi", "08069601244", "Fortnightly; time not published", "NIFES lists a fortnightly meeting; call the shared coordinator to confirm time, current venue, whether non-associates may attend, and any changes."],
+    ["bauchi-gwallameji", "Gwallameji", "Bauchi", "08069601244", "Monthly; time not published", "NIFES lists a monthly meeting; call the shared coordinator to confirm time, current venue, whether non-associates may attend, and any changes."],
+    ["bauchi-azare", "Azare", "Azare", "08137632490", "Fortnightly; time not published", "NIFES lists a fortnightly meeting; call the coordinator to confirm time, current venue, whether non-associates may attend, and any changes."],
+    ["kaduna-narayi", "Kaduna (Narayi)", "Kaduna", "08036490207", "1st Saturday monthly; time not published", "NIFES lists a monthly meeting at RCCG Dunamis Center, Narayi High-cost; call to verify the venue, access for non-associates, time, and current schedule."],
+    ["kaduna-zaria", "Zaria", "Zaria", "08067671145", "2nd Sunday monthly; time not published", "NIFES lists a monthly meeting at its Zaria office; call to verify the current venue, access for non-associates, time, and schedule."],
+    ["akwaibom-uyo", "Uyo", "Uyo", "08060333866", "3rd Sunday monthly; time not published", "NIFES lists a monthly meeting at Victory Chapel, UNIUYO; call to verify the venue, access for non-associates, time, and current schedule."],
+    ["akwaibom-eket", "Eket", "Eket", "08067280256", "2nd Sunday monthly; time not published", "NIFES lists a monthly meeting in Eket; call to confirm the exact venue, access for non-associates, time, and current schedule."],
+    ["ogun-abeokuta", "Abeokuta", "Abeokuta", "0802925536", "3rd Friday monthly, 4:00 p.m.", "NIFES lists a monthly meeting; call the coordinator to confirm the current venue, whether non-associates may attend, and any changes to the schedule."],
+    ["ogun-ijebu-ode", "Ijebu-Ode", "Ijebu-Ode", "07031877989", "Sunday, 3:00 p.m.; frequency not specified", "NIFES lists a Sunday meeting; call the coordinator to confirm frequency, current venue, whether non-associates may attend, and any changes."],
+  ].map(([slug, city, locality, phone, schedule, accessNote]) => sourceReviewed({
+    id: `nifes-nacf-${slug}-community-fellowship`,
+    name: `NIFES Associates Community Fellowship (NACF) — ${city} faith-based community meeting`,
+    primaryCategory: "circles",
+    resourceType: "Faith-based community fellowship · scheduled local meeting",
+    description: `NIFES publishes this local fellowship contact and schedule: ${schedule} ${accessNote} This is a faith-based fellowship, not clinical counselling, mental-health treatment, or addiction-recovery care.`,
+    phone,
+    link: "https://nifes.org.ng/nacfnigeria/",
+    source: "NIFES · Associates Community Fellowship (NACF) Centers in Nigeria",
+    city,
+    state: slug.startsWith("enugu-") ? "Enugu" : slug.startsWith("bauchi-") ? "Bauchi" : slug.startsWith("kaduna-") ? "Kaduna" : slug.startsWith("akwaibom-") ? "Akwa Ibom" : "Ogun",
+    region: `${city}, Nigeria`,
+    locationLine: `${city} · ${schedule}; call first to confirm venue and public access`,
+  })),
+  ...[
+    ["bauchi-azare", "Federal Medical Centre, Azare", "Azare", "08099275912", "dkatagum@yahoo.com"],
+    ["bauchi-misau", "Federal Medical Centre, Misau", "Misau", "08034836698", "rufaidachi@yahoo.co.uk"],
+    ["ogun-abeokuta", "Federal Medical Centre, Abeokuta", "Abeokuta", "08030608704", "alwajud1423@gmail.com"],
+  ].map(([slug, name, city, phone, email]) => sourceReviewed({
+    id: `nigeria-${slug}-federal-medical-center-care`,
+    name: `${name} — general and specialist-care access`,
+    primaryCategory: "programs",
+    resourceType: "Federal Medical Centre · general and specialist-care enquiries",
+    description: `The Federal Ministry of Health lists ${name} and publishes a phone and email contact. Contact the hospital to request the appropriate patient-intake or clinic desk and confirm the service, appointment route, hours, fees, and referral requirements. This listing does not confirm a particular specialty, current bed, or same-day access.`,
+    phone,
+    email,
+    link: "https://health.gov.ng/federal-medical-centres/",
+    source: "Federal Ministry of Health and Social Welfare · Federal Medical Centres directory",
+    city,
+    state: city === "Azare" || city === "Misau" ? "Bauchi" : "Ogun",
+    region: `${city}, Nigeria`,
+    locationLine: `${city} · contact the hospital to confirm current clinic access, hours, and fees`,
+  })),
 ];
 
 export const NIGERIA_NEXT_FIVE_STATE_EXPANSION_COUNTS = Object.freeze({
