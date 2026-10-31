@@ -7,6 +7,7 @@ import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "./nigeriaNemaOfficeOct20
 import { NIGERIA_FRSC_UNIT_COMMAND_EXPANSION } from "./nigeriaFrscUnitCommandExpansion.js";
 import { NIGERIA_LAGOS_MIND_PHC_EXPANSION } from "./nigeriaLagosMindPhcExpansion.js";
 import { NIGERIA_ORANGE_PAGES_OCT_2026_EXPANSION } from "./nigeriaOrangePagesOct2026Expansion.js";
+import { NIGERIA_ORANGE_PAGES_FOLLOWUP } from "./nigeriaOrangePagesOct2026Followup.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -25,6 +26,7 @@ const reviewedExpansion = [
   ...NIGERIA_NEXT_FIVE_STATE_EXPANSION,
   ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
   ...NIGERIA_ORANGE_PAGES_OCT_2026_EXPANSION,
+  ...NIGERIA_ORANGE_PAGES_FOLLOWUP,
 ];
 const fiveJurisdiction = (category) => reviewedExpansion
   .filter((record) => record.primaryCategory === category);
