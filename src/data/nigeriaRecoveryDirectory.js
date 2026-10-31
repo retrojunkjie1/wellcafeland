@@ -12,6 +12,12 @@ import { NIGERIA_NHRC_STATE_OFFICES } from "./nigeriaNhrcStateOfficesOct2026.js"
 import { NIGERIA_RED_CROSS_BRANCHES } from "./nigeriaRedCrossBranchOct2026.js";
 import { NIGERIA_FIDA_BRANCH_OCT_2026 } from "./nigeriaFidaBranchOct2026.js";
 import {
+  NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY,
+  NIGERIA_NEXT_LOW_COVERAGE_FOOD,
+  NIGERIA_NEXT_LOW_COVERAGE_FUNDING,
+  NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS,
+} from "./nigeriaLowCoverageNextFiveOct2026.js";
+import {
   NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
   NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
   NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
@@ -256,6 +262,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...fiveJurisdiction("programs"),
   ...NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS,
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
 ];
 
@@ -434,6 +441,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   },
   ...fiveJurisdiction("food"),
   ...NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
+  ...NIGERIA_NEXT_LOW_COVERAGE_FOOD,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -532,6 +540,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...fiveJurisdiction("funding"),
   ...NIGERIA_NHIA_STATE_EXPANSION,
   ...NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
+  ...NIGERIA_NEXT_LOW_COVERAGE_FUNDING,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -599,6 +608,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION,
   ...NIGERIA_FRSC_UNIT_COMMAND_EXPANSION,
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY,
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
