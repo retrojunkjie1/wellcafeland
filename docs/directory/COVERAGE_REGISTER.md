@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are in the coverage calculator; live audit after the current five-state batch: 41 meet the current directory floor and 10 remain in progress. | In progress | Continue the under-floor and category-gap queue. Current batch: KY, LA, ME, MA and MO; all five meet the 75-record and six-category starting floors while source freshness, local depth and availability checks remain open. |
+| United States | All 50 states plus DC are in the coverage calculator; live audit after the current five-state batch: 46 meet the current directory floor and 5 remain in progress. | In progress | Continue the five under-floor states and deepen locality/source review. Current batch: MT, NE, NV, NH and SC; all five now meet the 75-record and six-category starting floors. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -32,7 +32,7 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Meets the current directory floor: 41 jurisdictions
+### Meets the current directory floor: 46 jurisdictions
 
 “Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
@@ -60,12 +60,16 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Maine | ME | 137 | Meets count and all six category floors; local provider details and source freshness need review |
 | Massachusetts | MA | 95 | Meets count and all six category floors; city-level food and family-shelter routes added; local depth remains open |
 | Missouri | MO | 88 | Meets count and all six category floors; Coordinated Entry source dates and local access remain open |
+| Montana | MT | 78 | Meets count and all six category floors; local office and peer-service delivery remain subject to direct confirmation |
 | Maryland | MD | 85 | Meets current directory floor; local food finders broaden county coverage; locality and phone review remain open |
 | Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
 | Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
 | Minnesota | MN | 320 | Meets floor; housing-benefit routes added across county/Tribal offices; deeper local-provider coverage remains open |
 | New Jersey | NJ | 137 | Meets current count and six-category floors; locality and phone review remain open |
 | New Mexico | NM | 76 | Meets current count and six-category floors; locality and phone review remain open |
+| Nebraska | NE | 86 | Meets count and all six category floors; kiosks are self-service locations, not staffed benefit intake offices |
+| New Hampshire | NH | 86 | Meets count and all six category floors; crisis contacts are source-listed regional routes, not confirmed response capacity |
+| Nevada | NV | 88 | Meets count and all six category floors; coordinated-entry source includes a 2023 Southern Nevada flyer requiring current schedule confirmation |
 | New York | NY | 123 | Meets current directory floor |
 | North Carolina | NC | 270 | Meets floor; above planning range, preserve and audit |
 | North Dakota | ND | 79 | Meets current count and six-category floors; locality and phone review remain open |
@@ -74,38 +78,35 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Oregon | OR | 121 | Meets current count and six-category floors; locality and phone review remain open |
 | Pennsylvania | PA | 75 | Meets current directory floor |
 | Rhode Island | RI | 78 | Meets current count and six-category floors; locality and phone review remain open |
+| South Carolina | SC | 131 | Meets count and all six category floors; specialized crisis channels supplement the statewide mobile-crisis dispatcher |
 | South Dakota | SD | 98 | Meets current directory floor |
 | Tennessee | TN | 221 | Meets floor; above planning range, preserve and audit |
 | Texas | TX | 340 | Meets floor; above planning range, preserve and audit |
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Still in progress: 10 jurisdictions
+### Still in progress: 5 jurisdictions
 
 Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
 
 | State / jurisdiction | Code | Records | Categories below five (current count) |
 |---|---:|---:|---|
-| Montana | MT | 51 | Peer 4; benefits 0 |
-| Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
-| Nevada | NV | 33 | Peer 2; housing 0; benefits 0; urgent 1 |
-| New Hampshire | NH | 54 | Benefits 0; urgent 0 |
-| South Carolina | SC | 127 | Urgent 1 |
 | Virginia | VA | 0 | All six categories 0 |
 | Washington | WA | 0 | All six categories 0 |
 | West Virginia | WV | 0 | All six categories 0 |
 | Wisconsin | WI | 0 | All six categories 0 |
 | Wyoming | WY | 0 | All six categories 0 |
 
-The source-reviewed batch recorded below adds 94 distinct listings across Kentucky, Louisiana, Maine, Massachusetts, and Missouri. Each of the five now meets the initial 75-record floor and all six category minima; continued work remains necessary for local depth, provider confirmation, source freshness, and coverage beyond these contacts. Minnesota now meets the initial count and six-category balance floors, but this does not establish exhaustive coverage. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
+The October 30 source-reviewed batch adds 94 distinct listings across Kentucky, Louisiana, Maine, Massachusetts, and Missouri. Each meets the initial 75-record floor and all six category minima; continued work remains necessary for local depth, provider confirmation, source freshness, and coverage beyond these contacts. Minnesota also meets the initial count and six-category balance floors. The current live snapshot for MT, NE, NV, NH and SC is recorded below; these milestones do not establish exhaustive or phone-confirmed coverage. Counts come from `US_DIRECTORY_COVERAGE` after wiring records into search:
 
 | State | Total | Categories covered in this batch | Remaining work |
 |---|---:|---|---|
 | Missouri (MO) | 77 | Treatment: 30; peer: 12; food: 10; urgent support: 25 | Numeric floor met; urgent care is source-listed, not capacity-confirmed; housing and benefits remain gaps |
-| Montana (MT) | 51 | Treatment: 20; peer/community: 4; housing: 8; food: 9; urgent support: 10 | Add 24 records to the 75 floor; benefits remain a gap, and urgency contacts are regional/site routes |
-| Nebraska (NE) | 53 | Housing: 35; treatment: 6; peer: 4; food: 6; benefits and urgent-support referrals: 1 each | Add 22 records to the 75 floor; continue peer support and all-category locality coverage |
-| Nevada (NV) | 33 | Treatment: 5; food: 25; peer: 2; urgent support: 1 statewide 988 route | Add 42 records to the 75 floor; housing, benefits and local urgent routes remain gaps |
-| New Hampshire (NH) | 54 | Housing: 17; treatment & recovery: 10; peer: 22; food: 5 | Add 21 records to the 75 floor; benefits and urgent support remain gaps |
+| Montana (MT) | 78 | Treatment: 20; peer/community: 12; housing: 8; food: 9; benefits: 19; urgent support: 10 | All six initial floors met; deepen non-metro service and confirm how AWARE peer support is delivered locally |
+| Nebraska (NE) | 86 | Treatment: 6; peer/community: 5; housing: 35; food: 6; benefits: 29; urgent support: 5 | All six initial floors met; kiosks are self-service and regional crisis access must be checked before travel |
+| Nevada (NV) | 88 | Treatment: 5; peer/community: 5; housing: 29; food: 25; benefits: 19; urgent support: 5 | All six initial floors met; Clark County entry flyer is dated August 2023; verify access, age, and current schedule |
+| New Hampshire (NH) | 86 | Treatment: 10; peer/community: 22; housing: 17; food: 5; benefits: 11; urgent support: 21 | All six initial floors met; verify regional crisis catchment and present response options |
+| South Carolina (SC) | 131 | Treatment: 64; peer/community: 5; housing: 5; food: 6; benefits: 46; urgent support: 5 | All six initial floors met; statewide accessibility, texting, 988 and Veteran channels supplement mobile-crisis dispatch |
 
 Sources: [Missouri DSS Find an Office](https://dss.mo.gov/dss-map), [Missouri Department of Mental Health provider contacts](https://dmh.mo.gov/contacts), [Montana DPHHS Emergency Solutions Grant providers](https://dphhs.mt.gov/HCSD/EmergencySolutionsGrant/ServiceProviders), [Montana DPHHS TEFAP recipient agencies](https://prod-dphhs.mt.gov/hcsd/TheEmergencyFoodAssistanceProgram), [Montana DPHHS CCBHC Provider Locator](https://www.dphhs.mt.gov/FutureGenerations/CCBHC/Provider-Locator), [Nebraska DHHS homeless assistance providers](https://dhhs.ne.gov/Pages/Nebraska-Homeless-Assistance-Program-Recipients.aspx), [Nebraska same-day and walk-in behavioral-health access](https://dhhs.ne.gov/Pages/Same-Day-Open-Access.aspx), [Nebraska DHHS outreach and community resources](https://dhhs.ne.gov/Pages/Outreach-and-Community-Resources.aspx), [Food Bank of Northern Nevada](https://www.fbnn.org/gethelp/), [Three Square food assistance](https://www.threesquare.org/contact-us), [Nevada 211 food services](https://www.nevada211.org/food-assistance/search-food-services/), [Nevada 988 crisis response](https://www.dpbh.nv.gov/programs/bh-wellness-and-prevention-bbhwp/crisis-response/), [New Hampshire DHHS Community Mental Health Centers](https://www.dhhs.nh.gov/sites/g/files/ehbemt476/files/documents2/bmhs-list-map.pdf), and [New Hampshire DHHS emergency shelter directory (January 2023 source)](https://www.dhhs.nh.gov/sites/g/files/ehbemt476/files/documents2/dhhs-contracted-emergency-shelters.pdf). These are source-reviewed contacts, not phone-confirmed, availability-confirmed, or exhaustive coverage. The New Hampshire shelter source is dated January 2023; users should confirm the shelter is operating and accepting referrals before travel.
 
@@ -133,9 +134,11 @@ North Carolina is now organized into six separate categories rather than display
 
 ### Next U.S. multi-state batch queue
 
-### Current five-state batch — October 30, 2026
+Next five states: Virginia, Washington, West Virginia, Wisconsin, and Wyoming. Each is currently below the 75-record floor in the live catalog; build all six categories with sourced local and statewide routes, preserve existing records, then reconcile actual counts before calling a state floor-met.
 
-The current batch is New Jersey, New Mexico, North Dakota, Oregon, and Rhode Island. Counts below reflect the current state-linked catalog after the new unique records were wired into the six support categories. The 75–125 range is a planning band, not a cap. All five meet the initial 75-record and five-per-category floors; **none is marked exhaustive or finished**. City, rural-area, intake, and source-depth review remains active.
+### Completed five-state checkpoint — New Jersey, New Mexico, North Dakota, Oregon, Rhode Island (October 30, 2026)
+
+This completed batch was New Jersey, New Mexico, North Dakota, Oregon, and Rhode Island. Counts below reflect the current state-linked catalog after the new unique records were wired into the six support categories. The 75–125 range is a planning band, not a cap. All five meet the initial 75-record and five-per-category floors; **none is marked exhaustive or finished**. City, rural-area, intake, and source-depth review remains active.
 
 | State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support | Current state |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
@@ -157,7 +160,7 @@ These five states now have larger, organized source-backed additions in the acti
 
 | State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support | Current state |
 |---|---:|---:|---:|---:|---:|---:|---:|---|
-| South Carolina | 127 | 64 | 5 | 5 | 6 | 46 | 1 | Above planning band; urgent-support depth remains a research gap |
+| South Carolina | 127 | 64 | 5 | 5 | 6 | 46 | 1 | Prior checkpoint only; superseded by Oct 30 update below (current 131 / urgent 5) |
 | South Dakota | 98 | 33 | 11 | 10 | 33 | 5 | 6 | Initial numeric and category floors met; continue county and treatment coverage |
 | Tennessee | 221 | 150 | 7 | 36 | 7 | 11 | 10 | Above planning band; expanded named local crisis access, broader locality review remains open |
 | Utah | 80 | 7 | 6 | 29 | 17 | 12 | 9 | Above the initial numeric floor; local crisis-center coverage expanded, statewide and category depth still in progress |
@@ -175,7 +178,7 @@ The October 30, 2026 peer-support pass adds 44 distinct resources across the sam
 
 Sources for this peer-support pass: [Missouri Department of Mental Health Recovery Community Centers map (revised May 5, 2025)](https://oembed-dmh.mo.gov/sites/dmh/files/media/pdf/2025/05/recovery-community-centers-map.pdf); [New Hampshire DHHS State-Funded Recovery Community Organizations referral guide (November 2023)](https://www.nhrecovery.org/wp-content/uploads/2023/11/RCOReferralGuide_BDAS-Nov2023-1.pdf); [Never Alone Recovery Support Services programs](https://www.narssmontana.org/programs) and [contact page](https://www.narssmontana.org/contactus); [Montana's Peer Network](https://www.mtpeernetwork.org/); [Recovery Access Montana directory](https://www.rammontana.org/directory); [Wellbeing Initiative Nebraska Recovery Community Navigation](https://www.wellbeinginitiatives.org/recovery-community-navigation); [Heartland Family Service Peer Support](https://www.heartlandfamilyservice.org/services/peer-support-ne/); [VA Nebraska-Western Iowa peer-support groups](https://www.va.gov/nebraska-western-iowa-health-care/programs/peer-support-groups/); [Region 6 Behavioral Healthcare peer and recovery initiatives](https://www.regionsix.com/how-we-help/peer-and-recovery-initiatives/); [Foundation for Recovery Southern Nevada center](https://forrecovery.org/) and [peer-support warmline](https://forrecovery.org/peer-recovery-support/).
 
-On October 30, 2026, the next source-reviewed batch added 141 distinct records: 24 South Dakota food pantry routes and four local Community Action providers; 36 Tennessee shelter, housing-access, and survivor-support contacts from the state housing resource table; 29 Utah affordable-housing/shelter contacts and 12 county/region HEAT utility-assistance contacts from Utah DHHS; and 36 named Vermont Commodity Supplemental Food Program pickup leads from Vermont Foodbank. A subsequent targeted pass added three Tennessee food contacts (Northeast Tennessee regional finder, Bledsoe County Food Bank, and Grundy County FoodBank) and 15 Vermont urgent-support records (three state-listed walk-in urgent-care programs and 12 regional community-agency crisis lines). A Utah urgent-support pass added three distinct routes: the youth/family Stabilization and Mobile Response line, YWCA Utah's survivor crisis line, and The Trevor Project's specialized LGBTQ+ youth crisis service. The last Utah batch adds nine named food-pantry locations from Salt Lake and Utah County health-department resource guides. At that checkpoint, South Dakota had 54 records; Tennessee 212, Utah 76, and Vermont 99. Tennessee's 36 housing records are provider access contacts, not confirmed beds. Utah's two Bear River office listings are separate published office routes for the same regional authority. Vermont's 36 entries are CSFP pickup leads for eligible older adults, not general walk-in pantries; the source gives town/site names, so callers must confirm exact pickup address and schedule before travel. Utah and Vermont met the initial numeric floor at that checkpoint. These are threshold milestones, not claims of exhaustive or phone-confirmed coverage. Every total remains a progress measure, not proof of exhaustive local coverage or current intake. South Carolina received no new crisis record because the research found one statewide dispatch route and no substantiated distinct local dispatcher; it remains a one-record urgent category rather than inflating coverage with duplicate 988/911 routes.
+On October 30, 2026, the next source-reviewed batch added 141 distinct records: 24 South Dakota food pantry routes and four local Community Action providers; 36 Tennessee shelter, housing-access, and survivor-support contacts from the state housing resource table; 29 Utah affordable-housing/shelter contacts and 12 county/region HEAT utility-assistance contacts from Utah DHHS; and 36 named Vermont Commodity Supplemental Food Program pickup leads from Vermont Foodbank. A subsequent targeted pass added three Tennessee food contacts (Northeast Tennessee regional finder, Bledsoe County Food Bank, and Grundy County FoodBank) and 15 Vermont urgent-support records (three state-listed walk-in urgent-care programs and 12 regional community-agency crisis lines). A Utah urgent-support pass added three distinct routes: the youth/family Stabilization and Mobile Response line, YWCA Utah's survivor crisis line, and The Trevor Project's specialized LGBTQ+ youth crisis service. The last Utah batch adds nine named food-pantry locations from Salt Lake and Utah County health-department resource guides. At that checkpoint, South Dakota had 54 records; Tennessee 212, Utah 76, and Vermont 99. Tennessee's 36 housing records are provider access contacts, not confirmed beds. Utah's two Bear River office listings are separate published office routes for the same regional authority. Vermont's 36 entries are CSFP pickup leads for eligible older adults, not general walk-in pantries; the source gives town/site names, so callers must confirm exact pickup address and schedule before travel. Utah and Vermont met the initial numeric floor at that checkpoint. These are threshold milestones, not claims of exhaustive or phone-confirmed coverage. Every total remains a progress measure, not proof of exhaustive local coverage or current intake. At this earlier checkpoint, South Carolina received no new crisis record because research found one statewide mobile-crisis dispatcher and no substantiated distinct local dispatcher. That snapshot is superseded by the later distinct accessibility, text, 988, and Veterans channels documented in the current batch below; 988 and 911 are not counted as duplicate dispatch routes.
 
 The current South Dakota batch adds eight named peer/community access points, four state-listed short-term crisis stabilization centers, and nine distinct local food contacts (Huron, Milbank, Madison, Wall, Bowdle, Flandreau, Piedmont, Bridgewater, and Rapid City). Its live catalog snapshot is now 75 records across the six categories: treatment 11, peer/community 11, housing 10, food/essentials 33, funding/benefits 5, urgent support 5. The state meets the 75-record initial floor and the five-per-category floor; this is a planning milestone, not a claim of exhaustive geographic coverage, current capacity, or phone confirmation. Crisis centers are listed as regional short-term stabilization services, not guaranteed walk-in beds; callers should confirm intake and eligibility first.
 
@@ -188,6 +191,22 @@ Next work: continue South Dakota's locality and treatment coverage; continue Ten
 The source-reviewed catalog now reports Arkansas 124 records, Delaware 140, District of Columbia 88, Illinois 113, and Kansas 127. Each jurisdiction has at least five distinct state-linked records in treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. These are directory-floor milestones, not exhaustive coverage, phone confirmation, guaranteed availability, or current eligibility. The changes add Arkansas peer-recovery sites and a regional 24/7 crisis route; a Dover Recovery Café; four DC consumer-led peer and advocacy partners; Illinois's CARES mobile-crisis access line; and the Kansas Food Source county locator. Existing state entries were preserved. Live category totals (programs, peer, housing, food, grants, urgent): AR 18/6/7/75/13/5; DE 31/5/25/47/19/13; DC 38/7/20/11/5/7; IL 29/10/20/40/9/5; KS 57/25/6/5/6/28.
 
 Sources: [Wolfe Street Foundation](https://www.wolfestreet.org/), [Hot Springs peer recovery](https://www.hotspringsar.gov/1359/Peer-Recovery-Support), [NEA Divine Intervention](https://www.neadivineintervention.org/), [P.E.A.R.L. peer support](https://arpearl.org/peer-support-services/), [The Centers Northwest Arkansas crisis services](https://www.thecentersar.com/services/crisis-emergency-services), [Network Connect Recovery Café](https://www.networkconnect.org/recovery-cafe), [Delaware DHSS Recovery Month update](https://news.delaware.gov/2026/09/28/delaware-officials-close-out-national-recovery-month-highlight-recovery-community-centers-across-the-state/), [DC DBH consumer advocacy and peer support partners](https://dbh.dc.gov/service/consumer-advocacy-and-peer-support), [Illinois CARES crisis provider locator](https://hfs.illinois.gov/medicalclients/behavioral/findaprovider.html), and [Kansas Food Source](https://kansasfoodsource.org/). Contact the organization or service before travel to confirm hours, eligibility, intake, location, and current availability. No listing in this batch was phone-confirmed.
+
+### Current five-state batch — Montana, Nebraska, Nevada, New Hampshire, South Carolina (October 30, 2026)
+
+The active batch has been integrated into the searchable catalog. All five states now meet the 75-record floor and have at least five unique, state-linked records in each of the six support categories. Counts are calculated from `US_DIRECTORY_COVERAGE`; the 75–125 range remains a planning band, not a cap. These are source-reviewed listings, not phone-confirmed or exhaustive coverage, and current intake, eligibility, schedules, and capacity must be confirmed with each service. Existing listings were preserved.
+
+| State | Total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Montana (MT) | 78 | 20 | 12 | 8 | 9 | 19 | 10 |
+| Nebraska (NE) | 86 | 6 | 5 | 35 | 6 | 29 | 5 |
+| Nevada (NV) | 88 | 5 | 5 | 29 | 25 | 19 | 5 |
+| New Hampshire (NH) | 86 | 10 | 22 | 17 | 5 | 11 | 21 |
+| South Carolina (SC) | 131 | 64 | 5 | 5 | 6 | 46 | 5 |
+
+This batch adds 19 Montana public-assistance offices and eight peer-access routes; 28 Nebraska public-use benefit kiosks, a DHHS consumer/peer advocacy route, and four additional urgent-support contacts; 19 Nevada DSS district offices, 29 coordinated-entry access points across Clark and Washoe counties, three peer-access resources, and four local crisis routes; 11 New Hampshire benefit offices and 21 regional crisis contacts; and four distinct South Carolina accessibility/text/specialized crisis channels. Nebraska kiosk entries represent computers for public use, not staffed application intake. Nevada's Clark County access flyer is dated August 2023 and schedules/eligibility need rechecking; current Washoe and DSS sources are linked in the records. South Carolina's new lines are specialized channels, not extra mobile dispatchers.
+
+Sources: [Montana DPHHS Public Assistance offices](https://dphhs.mt.gov/HCSD/OfficeofPublicAssistance), [Greater Impact Recovery Point](https://www.greaterimpact.us/recoverypoint), [HRDC Recovery Point](https://hrdc9.galaxydigital.com/agency/detail/?agency_id=150461), [AWARE peer support](https://www.aware-inc.org/service/peer-support/), [Power for Abundant Recovery](https://abundantrecovery.org/about-us/peer-support-center/); [Nebraska ACCESSNebraska kiosk locations](https://dhhs.ne.gov/Documents/ACCESSNebraskaKiosks.pdf), [Nebraska DHHS Office of Consumer Affairs](https://dhhs.ne.gov/Pages/Consumer-Advocacy.aspx), [Nebraska Region 1 crisis services](https://region1bhs.net/services.html); [Nevada DSS northern offices](https://www.dss.nv.gov/contact/welfare-district-offices-north/), [Nevada DSS southern offices](https://www.dss.nv.gov/contact/welfare-district-offices-south/), [Clark County coordinated-entry access flyer (August 2023)](https://www.clarkcountynv.gov/adobe/assets/urn%3Aaaid%3Aaem%3Aa055c9d5-625f-4640-bde1-ec23d9beb167/original/as/coordinated-entry-flyer-lived-x-team-08-22-23.pdf), [Washoe County coordinated entry](https://www.washoecounty.gov/homeless/regional_governance_and_coordination/coc/coordinated_entry.php), [Ridge House Bridge](https://www.ridgehouse.org/bridge), [Nevada Veterans Voices of Valor](https://veterans.nv.gov/recovery-and-behavioral-health-programs/peer-support-voices-of-valor/), [Nevada Peer Support Network](https://nvpsn.org/about); [New Hampshire DHHS district offices](https://nhfv.org/resources/district-offices-dos/), [NH community mental-health crisis contacts](https://nhcbha.org/emergency-key-services/); [South Carolina BHDD mental-health resources](https://bhdd.sc.gov/office-mental-health/resources).
 
 ### Previously queued states after the active slice
 

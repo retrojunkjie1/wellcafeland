@@ -908,11 +908,17 @@ describe("category fallback pathways", () => {
       expect(addedRecords.every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
     }
 
-    const expectedTotals = { Missouri: 88, Montana: 51, Nebraska: 53, Nevada: 33, "New Hampshire": 54 };
+    const expectedTotals = { Missouri: 88, Montana: 78, Nebraska: 86, Nevada: 88, "New Hampshire": 86, "South Carolina": 131 };
     for (const [state, total] of Object.entries(expectedTotals)) {
       const categories = getUSStateCoverage(state);
       const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
       expect(uniqueIds.size).toBe(total);
+    }
+    for (const state of ["Montana", "Nebraska", "Nevada", "New Hampshire", "South Carolina"]) {
+      const categories = getUSStateCoverage(state);
+      expect(categories.every(({ records }) => records.length >= 5), `${state} six-category floor`).toBe(true);
+      expect(new Set(categories.flatMap(({ records }) => records.map(({ id }) => id))).size).toBeGreaterThanOrEqual(75);
+      expect(categories.flatMap(({ records }) => records).every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
     }
   });
 
@@ -1019,9 +1025,9 @@ describe("category fallback pathways", () => {
   it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
     const batchChecks = [
       ["Missouri", "mo-peer-beacon-sedalia", 12],
-      ["Montana", "mt-peer-narss-recovery-hall-ronan", 4],
-      ["Nebraska", "ne-peer-wellbeing-initiative-lincoln", 4],
-      ["Nevada", "nv-peer-recovery-support-warmline", 2],
+      ["Montana", "mt-peer-narss-recovery-hall-ronan", 12],
+      ["Nebraska", "ne-peer-wellbeing-initiative-lincoln", 5],
+      ["Nevada", "nv-peer-recovery-support-warmline", 5],
       ["New Hampshire", "nh-peer-white-horse-littleton", 22],
     ];
     for (const [state, firstId, expectedPeerCount] of batchChecks) {
