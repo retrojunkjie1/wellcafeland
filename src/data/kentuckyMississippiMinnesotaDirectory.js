@@ -9197,7 +9197,7 @@ export const MINNESOTA_FOOD = [
   {
     id: "mn-channel-one-regional-food-bank",
     name: "Channel One Food Bank — southeast Minnesota food shelf referral",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Minnesota DHS lists this regional food-bank contact in its TEFAP directory. Its address is an organization office or warehouse, not a walk-in food shelf. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Rochester", state: "MN", address: "131 35th St SE, Rochester, MN 55904", phone: "507-287-2350", link: "https://www.helpingfeedpeople.org/",
     source: "Minnesota DCYF TEFAP regional food bank directory",
     serviceArea: "Dodge, Faribault, Fillmore, Freeborn, Goodhue, Houston, Mower, Olmsted, Rice, Steele, Wabasha, Waseca and Winona counties", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9207,7 +9207,7 @@ export const MINNESOTA_FOOD = [
   {
     id: "mn-north-country-food-bank",
     name: "North Country Food Bank — northwest Minnesota food shelf referral",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Minnesota DHS lists this regional food-bank contact in its TEFAP directory. Its address is an organization office or warehouse, not a walk-in food shelf. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "East Grand Forks", state: "MN", address: "1011 11th Ave NE, East Grand Forks, MN 56721", phone: "218-399-7356", link: "https://www.northcountryfoodbank.org/",
     source: "Minnesota DCYF TEFAP regional food bank directory",
     serviceArea: "Becker, Beltrami, Clay, Clearwater, Douglas, Grant, Hubbard, Kittson, Lake of the Woods, Mahnomen, Marshall, Norman, Otter Tail, Pennington, Pope, Polk, Red Lake, Roseau, Stevens, Traverse, Wadena and Wilkin counties", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9217,7 +9217,7 @@ export const MINNESOTA_FOOD = [
   {
     id: "mn-second-harvest-heartland",
     name: "Second Harvest Heartland — central Minnesota food shelf referral",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Minnesota DHS lists this regional food-bank contact in its TEFAP directory. Its address is an organization office or warehouse, not a walk-in food shelf. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Brooklyn Park", state: "MN", address: "7101 Winnetka Ave N, Brooklyn Park, MN 55428", phone: "651-484-5117", link: "https://www.2harvest.org/find-food",
     source: "Minnesota DCYF TEFAP regional food bank directory",
     serviceArea: "Anoka, Benton, Big Stone, Blue Earth, Brown, Carver, Chippewa, Chisago, Cottonwood, Dakota, Isanti, Jackson, Kandiyohi, Lac Qui Parle, Le Sueur, Lincoln, Lyon, Martin, McLeod, Meeker, Morrison, Murray, Nicollet, Nobles, Pine, Pipestone, Ramsey, Redwood, Renville, Rock, Scott, Sherburne, Sibley, Stearns, Swift, Todd, Washington, Watonwan, Wright and Yellow Medicine counties", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9227,7 +9227,7 @@ export const MINNESOTA_FOOD = [
   {
     id: "mn-second-harvest-northland",
     name: "Second Harvest Northland — northeast Minnesota food shelf referral",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Minnesota DHS lists this regional food-bank contact in its TEFAP directory. Its address is an organization office or warehouse, not a walk-in food shelf. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Duluth", state: "MN", address: "2302 Commonwealth Ave, Duluth, MN 55808", phone: "218-727-5653", link: "https://secondharvestnorthland.org/",
     source: "Minnesota DCYF TEFAP regional food bank directory",
     serviceArea: "Aitkin, Carlton, Cass, Cook, Crow Wing, Itasca, Kanabec, Koochiching, Lake, Mille Lacs and St. Louis counties", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9237,7 +9237,7 @@ export const MINNESOTA_FOOD = [
   {
     id: "mn-the-food-group",
     name: "The Food Group — Hennepin County food shelf and meal referral",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Minnesota DHS lists this regional food-bank contact in its TEFAP directory. Its address is an organization office or warehouse, not a walk-in food shelf. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "New Hope", state: "MN", address: "8501 54th Ave N, New Hope, MN 55428", phone: "763-450-3860", link: "https://www.thefoodgroupmn.org/food-access/",
     source: "Minnesota DCYF TEFAP regional food bank directory",
     serviceArea: "Hennepin County and partner food shelves; use the food access map to find a nearby distribution site", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9250,7 +9250,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-food-bank-eastern-michigan",
     name: "Food Bank of Eastern Michigan — regional food pantry finder",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Flint", state: "MI", address: "2300 Lapeer Rd, Flint, MI 48503", phone: "810-239-4441", link: "https://www.fbem.org/find-food/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "Eastern Michigan; Michigan Department of Education lists county-level TEFAP contact routes. Confirm the pantry serving your county.", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9260,7 +9260,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-south-michigan-food-bank",
     name: "South Michigan Food Bank — southwest Michigan food access",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Battle Creek", state: "MI", address: "5451 Wayne Rd, Battle Creek, MI 49037", phone: "269-964-3663", link: "https://smfoodbank.org/find-food/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "Barry, Branch, Calhoun, Hillsdale, Jackson, Kalamazoo, Lenawee and St. Joseph counties", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9270,7 +9270,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-greater-lansing-food-bank",
     name: "Greater Lansing Food Bank — mid-Michigan food access",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Bath Township", state: "MI", address: "5600 Food Court, Bath Township, MI 48808", phone: "517-853-7800", link: "https://greaterlansingfoodbank.org/find-food/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "Clare, Clinton, Eaton, Gratiot, Ingham, Isabella and Shiawassee counties; call the food bank for current pantry access", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9280,7 +9280,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-gleaners-community-food-bank",
     name: "Gleaners Community Food Bank — southeast Michigan food locator",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Detroit", state: "MI", address: "2131 Beaufait, Detroit, MI 48207", phone: "866-453-2637", link: "https://www.gcfb.org/find-food/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "Southeast Michigan, including Wayne, Oakland, Macomb, Livingston and Monroe county routes listed by Michigan MDE", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9290,7 +9290,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-forgotten-harvest",
     name: "Forgotten Harvest — Metro Detroit food assistance locator",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Oak Park", state: "MI", address: "15000 W Eight Mile Rd, Oak Park, MI 48237", phone: "888-332-7140", link: "https://www.forgottenharvest.org/find-food/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "Oakland, Macomb and Wayne counties; contact or use the locator to find partner distribution sites", coverageScope: "region", resourceType: 'regional food-bank referral and locator',
@@ -9300,7 +9300,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-food-gatherers",
     name: "Food Gatherers — Washtenaw County food assistance",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Ann Arbor", state: "MI", address: "1 Carrot Way, Ann Arbor, MI 48105", phone: "734-761-2796", link: "https://www.foodgatherers.org/find-food/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "Washtenaw County; use the food finder or call to locate current pantry, meal and Community Kitchen access", coverageScope: "county", resourceType: 'regional food-bank referral and locator',
@@ -9310,7 +9310,7 @@ export const MICHIGAN_FOOD = [
   {
     id: "mi-feeding-america-west-michigan",
     name: "Feeding America West Michigan — western and Upper Peninsula food finder",
-    description: "This regional food bank participates in Minnesota or Michigan emergency food distribution through local food shelves, meal programs, shelters, or partner agencies. This listed address is the organization’s office or warehouse, not a promise of walk-in food pickup. Use the official food locator or call to find the currently operating pantry or distribution serving your area; confirm hours, eligibility, intake, and availability before traveling.",
+    description: "Michigan MDE lists this regional food-bank contact for TEFAP and county food distribution. Its address is an organization office or warehouse, not a walk-in pantry. Use the linked food locator or call to find a current partner site serving your county; confirm distribution dates, eligibility, intake, and availability before traveling.",
     city: "Kentwood", state: "MI", address: "3070 Shaffer Ave SE, Kentwood, MI 49512", phone: "616-784-3250", link: "https://www.feedwm.org/findfood/",
     source: "Michigan Department of Education TEFAP county contact directory / Food Bank Council of Michigan network",
     serviceArea: "West Michigan and Upper Peninsula; statewide TEFAP county directory identifies the local food bank and community-action contacts by county", coverageScope: "region", resourceType: 'regional food-bank referral and locator',

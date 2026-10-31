@@ -50,9 +50,9 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Idaho | ID | 113 | Meets current directory floor |
 | Indiana | IN | 115 | Meets current directory floor |
 | Iowa | IA | 108 | Meets current directory floor |
-| Maryland | MD | 76 | Meets current directory floor; deeper locality and phone review remain open |
-| Michigan | MI | 77 | Meets current directory floor; deeper locality review remains open |
-| Mississippi | MS | 286 | Meets floor; above planning range, preserve and audit |
+| Maryland | MD | 85 | Meets current directory floor; local food finders broaden county coverage; locality and phone review remain open |
+| Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
+| Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
 | New York | NY | 123 | Meets current directory floor |
 | North Carolina | NC | 270 | Meets floor; above planning range, preserve and audit |
 | Ohio | OH | 76 | Meets current directory floor |
@@ -75,11 +75,11 @@ Each row gives the live count and categories below five. A zero indicates that t
 | District of Columbia | DC | 0 | All six categories 0 |
 | Illinois | IL | 112 | Urgent 4 |
 | Kansas | KS | 126 | Food 4 |
-| Kentucky | KY | 134 | Treatment 0; peer 0; housing 0; food 0 |
+| Kentucky | KY | 147 | Peer 0; food 0; treatment 0; recovery housing now 13 |
 | Louisiana | LA | 123 | Peer 2; housing 3; benefits 3; urgent 3 |
 | Maine | ME | 121 | Treatment 1; peer 2; benefits 2 |
 | Massachusetts | MA | 78 | Housing 1; food 1; benefits 2 |
-| Minnesota | MN | 122 | Treatment 0; housing 0; benefits 0 |
+| Minnesota | MN | 144 | Housing 0; benefits 0; treatment now 22 |
 | Missouri | MO | 77 | Housing 0; benefits 0 |
 | Montana | MT | 51 | Peer 4; benefits 0 |
 | Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
@@ -97,7 +97,7 @@ Each row gives the live count and categories below five. A zero indicates that t
 | Wisconsin | WI | 0 | All six categories 0 |
 | Wyoming | WY | 0 | All six categories 0 |
 
-The initial source-reviewed five-state batch added 74 distinct records, followed by 100 additional records and a further 98-contact cross-category expansion on 2026-10-30. Every state remains **in progress**; none meets the six-category balance floor. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
+The initial source-reviewed five-state batch added 74 distinct records, followed by 100 additional records and a further 98-contact cross-category expansion on 2026-10-30. The five most recent states remain **in progress**; none meets the six-category balance floor. Counts are live audit results from `US_DIRECTORY_COVERAGE` after wiring these records into search:
 
 | State | Total | Categories covered in this batch | Remaining work |
 |---|---:|---|---|
@@ -310,3 +310,12 @@ Mississippi food listings were expanded from 2 statewide/regional referral point
 The next South Dakota batch adds 22 distinct treatment access listings from the state Behavioral Health substance-use treatment locator, spanning Rapid City, Spearfish, Agency Village, Mobridge, Watertown, Sioux Falls, Howard, Canton, Winner, Vale, Huron, Rosebud, and Pierre. This expands the treatment category from 11 to 33 and the catalog snapshot from 75 to 97 records; all six categories remain represented. Listings include published addresses, phone numbers, and provider links where supplied by the state. Tribal/youth programs carry a prompt to confirm eligibility; outpatient, residential, and specialty level-of-care details must be confirmed with each provider. These are source-reviewed, not phone-confirmed or capacity-confirmed, and do not establish exhaustive coverage. Sources: [South Dakota Behavioral Health substance-use treatment locator](https://sdbehavioralhealth.gov/substance-use/treatment), [Pennington County Care Campus](https://www.pennco.org/services/care_campus/index.php) for its currently published program details, and [South Dakota behavioral-health locator](https://sdbehavioralhealth.gov/prevention/suicide/mental-health-services) for center/location cross-checks.
 
 The next urgent-support pass added four Tennessee crisis access contacts and one South Dakota community triage center without removing or replacing existing listings. Tennessee adds Volunteer Behavioral Health's 24/7 adult walk-in/stabilization sites in Chattanooga, Cookeville, and Murfreesboro, plus McNabb Center's voluntary adult stabilization unit in Morristown. South Dakota adds The Link in Sioux Falls, a 24/7 adult walk-in detox and mental-health stabilization service for Minnehaha and Lincoln County residents. The Link is seeking a new operator according to a 2026 local report; its listing expressly tells people to call first to confirm it is operating and accepting access before traveling. The updated snapshot is South Dakota 98 (urgent support 6) and Tennessee 221 (urgent support 10). Sources: [Tennessee crisis continuum](https://www.tn.gov/content/tn/behavioral-health/crisis/continuum.html), [Volunteer Behavioral Health crisis services](https://volunteerbehavioralhealth.org/services/crisis-services-2/), [McNabb Center Hamblen County crisis stabilization unit](https://mcnabbcenter.org/hamblen_co/), [South Dakota state crisis care centers](https://sdbehavioralhealth.gov/crisis-services/short-term), [South Dakota The Link state service record](https://dakotaathome.sd.gov/search/62c12d15-2b73-576f-b005-659c18421ec9), and [The Link 2024 annual report](https://gis.siouxfalls.gov/images/link/Link2024_Annual_Report.pdf). These listings are source-reviewed, not phone-confirmed or capacity-confirmed; coverage remains non-exhaustive.
+
+
+## October 30, 2026 — next five-state expansion batch
+
+This batch adds 71 distinct source-reviewed records across Kentucky, Maryland, Michigan, Minnesota, and Mississippi. It preserves existing IDs and content. Live catalog counts after wiring: KY 147 (13 recovery-housing programs, 14 urgent, 120 benefits); MD 85 (22 treatment, 5 peer, 18 housing, 30 food including nine county-level local food finders, 5 benefits, 5 urgent); MI 96 (10 treatment, 10 peer, 30 housing, 26 food including 19 TEFAP county-agency contacts, 10 benefits, 10 urgent); MN 144 (22 integrated treatment providers, 26 peer, 91 urgent, 5 food); MS 294 (18 housing/safety, 13 peer, 22 treatment, 162 benefits/community assistance, 28 urgent, 51 food).
+
+The 13 Kentucky Recovery Kentucky entries are supportive recovery housing; applicants apply directly to the center and must confirm eligibility and openings. The 22 Minnesota providers are state-listed CCBHC services; contact each provider for local clinic, referral, payment, and intake details. The Mississippi records distinguish confidential shelter access from public locations and retain provider-specific cautions. Maryland's county pages and Michigan's TEFAP county agencies are finders/referral routes, not walk-in food sites. Michigan TEFAP eligibility is income- and residency-based; call to learn which active distribution serves the household. These are source-reviewed leads, not phone-confirmed, capacity-confirmed, or exhaustive coverage.
+
+Sources for the batch: [Kentucky Housing Corporation Recovery Kentucky center list](https://www.kyhousing.org/programs/recovery-kentucky), [Maryland Food Bank county food finders](https://mdfoodbank.org/find-food/), [Michigan MDE TEFAP county directory](https://www.michigan.gov/mde/services/food/food-distribution/household-food-distribution/the-emergency-food-assistance-program/where-can-i-get-tefap), [Michigan TEFAP eligibility and program overview](https://www.michigan.gov/mde/services/food/food-distribution/household-food-distribution/the-emergency-food-assistance-program), [Minnesota DHS CCBHC provider list](https://mn.gov/dhs/partners-and-providers/policies-procedures/behavioral-health/ccbhc/), and [Mississippi MAMA housing and safety directory](https://www.mama.ms.gov/service-directory?category=6).
