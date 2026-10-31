@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 19. | In progress | Continue Abuja, Lagos, Oyo, Rivers and all remaining states; category depth and independently checked sources remain limited. |
+| Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 21. | In progress | Continue Abuja, Lagos, Oyo, Rivers and all remaining states; category depth and independently checked sources remain limited. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -284,18 +284,22 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Ekiti | 2 | Enugu | 3 |
 | Gombe | 3 | Imo | 3 |
 | Jigawa | 3 | Kaduna | 4 |
-| Kano | 8 | Katsina | 3 |
+| Kano | 14 | Katsina | 3 |
 | Kebbi | 3 | Kogi | 3 |
 | Kwara | 3 | Lagos | 21 |
 | Nasarawa | 3 | Niger | 3 |
 | Ogun | 3 | Ondo | 3 |
 | Osun | 2 | Oyo | 19 |
-| Plateau | 3 | Rivers | 14 |
+| Plateau | 3 | Rivers | 21 |
 | Sokoto | 4 | Taraba | 2 |
 | Yobe | 2 | Zamfara | 2 |
 | Federal Capital Territory | 17 | | |
 
 The Nigeria calculator reports independent-check evidence for Cross River, Edo, Kaduna, Ogun and Sokoto only. Other source-reviewed records are not independently checked by that measure.
+
+### Kano and Rivers follow-up research — October 31, 2026
+
+Added 13 source-reviewed contacts to the active catalog while preserving the earlier listings: six in Kano and seven in Rivers. Kano now has 14 state-linked listings; Rivers has 21. The Kano additions include YADAF counselling/referral, Bayero University’s staff-and-student mental-health clinic, KSCHMA health-coverage enquiries, KASITDA statewide digital-skills cohorts, the Scholarships Board portal, and AKY-YEPE, whose official intake page currently says applications are closed. Rivers additions include a child-welfare Family Court emergency route, the statewide primary-care facility network, First Rivers psychiatry, ministry youth entrepreneurship training, the FIDA branch, Victor & Helen Foundation scholarship/skills enquiries, and IHVN’s Rivers clinical referral network. Sources: [YADAF](https://www.yadaf.org/), [Bayero University mental-health clinic](https://www.buk.edu.ng/mental_health_clinic), [NHIA state insurance agency directory](https://www.nhia.gov.ng/sshias/), [KASITDA services](https://kasitda.kn.gov.ng/help), [Kano Scholarships Board](https://kssbonline.org/), [AKY-YEPE intake status](https://empowerment.kanostate.gov.ng/Apply), [Rivers Family Court](https://www.judiciary.rv.gov.ng/family-court/), [Rivers Primary Health Care Board](https://www.rsphcmb.rv.gov.ng/), [First Rivers Hospital](https://firstrivers.com/contact/), [Rivers Ministry of Employment Generation](https://www.megee.rv.gov.ng/index.html), [FIDA Rivers](https://fida.org.ng/rivers/), [Victor & Helen Foundation](https://www.vhf.org.ng/home/), and [IHVN Rivers](https://ihvnigeria.org/where-we-work/rivers/). These are source-reviewed leads, not phone-confirmed services, current intake/capacity, eligibility decisions, or exhaustive coverage. Kano still has no verified housing/shelter contact or local peer-meeting schedule; Oyo has no verified peer listing; Rivers still lacks a verified local peer-meeting calendar and public food-distribution schedule; gaps remain open.
 
 ## Australia: states and territories
 
