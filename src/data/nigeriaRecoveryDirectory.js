@@ -3,6 +3,7 @@ import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "./nigeriaNextFiveStateExpansi
 import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "./nigeriaNifesCommunityExpansion.js";
 import { NIGERIA_NHIA_STATE_EXPANSION } from "./nigeriaNhiaStateExpansion.js";
 import { NIGERIA_SARC_AUG_2026_EXPANSION } from "./nigeriaSarcAug2026Expansion.js";
+import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "./nigeriaNemaOfficeOct2026Expansion.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -568,6 +569,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   },
   ...fiveJurisdiction("emergency"),
   ...NIGERIA_SARC_AUG_2026_EXPANSION,
+  ...NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION,
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
