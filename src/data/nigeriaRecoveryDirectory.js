@@ -5,6 +5,7 @@ import { NIGERIA_NHIA_STATE_EXPANSION } from "./nigeriaNhiaStateExpansion.js";
 import { NIGERIA_SARC_AUG_2026_EXPANSION } from "./nigeriaSarcAug2026Expansion.js";
 import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "./nigeriaNemaOfficeOct2026Expansion.js";
 import { NIGERIA_FRSC_UNIT_COMMAND_EXPANSION } from "./nigeriaFrscUnitCommandExpansion.js";
+import { NIGERIA_LAGOS_MIND_PHC_EXPANSION } from "./nigeriaLagosMindPhcExpansion.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -234,6 +235,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
     locationLine: "Lagos State · also lists 020 1410 6463 and WhatsApp 090 9000 6463", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("programs"),
+  ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
 ];
 
 export const NIGERIA_CITIES = [
