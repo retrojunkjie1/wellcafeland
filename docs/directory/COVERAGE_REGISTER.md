@@ -55,6 +55,11 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Indiana | IN | 115 | Meets current directory floor |
 | Iowa | IA | 108 | Meets current directory floor |
 | Kansas | KS | 127 | Meets current count and six-category floors; locality and phone review remain open |
+| Kentucky | KY | 178 | Meets count and all six category floors; locality and source-depth review remain open |
+| Louisiana | LA | 142 | Meets count and all six category floors; locality and source-depth review remain open |
+| Maine | ME | 137 | Meets count and all six category floors; local provider details and source freshness need review |
+| Massachusetts | MA | 95 | Meets count and all six category floors; city-level food and family-shelter routes added; local depth remains open |
+| Missouri | MO | 88 | Meets count and all six category floors; Coordinated Entry source dates and local access remain open |
 | Maryland | MD | 85 | Meets current directory floor; local food finders broaden county coverage; locality and phone review remain open |
 | Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
 | Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
@@ -75,17 +80,12 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Still in progress: 10 jurisdictions
+### Still in progress: 5 jurisdictions
 
 Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
 
 | State / jurisdiction | Code | Records | Categories below five (current count) |
 |---|---:|---:|---|
-| Kentucky | KY | 178 | Meets count and all six category floors; locality and source-depth review remain open |
-| Louisiana | LA | 142 | Meets count and all six category floors; locality and source-depth review remain open |
-| Maine | ME | 137 | Meets count and all six category floors; local provider details and source freshness need review |
-| Massachusetts | MA | 95 | Meets count and all six category floors; city-level food and family-shelter routes added; local depth remains open |
-| Missouri | MO | 88 | Meets count and all six category floors; Coordinated Entry source dates and local access remain open |
 | Montana | MT | 51 | Peer 4; benefits 0 |
 | Nebraska | NE | 53 | Peer 4; benefits 1; urgent 1 |
 | Nevada | NV | 33 | Peer 2; housing 0; benefits 0; urgent 1 |
