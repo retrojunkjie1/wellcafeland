@@ -15,6 +15,7 @@ import {
   NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY,
   NIGERIA_NEXT_LOW_COVERAGE_FOOD,
   NIGERIA_NEXT_LOW_COVERAGE_FUNDING,
+  NIGERIA_NEXT_LOW_COVERAGE_HOUSING,
   NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS,
 } from "./nigeriaLowCoverageNextFiveOct2026.js";
 import {
@@ -345,6 +346,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   },
   ...fiveJurisdiction("housing"),
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_NEXT_LOW_COVERAGE_HOUSING,
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [

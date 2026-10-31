@@ -19,6 +19,26 @@ const orangePages = (state) => `https://invictusafrica.org/content/${state}/`;
 
 export const NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS = [
   reviewed({
+    id: "taraba-cfid-mental-health-psychosocial-support",
+    name: "CFID Taraba — mental-health and virtual psychosocial-support enquiries",
+    primaryCategory: "programs",
+    resourceType: "Community health nonprofit · mental-health support · psychosocial referral",
+    description: "CFID says it provides mental-health support for women, caregivers and families, including virtual psychosocial services through its CFID Cares mobile app and referrals to therapy and legal support. Contact CFID to confirm current counsellor availability, access requirements, confidentiality, fees and safe next steps. The public listing does not establish crisis response or a clinical appointment on demand.",
+    phone: "+2347034271256",
+    alternatePhone: "+2347025290764",
+    email: "info@cfidtaraba.org",
+    link: "https://cfidtaraba.org/2077-2/",
+    source: "CFID Taraba · mental-health programme and official contact pages",
+    sourceEvidenceUrl: "https://cfidtaraba.org/2077-2/",
+    independentSourceUrl: "https://cfidtaraba.org/contact/",
+    independentlyVerifiedAt: "2026-10-31",
+    city: "Jalingo",
+    state: "Taraba",
+    region: "Taraba State, Nigeria",
+    address: "CFID Secretariat, opposite Bondiya Place, beside Shallom Building, Mile Six Bypass, Dinyavoh, Jalingo, Taraba State, Nigeria",
+    locationLine: "Jalingo and virtual enquiries · contact first to confirm counsellor availability and intake",
+  }),
+  reviewed({
     id: "kebbi-women-affairs-counselling-empowerment",
     name: "Kebbi Ministry of Women Affairs — counselling and skills-support enquiries",
     primaryCategory: "programs",
@@ -160,6 +180,42 @@ export const NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS = [
 
 export const NIGERIA_NEXT_LOW_COVERAGE_FOOD = [
   reviewed({
+    id: "bayelsa-bell-and-us-food-relief-contact",
+    name: "Bell and Us Goodwill Foundation — Bayelsa food-relief enquiries",
+    primaryCategory: "food",
+    resourceType: "Community charity · targeted food distribution and meals",
+    description: "The foundation’s project page reports a recent home-delivery food project in Bayelsa and describes meal and food-supply support for vulnerable rural households, elders, widows, people with disabilities and children. Its published page gives a Nigeria contact number but no Bayelsa walk-in address or current distribution calendar. Call to ask whether there is an active local distribution and how to register; upcoming projects may be pop-up events with locations announced later.",
+    phone: "+2349137937769",
+    email: "info@bellandus.org",
+    link: "https://www.bellandus.org/projects/",
+    source: "Bell and Us Goodwill Foundation · official projects page",
+    independentSourceUrl: "https://www.bellandus.org/projects/",
+    independentlyVerifiedAt: "2026-10-31",
+    state: "Bayelsa",
+    region: "Bayelsa State, Nigeria",
+    locationLine: "Bayelsa · phone for current distribution dates and eligibility; no public walk-in pantry address",
+    directoryRole: "state-referral",
+  }),
+  reviewed({
+    id: "taraba-ameesha-food-relief-and-community-support",
+    name: "Ameesha Humanitarian Foundation — food-relief and household-support enquiries",
+    primaryCategory: "food",
+    resourceType: "Humanitarian nonprofit · food relief · street feeding and household distributions",
+    description: "Ameesha describes food-package distribution, street feeding and emergency relief for vulnerable households, and publishes a Jalingo office and contact. Contact the foundation to ask whether a distribution is active in your LGA, how beneficiaries are selected, and whether there is a collection point. No walk-in pantry, schedule or guaranteed package is listed.",
+    phone: "+2348033689577",
+    email: "impact@ameeshafoundation.org",
+    link: "https://ameeshafoundation.org/programs/",
+    source: "Ameesha Humanitarian Foundation · official programme and contact pages",
+    sourceEvidenceUrl: "https://ameeshafoundation.org/programs/",
+    independentSourceUrl: "https://ameeshafoundation.org/contact-us/",
+    independentlyVerifiedAt: "2026-10-31",
+    city: "Jalingo",
+    state: "Taraba",
+    region: "Jalingo, Taraba State, Nigeria",
+    address: "Inna Kogi Plaza, Barde Way, Jalingo, Taraba State, Nigeria",
+    locationLine: "Jalingo · office hours published as Monday–Friday 10:00 a.m.–6:00 p.m.; call to confirm distributions",
+  }),
+  reviewed({
     id: "yobe-apbef-community-food-distribution-enquiries",
     name: "APBEF Foundation — Damaturu food-distribution enquiries",
     primaryCategory: "food",
@@ -216,7 +272,45 @@ export const NIGERIA_NEXT_LOW_COVERAGE_FUNDING = [
   }),
 ];
 
-export const NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY = [
+const NIGERIA_NEXT_LOW_COVERAGE_SAFETY = [
+  reviewed({
+    id: "taraba-cfid-gbv-safe-space-referral",
+    name: "CFID Taraba — GBV survivor safe-space and referral enquiries",
+    primaryCategory: "housing",
+    resourceType: "Survivor support · safe-space access · psychosocial, health and legal referrals",
+    description: "CFID describes a safe space for survivors of gender-based violence at its Jalingo head office, with referral to health therapy and legal support. Contact CFID before travelling to confirm whether the service is active, the safe way to access it, eligibility and any referral or appointment steps. This is not evidence of residential shelter, an available bed or a confidential shelter address.",
+    phone: "+2347034271256",
+    alternatePhone: "+2347025290764",
+    email: "info@cfidtaraba.org",
+    link: "https://cfidtaraba.org/2077-2/",
+    source: "CFID Taraba · mental-health programme and official contact pages",
+    sourceEvidenceUrl: "https://cfidtaraba.org/2077-2/",
+    independentSourceUrl: "https://cfidtaraba.org/contact/",
+    independentlyVerifiedAt: "2026-10-31",
+    city: "Jalingo",
+    state: "Taraba",
+    region: "Jalingo, Taraba State, Nigeria",
+    address: "CFID Secretariat, opposite Bondiya Place, beside Shallom Building, Mile Six Bypass, Dinyavoh, Jalingo, Taraba State, Nigeria",
+    locationLine: "Jalingo · contact first for safe access and current availability; not overnight accommodation",
+  }),
+  reviewed({
+    id: "yobe-women-girls-dignity-centre-safe-referral",
+    name: "Yobe Women and Girls Dignity Centre — safe shelter and survivor-service referral",
+    primaryCategory: "housing",
+    resourceType: "Survivor service centre · safe shelter · GBV case-management referrals",
+    description: "Action Health Incorporated reports that it and the Yobe Ministry of Women Affairs established the Damaturu Women and Girls Dignity Centre, with survivor-focused case management, psychosocial counselling, medical and SARC referrals, and residential safe-shelter facilities. The public report does not give a safe street address or confirm current intake or bed capacity. Contact AHI to ask for a current, safe referral route before travelling; do not treat this listing as direct shelter access.",
+    phone: "+2348123445837",
+    email: "info@actionhealthinc.org",
+    link: "https://www.actionhealthinc.org/high-level-delegation-from-office-of-the-vice-president-visits-yobe-state-women-and-girls-dignity-centre/",
+    source: "Action Health Incorporated · Yobe Women and Girls Dignity Centre report",
+    independentSourceUrl: "https://www.actionhealthinc.org/high-level-delegation-from-office-of-the-vice-president-visits-yobe-state-women-and-girls-dignity-centre/",
+    independentlyVerifiedAt: "2026-10-31",
+    city: "Damaturu",
+    state: "Yobe",
+    region: "Damaturu, Yobe State, Nigeria",
+    locationLine: "Damaturu · contact Action Health Inc for a safe current referral; centre address not published here",
+    directoryRole: "state-referral",
+  }),
   reviewed({
     id: "bayelsa-women-children-affairs-gender-desk",
     name: "Bayelsa Ministry of Women and Children Affairs — gender desk enquiries",
@@ -234,3 +328,11 @@ export const NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY = [
     directoryRole: "state-referral",
   }),
 ];
+
+export const NIGERIA_NEXT_LOW_COVERAGE_HOUSING = NIGERIA_NEXT_LOW_COVERAGE_SAFETY.filter(
+  (record) => record.primaryCategory === "housing",
+);
+
+export const NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY = NIGERIA_NEXT_LOW_COVERAGE_SAFETY.filter(
+  (record) => record.primaryCategory === "emergency",
+);
