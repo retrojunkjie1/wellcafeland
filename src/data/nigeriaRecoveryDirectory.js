@@ -11,6 +11,11 @@ import { NIGERIA_ORANGE_PAGES_FOLLOWUP } from "./nigeriaOrangePagesOct2026Follow
 import { NIGERIA_NHRC_STATE_OFFICES } from "./nigeriaNhrcStateOfficesOct2026.js";
 import { NIGERIA_RED_CROSS_BRANCHES } from "./nigeriaRedCrossBranchOct2026.js";
 import { NIGERIA_FIDA_BRANCH_OCT_2026 } from "./nigeriaFidaBranchOct2026.js";
+import {
+  NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
+  NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
+  NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
+} from "./nigeriaLowCoverageStateBatchOct2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -245,6 +250,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
     locationLine: "Lagos State · also lists 020 1410 6463 and WhatsApp 090 9000 6463", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("programs"),
+  ...NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
 ];
 
@@ -421,6 +427,7 @@ export const NIGERIA_FOOD_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "Participating public primary schools nationwide · pupil eligibility applies", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("food"),
+  ...NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -518,6 +525,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   },
   ...fiveJurisdiction("funding"),
   ...NIGERIA_NHIA_STATE_EXPANSION,
+  ...NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
