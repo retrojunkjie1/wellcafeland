@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are in the coverage calculator; live audit after this five-state batch: 31 meet the current directory floor and 20 remain in progress. | In progress | Continue the under-floor and category-gap queue. Latest five-state batch: NJ, NM, ND, OR and RI; all five meet the initial count and per-category floors while locality and source-depth work continues. |
+| United States | All 50 states plus DC are in the coverage calculator; live audit after this five-jurisdiction batch: 36 meet the current directory floor and 15 remain in progress. | In progress | Continue the under-floor and category-gap queue. Current batch: AR, DE, DC, IL and KS; all five meet the initial count and per-category floors while locality and source-depth work continues. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -32,7 +32,7 @@ Other countries remain in the discovery queue. Add them here once selected for a
 
 Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.js`, which deduplicates IDs and counts state-linked records across treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Counts are a catalog progress measure, not a quality or exhaustiveness claim.
 
-### Meets the current directory floor: 31 jurisdictions
+### Meets the current directory floor: 36 jurisdictions
 
 “Complete” here means at least 75 state-linked records and at least five records in each of the six categories. It is a directory-build milestone, not proof of exhaustive coverage, current capacity, or phone confirmation. Counts above 125 remain intact; the planning range is not a cap.
 
@@ -41,15 +41,20 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Alabama | AL | 87 | Meets current directory floor |
 | Alaska | AK | 124 | Meets current directory floor |
 | Arizona | AZ | 82 | Meets current directory floor |
+| Arkansas | AR | 124 | Meets current count and six-category floors; locality and phone review remain open |
 | California | CA | 229 | Meets floor; above planning range, preserve and audit |
 | Colorado | CO | 80 | Meets current directory floor |
 | Connecticut | CT | 75 | Meets current directory floor |
+| Delaware | DE | 140 | Meets current count and six-category floors; locality and phone review remain open |
+| District of Columbia | DC | 88 | Meets current count and six-category floors; locality and phone review remain open |
 | Florida | FL | 121 | Meets current directory floor |
 | Georgia | GA | 76 | Meets current directory floor |
 | Hawaii | HI | 152 | Meets floor; above planning range, preserve and audit |
 | Idaho | ID | 113 | Meets current directory floor |
+| Illinois | IL | 113 | Meets current count and six-category floors; locality and phone review remain open |
 | Indiana | IN | 115 | Meets current directory floor |
 | Iowa | IA | 108 | Meets current directory floor |
+| Kansas | KS | 127 | Meets current count and six-category floors; locality and phone review remain open |
 | Maryland | MD | 85 | Meets current directory floor; local food finders broaden county coverage; locality and phone review remain open |
 | Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
 | Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
@@ -70,17 +75,12 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Utah | UT | 80 | Meets current directory floor; deeper locality review remains open |
 | Vermont | VT | 99 | Meets current directory floor; deeper locality review remains open |
 
-### Still in progress: 20 jurisdictions
+### Still in progress: 15 jurisdictions
 
 Each row gives the live count and categories below five. A zero indicates that the current catalog has no state-linked record in that category. Continue from the stated gaps while preserving existing listings.
 
 | State / jurisdiction | Code | Records | Categories below five (current count) |
 |---|---:|---:|---|
-| Arkansas | AR | 119 | Peer 2; urgent 4 |
-| Delaware | DE | 139 | Peer 4 |
-| District of Columbia | DC | 0 | All six categories 0 |
-| Illinois | IL | 112 | Urgent 4 |
-| Kansas | KS | 126 | Food 4 |
 | Kentucky | KY | 147 | Peer 0; food 0; treatment 0; recovery housing now 13 |
 | Louisiana | LA | 123 | Peer 2; housing 3; benefits 3; urgent 3 |
 | Maine | ME | 121 | Treatment 1; peer 2; benefits 2 |
@@ -182,6 +182,12 @@ The current South Dakota batch adds eight named peer/community access points, fo
 Sources for this batch: [Dakota at Home food pantry directory](https://dakotaathome.sd.gov/search?query=BD-1800.2000&query_label=Food+Pantries&query_type=taxonomy), including [Inter-Lakes Milbank pantry](https://dakotaathome.sd.gov/search/b0b4d12f-cb19-5d37-9f4b-1b1b2f9f2c17), [Lake County Food Pantry](https://dakotaathome.sd.gov/search/9082a4c9-7d6e-5076-8c70-0cef357842e5), [Country Cupboard](https://dakotaathome.sd.gov/search/d42f0377-6616-5916-8a40-e1c45baaa78a), [Bowdle Food Pantry](https://dakotaathome.sd.gov/search/cff568d4-c700-5840-b05a-8556ebc89653), and [The Breadbasket](https://dakotaathome.sd.gov/search/7139b66d-957c-5755-8f95-184ba6b58f4f); [South Dakota Behavioral Health Short-Term Crisis Care Centers](https://sdbehavioralhealth.gov/crisis-services/short-term); [South Dakota DSS Community Action providers](https://dss.sd.gov/economicassistance/communityassistance.aspx); [Tennessee Housing Development Agency homelessness resources](https://thda.org/homelessness-resources/); [Utah DHHS Housing Resources by County](https://mihp.utah.gov/maternal-resource-guide-utah/housing-resources); [Vermont Foodbank CSFP pickup locations (April 2026)](https://www.vtfoodbank.org/wp-content/uploads/2026/05/20260501_CSFP-Pick-Up-Location-List_Updated-April-2026.pdf); [Tennessee TDHS food resources](https://www.tn.gov/humanservices/information-and-resources/tdhs-resource-library/community-resources.html); [Tennessee SNAP Outreach Partner Network](https://www.tn.gov/humanservices/for-families/supplemental-nutrition-assistance-program-snap/snap-outreach-partner-network.html); [Tennessee Serves local organization directory](https://www.tn.gov/firstlady/tennessee-serves/where-to-serve0.html); [Vermont DMH local crisis lines](https://mentalhealth.vermont.gov/get-help-now); [Vermont DMH walk-in urgent-care and crisis services](https://mentalhealth.vermont.gov/programs-services/crisis-services); [Utah DHHS family Stabilization and Mobile Response](https://sumh.utah.gov/services/treatment/child-mental-health/); [YWCA Utah survivor crisis services](https://www.ywcautah.org/survivor-services); [The Trevor Project crisis contact options](https://www.thetrevorproject.org/get-help/); [Salt Lake County Health Department community resources](https://www.saltlakecounty.gov/health/resources/); and [Utah County Health Department community assistance programs](https://health.utahcounty.gov/community-assistance-programs-3/). These are source-reviewed listings, not phone-confirmed, current-capacity-confirmed, eligibility-confirmed, or exhaustive coverage.
 
 Next work: continue South Dakota's locality and treatment coverage; continue Tennessee urgent-support research; extend Utah's local treatment, peer, and urgent-support coverage; deepen Vermont locality/category coverage beyond the initial balance threshold. Keep South Carolina's statewide dispatcher count honest unless a distinct local access route is documented. Preserve all current records and refresh these live counts after every catalog batch.
+
+### Current five-jurisdiction batch — AR, DE, DC, IL and KS (October 30, 2026)
+
+The source-reviewed catalog now reports Arkansas 124 records, Delaware 140, District of Columbia 88, Illinois 113, and Kansas 127. Each jurisdiction has at least five distinct state-linked records in treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. These are directory-floor milestones, not exhaustive coverage, phone confirmation, guaranteed availability, or current eligibility. The changes add Arkansas peer-recovery sites and a regional 24/7 crisis route; a Dover Recovery Café; four DC consumer-led peer and advocacy partners; Illinois's CARES mobile-crisis access line; and the Kansas Food Source county locator. Existing state entries were preserved. Live category totals (programs, peer, housing, food, grants, urgent): AR 18/6/7/75/13/5; DE 31/5/25/47/19/13; DC 38/7/20/11/5/7; IL 29/10/20/40/9/5; KS 57/25/6/5/6/28.
+
+Sources: [Wolfe Street Foundation](https://www.wolfestreet.org/), [Hot Springs peer recovery](https://www.hotspringsar.gov/1359/Peer-Recovery-Support), [NEA Divine Intervention](https://www.neadivineintervention.org/), [P.E.A.R.L. peer support](https://arpearl.org/peer-support-services/), [The Centers Northwest Arkansas crisis services](https://www.thecentersar.com/services/crisis-emergency-services), [Network Connect Recovery Café](https://www.networkconnect.org/recovery-cafe), [Delaware DHSS Recovery Month update](https://news.delaware.gov/2026/09/28/delaware-officials-close-out-national-recovery-month-highlight-recovery-community-centers-across-the-state/), [DC DBH consumer advocacy and peer support partners](https://dbh.dc.gov/service/consumer-advocacy-and-peer-support), [Illinois CARES crisis provider locator](https://hfs.illinois.gov/medicalclients/behavioral/findaprovider.html), and [Kansas Food Source](https://kansasfoodsource.org/). Contact the organization or service before travel to confirm hours, eligibility, intake, location, and current availability. No listing in this batch was phone-confirmed.
 
 ### Previously queued states after the active slice
 
