@@ -16,6 +16,10 @@ import {
   NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
   NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
 } from "./nigeriaLowCoverageStateBatchOct2026.js";
+import {
+  NIGERIA_LOW_COVERAGE_FOLLOWUP_CIRCLES_OCT_2026,
+  NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026,
+} from "./nigeriaLowCoverageStateFollowupOct2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -251,6 +255,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   },
   ...fiveJurisdiction("programs"),
   ...NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
 ];
 
@@ -332,6 +337,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
     city: "Ibadan", state: "Oyo", country: "Nigeria", region: "Ibadan, Oyo, Nigeria", locationLine: "Ibadan · confidential shelter location; contact for safe referral; 24-hour shelter service described by organization", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("housing"),
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -592,6 +598,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_SARC_AUG_2026_EXPANSION,
   ...NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION,
   ...NIGERIA_FRSC_UNIT_COMMAND_EXPANSION,
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "emergency"),
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
@@ -633,5 +640,6 @@ export const NIGERIA_PEER_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "Nigeria-wide helpline and state commands · ask for a city-specific referral", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("circles").map((record) => ({ ...record, directoryRole: "meeting-finder" })),
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_CIRCLES_OCT_2026,
   ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
 ];
