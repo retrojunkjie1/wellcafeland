@@ -17,7 +17,7 @@
 
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
-| United States | All 50 states plus DC are in the coverage calculator; live audit after the current five-state batch: 46 meet the current directory floor and 5 remain in progress. | In progress | Continue the five under-floor states and deepen locality/source review. Current batch: MT, NE, NV, NH and SC; all five now meet the 75-record and six-category starting floors. |
+| United States | All 50 states plus DC are in the coverage calculator; 46 meet the current directory floor and 5 remain in progress. | In progress | Continue the five under-floor states and deepen locality/source review. Latest locality deepening: CO, MT, ND, OH and RI; all five meet the initial 75-record and six-category floors, with MT above the planning band. |
 | Nigeria | 36 states and the Federal Capital Territory are tracked; current state-linked counts range from 2 to 14. | In progress | Expand Abuja, Lagos, Oyo, Rivers and all remaining states with direct local contacts across the six categories. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
@@ -43,7 +43,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Arizona | AZ | 82 | Meets current directory floor |
 | Arkansas | AR | 124 | Meets current count and six-category floors; locality and phone review remain open |
 | California | CA | 229 | Meets floor; above planning range, preserve and audit |
-| Colorado | CO | 80 | Meets current directory floor |
+| Colorado | CO | 99 | Meets current count and six-category floors; continue city and peer-organization contact validation |
 | Connecticut | CT | 75 | Meets current directory floor |
 | Delaware | DE | 140 | Meets current count and six-category floors; locality and phone review remain open |
 | District of Columbia | DC | 88 | Meets current count and six-category floors; locality and phone review remain open |
@@ -60,7 +60,7 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Maine | ME | 137 | Meets count and all six category floors; local provider details and source freshness need review |
 | Massachusetts | MA | 95 | Meets count and all six category floors; city-level food and family-shelter routes added; local depth remains open |
 | Missouri | MO | 88 | Meets count and all six category floors; Coordinated Entry source dates and local access remain open |
-| Montana | MT | 78 | Meets count and all six category floors; local office and peer-service delivery remain subject to direct confirmation |
+| Montana | MT | 150 | Above planning range; preserve all records, with local food contact details and peer-service delivery still subject to direct confirmation |
 | Maryland | MD | 85 | Meets current directory floor; local food finders broaden county coverage; locality and phone review remain open |
 | Michigan | MI | 96 | Meets current directory floor; 19 Michigan TEFAP county-agency routes added; deeper locality review remains open |
 | Mississippi | MS | 294 | Meets floor; above planning range, preserve and audit |
@@ -72,12 +72,12 @@ Counts below are from `US_DIRECTORY_COVERAGE` in `src/data/usDirectoryCoverage.j
 | Nevada | NV | 88 | Meets count and all six category floors; coordinated-entry source includes a 2023 Southern Nevada flyer requiring current schedule confirmation |
 | New York | NY | 123 | Meets current directory floor |
 | North Carolina | NC | 270 | Meets floor; above planning range, preserve and audit |
-| North Dakota | ND | 79 | Meets current count and six-category floors; locality and phone review remain open |
-| Ohio | OH | 76 | Meets current directory floor |
+| North Dakota | ND | 99 | Meets current count and six-category floors; locality and phone review remain open |
+| Ohio | OH | 90 | Meets current count and six-category floors; locality and phone review remain open |
 | Oklahoma | OK | 75 | Meets current directory floor |
 | Oregon | OR | 121 | Meets current count and six-category floors; locality and phone review remain open |
 | Pennsylvania | PA | 75 | Meets current directory floor |
-| Rhode Island | RI | 78 | Meets current count and six-category floors; locality and phone review remain open |
+| Rhode Island | RI | 101 | Meets current count and six-category floors; pantry schedules come from a June 2025 list and require live confirmation |
 | South Carolina | SC | 131 | Meets count and all six category floors; specialized crisis channels supplement the statewide mobile-crisis dispatcher |
 | South Dakota | SD | 98 | Meets current directory floor |
 | Tennessee | TN | 221 | Meets floor; above planning range, preserve and audit |
@@ -179,6 +179,14 @@ This completed batch was New Jersey, New Mexico, North Dakota, Oregon, and Rhode
 The additions include NJ community mental-health and psychiatric screening sites, recovery-community centers, regional food-bank contacts, and designated county screening routes; NM behavioral-health providers, peer-support options, crisis triage, and state-listed food resources; OR county peer and housing-navigation providers from the state BHRN directory plus ODHS Self-Sufficiency offices; and RI recovery centers, DHS and Community Action benefit-access offices, and specialized crisis/safety contacts. Oregon’s White Bird Clinic listing remains in the peer category and is excluded from housing because the cited OHA listing does not mark housing service there. Housing-navigation contacts describe access and stabilization support, not confirmed shelter beds. These records are source-reviewed, not phone-confirmed, and do not guarantee current intake, capacity, eligibility, or exhaustive local coverage.
 
 Current sources: [New Jersey DMHAS behavioral-health directory](https://www.nj.gov/humanservices/dmhas/documents/pdf/MH_Dir_COMPLETE.pdf), [NJ ReachNJ Recovery Centers](https://www.nj.gov/humanservices/reachnj/help/centers/), [NJ DHS 2026–27 Emergency Food Assistance network](https://www.nj.gov/humanservices/dds/documents/RD/2026/NJ_Resources_2026_2027_English.pdf); [Las Cumbres New Mexico behavioral-health provider directory](https://www.lascumbres-nm.org/behavioral-health-providers), [New Mexico Peer Support Services](https://yes.nm.gov/nmhr/s/opre-peer-support-services-page?language=en_US), [UNM Crisis Triage Center](https://unmhealth.org/services/behavioral-health/crisis-triage-center.html), [New Mexico OFRA food resource list](https://www.ofra.nm.gov/wp-content/uploads/2025/11/List-of-food-box-resources.pdf), [New Mexico Association of Community Partners](https://nmacp.org/help/); [Oregon Health Authority 2025–2029 BHRN directory](https://www.oregon.gov/oha/HSD/AMH/docs/BHRN-Directory.pdf), [Oregon ODHS Self-Sufficiency Office Finder](https://www.oregon.gov/odhs/Pages/office-finder.aspx?serviceid=26); [Rhode Island Recovery Community Centers](https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers), [Rhode Island DHS offices](https://dhs.ri.gov/about-us/dhs-offices), [Rhode Island Community Action Association locator](https://ricommunityaction.org/find-your-caa/), [Rhode Island Executive Office of Housing CAP directory](https://housing.ri.gov/resources/frequently-asked-questions-faq), and [BH Link](https://bhlink.org/). North Dakota’s sources and prior additions are documented below.
+
+### Latest locality-deepening checkpoint — Colorado, Montana, North Dakota, Ohio, Rhode Island (October 30, 2026)
+
+This additive batch introduces 144 named source-listed contacts and routes: 68 Montana TEFAP recipient agencies, 23 Rhode Island pantry contacts, 20 North Dakota licensed addiction-treatment providers, 19 Colorado recovery-community organizations, eight Ohio local housing-navigation contacts, and six Ohio A.A. intergroup contacts. The current distinct catalog snapshot is Colorado 99, Montana 150, North Dakota 99, Ohio 90, and Rhode Island 101. Each has at least five records in each of the six categories. Montana's count is above the 75–125 planning band; preserve all valid listings. These are catalog progress milestones, not exhaustive coverage or confirmation of live services.
+
+The Montana DPHHS roster identifies eligible TEFAP recipient agencies but does not publish a direct phone or street address for each partner; use the Montana Food Bank Network locator linked from the state page to get current local contact details. The Rhode Island pantry rows reproduce a June 2025 Food Bank list and explicitly direct users to the live finder because schedules and service areas can change. North Dakota treatment contacts come from the November 2025 state directory. Colorado peer organizations are named in the 2026 statewide recovery-community landscape; for entries whose public landscape does not provide a direct organization contact, the record links to the CARS directory as a route to current details. Ohio housing records are access/navigation contacts rather than bed listings, and the Ohio peer records are fellowship meeting-connection contacts, not clinical treatment. All additions are source-reviewed, not phone-confirmed; none promises intake, eligibility, capacity, or an available bed. Existing records and IDs are preserved.
+
+Sources: [Montana DPHHS TEFAP recipient agencies](https://prod-dphhs.mt.gov/hcsd/TheEmergencyFoodAssistanceProgram), [Rhode Island Community Food Bank current food finder](https://rifoodbank.org/find-food/) and [June 2025 assistance-list PDF](https://dhs.ri.gov/sites/g/files/xkgbur426/files/2025-12/RI%20Community%20Food%20Bank%20-%20Food%20Assistance%20List%20%282025%29.pdf), [North Dakota HHS licensed addiction-treatment programs](https://www.hhs.nd.gov/behavioral-health/substance-abuse-treatment-programs), [Colorado 2026 recovery-friendly workplace landscape](https://corecoveryfriendlyworkplace.org/wp-content/uploads/2026/04/RFW_LandscapeReport_2026.pdf), [CARS Colorado peer recovery organization directory](https://www.carsrecovery.org/directory-of-peer-recovery-organizations/category/Colorado), [HUD Ohio homelessness assistance contacts](https://www.hud.gov/states/ohio), [Toledo-Lucas County coordinated entry](https://www.endinghomelessnesstoledo.org/coordinated-entry), and [Northeast Ohio Area 54 A.A. intergroups and central offices](https://area54.org/about-us/intergroups-central-offices-in-ne-ohio/).
 
 ### Previous five-state checkpoint — South Carolina, South Dakota, Tennessee, Utah, Vermont
 

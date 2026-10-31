@@ -908,7 +908,7 @@ describe("category fallback pathways", () => {
       expect(addedRecords.every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
     }
 
-    const expectedTotals = { Missouri: 88, Montana: 78, Nebraska: 86, Nevada: 88, "New Hampshire": 86, "South Carolina": 131 };
+    const expectedTotals = { Missouri: 88, Montana: 150, Nebraska: 86, Nevada: 88, "New Hampshire": 86, "South Carolina": 131 };
     for (const [state, total] of Object.entries(expectedTotals)) {
       const categories = getUSStateCoverage(state);
       const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
@@ -919,6 +919,29 @@ describe("category fallback pathways", () => {
       expect(categories.every(({ records }) => records.length >= 5), `${state} six-category floor`).toBe(true);
       expect(new Set(categories.flatMap(({ records }) => records.map(({ id }) => id))).size).toBeGreaterThanOrEqual(75);
       expect(categories.flatMap(({ records }) => records).every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
+    }
+  });
+
+  it("routes the latest five-state deepening contacts to the selected city and keeps their verification limits explicit", () => {
+    const cityExamples = [
+      ["food.essentials", "Butte, Montana", "mt-tefap-butte-emergency"],
+      ["food.essentials", "Pawtucket, Rhode Island", "ri-food-community-pawtucket-blackstone"],
+      ["programs", "Minot, North Dakota", "nd-sud-goodman-minot"],
+      ["housing", "Cleveland, Ohio", "oh-housing-local-cleveland-coordinated-intake-direct"],
+      ["peer", "Youngstown, Ohio", "oh-peer-youngstown-aa"],
+      ["peer", "Rifle, Colorado", "co-peer-community-discovery-cafe-rifle"],
+    ];
+    for (const [category, city, id] of cityExamples) {
+      const record = getCuratedFallback(category, "", city).find((entry) => entry.id === id);
+      expect(record, `${id} appears for ${city}`).toBeDefined();
+      expect(record).toMatchObject({ sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false });
+    }
+
+    const expectedTotals = { Colorado: 99, Montana: 150, "North Dakota": 99, Ohio: 90, "Rhode Island": 101 };
+    for (const [state, total] of Object.entries(expectedTotals)) {
+      const categories = getUSStateCoverage(state);
+      expect(new Set(categories.flatMap(({ records }) => records.map(({ id }) => id))).size).toBe(total);
+      expect(categories.every(({ records }) => records.length >= 5), `${state} six-category floor`).toBe(true);
     }
   });
 
