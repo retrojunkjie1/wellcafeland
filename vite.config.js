@@ -87,6 +87,9 @@ export default defineConfig(({ mode }) => {
             "upper-midwest-directory-expansion": ["./src/data/upperMidwestDirectoryExpansion.js"],
             "northeast-northwest-directory": ["./src/data/northeastNorthwestDirectory.js"],
             "southeast-mountain-directory": ["./src/data/southeastMountainDirectory.js"],
+            // Keep the active five-state directory batch independent from the
+            // shared fallback module as the sourced listings continue to grow.
+            "current-five-state-directory": ["./src/data/currentFiveStateCoverage.js"],
             "texas-local-resource-directory": [
               "./src/data/texasCitiesDirectory.js",
               "./src/data/texasCitiesBatchTwo.js",

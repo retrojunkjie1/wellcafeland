@@ -333,7 +333,14 @@ export const SOUTH_DAKOTA_URGENT = [record({
   serviceArea: `${city} and designated regional counties; call to confirm catchment`,
   resourceType: "regional short-term behavioral-health crisis stabilization center",
   description: `South Dakota Behavioral Health lists ${name} at ${address}, phone ${phone}. The state describes its regional centers as 24/7 overnight stabilization access for acute behavioral-health symptoms, evaluation, and crisis planning. Call first to confirm current intake, age and eligibility rules, whether referral or assessment is required, and available capacity before traveling. Call or text 988 for statewide crisis counseling; call 911 for immediate danger or urgent medical needs.`,
-}))];
+})), record({
+  id: "sd-crisis-sioux-falls-the-link", state: "SD", name: "The Link Community Triage Center — crisis, withdrawal, and sobering support", city: "Sioux Falls", address: "132 North Dakota Avenue, Sioux Falls, SD 57104", phone: "605-275-1000",
+  link: "https://dakotaathome.sd.gov/search/62c12d15-2b73-576f-b005-659c18421ec9",
+  source: "South Dakota Department of Social Services, Dakota at Home The Link service record; South Dakota Behavioral Health, substance-use treatment locator; City of Sioux Falls, Community Approach for Supporting Homelessness",
+  serviceArea: "Sioux Falls metro; published eligibility is for Minnehaha or Lincoln County residents",
+  resourceType: "24/7 community triage, behavioral-health crisis stabilization, withdrawal-management, and sobering access",
+  description: "The Link provides walk-in detox and mental-health crisis stabilization at 132 North Dakota Avenue; the state directory lists 24/7 hours, adults 18 and older, phone 605-275-1000, and service for Minnehaha and Lincoln County residents. The state resource entry describes medically monitored withdrawal management, sliding-scale fees, and service regardless of ability to pay. A 2026 local report says the center is seeking a new operator, so call before traveling to confirm that the program is operating, the current intake route, eligibility, and capacity. This is not an emergency department. Call or text 988 for statewide behavioral-health crisis support; call 911 for immediate danger or urgent medical needs.",
+})];
 
 const tnOfficeSource = "https://www.tn.gov/humanservices/for-families/supplemental-nutrition-assistance-program-snap/office-locator-family-assistance.html";
 const tnOffices = [
@@ -567,6 +574,24 @@ export const TENNESSEE_URGENT_LOCAL = [
     link: "https://www.frontierhealth.org/24-hr-crisis-walk-in-center/", source: "Frontier Health, 24-hour Crisis Walk-In Center and Turning Point; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
     serviceArea: "Northeast Tennessee; children age 7 and older and adults", resourceType: "24/7 walk-in psychiatric and substance-misuse crisis evaluation",
     description: "Frontier Health says Turning Point is open 24/7, accepts walk-ins without an appointment, and serves adults and children age 7 and older experiencing a non-medical psychiatric or substance-misuse emergency. Published center phone: 423-926-0940; the provider also lists a 24-hour crisis hotline at 877-928-9062. Services include crisis assessment, safety planning, and connection to stabilization, detox, or other care when appropriate. Call to confirm the right route and age-specific service. For immediate medical emergencies, call 911; Tennessee's statewide crisis line is 988.",
+  }),
+  ...[
+    ["chattanooga", "Chattanooga", "413 North Spring Street, Chattanooga, TN 37405", "423-634-8884", "Hamilton County and surrounding communities"],
+    ["cookeville", "Cookeville", "1200 South Willow Avenue, Cookeville, TN 38506", "931-431-4123", "Upper Cumberland region; confirm county access with the crisis team"],
+    ["murfreesboro", "Murfreesboro", "1504 Williams Drive, Murfreesboro, TN 37129", "615-898-0771", "Rutherford County and surrounding communities"],
+  ].map(([id, city, address, phone, serviceArea]) => record({
+    id: `tn-vbh-${id}-crisis-walk-in`, state: "TN", name: `Volunteer Behavioral Health — ${city} 24/7 crisis walk-in and stabilization center`, city, address, phone,
+    link: "https://volunteerbehavioralhealth.org/services/crisis-services-2/",
+    source: "Volunteer Behavioral Health Care System, Crisis Services and Walk-In Center locations; Tennessee Department of Mental Health and Substance Abuse Services, Crisis Services Continuum",
+    serviceArea, resourceType: "24/7 adult crisis walk-in assessment and short-term stabilization",
+    description: `Volunteer Behavioral Health identifies its ${city} campus as a 24/7, 365-day crisis walk-in center and crisis stabilization unit for adults experiencing a mental-health crisis. Published location: ${address}; provider crisis line: 1-800-704-2651, or call/text 988. The provider describes assessment, referral, follow-up, and voluntary short-term stabilization; its mobile crisis teams cover 29 counties across multiple regions. Call first to confirm current entrance, age and medical eligibility, and whether this site can safely meet the immediate need. For an urgent medical emergency or immediate danger, call 911.`,
+  })),
+  record({
+    id: "tn-mcnabb-morristown-crisis-stabilization-unit", state: "TN", name: "McNabb Center — Morristown adult crisis stabilization unit", city: "Morristown", address: "320 West 3rd North Street, Morristown, TN 37814", phone: "423-273-5599",
+    link: "https://mcnabbcenter.org/hamblen_co/", source: "McNabb Center, Hamblen County crisis stabilization unit and adult crisis services",
+    serviceArea: "Anderson, Campbell, Claiborne, Cocke, Grainger, Hamblen, Hancock, Hawkins, Jefferson, and Union counties",
+    resourceType: "voluntary 24-hour adult crisis stabilization in a non-hospital setting",
+    description: "McNabb Center lists its Morristown crisis stabilization unit at 320 West 3rd North Street, phone 423-273-5599. The provider describes voluntary, short-term 24-hour treatment for adults who are medically stable and do not need medical detox; published service-area counties are Anderson, Campbell, Claiborne, Cocke, Grainger, Hamblen, Hancock, Hawkins, Jefferson, and Union. Call before traveling to discuss screening, eligibility, and current access. For immediate danger or an urgent medical emergency, call 911; Tennessee's crisis continuum is reachable at 988.",
   }),
 ];
 export const TENNESSEE_FOOD = [

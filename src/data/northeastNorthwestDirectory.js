@@ -264,6 +264,81 @@ export const NORTH_DAKOTA_FOOD = ndFoodSites.map(([id, name, city, address, phon
   description: `North Dakota HHS lists ${name} at ${address}, phone ${phone}, among local food resources. Contact the organization to confirm hours, eligibility or service area, appointment requirements, and current food availability before traveling. HHS also notes mobile food pantries and other nutrition support for rural communities; use the linked state guide or call 211 if this location is not accessible.`,
 }));
 
+// North Dakota peer, housing, and rural food routes from state HHS and NDDPI.
+// Community Connect has program eligibility; these are access contacts, not
+// open-enrollment promises or confirmed availability.
+const ndCommunityConnectSource = "https://www.hhs.nd.gov/behavioral-health/community-connect/providers";
+const ndPeerRoutes = [
+  ["advocates-minot", "Advocates for Change", "Minot", "North Central Region", "701-289-7676", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Care coordination and peer support through Community Connect and Free Through Recovery; the latter has justice-system eligibility."],
+  ["all-of-us-minot", "All Of Us In Recovery", "Minot", "North Central Region", "218-779-6825", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Case management connects participants with behavioral healthcare, peer support, housing, medical care, advocacy, education, employment, and social opportunities."],
+  ["community-options-minot", "Community Options", "Minot", "North Central Region", "701-852-0174", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Care coordinators connect participants with peer support and referrals, including housing, employment, and education."],
+  ["f5-minot", "F5 Project", "Minot", "North Central Region", "701-412-6866", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Peer mentorship and re-entry support, including employment and housing navigation; some services are for people involved with the justice system."],
+  ["independence-minot", "Independence, Inc.", "Minot", "North Central Region", "701-839-4724", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Peer-driven independent-living support for people in recovery; services may include housing, employment, transportation, education, and financial-independence navigation."],
+  ["new-creation-devils-lake", "A New Creation", "Devils Lake", "Lake Region", "701-552-0892 / 701-350-2362", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Recovery mentoring and advocacy, individualized care planning, and support groups; the provider also serves justice-involved people."],
+  ["all-of-us-devils-lake", "All Of Us In Recovery", "Devils Lake", "Lake Region", "701-330-2006", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Case-management route for behavioral-health, peer-support, housing, medical-care, advocacy, education, employment, and social-service referrals."],
+  ["community-options-devils-lake", "Community Options", "Devils Lake", "Lake Region", "701-662-3110", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Care coordinators connect Community Connect participants with peer support and housing, employment, and education referrals."],
+  ["f5-devils-lake", "F5 Project", "Devils Lake", "Lake Region", "701-960-9648", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Re-entry peer mentorship and transitional support, including housing and employment navigation; ask about justice-system program eligibility."],
+  ["libertas-northeast", "Libertas", "Cavalier, Pembina, and Walsh counties", "Northeast Region", "701-521-5122", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Community-based care coordination and peer support for residents navigating behavioral health, housing, employment, sobriety, and post-incarceration needs."],
+  ["ability-consulting-grand-forks", "Ability Consulting", "Grand Forks", "Grand Forks region", "701-770-3525", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Community Connect case management with educational, employment, housing, and community-connection goals."],
+  ["community-options-grand-forks", "Community Options", "Grand Forks", "Grand Forks region", "701-772-1715", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Care coordinators connect participants with peer support and referrals for housing, employment, and education."],
+  ["f5-grand-forks", "F5 Project", "Grand Forks", "Grand Forks region", "701-960-9648", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Re-entry peer mentorship and transition support with housing, employment, and community-connection referrals."],
+  ["better-together-grand-forks", "Better Together ND", "Grand Forks", "Grand Forks region", "701-404-9180", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Community Connect care coordination, peer support, and recovery services based on an individualized care plan."],
+  ["cass-clay-integration-fargo", "Cass Clay Integration Center", "Fargo", "Cass, Ransom, Richland, Sargent, Steele, and Traill counties", "701-730-9236", "https://www.hhs.nd.gov/behavioral-health/community-connect/region5", "Community Connect care coordination, peer support, recovery, housing, employment, education, and resource navigation."],
+  ["f5-fargo", "F5 Project", "Fargo", "Southeast Region", "701-210-2491", "https://www.hhs.nd.gov/behavioral-health/community-connect/region5", "Fargo re-entry and peer-mentorship route; ask about Community Connect or Free Through Recovery eligibility and the appropriate local service."],
+  ["recovery-talk-statewide", "Recovery Talk — confidential peer support", "Statewide", "North Dakota statewide", "701-291-7901 (call or text)", "https://www.hhs.nd.gov/behavioral-health/recovery-talk", "Free, confidential 24/7 peer support from trained specialists with lived experience. Anonymous support and optional scheduled outreach are available; it is not emergency dispatch."],
+];
+export const NORTH_DAKOTA_PEER = ndPeerRoutes.map(([id, name, city, serviceArea, phone, link, scope]) => reviewed({
+  id: `nd-peer-${id}`, name: `${name} — peer and community recovery support`, state: "ND", city, phone, link,
+  source: "North Dakota HHS Community Connect provider guide and Recovery Talk directory", serviceArea, coverageScope: "regional peer-support access route", resourceType: "peer recovery and community support",
+  locationLine: `${city} · ${serviceArea} · call to confirm fit and intake`,
+  description: `North Dakota HHS lists ${name} as a Community Connect or peer-support contact. ${scope} Ask about program eligibility, current intake, hours, costs, and whether services are available in your community before traveling. Provider listings are source-reviewed, not phone-confirmed.`,
+}));
+
+const ndHousingSource = "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/shelter-and-housing-assistance";
+const ndHousingRoutes = [
+  ["ywca-cass-clay", "YWCA Cass Clay", "Fargo", "3000 S University Dr, Fargo, ND 58103", "701-232-3449", "Emergency shelter and housing referral; call for confidential intake and safe access instructions."],
+  ["new-life-center", "New Life Center", "Fargo", "1902 3rd Ave N, Fargo, ND 58102", "701-235-4453", "Emergency shelter and housing support route; call to confirm eligibility, referral steps, and current availability."],
+  ["united-way-center-opportunity", "United Way Center for Opportunity", "Bismarck", "1140 S 12th St, Bismarck, ND 58501", "701-401-5606", "Housing and homelessness-prevention contact; ask about current intake and referral options."],
+  ["fargo-hra", "Fargo Housing & Redevelopment Authority", "Fargo", "25 Broadway, Fargo, ND 58102", "701-293-6262", "Public-housing and rental-assistance contact. Ask about current application windows, waitlists, and program eligibility."],
+  ["village-family-service", "The Village Family Service Center", "Fargo", "2701 12th Ave S, Fargo, ND 58103", "701-451-4900 / 800-627-8220", "Housing-support and case-management route; call to confirm current programs and intake."],
+  ["grand-forks-hra", "Grand Forks Housing Authority", "Grand Forks", "1405 1st Ave N, Grand Forks, ND 58203", "701-456-2545", "Public-housing and rental-assistance contact; ask about current application periods, eligibility, and waitlists."],
+  ["salvation-army-grand-forks", "Salvation Army Grand Forks", "Grand Forks", "1600 University Ave, Grand Forks, ND 58203", "701-775-2597", "Housing-support referral contact; call to ask what housing or emergency-support services are currently active."],
+  ["burleigh-housing-authority", "Burleigh County Housing Authority", "Bismarck", "410 S 2nd St, Bismarck, ND 58504", "701-225-2540", "Public-housing and rental-assistance contact; confirm current programs, eligibility, and waitlist status."],
+  ["cap-region-vii", "Community Action Program Region VII", "Bismarck", "2105 Lee Ave, Bismarck, ND 58504", "701-258-2240", "Housing and homelessness-prevention referral route; call to ask about current rent support, screening, and documentation."],
+  ["southeast-care-fargo", "Southeast Care LLC", "Fargo", "1323 23rd St S, Suite D, Fargo, ND 58103", "218-443-0088", "Listed by North Dakota HHS under housing-support case management. Contact to confirm current service area, referral pathway, and eligibility."],
+  ["community-options-fargo", "Community Options", "Fargo", "2701 9th Ave S, Fargo, ND 58103", "701-223-2417", "Housing-support case-management contact listed by North Dakota HHS. Call to confirm intake, eligibility, and current services."],
+  ["prairie-harvest-grand-forks", "Prairie Harvest Medical Health", "Grand Forks", "930 N 3rd St, Grand Forks, ND 58203", "701-795-9143", "Housing-support case-management contact listed by North Dakota HHS. Call to identify current social-work and referral access."],
+  ["altru-social-work-grand-forks", "Altru Health System Social Work", "Grand Forks", "1200 S Columbia Rd, Grand Forks, ND 58206", "701-780-5000", "Hospital social-work contact listed by North Dakota HHS for housing-support case management; ask to be connected to the appropriate team."],
+  ["community-options-bismarck", "Community Options", "Bismarck", "4909 Shelburne St, Bismarck, ND 58501", "701-223-2417", "Housing-support case-management contact listed by North Dakota HHS. Call to confirm service eligibility and referral steps."],
+  ["beyond-housing-valley-city", "Beyond Housing", "Valley City", "915 2nd St SW, Valley City, ND 58072", "701-399-9863", "North Dakota Community Connect lists housing support serving Barnes County and neighboring counties. Call to confirm coverage and intake."],
+  ["blessed-builders-bismarck", "Blessed Builders", "Bismarck", "2700 State St, Suite F-6, Bismarck, ND 58503", "701-751-0318", "Community Connect directory lists sober housing and outpatient treatment for men and women. Ask about admission criteria, fees, and current space."],
+  ["ministry-margins-bismarck", "Ministry on the Margins", "Bismarck", "201 N 24th St, Bismarck, ND", "701-223-6315", "Community Connect directory lists emergency-shelter and housing support alongside food assistance. Call first for intake, hours, eligibility, and safe access details."],
+  ["hopes-landing-dickinson", "Hope’s Landing Sober Living", "Dickinson", "PO Box 3645, Dickinson, ND 58602", "701-225-7132", "Community Connect directory lists sober living for men and women. Call to ask about admission requirements, costs, current space, and the confidential intake process."],
+];
+export const NORTH_DAKOTA_HOUSING = ndHousingRoutes.map(([id, name, city, address, phone, scope]) => reviewed({
+  id: `nd-housing-${id}`, name: `${name} — housing and safe-place access`, state: "ND", city, address, phone,
+  link: id.includes("beyond-housing") ? "https://www.hhs.nd.gov/behavioral-health/community-connect/region6" : id.includes("blessed-builders") || id.includes("ministry-margins") ? "https://www.hhs.nd.gov/behavioral-health/community-connect/region7" : id.includes("hopes-landing") ? "https://www.hhs.nd.gov/behavioral-health/community-connect/region8" : ndHousingSource,
+  source: id.includes("beyond-housing") || id.includes("blessed-builders") || id.includes("ministry-margins") || id.includes("hopes-landing") ? "North Dakota HHS Community Connect regional provider directory" : "North Dakota HHS Community Resource Guide, Shelter and Housing Assistance",
+  serviceArea: city === "Fargo" ? "Fargo and Cass County; ask provider about wider referral coverage" : city === "Grand Forks" ? "Grand Forks area; ask provider about wider referral coverage" : `${city} area`,
+  coverageScope: "local housing access or referral contact", resourceType: "housing, shelter, rental assistance, or housing case-management contact",
+  locationLine: `${address} · call to confirm intake, eligibility, and availability`,
+  description: `North Dakota HHS lists ${name} as a housing or housing-support contact. ${scope} Call before traveling to confirm the correct referral path, eligibility, hours, fees, safety instructions, and current availability. A listing does not guarantee rental assistance, placement, or an available bed.`,
+}));
+
+const ndFoodNetworkSource = "https://www.nd.gov/dpi/familiescommunity/community/food-programs";
+const ndFoodNetworkRoutes = [
+  ["community-action-dickinson", "Community Action Partnership in Dickinson", "Dickinson", "202 East Villard, Dickinson, ND 58601", "701-227-0131 / 800-359-2243", "Dunn, Billings, Golden Valley, Stark, Hettinger, Slope, Bowman, and Adams counties", "Regional CSFP food-program contact; CSFP eligibility is for qualifying adults age 60 and older. Ask about application and local distribution site."],
+  ["community-action-williston", "Community Action Partnership — Williston region", "Williston", "120 Washington Ave, Williston, ND 58801", "701-572-8191 / 877-572-8191", "Williams, Divide, and McKenzie counties", "Regional CSFP food-program contact; CSFP eligibility is for qualifying adults age 60 and older. Ask about application and local distribution site."],
+  ["southeastern-cap-fargo", "Southeastern North Dakota Community Action Agency", "Fargo", "3233 South University Drive, Fargo, ND 58104-6221", "701-232-2452 / 800-726-7960", "Cass, Ransom, Sargent, Richland, Steele, Traill, and Nelson counties", "State-listed local CSFP administering agency. Ask about the age-60-plus eligibility rules, application, and the distribution partner serving your county."],
+  ["hope-center-devils-lake", "Hope Center", "Devils Lake", "313 3rd Street NE, Devils Lake, ND 58301", "701-665-4673", "Ramsey, Eddy, Towner, Benson, and Cavalier counties", "State-listed CSFP food distribution contact. Ask about the age-60-plus eligibility rules, application, distribution schedule, and current availability."],
+];
+export const NORTH_DAKOTA_FOOD_REGIONAL = ndFoodNetworkRoutes.map(([id, name, city, address, phone, serviceArea, scope]) => reviewed({
+  id: `nd-food-${id}`, name: `${name} — regional food and CSFP access`, state: "ND", city, address, phone, link: ndFoodNetworkSource,
+  source: "North Dakota Department of Public Instruction Food Programs, CSFP agency contact directory", serviceArea, coverageScope: "regional food-program access contact", resourceType: "senior food program and regional food distribution route",
+  locationLine: `${city} · serves ${serviceArea} · call for local distribution details`,
+  description: `North Dakota’s state food-program directory lists ${name} for ${serviceArea}. ${scope} Contact the agency to confirm current county coverage, enrollment, distribution location and dates before traveling; this program route is not a general walk-in pantry listing and does not guarantee food availability.`,
+}));
+
 const orFoodNetworks = [
   ["access", "ACCESS Food Share", "Medford", "Jackson County", "https://www.accesshelps.org/"],
   ["capeco", "CAPECO Food Share", "Pendleton", "Umatilla and Morrow counties", "https://www.capeco-works.org/"],
@@ -446,3 +521,317 @@ export const RHODE_ISLAND_URGENT = [reviewed({
   id: "ri-bh-link-988", name: "BH Link — Rhode Island 24/7 behavioral-health crisis support", state: "RI", city: "Statewide", phone: "988", link: "https://bhddh.ri.gov/mental-health/licensed-treatment-providers", source: "Rhode Island BHDDH, Community Mental Health Centers and crisis information", serviceArea: "Statewide, Rhode Island", coverageScope: "statewide", resourceType: "24/7 call, text, and crisis connection", locationLine: "Call or text 988 · statewide confidential support and connection to care",
   description: "Rhode Island BHDDH identifies BH Link through 988 for confidential crisis support and connection to care. People under 18 can call 855-KIDLINK. Call or text 988 to reach trained crisis counselors; for immediate danger, call 911.",
 })];
+
+// Additional city and county contacts for the active five-state directory
+// batch. Locations and program scopes come from the source named on each row;
+// verify current intake, access, and capacity with the organization.
+const NJ_DMHA = "https://www.nj.gov/humanservices/dmhas/documents/pdf/MH_Dir_COMPLETE.pdf";
+const njBehavioralRows = [
+  ["atlantic-outpatient", "Atlanticare Behavioral Health", "Atlantic City", "Atlantic", "13 North Hartford Avenue, Atlantic City, NJ 08401", "609-348-1116", "Outpatient mental-health services"],
+  ["atlantic-absecon", "Center for Family Services", "Absecon", "Atlantic", "312 East White Horse Pike, Absecon Highlands, NJ 08201", "609-652-1600", "Outpatient mental-health services"],
+  ["bergen-newbridge", "Care Plus NJ", "Paramus", "Bergen", "610 Valley Health Plaza, Paramus, NJ 07652", "201-265-8200", "Community behavioral-health clinic and outpatient services"],
+  ["bergen-westbergen", "West Bergen Mental Healthcare", "Ridgewood", "Bergen", "120 Chestnut Street, Ridgewood, NJ 07450", "201-444-3550", "Outpatient and community mental-health services"],
+  ["bergen-vantage-englewood", "Vantage Health System", "Englewood", "Bergen", "93 West Palisade Avenue, Englewood, NJ 07631", "201-567-0059", "Outpatient mental-health services"],
+  ["bergen-cbh-hackensack", "CBH Care", "Hackensack", "Bergen", "25 East Salem Street, 2nd Floor, Hackensack, NJ 07601", "201-935-3322", "Outpatient and community mental-health services"],
+  ["cape-acenda", "Acenda Integrated Health", "Cape May Court House", "Cape May", "128 Crest Haven Road, Cape May Court House, NJ 08210", "609-465-4100", "Outpatient, intensive outpatient, and community mental-health services"],
+  ["cape-learning-center", "Learning Recovery Center", "Rio Grande", "Cape May", "1304 Route 47 South, Units AH & AJ, Rio Grande, NJ 08242", "609-600-3502", "Community wellness and recovery support"],
+  ["cumberland-guidance", "Cumberland County Guidance Center", "Vineland", "Cumberland", "814 Elmer Street, Vineland, NJ 08360", "856-825-6810", "County community mental-health services"],
+  ["newark-beth-israel", "Newark Beth Israel Medical Center Behavioral Health", "Newark", "Essex", "210 Lyons Avenue, Newark, NJ 07112", "973-926-7026", "Outpatient behavioral-health services"],
+  ["essex-clara-maass", "Clara Maass Medical Center Behavioral Health", "Belleville", "Essex", "1 Clara Maass Drive, Belleville, NJ 07109", "973-844-4357", "Behavioral-health emergency screening and assessment"],
+  ["hudson-jcmc", "Jersey City Medical Center Behavioral Health", "Jersey City", "Hudson", "355 Grand Street, Jersey City, NJ 07302", "201-915-2210", "Behavioral-health emergency assessment and referral"],
+  ["hunterdon-behavioral", "Hunterdon Behavioral Health Emergency Services", "Flemington", "Hunterdon", "2100 Wescott Drive, Flemington, NJ 08822", "908-788-6400", "Behavioral-health emergency assessment and referral"],
+  ["camden-oaks", "Oaks Integrated Care", "Cherry Hill", "Camden", "2201 West Chapel Avenue, Cherry Hill, NJ 08002", "856-428-4357", "Behavioral-health emergency screening and community services"],
+  ["burlington-legacy", "Legacy Treatment Services", "Hainesport", "Burlington", "1289 Route 38 West, Hainesport, NJ 08046", "609-835-6180", "Behavioral-health emergency screening and community services"],
+  ["passaic-stmarys", "St. Mary's General Hospital Behavioral Health", "Passaic", "Passaic", "211 Pennington Avenue, Passaic, NJ 07055", "973-470-3086", "Short-term behavioral-health care"],
+  ["essex-rutgers", "Rutgers University Behavioral Health Care", "Newark", "Essex", "150 Bergen Street, Newark, NJ 07101", "973-623-2323", "Psychiatric emergency screening and behavioral-health assessment"],
+  ["essex-nbi", "Newark Beth Israel Medical Center Psychiatric Screening", "Newark", "Essex", "201 Lyons Avenue, Newark, NJ 07112", "973-926-7444", "Psychiatric emergency screening and referral"],
+];
+export const NEW_JERSEY_TREATMENT = njBehavioralRows.map(([id, name, city, county, address, phone, scope]) => reviewed({
+  id: `nj-treatment-${id}`, name: `${name} — ${scope.toLowerCase()}`, state: "NJ", city, county: `${county} County`, address, phone,
+  link: NJ_DMHA, source: "New Jersey DMHAS Directory of Mental Health Services (updated October 2026)", serviceArea: `${county} County`, coverageScope: "county behavioral-health program",
+  resourceType: scope, locationLine: `${city} · ${address} · call before visiting for intake and current services`,
+  description: `New Jersey DMHAS lists ${name} at ${address} for ${scope.toLowerCase()} in ${county} County. Published contact: ${phone}. Ask about intake, age range, insurance or payment, referral requirements, accessibility, and current availability. Emergency screening services assess and refer; they do not guarantee admission or a particular treatment.`,
+}));
+
+const njPeerRows = [
+  ["capital", "Capital Recovery Center", "Bridgeton", "Cumberland", "72 North Pearl Street, Bridgeton, NJ 08302", "856-391-7449"],
+  ["cape-regional", "Cape Regional Recovery Center", "Rio Grande", "Cape May", "1304 Route 47, Unit WL, Rio Grande, NJ 08242", "609-435-6272"],
+  ["living-proof-sewell", "Living Proof Recovery Center at RCSJ", "Sewell", "Gloucester", "1492 Tanyard Road, Sewell, NJ 08080", "856-394-3386"],
+  ["living-proof-camden", "Living Proof Recovery Center", "Camden", "Camden", "500 Pine Street, Camden, NJ 08104", "609-435-6272"],
+  ["living-proof-salem", "Living Proof Recovery Center of Salem County", "Mannington", "Salem", "5 Route 45, Mannington, NJ 08079", "609-682-1204"],
+  ["mercer", "Mercer Community Peer Recovery Center", "Hamilton", "Mercer", "3525 Quakerbridge Road, Suite 903, Hamilton, NJ 08619", "609-582-1489"],
+  ["community-in-crisis", "Community in Connection Peer Recovery Services", "Bernardsville", "Somerset", "9 Church Street, Bernardsville, NJ 07924", "973-434-0911"],
+  ["warren", "Living Proof Recovery Center of Warren County", "Phillipsburg", "Warren", "370 Memorial Parkway, First Floor, Suite 4, Phillipsburg, NJ 08865", "908-454-4470"],
+  ["hope-sheds-light", "Hope Recovery Center", "Toms River", "Ocean", "253 Chestnut Street, Toms River, NJ 08753", "732-244-0783"],
+  ["burlington-resource", "Burlington Recovery Resource Center", "Westampton", "Burlington", "795 Woodlane Road, Third Floor, Westampton, NJ 08060", "609-726-7087"],
+  ["burlington-cprc", "Burlington Community Peer Recovery Center", "Burlington", "Burlington", "525 High Street, Burlington, NJ 08016", "609-265-5383"],
+  ["all-roads-atlantic", "All Roads Recovery Center", "Atlantic City", "Atlantic", "1931 Bacharach Boulevard, Atlantic City, NJ 08401", "609-345-2020"],
+  ["all-roads-pleasantville", "All Roads Recovery Center", "Pleasantville", "Atlantic", "610 Blackhorse Pike, Suite F15B, Pleasantville, NJ 08232", "609-345-2020"],
+  ["living-proof-voorhees", "Living Proof Recovery Center", "Voorhees", "Camden", "108 Somerdale Road, Voorhees, NJ 08043", "856-216-7134"],
+  ["cares-dover", "CARES Recovery Center", "Dover", "Morris", "60 North Sussex Street, Dover, NJ 07801", "973-625-1143"],
+  ["newbridge", "Recovery Center at Bergen New Bridge Medical Center", "Paramus", "Bergen", "230 East Ridgewood Avenue, Paramus, NJ 07652", "201-967-4000 ext. 22453"],
+  ["rise-up", "Rise UP Community Peer Recovery Center", "Roselle", "Union", "121–125 Chestnut Street, Roselle, NJ 07203", "908-454-4470 ext. 306"],
+  ["recovery-junction", "Recovery Junction Recovery Center", "Jersey City", "Hudson", "35 Journal Square Plaza, Suite 500, Jersey City, NJ 07306", "551-220-1150"],
+  ["hunterdon-open-door", "Open Door Recovery Center of Hunterdon County", "Flemington", "Hunterdon", "5 East Main Street, Flemington, NJ 08822", "908-520-6812"],
+  ["middlesex", "Middlesex Community Peer Recovery Center", "New Brunswick", "Middlesex", "97–99 Bayard Street, Suite 201, New Brunswick, NJ 08901", "732-381-4100"],
+  ["monmouth-open-door", "Open Door Recovery Center of Monmouth County", "Asbury Park", "Monmouth", "1004 Comstock Street, First Floor, Asbury Park, NJ 07712", "908-315-3221"],
+  ["sussex", "Sussex County Recovery Community Center", "Newton", "Sussex", "65 Newton Sparta Road, Newton, NJ 07860", "973-940-2966"],
+  ["evas-village", "Recovery Center at Eva's Village", "Paterson", "Passaic", "16 Spring Street, Paterson, NJ 07501", "973-381-0425"],
+];
+export const NEW_JERSEY_PEER = njPeerRows.map(([id, name, city, county, address, phone]) => reviewed({
+  id: `nj-peer-${id}`, name: `${name} — community peer recovery support`, state: "NJ", city, county: `${county} County`, address, phone,
+  link: "https://www.nj.gov/humanservices/reachnj/help/centers/", source: "New Jersey Human Services ReachNJ Community Peer Recovery Centers directory",
+  serviceArea: `${county} County and participating neighboring counties`, coverageScope: "community peer recovery center", resourceType: "peer recovery center",
+  locationLine: `${address} · contact for current opening times and groups`,
+  description: `New Jersey Human Services lists ${name} at ${address} as a Community Peer Recovery Center. The state describes these centers as community peer supports that may offer recovery coaching, support groups, community activities, naloxone education, and connections to treatment and other services. Call to confirm current hours, age range, walk-in access, and services; peer support is not clinical treatment or emergency response.`,
+}));
+
+const njFoodRows = [
+  ["cfbnj-north", "Community FoodBank of New Jersey", "Hillside", "North and central counties: Bergen, Essex, Hudson, Middlesex, Morris, Passaic, Somerset, and Union", "908-355-3663", "https://cfbnj.org/find-foods-services/"],
+  ["cfbnj-south", "Community FoodBank of New Jersey Southern Branch", "Egg Harbor Township", "Atlantic, Cape May, and Cumberland counties", "609-383-8843", "https://cfbnj.org/find-foods-services/"],
+  ["food-bank-south-jersey", "Food Bank of South Jersey", "Pennsauken", "Burlington, Camden, Gloucester, and Salem counties", "856-662-4884", "https://foodbanksj.org/"],
+  ["mercer-street-friends", "Mercer Street Friends Food Bank", "Trenton", "Mercer County", "609-406-0503", "https://www.mercerstreetfriends.org/"],
+  ["fulfill", "Fulfill Food Bank", "Neptune", "Monmouth and Ocean counties", "732-918-2600", "https://fulfillnj.org/"],
+  ["norwescap", "NORWESCAP Food Bank", "Phillipsburg", "Hunterdon, Sussex, and Warren counties", "908-454-4322", "https://www.norwescap.org/"],
+];
+export const NEW_JERSEY_FOOD = njFoodRows.map(([id, name, city, serviceArea, phone, link]) => reviewed({
+  id: `nj-food-${id}`, name: `${name} — regional food assistance network`, state: "NJ", city, phone, link,
+  source: "New Jersey Human Services 2026–2027 resource guide, Emergency Food Assistance Program food-bank network", serviceArea, coverageScope: "regional food-bank network", resourceType: "regional food bank and pantry locator",
+  locationLine: `${city} · serves ${serviceArea} · call or use its locator to find a nearby pantry`,
+  description: `New Jersey Human Services identifies ${name} as an Emergency Food Assistance Program regional food organization serving ${serviceArea}. Published contact: ${phone}. Food banks coordinate with community pantries, meal sites, and shelters; this is a regional contact, not a guarantee of walk-in food at the listed office. Use the organization's locator or call to find a local site and confirm hours, eligibility, appointment requirements, and current availability.`,
+}));
+const njScreeningRows = [
+  ["atlantic", "Atlanticare Regional Medical Center Psychiatric Intervention Program", "Atlantic City", "Atlantic", "1925 Pacific Avenue, Atlantic City, NJ 08401", "609-344-1118"],
+  ["bergen", "Care Plus NJ at Bergen New Bridge Medical Center", "Paramus", "Bergen", "230 East Ridgewood Avenue, Paramus, NJ 07652", "201-262-4357"],
+  ["camden", "Oaks Integrated Care Psychiatric Screening", "Cherry Hill", "Camden", "2201 West Chapel Avenue, Cherry Hill, NJ 08002", "856-428-4357"],
+  ["burlington", "Legacy Treatment Services Psychiatric Screening", "Hainesport", "Burlington", "1289 Route 38 West, Hainesport, NJ 08046", "609-835-6180"],
+  ["cape-may", "Acenda Integrated Health Psychiatric Screening", "Cape May Court House", "Cape May", "2 Stone Harbor Boulevard, Cape May Court House, NJ 08210", "609-465-5999"],
+  ["cumberland", "Cumberland County Guidance Center Psychiatric Screening", "Bridgeton", "Cumberland", "425 Bank Street, Bridgeton, NJ 08302", "856-455-5555"],
+  ["essex-clara-maass", "Clara Maass Medical Center Psychiatric Screening", "Belleville", "Essex", "1 Clara Maass Drive, Belleville, NJ 07109", "973-844-4357"],
+  ["hudson", "Jersey City Medical Center Psychiatric Screening", "Jersey City", "Hudson", "355 Grand Street, Jersey City, NJ 07302", "201-915-2210"],
+  ["hunterdon", "Hunterdon Medical Center Behavioral Health Emergency Services", "Flemington", "Hunterdon", "2100 Wescott Drive, Flemington, NJ 08822", "908-788-6400"],
+];
+export const NEW_JERSEY_URGENT = njScreeningRows.map(([id, name, city, county, address, phone]) => reviewed({
+  id: `nj-urgent-${id}`, name, state: "NJ", city, county: `${county} County`, address, phone, link: NJ_DMHA,
+  source: "New Jersey DMHAS Directory of Mental Health Services, Designated Screening Centers (updated October 2026)",
+  serviceArea: `${county} County screening area`, coverageScope: "county psychiatric screening center", resourceType: "psychiatric emergency assessment and referral",
+  locationLine: `${address} · call the published hotline for county-specific access instructions`,
+  description: `New Jersey DMHAS designates ${name} as the psychiatric screening contact for ${county} County and publishes ${phone}. The center evaluates and refers people under the state's psychiatric screening system; it is not a general walk-in clinic and does not guarantee admission. Call first for county eligibility, transport, and current procedure. For immediate danger, call 911.`,
+}));
+
+const nmBHSource = "https://www.lascumbres-nm.org/behavioral-health-providers";
+const nmBHRows = [
+  ["el-centro-espanola", "El Centro Family Health Services", "Española", "Rio Arriba", "505-753-7218", "https://ecfh.org/", "Behavioral-health services for children and adults; listed ages 3+"],
+  ["espanola-family-wellness", "Española Family Wellness Center", "Española", "Rio Arriba", "505-443-2800", "https://www.pmsnm.org/", "Behavioral-health services; listed ages 3+"],
+  ["las-clinicas-ojo", "Las Clinicas del Norte", "Ojo Caliente", "Rio Arriba", "505-384-2777", "https://lcdn.org/", "Behavioral-health services; listed ages 6+"],
+  ["las-clinicas-pojoaque", "Las Clinicas del Norte", "Pojoaque", "Santa Fe", "505-384-2777", "https://lcdn.org/", "Behavioral-health services; listed ages 6+"],
+  ["mesa-vista-santa-fe", "Mesa Vista Wellness", "Santa Fe", "Santa Fe", "505-983-8225", "https://mesavistawellness.com/", "Behavioral-health services; listed ages 3+"],
+  ["serna-albuquerque", "Serna Solutions", "Albuquerque", "Bernalillo", "505-207-8929", "https://sernasolutionsllc.com/", "Behavioral-health services; age range varies by location"],
+  ["christus-santa-fe", "Christus St. Vincent Behavioral Health", "Santa Fe", "Santa Fe", "505-913-3056", "https://christushealth.org/locations/st-vincent-behavioral-health-specialist", "Adult behavioral-health services"],
+  ["new-mexico-solutions-sf", "New Mexico Solutions", "Santa Fe", "Santa Fe", "877-499-1354", "https://treatmentsolutions.org/", "Behavioral-health services for adults"],
+  ["new-mexico-solutions-abq", "New Mexico Solutions", "Albuquerque", "Bernalillo", "877-499-1354", "https://treatmentsolutions.org/", "Behavioral-health services for adults"],
+  ["southwest-family-abq", "Southwest Family Guidance Center", "Albuquerque", "Bernalillo", "505-310-4764", "https://swfamily.com/", "Behavioral-health services for children and families"],
+  ["small-steps-abq", "Small Steps Counseling", "Albuquerque", "Bernalillo", "505-933-4639", "https://smallstepschildcounseling.com/", "Child and adolescent counseling; listed ages 0–18"],
+  ["sky-center-sf", "SKY Center", "Santa Fe", "Santa Fe", "505-473-6191", "https://skycenter.nmsip.org/", "Family therapy; listed ages 5+"],
+  ["grief-center", "The Grief Center", "Albuquerque", "Bernalillo", "505-323-0478", "https://www.griefnm.org/", "Grief counseling and support groups for adults and children"],
+  ["team-builders-taos", "TeamBuilders Behavioral Health", "Taos", "Taos", "505-216-2727", "https://teambuilders.org/", "Community behavioral-health services; listed ages 5+"],
+  ["taos-behavioral", "Taos Behavioral Health", "Taos", "Taos", "575-758-4297", "https://taosbehavioralhealth.org/", "Behavioral-health services; listed ages 5+"],
+  ["pinwheel-taos", "Pinwheel Healing Center", "Taos", "Taos", "505-636-6100", "https://pinwheelhealing.com/", "Behavioral-health services; listed ages 14+"],
+  ["belong-taos", "Belong Counseling and Consulting", "Taos", "Taos", "575-305-7393", "https://belongcounseling.com/", "Counseling services; contact to confirm current age and insurance options"],
+  ["esperanza-estancia", "Esperanza Family Health Center", "Estancia", "Torrance", "505-384-2777", "https://www.pmsnm.org/locations/esperanza-family-health-center", "Behavioral-health services; listed ages 7+"],
+  ["life-link-santa-fe", "Life Link", "Santa Fe", "Santa Fe", "505-438-0010", "https://thelifelink.org/", "Behavioral-health and community support services"],
+  ["mountain-center-sf", "The Mountain Center", "Santa Fe", "Santa Fe", "505-670-2861", "https://themountaincenter.org/", "Counseling and wellness services; listed ages 11+"],
+];
+export const NEW_MEXICO_TREATMENT = nmBHRows.map(([id, name, city, county, phone, link, scope]) => reviewed({
+  id: `nm-treatment-${id}`, name: `${name} — ${scope.toLowerCase()}`, state: "NM", city, county: `${county} County`, phone, link,
+  source: "Las Cumbres Community Services behavioral-health referral directory and provider-published service pages", serviceArea: `${city} and nearby communities`, coverageScope: "local behavioral-health referral provider", resourceType: "behavioral-health counseling and treatment access",
+  locationLine: `${city}, ${county} County · contact provider for its exact current clinic address and intake route`,
+  description: `Las Cumbres Community Services lists ${name} for ${city} and describes ${scope.toLowerCase()}. Published contact: ${phone}. The referral guide was last reviewed in 2025 and provider availability can change. Call to confirm current location, age range, accepted insurance or fees, referral requirements, and appointment openings before traveling.`,
+}));
+
+const nmPeerRows = [
+  ["nm-peer-warmline", "New Mexico Peer-to-Peer Warmline", "Statewide", "1-855-466-7100", "https://nmcrisisline.com/", "Daily non-crisis peer support by phone and text; the current provider page posts separate call and text hours."],
+  ["nm-peer-nami", "NAMI New Mexico", "Albuquerque and statewide", "505-260-0154", "https://naminewmexico.org/", "Education, support, and recovery resources; ask about local NAMI Connection groups and online options."],
+  ["nm-peer-friendship", "Friendship Club peer community", "Santa Fe", "", "https://friendshipclubsantafe.org/", "Peer-led community and wellness activities; contact the organization for its current schedule and access details."],
+  ["nm-peer-heights", "Heights Community Center peer-support activities", "Albuquerque", "", "https://heightsclub.com/", "Peer and community activities; call or check the organization site for current programming and entry requirements."],
+  ["nm-peer-bernco", "Bernalillo County Recovery Support Center", "Albuquerque", "", "https://www.bernco.gov/community-services/behavioral-health-initiative/", "Community recovery-support and peer meeting access; confirm hours, eligibility, and current location before visiting."],
+  ["nm-peer-recovery-communities", "Recovery Communities of New Mexico", "Statewide", "", "https://nmrecovery.org/", "Peer-led recovery community and advocacy connections; contact for current local and online support options."],
+  ["nm-peer-peers-helping-peers", "Peers Helping Peers — New Mexico Recovery Coalition", "Southwest New Mexico", "", "https://www.sharenm.org/organization/print/new-mexico-recovery-coalition/peers-helping-peers", "Certified peer workers provide community-based lived-experience support in the Southwest New Mexico service area; request an intake connection."],
+  ["nm-peer-cocaine-anonymous", "Cocaine Anonymous New Mexico meetings", "Albuquerque and Santa Fe", "", "https://canminfo.com/", "The fellowship publishes current peer mutual-aid meeting locations and schedules; check the live list before attending."],
+];
+export const NEW_MEXICO_PEER = nmPeerRows.map(([id, name, city, phone, link, detail]) => reviewed({
+  id, name, state: "NM", city, phone: phone || undefined, link, source: "New Mexico Health Care Authority Office of Peer Recovery and Engagement, NM Crisis Line, New Mexico recovery organizations, and published peer-community listings",
+  serviceArea: city === "Statewide" ? "Statewide, New Mexico" : city, coverageScope: "peer and community recovery support", resourceType: "peer, family, or mutual-aid community support",
+  locationLine: `${city} · contact the organization to confirm current group format, schedule, and location`,
+  description: `${detail} Peer and mutual-aid supports complement professional treatment; they are not clinical care or emergency response.`,
+}));
+
+const nmCrisisRows = [
+  ["nm-crisis-warmline", "New Mexico Peer-to-Peer Warmline", "Statewide", "1-855-466-7100", "https://nmcrisisline.com/", "Non-crisis emotional support from peer specialists by phone; published daily call hours are 3 p.m.–11:30 p.m. Mountain Time."],
+  ["nm-crisis-988", "988 New Mexico — call or text crisis support", "Statewide", "988", "https://nmcrisisline.com/", "Free, confidential crisis support by phone or text, 24 hours a day. For immediate physical danger, call 911."],
+  ["nm-crisis-unm-ctc", "UNM Health Crisis Triage Center", "Albuquerque", "505-272-7270", "https://unmhealth.org/services/behavioral-health/crisis-triage-center.html", "Voluntary 24/7 stabilization for adults; assessment and admission are coordinated through UNM Psychiatric Emergency Services. Call first to confirm access."],
+  ["nm-crisis-dona-ana", "Doña Ana County Crisis Triage Center", "Las Cruces", "575-216-4150", "https://sharenm.org/dona-ana-crisis-triage-center", "Published as 24/7 crisis stabilization for referred guests; call to confirm referral and admission process."],
+  ["nm-crisis-solace", "Solace Sexual Assault Services — 24/7 hotline", "Santa Fe and statewide", "505-988-1951", "https://findsolace.org/", "Confidential crisis support for survivors of sexual violence; the local directory also lists 1-800-721-7273 as a toll-free hotline. Call first for safe access and advocate response."],
+  ["nm-crisis-domestic-violence", "New Mexico Domestic Violence Hotline", "Statewide", "1-800-473-5220", "https://www.nmcadv.org/", "Confidential safety planning and connection to domestic-violence services; call before traveling to any shelter and follow the advocate's safety instructions."],
+  ["nm-crisis-youth", "New Mexico Children, Youth and Families — child safety report line", "Statewide", "1-855-333-7233", "https://www.cyfd.nm.gov/", "Statewide route for reporting suspected child abuse or neglect; this is a protective-services report line rather than a therapy or youth crisis counseling service."],
+];
+export const NEW_MEXICO_URGENT_LOCAL = nmCrisisRows.map(([id, name, city, phone, link, detail]) => reviewed({
+  id, name, state: "NM", city, phone, link, source: "New Mexico Crisis and Access Line; UNM Health Crisis Triage Center; Share New Mexico; Santa Fe County resource directory",
+  serviceArea: city === "Statewide" ? "Statewide, New Mexico" : city, coverageScope: "specialized or local urgent support", resourceType: "behavioral-health, survivor, or protective-service urgent contact",
+  locationLine: `${city} · call or text as described · confirm eligibility and response scope`,
+  description: `${detail} This number serves the specific crisis or protection purpose described; use 988 for behavioral-health crisis support and 911 for immediate danger when emergency response is needed.`,
+}));
+
+const riPeerCenterRows = [
+  ["anchor-providence", "Anchor Recovery Community Center", "Providence", "310 Reservoir Avenue, Providence, RI", "401-889-5770", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+  ["anchor-warwick", "Anchor Recovery Community Center", "Warwick", "1229 Main Street, West Warwick, RI", "401-889-5770", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+  ["east-bay-warren", "East Bay Recovery Community Center", "Warren", "31 Railroad Avenue, Warren, RI 02885", "401-289-2055", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+  ["east-bay-newport", "East Bay Recovery Community Center", "Newport", "23 Marlborough Street, Newport, RI", "401-302-6231", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+  ["serenity-woonsocket", "Serenity Community Center", "Woonsocket", "66 Social Street, Woonsocket, RI", "401-488-4426", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+  ["oasis-providence", "Oasis Wellness & Recovery Community Center", "Providence", "530 North Main Street, Providence, RI", "401-831-6937", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+  ["teen-anchor", "Jim Gillen Teen Center", "Providence", "1280 North Main Street, Providence, RI", "401-632-4077", "https://recoveryfriendly.ri.gov/recovery-resources/recovery-community-centers"],
+];
+export const RHODE_ISLAND_PEER_LOCAL = riPeerCenterRows.map(([id, name, city, address, phone, link]) => reviewed({
+  id: `ri-peer-center-${id}`, name: `${name} — peer recovery community`, state: "RI", city, address, phone, link,
+  source: "Rhode Island Recovery Friendly initiative, Recovery Community Centers directory (state task-force/BHDDH partnership)",
+  serviceArea: city === "Woonsocket" ? "Northern Rhode Island" : city === "Warren" || city === "Newport" ? "East Bay and Newport County" : "Rhode Island regional recovery community",
+  coverageScope: "community recovery center", resourceType: "peer-led recovery community and support center", locationLine: `${address} · call to confirm current schedule and drop-in access`,
+  description: `Rhode Island's Recovery Friendly initiative lists ${name} at ${address}, phone ${phone}. State-published service descriptions include peer connection and recovery activities; offerings and hours differ by center. Contact the center to confirm current groups, age range, walk-in access, and whether any referral is needed. Peer support complements, but does not replace, clinical treatment or crisis response.`,
+}));
+
+const riBenefitRows = [
+  ["dhs-providence", "Rhode Island DHS Providence Walk-In Office", "Providence", "125 Holden Street, Providence, RI", "State DHS walk-in services; outside drop box is available 24/7; office visits may require an appointment."],
+  ["dhs-pawtucket", "Rhode Island DHS Pawtucket Walk-In Office", "Pawtucket", "249 Roosevelt Avenue, Pawtucket, RI", "State DHS document scanning center and walk-in office; confirm service hours and appointment requirements."],
+  ["dhs-woonsocket", "Rhode Island DHS Woonsocket Walk-In Office", "Woonsocket", "219 Pond Street, Woonsocket, RI", "State DHS walk-in services; outside drop box is available 24/7; confirm current hours before visiting."],
+  ["dhs-south-county", "Rhode Island DHS South County Walk-In Office", "Wakefield", "4808 Tower Hill Road, Suite G1, Wakefield, RI", "Regional DHS walk-in benefits access; confirm office hours and appointment requirements."],
+  ["dhs-newport", "Newport Regional Family Center — DHS walk-in services", "Middletown", "31 John Clarke Road, Middletown, RI", "DHS walk-in and document drop-off access; confirm which services are offered at this site before visiting."],
+];
+export const RHODE_ISLAND_BENEFITS = riBenefitRows.map(([id, name, city, address, detail]) => reviewed({
+  id: `ri-benefits-${id}`, name: `${name} — SNAP, medical and cash-benefit access`, state: "RI", city, address, phone: "1-855-697-4347",
+  link: "https://dhs.ri.gov/about-us/dhs-offices", source: "Rhode Island DHS office locations and current walk-in service notice",
+  serviceArea: city === "Providence" ? "Providence region" : city === "Pawtucket" ? "Blackstone Valley region" : city === "Woonsocket" ? "Northern Rhode Island" : city === "Wakefield" ? "South County" : "Newport County",
+  coverageScope: "regional state benefits office", resourceType: "SNAP, Medicaid, and cash-assistance service access", locationLine: `${address} · call DHS before visiting`,
+  description: `Rhode Island DHS lists ${name} at ${address}; the statewide DHS customer-service contact is 1-855-697-4347. ${detail} Use the RI DHS portal for applications and document submission where available. Call to confirm the benefit service, hours, required appointment, and documents; this directory cannot determine eligibility or approve benefits.`,
+}));
+
+const riCommunityActionRows = [
+  ["bvcap-pawtucket", "Blackstone Valley Community Action Program", "Pawtucket", "32 Goff Avenue, Pawtucket, RI 02860", "401-723-4520", "Pawtucket, Central Falls, Lincoln, Cumberland, and Woonsocket", "https://www.bvcap.org/"],
+  ["cap-providence", "Community Action Partnership of Providence", "Providence", "518 Hartford Avenue, Providence, RI 02909", "401-273-2000", "Providence", "https://www.cappri.org/"],
+  ["ccap-cranston", "Comprehensive Community Action", "Cranston", "311 Doric Avenue, Cranston, RI 02910", "401-467-9610", "Cranston, Foster, Scituate, and Coventry", "https://www.comcap.org/"],
+  ["ebcap-newport", "East Bay Community Action Program", "Newport", "19 Broadway, Newport, RI 02840", "401-847-7821", "Newport, Portsmouth, Tiverton, Middletown, Jamestown, and Little Compton", "https://www.ebcap.org/"],
+  ["westbay-warwick", "Westbay Community Action", "Warwick", "487 Jefferson Boulevard, Warwick, RI 02886", "401-732-4660", "Coventry, East Greenwich, Warwick, and West Warwick", "https://www.westbaycap.org/"],
+];
+export const RHODE_ISLAND_BENEFIT_PARTNERS = riCommunityActionRows.map(([id, name, city, address, phone, serviceArea, link]) => reviewed({
+  id: `ri-benefit-partner-${id}`, name: `${name} — local household-benefit navigation`, state: "RI", city, address, phone, link,
+  source: "Rhode Island Executive Office of Housing local Community Action Program directory and agency contact pages",
+  serviceArea, coverageScope: "local community-action benefits access", resourceType: "utility, housing, food, and household-stability assistance navigation",
+  locationLine: `${address} · serves ${serviceArea} · call for current intake`,
+  description: `Rhode Island's Community Action Program directory identifies ${name} at ${address}, phone ${phone}, serving ${serviceArea}. The agency may help residents navigate programs such as utility assistance, housing stability, emergency food, and other household supports; services and funding vary by household and season. Contact the agency to confirm which programs are open, eligibility, documents, and appointment or walk-in rules. This referral listing does not imply benefit approval or available funds.`,
+}));
+
+const riUrgentAdditional = [
+  ["bh-link", "BH Link — behavioral-health crisis triage and connection", "Statewide", "988", "https://bhlink.org/", "Call or text 988 for confidential behavioral-health crisis support and connection to BH Link services; call ahead for the local walk-in address and access."],
+  ["kidlink", "KID LINK — Rhode Island youth behavioral-health support", "Statewide", "1-855-KID-LINK (543-5465)", "https://bhddh.ri.gov/mental-health", "Youth and caregiver behavioral-health crisis navigation; confirm age scope and response options with the counselor."],
+  ["dv-hotline", "Day One Rhode Island — sexual and domestic violence support", "Statewide", "1-800-494-8100", "https://dayoneri.org/", "Confidential crisis support, safety planning, and survivor services; call before travel and follow advocate safety instructions."],
+  ["dv-coalition", "Rhode Island Coalition Against Domestic Violence hotline", "Statewide", "1-800-494-8100", "https://ricadv.org/", "Statewide connection to domestic-violence programs and safety planning. This shares a published statewide intake number with member services; do not count as a separate call line if deduplicating by number."],
+  ["sexual-assault", "Rhode Island sexual assault hotline and advocacy", "Statewide", "1-800-494-8100", "https://www.ricadv.org/", "Call to request confidential survivor advocacy and referral; ask for sexual-assault services and current local response options."],
+];
+export const RHODE_ISLAND_URGENT_LOCAL = riUrgentAdditional.slice(0, 3).map(([id, name, city, phone, link, detail]) => reviewed({
+  id: `ri-urgent-${id}`, name, state: "RI", city, phone, link, source: "Rhode Island BHDDH crisis pathway and Rhode Island survivor-support organization public contact pages",
+  serviceArea: "Statewide, Rhode Island", coverageScope: "statewide specialized urgent support", resourceType: "behavioral-health or survivor crisis navigation", locationLine: `${phone} · statewide crisis access`,
+  description: `${detail} If there is immediate danger, call 911.`,
+}));
+
+// Community-action outreach partners offer local application navigation;
+// they do not decide eligibility or issue benefits.
+const nmBenefitPartners = [
+  ["nmacp-north", "New Mexico Association of Community Partners — northern region", "Las Vegas", "San Miguel, Mora, Colfax, and Harding counties", "https://nmacp.org/help/"],
+  ["nmacp-southwest", "New Mexico Association of Community Partners — southwest region", "Silver City", "Grant, Hidalgo, Luna, and Catron counties", "https://nmacp.org/help/"],
+  ["nmacp-southeast", "New Mexico Association of Community Partners — southeast region", "Roswell", "Chaves, Eddy, Lea, and Otero counties", "https://nmacp.org/help/"],
+  ["nmacp-central", "New Mexico Association of Community Partners — central region", "Albuquerque", "Bernalillo, Sandoval, Valencia, and Torrance counties", "https://nmacp.org/help/"],
+  ["nmacp-northwest", "New Mexico Association of Community Partners — northwest region", "Farmington", "San Juan, McKinley, and Cibola counties", "https://nmacp.org/help/"],
+];
+export const NEW_MEXICO_BENEFIT_PARTNERS = nmBenefitPartners.map(([id, name, city, counties, link]) => reviewed({
+  id: `nm-benefit-${id}`, name, state: "NM", city, link, source: "New Mexico Association of Community Partners (NMACP) service-area map and help directory",
+  serviceArea: counties, coverageScope: "regional community-action benefits navigation", resourceType: "community action, benefits, and household-stability referral",
+  locationLine: `${city} · serves ${counties} · use partner directory to find nearest local agency`,
+  description: `The New Mexico Association of Community Partners coordinates regional Community Action Agency access for ${counties}. Use its current partner list to identify the agency serving your county and ask about LIHEAP, emergency household assistance, weatherization, and benefit application help. Program funding and eligibility vary; contact the named local agency to confirm intake, documentation, and availability.`,
+}));
+
+const nmLocalFoodRows = [
+  ["salvation-army-abq", "Salvation Army Albuquerque Food Box Program", "Albuquerque", "4301 Bryn Mawr Drive NE, Albuquerque, NM", "505-872-1171", "Monday, Wednesday, and Friday, 9 a.m.–noon and 1–4 p.m.", "Walk-in food boxes; confirm same-day hours and eligibility."],
+  ["st-felix", "St. Felix Pantry", "Rio Rancho", "4020 Barbara Loop SE, Rio Rancho, NM", "505-891-8075", "Thursday–Saturday, 9 a.m.–noon", "The 2025 state food list says any New Mexico resident may request food; confirm current hours before travel."],
+  ["storehouse", "The Storehouse New Mexico", "Albuquerque", "106 Broadway SE, Albuquerque, NM", "505-842-6491", "Wednesday, Friday, and Saturday, 9 a.m.–noon", "Food boxes, diapers, and limited pet-food distribution; call to confirm current intake."],
+  ["rio-grande-food-project", "Rio Grande Food Project", "Albuquerque", "600 Coors Boulevard NW, Albuquerque, NM", "505-831-3778", "Wednesday, Friday, and Saturday, 9–11 a.m.", "Published schedule serves low-income households; call to confirm current requirements and availability."],
+  ["vic-veterans", "Veterans Integration Center Food Pantry", "Albuquerque", "2701 Mulberry Street SE, Albuquerque, NM", "505-296-0800", "Friday, 10 a.m.–1 p.m.", "Food pantry is limited to veterans, spouses/widows/widowers, National Guard, and Reserves; confirm eligibility and current site."],
+  ["echo-senior", "ECHO Food Bank Senior Food Program", "Albuquerque", "300 Menaul Boulevard NW, Suite 226, Albuquerque, NM", "505-242-6777", "Monday–Thursday, 7:30 a.m.–4 p.m.; closed 12:00–12:30 p.m.", "Food program is for adults age 60 and older; contact ECHO to confirm current drive-through and eligibility."],
+  ["silver-horizons", "Silver Horizons Food and Household Support", "Albuquerque", "Albuquerque, NM; call for current service location", "505-884-3881", "Call for current appointment and distribution times.", "Food and household-bill help is described for low-income adults age 50+ and low-income veterans of any age, including household members."],
+  ["abq-senior-meals", "City of Albuquerque Senior Affairs Home-Delivered Meals", "Albuquerque", "Albuquerque service area; call to request screening", "505-764-6400", "Call for intake and meal-delivery schedule.", "Home-delivered meals are for eligible homebound Albuquerque seniors age 60+; call for screening and service-area confirmation."],
+];
+export const NEW_MEXICO_LOCAL_FOOD = nmLocalFoodRows.map(([id, name, city, address, phone, hours, scope]) => reviewed({
+  id: `nm-food-local-${id}`, name, state: "NM", city, address, phone,
+  link: "https://www.ofra.nm.gov/wp-content/uploads/2025/11/List-of-food-box-resources.pdf",
+  source: "New Mexico Office of the Food Repositories Administrator, One-page Food Resource List (November 2025)",
+  serviceArea: city === "Albuquerque" ? "Albuquerque and Bernalillo County, subject to program eligibility" : "Rio Rancho and New Mexico statewide access as stated by provider",
+  coverageScope: "named local food site or meal-support program", resourceType: "food pantry, food box, senior meal, or household food support",
+  locationLine: `${address} · ${hours}`,
+  description: `New Mexico's Office of the Food Repositories Administrator lists ${name}. Published details: ${scope} Hours and eligibility above come from its November 2025 state resource sheet and may change; contact the provider before traveling to confirm the address, requirements, and current food availability.`,
+}));
+
+const orPeerHousingRows = [
+  ["coos-first-step", "Bay Area First Step", "Coos Bay", "Coos", "155 South Empire Boulevard, Coos Bay, OR 97420", "541-756-3111", "Peer support and housing navigation"],
+  ["crook-bestcare", "BestCare Treatment Services", "Prineville", "Crook", "1059 NW Madras Highway, Prineville, OR 97754", "541-323-5330", "Peer support and housing navigation"],
+  ["douglas-adapt", "Adapt Integrated Health Care", "Roseburg", "Douglas", "621 West Madrone Street, Roseburg, OR 97470", "541-708-9581", "Peer support and housing access"],
+  ["hood-river-mccfl", "Mid-Columbia Center for Living", "Hood River", "Hood River", "1610 Woods Court, Hood River, OR 97031", "541-386-2620", "Peer support and housing navigation"],
+  ["jackson-family-nurturing", "Family Nurturing Center", "Medford", "Jackson", "825 East Main Street, Suite A, Medford, OR 97504", "541-779-5242", "Peer and family support and housing access"],
+  ["lane-white-bird", "White Bird Clinic", "Eugene", "Lane", "647 Polk Street, Eugene, OR 97402", "541-246-1353", "Peer support and harm-reduction connection"],
+  ["linn-csc", "Community Services Consortium", "Albany", "Linn", "250 SW Broadalbin Street, Suite 2A, Albany, OR 97321", "541-928-6335", "Peer support and housing navigation"],
+  ["marion-irontribe", "IronTribe Network", "Salem", "Marion", "1915 Commercial Street SE, Salem, OR", "503-344-6710", "Housing-focused behavioral-health resource navigation"],
+  ["tillamook-helping-hands", "Helping Hands Reentry Outreach Centers", "Tillamook", "Tillamook", "6505 Headquarters Street, Tillamook, OR 97141", "503-354-8014", "Peer support and housing assistance"],
+  ["wasco-yes", "Youth Empowerment Shelter", "The Dalles", "Wasco", "610 Court Street, The Dalles, OR 97058", "541-705-4777", "Youth peer support and housing services"],
+  ["wallowa-center", "Wallowa Valley Center for Wellness", "Enterprise", "Wallowa", "606 Medical Parkway, Enterprise, OR 97828", "541-426-4524", "Peer support and housing navigation"],
+  ["morrow-ccs", "Community Counseling Solutions", "Heppner", "Morrow", "550 West Sperry Street, Heppner, OR 97836", "541-947-6021", "Peer support and housing navigation"],
+];
+const makeORPeerHousing = (row, kind) => {
+  const [id, provider, city, county, address, phone, scope] = row;
+  const isPeer = kind === "peer";
+  return reviewed({
+    id: `or-${kind}-bhrn-${id}`, name: `${provider} — ${isPeer ? "peer recovery support" : "housing and stabilization access"}`, state: "OR", city, county: `${county} County`, address, phone,
+    link: "https://www.oregon.gov/oha/HSD/AMH/docs/BHRN-Directory.pdf", source: "Oregon Health Authority 2025–2029 Behavioral Health Resource Networks directory",
+    serviceArea: `${county} County`, coverageScope: "county Behavioral Health Resource Network provider", resourceType: isPeer ? "peer recovery service" : "behavioral-health-linked housing navigation",
+    locationLine: `${address} · contact for current program intake and schedule`,
+    description: `Oregon Health Authority lists ${provider} in its ${county} County Behavioral Health Resource Network and marks ${scope.toLowerCase()} among its service areas. Contact the organization to confirm which listed service is available at this location, current eligibility, referral or intake steps, and hours. The directory does not confirm a bed, rental payment, or same-day appointment.`,
+  });
+};
+export const OREGON_PEER_LOCAL = orPeerHousingRows.filter((row) => !["marion-irontribe"].includes(row[0])).map((row) => makeORPeerHousing(row, "peer"));
+export const OREGON_HOUSING_LOCAL = orPeerHousingRows.filter((row) => row[0] !== "lane-white-bird").map((row) => makeORPeerHousing(row, "housing"));
+
+const orBenefitsRows = [
+  ["albany", "Albany Self-Sufficiency Office", "Albany", "118 2nd Avenue SE, Albany, OR 97321", "541-967-2078"],
+  ["alberta", "Alberta Self-Sufficiency Office", "Portland", "30 North Webster Street, Suite A, Portland, OR 97217", "971-673-6900"],
+  ["ashland", "Ashland Self-Sufficiency Office", "Ashland", "1658 Ashland Street, Ashland, OR 97520", "541-482-2041"],
+  ["astoria", "Astoria Self-Sufficiency Office", "Astoria", "422 Gateway Avenue, Suite 260, Astoria, OR 97103", "503-325-2021"],
+  ["baker-city", "Baker City Self-Sufficiency Office", "Baker City", "3165 10th Street, Suite 100, Baker City, OR 97814", "541-523-3648"],
+  ["beaverton", "Beaverton Self-Sufficiency Office", "Beaverton", "15425 NW Greenbrier Parkway, Beaverton, OR 97006", "503-646-9952"],
+  ["bend", "Bend Self-Sufficiency Office", "Bend", "1300 NW Wall Street, Suite 101, Bend, OR 97703", "541-388-6010"],
+  ["brookings", "Brookings Self-Sufficiency Office", "Brookings", "1210 Chetco Avenue, Brookings, OR 97415", "541-469-9299"],
+  ["burns", "Burns Self-Sufficiency Office", "Burns", "809 W Jackson Street, Suite 100, Burns, OR 97720", "541-573-5227"],
+  ["cave-junction", "Cave Junction Self-Sufficiency Office", "Cave Junction", "535 E River Street, Cave Junction, OR 97523", "541-592-4149"],
+];
+export const OREGON_BENEFITS_LOCAL = orBenefitsRows.map(([id, name, city, address, phone]) => reviewed({
+  id: `or-benefits-${id}`, name: `${name} — food, cash, medical, and child-care benefit access`, state: "OR", city, address, phone,
+  link: "https://www.oregon.gov/odhs/Pages/office-finder.aspx?serviceid=26", source: "Oregon ODHS Office Finder, Self-Sufficiency Programs listing",
+  serviceArea: `${city} and nearby communities`, coverageScope: "local ODHS benefits office", resourceType: "SNAP, cash, medical, and child-care benefits access",
+  locationLine: `${address} · call ahead to confirm services and walk-in hours`,
+  description: `Oregon ODHS lists ${name} at ${address}, phone ${phone}. The Self-Sufficiency program supports access to food, cash, medical, and child-care benefits. The statewide ONE Customer Service Center is 800-699-9075, Monday–Friday, 7 a.m.–6 p.m. Call the local office before visiting to confirm which services are available, appointment rules, documents, interpretation, and current hours. The office cannot guarantee eligibility or benefit approval.`,
+}));
+
+const riUrgentSafetyRows = [
+  ["adult-protective", "Rhode Island Adult Protective Services reporting and safety line", "Statewide", "401-462-0555", "https://dhs.ri.gov/programs-and-services/adults/adult-protective-services", "For concerns about abuse, neglect, or exploitation of a vulnerable adult; use 911 for immediate danger."],
+  ["child-protective", "Rhode Island Child Abuse and Neglect Hotline", "Statewide", "1-800-RI-CHILD (1-800-742-4453)", "https://dcyf.ri.gov/", "Statewide route to report child abuse or neglect and request protective-services response; this is not a counseling line."],
+];
+export const RHODE_ISLAND_URGENT_SAFETY = riUrgentSafetyRows.map(([id, name, city, phone, link, detail]) => reviewed({
+  id: `ri-urgent-${id}`, name, state: "RI", city, phone, link, source: "Rhode Island DHS Adult Protective Services and Department of Children, Youth & Families public reporting contacts",
+  serviceArea: "Statewide, Rhode Island", coverageScope: "statewide protective-service reporting", resourceType: "urgent safety and protective-service contact",
+  locationLine: `${phone} · statewide contact; call 911 for immediate danger`, description: `${detail} Call to clarify whether the situation meets reporting criteria and what happens next.`,
+}));

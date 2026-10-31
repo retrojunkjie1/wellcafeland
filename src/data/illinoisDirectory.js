@@ -1002,4 +1002,14 @@ export const ILLINOIS_URGENT_RESOURCES = [
     city: "Chicago", state: "IL", address: "4423 N. Ravenswood Avenue, Chicago, IL 60640",
     locationLine: "Ravenswood · peer-led respite · provider lists 24/7 availability; call before travel",
   }),
+  reviewed({
+    id: "il-cares-mobile-crisis-access",
+    name: "Illinois CARES Line — statewide mobile crisis response access",
+    description: "Illinois HFS directs people experiencing a mental-health crisis, or concerned about immediate safety, to the CARES line to reach the designated Mobile Crisis Response provider for their county or Cook County ZIP code. The service operates 24/7/365. Call to request the appropriate local response; for immediate medical danger call 911.",
+    phone: "1-800-345-9049",
+    link: "https://hfs.illinois.gov/medicalclients/behavioral/findaprovider.html",
+    source: "Illinois Department of Healthcare and Family Services, Find a Crisis Provider",
+    state: "IL", coverageScope: "state",
+    locationLine: "Illinois statewide · routes to the mobile-crisis provider for your county or ZIP code · 24/7",
+  }),
 ];

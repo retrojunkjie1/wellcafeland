@@ -879,11 +879,107 @@ describe("category fallback pathways", () => {
       expect(getCuratedFallback(category, "", region).map((resource) => resource.id)).toContain(id);
     }
 
-    expect(getCuratedFallback("food.essentials", "", "Nebraska")).toEqual([
-      expect.objectContaining({ id: "ne-food-pantry-referrals", state: "NE", coverageScope: "state" }),
-    ]);
+    const nebraskaFood = getCuratedFallback("food.essentials", "", "Nebraska");
+    expect(nebraskaFood.map(({ id }) => id)).toEqual(expect.arrayContaining([
+      "ne-food-pantry-referrals",
+      "ne-food-center-for-people",
+      "ne-food-catholic-social-services",
+      "ne-food-asian-community-cultural-center",
+      "ne-food-bellevue-food-pantry",
+      "ne-food-tri-city-food-pantry",
+    ]));
+    expect(nebraskaFood.find(({ id }) => id === "ne-food-pantry-referrals")).toMatchObject({ state: "NE", coverageScope: "state" });
     expect(getUSStateCoverage("Nevada").find((category) => category.id === "hotlines").statewideRoutes)
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: "nv-988-crisis-support", coverageScope: "state" })]));
+  });
+
+  it("adds sourced access contacts in all five states without claiming phone confirmation or completeness", () => {
+    const additions = [
+      ["hotlines", "Missouri", ["mo-crisis-kansas-city", "mo-crisis-cape-girardeau", "mo-crisis-sedalia"]],
+      ["hotlines", "Montana", ["mt-crisis-billings-community-center", "mt-crisis-many-rivers"]],
+      ["food.essentials", "Nebraska", ["ne-food-center-for-people", "ne-food-tri-city-food-pantry"]],
+      ["programs", "Nevada", ["nv-treatment-west-charleston", "nv-treatment-rawson-neal"]],
+      ["food.essentials", "New Hampshire", ["nh-food-centerpoint-concord", "nh-food-st-pauls-concord"]],
+    ];
+    for (const [category, state, ids] of additions) {
+      const records = getCuratedFallback(category, "", state);
+      const addedRecords = ids.map((id) => records.find((record) => record.id === id));
+      expect(addedRecords.every(Boolean)).toBe(true);
+      expect(addedRecords.every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
+    }
+
+    const expectedTotals = { Missouri: 88, Montana: 150, Nebraska: 86, Nevada: 88, "New Hampshire": 86, "South Carolina": 131 };
+    for (const [state, total] of Object.entries(expectedTotals)) {
+      const categories = getUSStateCoverage(state);
+      const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
+      expect(uniqueIds.size).toBe(total);
+    }
+    for (const state of ["Montana", "Nebraska", "Nevada", "New Hampshire", "South Carolina"]) {
+      const categories = getUSStateCoverage(state);
+      expect(categories.every(({ records }) => records.length >= 5), `${state} six-category floor`).toBe(true);
+      expect(new Set(categories.flatMap(({ records }) => records.map(({ id }) => id))).size).toBeGreaterThanOrEqual(75);
+      expect(categories.flatMap(({ records }) => records).every((record) => record.sourceReviewed && record.phoneConfirmed === false && record.exhaustiveCoverage === false)).toBe(true);
+    }
+  });
+
+  it("routes the latest five-state deepening contacts to the selected city and keeps their verification limits explicit", () => {
+    const cityExamples = [
+      ["food.essentials", "Butte, Montana", "mt-tefap-butte-emergency"],
+      ["food.essentials", "Pawtucket, Rhode Island", "ri-food-community-pawtucket-blackstone"],
+      ["programs", "Minot, North Dakota", "nd-sud-goodman-minot"],
+      ["housing", "Cleveland, Ohio", "oh-housing-local-cleveland-coordinated-intake-direct"],
+      ["peer", "Youngstown, Ohio", "oh-peer-youngstown-aa"],
+      ["peer", "Rifle, Colorado", "co-peer-community-discovery-cafe-rifle"],
+    ];
+    for (const [category, city, id] of cityExamples) {
+      const record = getCuratedFallback(category, "", city).find((entry) => entry.id === id);
+      expect(record, `${id} appears for ${city}`).toBeDefined();
+      expect(record).toMatchObject({ sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false });
+    }
+
+    const expectedTotals = { Colorado: 99, Montana: 150, "North Dakota": 99, Ohio: 90, "Rhode Island": 101 };
+    for (const [state, total] of Object.entries(expectedTotals)) {
+      const categories = getUSStateCoverage(state);
+      expect(new Set(categories.flatMap(({ records }) => records.map(({ id }) => id))).size).toBe(total);
+      expect(categories.every(({ records }) => records.length >= 5), `${state} six-category floor`).toBe(true);
+    }
+  });
+
+  it("keeps the Kentucky, Louisiana, Maine, Massachusetts and Missouri batch source-linked and category-balanced", () => {
+    const batchExamples = [
+      ["Kentucky", "programs", "ky-treatment-brighton-women"],
+      ["Kentucky", "peer", "ky-peer-rcc-voices-hope"],
+      ["Kentucky", "food.essentials", "ky-food-network-gods-pantry"],
+      ["Louisiana", "peer", "la-peer-recovery-hub-baton-rouge"],
+      ["Louisiana", "housing", "la-housing-ce-baton-rouge"],
+      ["Louisiana", "grants", "la-benefit-liheap-total-community-action"],
+      ["Louisiana", "hotlines", "la-crisis-center-bridge-center"],
+      ["Maine", "programs", "me-program-chcs-bangor"],
+      ["Maine", "peer", "me-peer-recovery-bangor"],
+      ["Maine", "grants", "me-benefit-ofi-augusta"],
+      ["Massachusetts", "housing", "ma-ea-intake-brockton"],
+      ["Massachusetts", "food.essentials", "ma-food-bank-merrimack"],
+      ["Massachusetts", "grants", "ma-benefits-office-lawrence"],
+      ["Missouri", "housing", "mo-housing-ce-one-door-springfield"],
+      ["Missouri", "grants", "mo-benefits-fsd-osceola"],
+    ];
+    for (const [state, category, id] of batchExamples) {
+      const record = getCuratedFallback(category, "", state).find((item) => item.id === id);
+      expect(record, `${state} / ${category} / ${id}`).toMatchObject({
+        sourceReviewed: true,
+        phoneConfirmed: false,
+        exhaustiveCoverage: false,
+      });
+      expect(record.link).toMatch(/^https:\/\//);
+    }
+
+    const expectedTotals = { Kentucky: 178, Louisiana: 142, Maine: 137, Massachusetts: 95, Missouri: 88 };
+    for (const [state, total] of Object.entries(expectedTotals)) {
+      const categories = getUSStateCoverage(state);
+      const uniqueIds = new Set(categories.flatMap(({ records }) => records.map(({ id }) => id)));
+      expect(uniqueIds.size).toBe(total);
+      expect(categories.every(({ records }) => records.length >= 5)).toBe(true);
+    }
   });
 
   it("adds four named Utah crisis receiving centers while retaining existing crisis routes", () => {
@@ -906,13 +1002,17 @@ describe("category fallback pathways", () => {
       .toEqual(expect.arrayContaining(centers.map(([, id]) => expect.objectContaining({ id }))));
   });
 
-  it("routes five named Tennessee crisis centers to their cities without replacing statewide access", () => {
+  it("routes Tennessee's named crisis centers to their cities without replacing statewide access", () => {
     const centers = [
       ["Nashville, TN", "tn-nashville-crisis-treatment-center", "615-726-0125"],
       ["Memphis, TN", "tn-memphis-alliance-adult-crisis-wellness-center", "901-577-9400"],
       ["Memphis, TN", "tn-memphis-alliance-children-youth-crisis-center", "901-577-9400"],
       ["Knoxville, TN", "tn-knoxville-mcnabb-empath", "865-539-2409"],
       ["Johnson City, TN", "tn-johnson-city-turning-point-crisis-walk-in", "423-926-0940"],
+      ["Chattanooga, TN", "tn-vbh-chattanooga-crisis-walk-in", "423-634-8884"],
+      ["Cookeville, TN", "tn-vbh-cookeville-crisis-walk-in", "931-431-4123"],
+      ["Murfreesboro, TN", "tn-vbh-murfreesboro-crisis-walk-in", "615-898-0771"],
+      ["Morristown, TN", "tn-mcnabb-morristown-crisis-stabilization-unit", "423-273-5599"],
     ];
 
     for (const [region, id, phone] of centers) {
@@ -923,7 +1023,7 @@ describe("category fallback pathways", () => {
     const statewide = getCuratedFallback("hotlines", "mobile crisis", "Tennessee");
     expect(statewide).toContainEqual(expect.objectContaining({ id: "tn-mobile-crisis-988", phone: "988" }));
     expect(getUSStateCoverage("Tennessee").find(({ id }) => id === "hotlines").records)
-      .toHaveLength(6);
+      .toHaveLength(10);
   });
 
   it("routes 22 state-listed South Dakota substance-use treatment contacts to their published communities", () => {
@@ -940,15 +1040,17 @@ describe("category fallback pathways", () => {
 
     const coverage = getUSStateCoverage("South Dakota");
     expect(coverage.find(({ id }) => id === "programs").records).toHaveLength(33);
-    expect(coverage.reduce((sum, category) => sum + category.records.length, 0)).toBe(97);
+    expect(coverage.find(({ id }) => id === "hotlines").records)
+      .toContainEqual(expect.objectContaining({ id: "sd-crisis-sioux-falls-the-link", phone: "605-275-1000", city: "Sioux Falls" }));
+    expect(coverage.reduce((sum, category) => sum + category.records.length, 0)).toBe(98);
   });
 
   it("adds named peer-support routes across the active five-state slice without replacing existing categories", () => {
     const batchChecks = [
       ["Missouri", "mo-peer-beacon-sedalia", 12],
-      ["Montana", "mt-peer-narss-recovery-hall-ronan", 4],
-      ["Nebraska", "ne-peer-wellbeing-initiative-lincoln", 4],
-      ["Nevada", "nv-peer-recovery-support-warmline", 2],
+      ["Montana", "mt-peer-narss-recovery-hall-ronan", 12],
+      ["Nebraska", "ne-peer-wellbeing-initiative-lincoln", 5],
+      ["Nevada", "nv-peer-recovery-support-warmline", 5],
       ["New Hampshire", "nh-peer-white-horse-littleton", 22],
     ];
     for (const [state, firstId, expectedPeerCount] of batchChecks) {
