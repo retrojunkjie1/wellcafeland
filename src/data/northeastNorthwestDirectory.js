@@ -264,6 +264,81 @@ export const NORTH_DAKOTA_FOOD = ndFoodSites.map(([id, name, city, address, phon
   description: `North Dakota HHS lists ${name} at ${address}, phone ${phone}, among local food resources. Contact the organization to confirm hours, eligibility or service area, appointment requirements, and current food availability before traveling. HHS also notes mobile food pantries and other nutrition support for rural communities; use the linked state guide or call 211 if this location is not accessible.`,
 }));
 
+// North Dakota peer, housing, and rural food routes from state HHS and NDDPI.
+// Community Connect has program eligibility; these are access contacts, not
+// open-enrollment promises or confirmed availability.
+const ndCommunityConnectSource = "https://www.hhs.nd.gov/behavioral-health/community-connect/providers";
+const ndPeerRoutes = [
+  ["advocates-minot", "Advocates for Change", "Minot", "North Central Region", "701-289-7676", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Care coordination and peer support through Community Connect and Free Through Recovery; the latter has justice-system eligibility."],
+  ["all-of-us-minot", "All Of Us In Recovery", "Minot", "North Central Region", "218-779-6825", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Case management connects participants with behavioral healthcare, peer support, housing, medical care, advocacy, education, employment, and social opportunities."],
+  ["community-options-minot", "Community Options", "Minot", "North Central Region", "701-852-0174", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Care coordinators connect participants with peer support and referrals, including housing, employment, and education."],
+  ["f5-minot", "F5 Project", "Minot", "North Central Region", "701-412-6866", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Peer mentorship and re-entry support, including employment and housing navigation; some services are for people involved with the justice system."],
+  ["independence-minot", "Independence, Inc.", "Minot", "North Central Region", "701-839-4724", "https://www.hhs.nd.gov/behavioral-health/community-connect/region2", "Peer-driven independent-living support for people in recovery; services may include housing, employment, transportation, education, and financial-independence navigation."],
+  ["new-creation-devils-lake", "A New Creation", "Devils Lake", "Lake Region", "701-552-0892 / 701-350-2362", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Recovery mentoring and advocacy, individualized care planning, and support groups; the provider also serves justice-involved people."],
+  ["all-of-us-devils-lake", "All Of Us In Recovery", "Devils Lake", "Lake Region", "701-330-2006", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Case-management route for behavioral-health, peer-support, housing, medical-care, advocacy, education, employment, and social-service referrals."],
+  ["community-options-devils-lake", "Community Options", "Devils Lake", "Lake Region", "701-662-3110", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Care coordinators connect Community Connect participants with peer support and housing, employment, and education referrals."],
+  ["f5-devils-lake", "F5 Project", "Devils Lake", "Lake Region", "701-960-9648", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Re-entry peer mentorship and transitional support, including housing and employment navigation; ask about justice-system program eligibility."],
+  ["libertas-northeast", "Libertas", "Cavalier, Pembina, and Walsh counties", "Northeast Region", "701-521-5122", "https://www.hhs.nd.gov/behavioral-health/community-connect/region3", "Community-based care coordination and peer support for residents navigating behavioral health, housing, employment, sobriety, and post-incarceration needs."],
+  ["ability-consulting-grand-forks", "Ability Consulting", "Grand Forks", "Grand Forks region", "701-770-3525", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Community Connect case management with educational, employment, housing, and community-connection goals."],
+  ["community-options-grand-forks", "Community Options", "Grand Forks", "Grand Forks region", "701-772-1715", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Care coordinators connect participants with peer support and referrals for housing, employment, and education."],
+  ["f5-grand-forks", "F5 Project", "Grand Forks", "Grand Forks region", "701-960-9648", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Re-entry peer mentorship and transition support with housing, employment, and community-connection referrals."],
+  ["better-together-grand-forks", "Better Together ND", "Grand Forks", "Grand Forks region", "701-404-9180", "https://www.hhs.nd.gov/behavioral-health/community-connect/region4", "Community Connect care coordination, peer support, and recovery services based on an individualized care plan."],
+  ["cass-clay-integration-fargo", "Cass Clay Integration Center", "Fargo", "Cass, Ransom, Richland, Sargent, Steele, and Traill counties", "701-730-9236", "https://www.hhs.nd.gov/behavioral-health/community-connect/region5", "Community Connect care coordination, peer support, recovery, housing, employment, education, and resource navigation."],
+  ["f5-fargo", "F5 Project", "Fargo", "Southeast Region", "701-210-2491", "https://www.hhs.nd.gov/behavioral-health/community-connect/region5", "Fargo re-entry and peer-mentorship route; ask about Community Connect or Free Through Recovery eligibility and the appropriate local service."],
+  ["recovery-talk-statewide", "Recovery Talk — confidential peer support", "Statewide", "North Dakota statewide", "701-291-7901 (call or text)", "https://www.hhs.nd.gov/behavioral-health/recovery-talk", "Free, confidential 24/7 peer support from trained specialists with lived experience. Anonymous support and optional scheduled outreach are available; it is not emergency dispatch."],
+];
+export const NORTH_DAKOTA_PEER = ndPeerRoutes.map(([id, name, city, serviceArea, phone, link, scope]) => reviewed({
+  id: `nd-peer-${id}`, name: `${name} — peer and community recovery support`, state: "ND", city, phone, link,
+  source: "North Dakota HHS Community Connect provider guide and Recovery Talk directory", serviceArea, coverageScope: "regional peer-support access route", resourceType: "peer recovery and community support",
+  locationLine: `${city} · ${serviceArea} · call to confirm fit and intake`,
+  description: `North Dakota HHS lists ${name} as a Community Connect or peer-support contact. ${scope} Ask about program eligibility, current intake, hours, costs, and whether services are available in your community before traveling. Provider listings are source-reviewed, not phone-confirmed.`,
+}));
+
+const ndHousingSource = "https://www.hhs.nd.gov/cfs/refugee-resettlement-program/community-resource-guide/shelter-and-housing-assistance";
+const ndHousingRoutes = [
+  ["ywca-cass-clay", "YWCA Cass Clay", "Fargo", "3000 S University Dr, Fargo, ND 58103", "701-232-3449", "Emergency shelter and housing referral; call for confidential intake and safe access instructions."],
+  ["new-life-center", "New Life Center", "Fargo", "1902 3rd Ave N, Fargo, ND 58102", "701-235-4453", "Emergency shelter and housing support route; call to confirm eligibility, referral steps, and current availability."],
+  ["united-way-center-opportunity", "United Way Center for Opportunity", "Bismarck", "1140 S 12th St, Bismarck, ND 58501", "701-401-5606", "Housing and homelessness-prevention contact; ask about current intake and referral options."],
+  ["fargo-hra", "Fargo Housing & Redevelopment Authority", "Fargo", "25 Broadway, Fargo, ND 58102", "701-293-6262", "Public-housing and rental-assistance contact. Ask about current application windows, waitlists, and program eligibility."],
+  ["village-family-service", "The Village Family Service Center", "Fargo", "2701 12th Ave S, Fargo, ND 58103", "701-451-4900 / 800-627-8220", "Housing-support and case-management route; call to confirm current programs and intake."],
+  ["grand-forks-hra", "Grand Forks Housing Authority", "Grand Forks", "1405 1st Ave N, Grand Forks, ND 58203", "701-456-2545", "Public-housing and rental-assistance contact; ask about current application periods, eligibility, and waitlists."],
+  ["salvation-army-grand-forks", "Salvation Army Grand Forks", "Grand Forks", "1600 University Ave, Grand Forks, ND 58203", "701-775-2597", "Housing-support referral contact; call to ask what housing or emergency-support services are currently active."],
+  ["burleigh-housing-authority", "Burleigh County Housing Authority", "Bismarck", "410 S 2nd St, Bismarck, ND 58504", "701-225-2540", "Public-housing and rental-assistance contact; confirm current programs, eligibility, and waitlist status."],
+  ["cap-region-vii", "Community Action Program Region VII", "Bismarck", "2105 Lee Ave, Bismarck, ND 58504", "701-258-2240", "Housing and homelessness-prevention referral route; call to ask about current rent support, screening, and documentation."],
+  ["southeast-care-fargo", "Southeast Care LLC", "Fargo", "1323 23rd St S, Suite D, Fargo, ND 58103", "218-443-0088", "Listed by North Dakota HHS under housing-support case management. Contact to confirm current service area, referral pathway, and eligibility."],
+  ["community-options-fargo", "Community Options", "Fargo", "2701 9th Ave S, Fargo, ND 58103", "701-223-2417", "Housing-support case-management contact listed by North Dakota HHS. Call to confirm intake, eligibility, and current services."],
+  ["prairie-harvest-grand-forks", "Prairie Harvest Medical Health", "Grand Forks", "930 N 3rd St, Grand Forks, ND 58203", "701-795-9143", "Housing-support case-management contact listed by North Dakota HHS. Call to identify current social-work and referral access."],
+  ["altru-social-work-grand-forks", "Altru Health System Social Work", "Grand Forks", "1200 S Columbia Rd, Grand Forks, ND 58206", "701-780-5000", "Hospital social-work contact listed by North Dakota HHS for housing-support case management; ask to be connected to the appropriate team."],
+  ["community-options-bismarck", "Community Options", "Bismarck", "4909 Shelburne St, Bismarck, ND 58501", "701-223-2417", "Housing-support case-management contact listed by North Dakota HHS. Call to confirm service eligibility and referral steps."],
+  ["beyond-housing-valley-city", "Beyond Housing", "Valley City", "915 2nd St SW, Valley City, ND 58072", "701-399-9863", "North Dakota Community Connect lists housing support serving Barnes County and neighboring counties. Call to confirm coverage and intake."],
+  ["blessed-builders-bismarck", "Blessed Builders", "Bismarck", "2700 State St, Suite F-6, Bismarck, ND 58503", "701-751-0318", "Community Connect directory lists sober housing and outpatient treatment for men and women. Ask about admission criteria, fees, and current space."],
+  ["ministry-margins-bismarck", "Ministry on the Margins", "Bismarck", "201 N 24th St, Bismarck, ND", "701-223-6315", "Community Connect directory lists emergency-shelter and housing support alongside food assistance. Call first for intake, hours, eligibility, and safe access details."],
+  ["hopes-landing-dickinson", "Hope’s Landing Sober Living", "Dickinson", "PO Box 3645, Dickinson, ND 58602", "701-225-7132", "Community Connect directory lists sober living for men and women. Call to ask about admission requirements, costs, current space, and the confidential intake process."],
+];
+export const NORTH_DAKOTA_HOUSING = ndHousingRoutes.map(([id, name, city, address, phone, scope]) => reviewed({
+  id: `nd-housing-${id}`, name: `${name} — housing and safe-place access`, state: "ND", city, address, phone,
+  link: id.includes("beyond-housing") ? "https://www.hhs.nd.gov/behavioral-health/community-connect/region6" : id.includes("blessed-builders") || id.includes("ministry-margins") ? "https://www.hhs.nd.gov/behavioral-health/community-connect/region7" : id.includes("hopes-landing") ? "https://www.hhs.nd.gov/behavioral-health/community-connect/region8" : ndHousingSource,
+  source: id.includes("beyond-housing") || id.includes("blessed-builders") || id.includes("ministry-margins") || id.includes("hopes-landing") ? "North Dakota HHS Community Connect regional provider directory" : "North Dakota HHS Community Resource Guide, Shelter and Housing Assistance",
+  serviceArea: city === "Fargo" ? "Fargo and Cass County; ask provider about wider referral coverage" : city === "Grand Forks" ? "Grand Forks area; ask provider about wider referral coverage" : `${city} area`,
+  coverageScope: "local housing access or referral contact", resourceType: "housing, shelter, rental assistance, or housing case-management contact",
+  locationLine: `${address} · call to confirm intake, eligibility, and availability`,
+  description: `North Dakota HHS lists ${name} as a housing or housing-support contact. ${scope} Call before traveling to confirm the correct referral path, eligibility, hours, fees, safety instructions, and current availability. A listing does not guarantee rental assistance, placement, or an available bed.`,
+}));
+
+const ndFoodNetworkSource = "https://www.nd.gov/dpi/familiescommunity/community/food-programs";
+const ndFoodNetworkRoutes = [
+  ["community-action-dickinson", "Community Action Partnership in Dickinson", "Dickinson", "202 East Villard, Dickinson, ND 58601", "701-227-0131 / 800-359-2243", "Dunn, Billings, Golden Valley, Stark, Hettinger, Slope, Bowman, and Adams counties", "Regional CSFP food-program contact; CSFP eligibility is for qualifying adults age 60 and older. Ask about application and local distribution site."],
+  ["community-action-williston", "Community Action Partnership — Williston region", "Williston", "120 Washington Ave, Williston, ND 58801", "701-572-8191 / 877-572-8191", "Williams, Divide, and McKenzie counties", "Regional CSFP food-program contact; CSFP eligibility is for qualifying adults age 60 and older. Ask about application and local distribution site."],
+  ["southeastern-cap-fargo", "Southeastern North Dakota Community Action Agency", "Fargo", "3233 South University Drive, Fargo, ND 58104-6221", "701-232-2452 / 800-726-7960", "Cass, Ransom, Sargent, Richland, Steele, Traill, and Nelson counties", "State-listed local CSFP administering agency. Ask about the age-60-plus eligibility rules, application, and the distribution partner serving your county."],
+  ["hope-center-devils-lake", "Hope Center", "Devils Lake", "313 3rd Street NE, Devils Lake, ND 58301", "701-665-4673", "Ramsey, Eddy, Towner, Benson, and Cavalier counties", "State-listed CSFP food distribution contact. Ask about the age-60-plus eligibility rules, application, distribution schedule, and current availability."],
+];
+export const NORTH_DAKOTA_FOOD_REGIONAL = ndFoodNetworkRoutes.map(([id, name, city, address, phone, serviceArea, scope]) => reviewed({
+  id: `nd-food-${id}`, name: `${name} — regional food and CSFP access`, state: "ND", city, address, phone, link: ndFoodNetworkSource,
+  source: "North Dakota Department of Public Instruction Food Programs, CSFP agency contact directory", serviceArea, coverageScope: "regional food-program access contact", resourceType: "senior food program and regional food distribution route",
+  locationLine: `${city} · serves ${serviceArea} · call for local distribution details`,
+  description: `North Dakota’s state food-program directory lists ${name} for ${serviceArea}. ${scope} Contact the agency to confirm current county coverage, enrollment, distribution location and dates before traveling; this program route is not a general walk-in pantry listing and does not guarantee food availability.`,
+}));
+
 const orFoodNetworks = [
   ["access", "ACCESS Food Share", "Medford", "Jackson County", "https://www.accesshelps.org/"],
   ["capeco", "CAPECO Food Share", "Pendleton", "Umatilla and Morrow counties", "https://www.capeco-works.org/"],
