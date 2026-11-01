@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,498 state-linked category records. Current counts range from 21 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,575 state-linked category records. Current counts range from 23 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,29 +271,37 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,498 records total, with a range of 21–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,575 records total, with a range of 23–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All jurisdictions remain **in progress** against the 75-record planning floor and the minimum of five in every category; no state is marked complete. Counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 27 | Adamawa | 24 |
+| Abia | 27 | Adamawa | 32 |
 | Akwa Ibom | 33 | Anambra | 27 |
-| Bauchi | 41 | Bayelsa | 21 |
-| Benue | 26 | Borno | 23 |
-| Cross River | 35 | Delta | 23 |
-| Ebonyi | 25 | Edo | 30 |
+| Bauchi | 41 | Bayelsa | 23 |
+| Benue | 26 | Borno | 52 |
+| Cross River | 35 | Delta | 27 |
+| Ebonyi | 33 | Edo | 30 |
 | Ekiti | 29 | Enugu | 49 |
-| Gombe | 23 | Imo | 123 |
-| Jigawa | 22 | Kaduna | 49 |
-| Kano | 25 | Katsina | 23 |
-| Kebbi | 100 | Kogi | 23 |
-| Kwara | 23 | Lagos | 108 |
-| Nasarawa | 22 | Niger | 26 |
+| Gombe | 30 | Imo | 123 |
+| Jigawa | 23 | Kaduna | 49 |
+| Kano | 25 | Katsina | 28 |
+| Kebbi | 100 | Kogi | 25 |
+| Kwara | 46 | Lagos | 108 |
+| Nasarawa | 23 | Niger | 28 |
 | Ogun | 75 | Ondo | 62 |
 | Osun | 30 | Oyo | 43 |
 | Plateau | 29 | Rivers | 28 |
-| Sokoto | 23 | Taraba | 72 |
-| Yobe | 22 | Zamfara | 52 |
+| Sokoto | 49 | Taraba | 72 |
+| Yobe | 25 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
+
+### Five-state Nigeria access expansion — Kogi, Kwara, Sokoto, Adamawa and Gombe — October 31, 2026
+
+Added 65 distinct source-reviewed category records without removing or replacing existing listings: 20 named Kwara public primary-care facilities; 25 named Sokoto primary-health facilities; two Kogi routes (the state-launched National Community Food Bank and KOSIPPPPA programme grievance/appeal channel); three Kwara support routes (Sobi Specialist Hospital SARC access, Olufolake Safe Haven referral, and Health Alive Foundation programme enquiries); one Albarka Health Spring Foundation nutrition enquiry in Sokoto; eight Adamawa records across community health, child protection, GBV, shelter-support enquiries, and food-security programme enquiries; and six Gombe records across shelter/counselling referrals, safeguarding, targeted welfare, and women’s/children’s support.
+
+Updated totals in category order (treatment/recovery and health access, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support): Adamawa 32 (4, 3, 2, 4, 2, 17); Gombe 30 (8, 3, 3, 3, 4, 9); Kogi 25 (4, 3, 0, 2, 4, 12); Kwara 46 (25, 1, 1, 3, 3, 13); Sokoto 49 (30, 3, 0, 4, 4, 8). The live Nigeria calculator reports 1,575 state-linked category records across 37 jurisdictions. Every state in this batch remains below the 75-record floor and has one or more categories below five; none is complete. The additional Kwara and Sokoto counts are general primary-care access listings and do not imply specialist mental-health or substance-use treatment. Facility records do not confirm opening status, direct phone access, current service menus, fees, safety, or eligibility. All entries are source-reviewed, not phone-confirmed, and the work is not exhaustive.
+
+Sources: [Kwara Care BHCPF facility network](https://kwaracare.com.ng/our-hospital-network/), [Sokoto State Ministry of Health](https://moh.sk.gov.ng/), [CheckmyPHC Sokoto facility directory](https://www.checkmyphc.org/phc-list?filterBy=state&keyword=sokoto+state), [Kogi National Community Food Bank launch](https://kogistate.gov.ng/nigeria-first-lady-remi-tinubu-launches-food-bank-in-lokoja-describes-project-as-significant-milestone-in-fight-against-food-insecurity/), [KOSIPPPPA grievance-redress portal](https://kosippppa.kogistate.gov.ng/grm-portal/), [Kwara Government SARC and Safe Haven location notice](https://kwarastate.gov.ng/news/british-dep-high-commissioner-to-inspect-innovation-hub-sarc-centre-in-official-visit-to-kwara/), [Voice of Nigeria Kwara Women Affairs hotline](https://von.gov.ng/kwara-first-lady-others-call-for-united-action-against-gbv/), [Health Alive Foundation profile](https://rsr.akvo.org/en/organisation/2698/), [Albarka Health Spring Foundation project and contact pages](https://ahsfng.org/), [Adamawa State Planning Commission local NGO register](https://adspc.ad.gov.ng/local-ngos/), [AGAOF protection programme](https://agaofng.org/programmes/protection-gbv-response/) and [contact page](https://agaofng.org/contact/), [Invictus Africa Gombe directory](https://invictusafrica.org/content/gombe/), [Motherhen Development Foundation](https://mdf.org.ng/), [Open Knowledge Development Initiative safeguarding/contact](https://okdinitiative.org/contact.html), [Da’awah and Relief Organization welfare committee](https://daawareliefgombe.com/services/welfare-committee/), and [SUFABEL contact](https://sufabel.org.ng/contact/).
 
 ### Osun wellbeing and family-access expansion — October 31, 2026
 

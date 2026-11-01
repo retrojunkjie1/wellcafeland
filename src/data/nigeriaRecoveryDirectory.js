@@ -121,6 +121,15 @@ import {
   NIGERIA_GOMBE_COMMUNITY_PROGRAMS_OCT31,
   NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2,
 } from "./nigeriaFiveStateAccessOct31Part2.js";
+import {
+  NIGERIA_ADAMAWA_ACCESS_OCT31,
+  NIGERIA_GOMBE_ACCESS_OCT31,
+  NIGERIA_KOGI_ACCESS_OCT31,
+  NIGERIA_KWARA_ACCESS_OCT31,
+  NIGERIA_KWARA_PHCS_OCT31,
+  NIGERIA_SOKOTO_ACCESS_OCT31,
+  NIGERIA_SOKOTO_PHCS_OCT31,
+} from "./nigeriaFiveStateAccessExpansionOct31.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -386,6 +395,11 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "programs"),
   ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_EBONYI_PREP_ACCESS_OCT31,
+  ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_KWARA_PHCS_OCT31,
+  ...NIGERIA_SOKOTO_PHCS_OCT31,
 ];
 
 export const NIGERIA_CITIES = [
@@ -481,6 +495,9 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_STATE_ACCESS_HOUSING_OCT31,
   ...NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
   ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -596,6 +613,10 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
   ...NIGERIA_OSUN_ACCESS_FOOD_OCT31,
   ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_KOGI_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_SOKOTO_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -708,6 +729,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_OSUN_ACCESS_FUNDING_OCT31,
   ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
   ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_KOGI_ACCESS_OCT31.filter((record) => record.primaryCategory === "funding"),
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -790,6 +812,9 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "emergency"),
   ...NIGERIA_STATE_ACCESS_EMERGENCY_OCT31,
   ...NIGERIA_ABIA_URGENT_ACCESS_OCT31,
+  ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "emergency"),
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
