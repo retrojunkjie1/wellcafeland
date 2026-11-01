@@ -57,6 +57,7 @@ import {
   NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
   NIGERIA_TARABA_PHCC_ACCESS_OCT31,
 } from "./nigeriaNextLowestCohortOct31.js";
+import { NIGERIA_IMO_LOCAL_FACILITIES_OCT31 } from "./nigeriaImoFacilityExpansionOct31.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -301,6 +302,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
   ...NIGERIA_IMO_PHCC_ACCESS_OCT31,
+  ...NIGERIA_IMO_LOCAL_FACILITIES_OCT31,
   ...NIGERIA_TARABA_PHCC_ACCESS_OCT31,
   ...NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
 ];
