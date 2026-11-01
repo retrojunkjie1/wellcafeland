@@ -271,7 +271,7 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,093 records total, with a range of 17–108 across the 37 tracked jurisdictions. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,330 records total, with a range of 19–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
@@ -285,14 +285,14 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Gombe | 21 | Imo | 123 |
 | Jigawa | 21 | Kaduna | 49 |
 | Kano | 25 | Katsina | 21 |
-| Kebbi | 19 | Kogi | 21 |
+| Kebbi | 61 | Kogi | 21 |
 | Kwara | 23 | Lagos | 108 |
 | Nasarawa | 20 | Niger | 26 |
-| Ogun | 68 | Ondo | 19 |
+| Ogun | 68 | Ondo | 62 |
 | Osun | 21 | Oyo | 43 |
 | Plateau | 20 | Rivers | 28 |
-| Sokoto | 19 | Taraba | 36 |
-| Yobe | 19 | Zamfara | 17 |
+| Sokoto | 19 | Taraba | 72 |
+| Yobe | 19 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
 
 ### Five-state continuation — Zamfara, Ondo, Imo, Kebbi and Taraba — October 31, 2026
@@ -314,6 +314,15 @@ Added 149 named facility locator records from Annex 10 of the [Nigeria HOPE-PHC 
 Current state totals after this batch, category order treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support: Ondo 61 (47, 2, 0, 2, 2, 8); Kebbi 60 (46, 1, 0, 2, 2, 9); Taraba 69 (54, 4, 1, 2, 2, 6); Zamfara 50 (35, 2, 0, 4, 2, 7). Nigeria now has 1,323 state-linked category records (an increase of 149). The four states remain below the 75-record floor and/or lack required category minimums; no completion status is claimed. All 37 Nigerian jurisdictions remain in progress against the overall six-category rule.
 
 Ondo's 2025 Womanity Index reports that there was no adult shelter in the state at the time of its assessment and warns that listed SARC capacity was not functioning as full-service centres. No adult shelter or fully operating SARC was fabricated to fill those categories; this remains a documented coverage gap requiring fresh verification. Source leads: [MyImo PHCC contacts and facilities](https://www.myimoapp.com/hospitals), [Taraba Ministry PHCC locations](https://health.tarabastate.gov.ng/facilities), [Sunshine Food Bank](https://sunshinefoodbank.org/), [Tosola Sunshine Foundation](https://tsfrf.org/), [Life Helpers Initiative programmes](https://lhinigeria.org/programs), [Life Helpers Initiative Yobe health and nutrition programme](https://lhinigeria.org/health), [Life Helpers Initiative ECHO work in Zamfara](https://lhinigeria.org/causes/echo-project/), and [Ondo 2025 Womanity Index findings](https://invictusafrica.org/wp-content/uploads/2025/12/Ondo-1.pdf).
+
+
+### Four-state service-access follow-up — Kebbi, Ondo, Taraba and Zamfara — October 31, 2026
+
+Added seven category records: six newly sourced contacts and a housing-category cross-listing of Kebbi’s Mai Talle Tara SARC, which already appears under urgent support. The new contacts are Taraba’s Ministry of Women Affairs GBV shelter-referral pathway, Zamfara’s Ministry of Humanitarian and Relief Matters protection/referral route, Lafiyar Mu Development Initiative’s Gusau nutrition-support contact, Angee Life Worth Foundation’s Jalingo counselling enquiries, ROTDOW’s Akure violence-support contact, and Caritas Nigeria’s Takum GBV-support location listed by UNHCR. No existing records were replaced.
+
+Current counts in category order treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support: Kebbi 61 (46, 1, 1, 2, 2, 9); Ondo 62 (47, 2, 0, 2, 2, 9); Taraba 72 (55, 4, 2, 2, 2, 7); Zamfara 52 (35, 2, 1, 5, 2, 7). Nigeria now has 1,330 state-linked category records. Kebbi and Zamfara housing entries are referral enquiries, not shelter addresses or confirmed placements. Ondo still has no housing listing: the 2025 Womanity Index documented no adult shelter at the time of its assessment, and we have not treated that historical finding as evidence of a current facility. Taraba’s ministry route is for referrals, not a walk-in shelter; Caritas Takum has a public location but no direct phone number in the cited UNHCR guidance. Lafiyar Mu is a nutrition-support contact, not a pantry or guaranteed food distribution. None of these contacts has been phone-confirmed; this work does not establish exhaustive coverage. All four states remain below 75 records; additional category gaps remain.
+
+Sources: [Kebbi Orange Pages provider directory](https://invictusafrica.org/content/kebbi/), [Taraba Ministry of Women Affairs contact](https://mwacd.tr.gov.ng/) and [GBV services](https://mwacd.tr.gov.ng/services/), [UNHCR Nigeria GBV guidance](https://help.unhcr.org/nigeria/services-in-nigeria/gender-based-violence-gbv/), [Zamfara Ministry contact](https://mohrm.zamfara.gov.ng/contact-us/), [Zamfara Ministry agencies](https://mohrm.zamfara.gov.ng/agencies/), [Zamfara SHRI partner role](https://mobp.zamfara.gov.ng/about/), [Lafiyar Mu Development Initiative](https://lafiyarmudevelopment.org/), [Angee Life Worth Foundation](https://angeefoundation.org/pages/profile.php), [ROTDOW](https://rotdow.org/), and [Ondo 2025 Womanity Index findings](https://invictusafrica.org/wp-content/uploads/2025/12/Ondo-1.pdf).
 
 ### Low-coverage five-jurisdiction follow-up — October 31, 2026
 
