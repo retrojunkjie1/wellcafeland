@@ -271,7 +271,7 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,345 records total, with a range of 19–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,350 records total, with a range of 19–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
@@ -290,10 +290,16 @@ Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in
 | Nasarawa | 21 | Niger | 26 |
 | Ogun | 68 | Ondo | 62 |
 | Osun | 21 | Oyo | 43 |
-| Plateau | 20 | Rivers | 28 |
+| Plateau | 25 | Rivers | 28 |
 | Sokoto | 20 | Taraba | 72 |
 | Yobe | 22 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
+
+### Plateau treatment and relief expansion — October 31, 2026
+
+Added five distinct public-source contacts in Jos: ICISAT substance-use and mental-health treatment enquiries, AIBETH psychotherapy appointments, WCCSI community-wellbeing enquiries, and SIM Magaji Foundation and Gonen Hope food/relief enquiries. Plateau now has 25 category records (4 treatment/programs, 5 peer/community, 2 housing, 3 food/essentials, 2 funding/benefits, 9 urgent support); Nigeria has 1,350 state-linked category records. Plateau remains in progress and well below the 75-record planning floor. This batch does not establish complete coverage, active intake, phone confirmation, a treatment slot, or current food-relief availability.
+
+Sources: [ICISAT contact and services](https://www.icisat.org/contact/), [AIBETH](https://aibeth.org/), [Wellbeing Connect and Community Support Initiative](https://wellbeingconnectsupport.org/contact-us/), [SIM Magaji Foundation](https://magaji.org/), and [Gonen Hope and Relief Foundation](https://gonen.org.ng/contact.html). Contact providers before travel to confirm current services, eligibility, fees, hours, and capacity.
 
 ### Four-state service-access expansion — Edo, Yobe, Nasarawa and Sokoto — October 31, 2026
 

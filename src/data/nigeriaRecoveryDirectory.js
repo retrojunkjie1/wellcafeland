@@ -75,6 +75,10 @@ import {
   NIGERIA_LOW_COVERAGE_PART3_EMERGENCY,
   NIGERIA_LOW_COVERAGE_PART3_PROGRAM_ENQUIRIES,
 } from "./nigeriaLowCoverageExpansionOct31Part3.js";
+import {
+  NIGERIA_PLATEAU_FOOD_OCT31,
+  NIGERIA_PLATEAU_PROGRAMS_OCT31,
+} from "./nigeriaPlateauExpansionOct31.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -326,6 +330,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_SERVICE_ACCESS_PROGRAMS_OCT31,
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAM_ENQUIRIES,
+  ...NIGERIA_PLATEAU_PROGRAMS_OCT31,
 ];
 
 export const NIGERIA_CITIES = [
@@ -523,6 +528,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_SERVICE_ACCESS_FOOD_OCT31,
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_LOW_COVERAGE_PART3_FOOD,
+  ...NIGERIA_PLATEAU_FOOD_OCT31,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
