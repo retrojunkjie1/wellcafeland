@@ -119,6 +119,11 @@ export default defineConfig(({ mode }) => {
               "./src/data/connecticutDirectory.js",
             ],
             "nigeria-resource-directory": ["./src/data/nigeriaRecoveryDirectory.js"],
+            // Preserve the same static catalog lookup while splitting the two largest
+            // Nigeria source batches out of the aggregate export chunk.
+            "nigeria-next-five-state-expansion": ["./src/data/nigeriaNextFiveStateExpansion.js"],
+            "nigeria-five-jurisdiction-expansion": ["./src/data/nigeriaFiveJurisdictionExpansion.js"],
+            "nigeria-five-state-access-oct31-part2": ["./src/data/nigeriaFiveStateAccessOct31Part2.js"],
             "delaware-resource-directory": ["./src/data/delawareDirectory.js"],
             "hawaii-resource-directory": ["./src/data/hawaiiDirectory.js"],
             "idaho-resource-directory": ["./src/data/idahoDirectory.js"],

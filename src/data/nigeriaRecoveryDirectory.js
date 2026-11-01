@@ -108,6 +108,13 @@ import {
   NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
   NIGERIA_OSUN_ACCESS_PROGRAMS_OCT31,
 } from "./nigeriaOsunAccessExpansionOct31.js";
+import {
+  DELTA_STATE_ACCESS_OCT31_PART2,
+  NIGERIA_BORNO_MAIDUGURI_HEALTH_ACCESS_OCT31,
+  NIGERIA_EBONYI_PREP_ACCESS_OCT31,
+  NIGERIA_GOMBE_COMMUNITY_PROGRAMS_OCT31,
+  NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2,
+} from "./nigeriaFiveStateAccessOct31Part2.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -367,6 +374,11 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_STATE_ACCESS_PROGRAMS_OCT31,
   ...NIGERIA_OSUN_ACCESS_PROGRAMS_OCT31,
   ...NIGERIA_ABIA_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_BORNO_MAIDUGURI_HEALTH_ACCESS_OCT31,
+  ...NIGERIA_GOMBE_COMMUNITY_PROGRAMS_OCT31,
+  ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "programs"),
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_EBONYI_PREP_ACCESS_OCT31,
 ];
 
 export const NIGERIA_CITIES = [
@@ -461,6 +473,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_STATE_ACCESS_HOUSING_OCT31,
   ...NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -574,6 +587,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
   ...NIGERIA_OSUN_ACCESS_FOOD_OCT31,
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "food"),
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -684,6 +698,8 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_STATE_ACCESS_FUNDING_OCT31,
   ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "funding"),
   ...NIGERIA_OSUN_ACCESS_FUNDING_OCT31,
+  ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
