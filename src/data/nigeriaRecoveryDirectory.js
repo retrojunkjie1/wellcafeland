@@ -25,6 +25,7 @@ import {
   NIGERIA_LOW_COVERAGE_RESEARCH_HOUSING_OCT_2026,
   NIGERIA_LOW_COVERAGE_RESEARCH_PROGRAMS_OCT_2026,
 } from "./nigeriaLowCoverageResearchBatchOct2026.js";
+import { NIGERIA_LOW_COVERAGE_COHORT_OCT31 } from "./nigeriaLowCoverageCohortOct31.js";
 import {
   NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
   NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
@@ -272,6 +273,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS,
   ...NIGERIA_LOW_COVERAGE_RESEARCH_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
 ];
 
@@ -356,6 +358,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_NEXT_LOW_COVERAGE_HOUSING,
   ...NIGERIA_LOW_COVERAGE_RESEARCH_HOUSING_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -454,6 +457,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
   ...NIGERIA_NEXT_LOW_COVERAGE_FOOD,
   ...NIGERIA_LOW_COVERAGE_RESEARCH_FOOD_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "food"),
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -554,6 +558,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
   ...NIGERIA_NEXT_LOW_COVERAGE_FUNDING,
   ...NIGERIA_LOW_COVERAGE_RESEARCH_FUNDING_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "funding"),
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -623,6 +628,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "emergency"),
   ...NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY,
   ...NIGERIA_LOW_COVERAGE_RESEARCH_EMERGENCY_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "emergency"),
 ];
 
 export const NIGERIA_PEER_RESOURCES = [

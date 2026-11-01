@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 983 state-linked category records. Current counts range from 12 to 108. A 66-record NIFES batch gives 30 jurisdictions and 60 city/locality labels with source-listed local faith-based meetings; a 31-record NHIA batch adds direct health-insurance agency contacts across 31 jurisdictions; a 40-record SARC cohort adds local survivor-care centres across 23 jurisdictions; a 14-record NEMA cohort adds disaster-coordination office contacts across 14 jurisdictions; a 216-record FRSC cohort adds contact-bearing local road-safety unit commands across all 37 jurisdictions; the Lagos MiND follow-up adds the 49 remaining PHCs from its published 57-site mental-health network; two Orange Pages batches add 46 distinct state-level or local survivor-support, legal, health, counselling, and skills-support contacts across nine jurisdictions; the October 31 NHRC cohort adds 35 previously missing state/FCT rights-complaint office routes, completing one published office route in each of the 37 tracked jurisdictions; the October 31 Nigerian Red Cross cohort adds 30 previously missing branch contacts; three FIDA cohorts add 24 new state-chapter legal-support contacts across 23 states and the FCT; the October 31 low-coverage batch adds 10 treatment, food, and social-protection contacts across Abia, Jigawa, Katsina, Sokoto, and Zamfara; its follow-up adds 11 distinct local or regional survivor-support, legal, psychosocial, and safe-referral routes; and the next five-state batch adds 17 counselling, food/essentials, skills, health-outreach and humanitarian contacts across Bayelsa, Kebbi, Ondo, Taraba and Yobe, preserving all prior records. | In progress; no jurisdiction meets all count and six-category floors. | Build distinct local contacts in all six categories in batches; source state- and city-specific care, housing, food, benefits, peer, and urgent routes. Keep faith-based meetings distinct from treatment and recovery care. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,020 state-linked category records. Current counts range from 13 to 108. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Build distinct local contacts across all six categories in batches; source city-level care, housing, food, benefits and peer options. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,12 +271,12 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`. All jurisdictions are **in progress** against the U.S.-style 75-record planning floor; these numbers must grow through distinct local resources, not repeated national hotlines.
+Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,020 records total, with a range of 13–108 across the 37 tracked jurisdictions. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 19 | Adamawa | 20 |
-| Akwa Ibom | 33 | Anambra | 18 |
+| Abia | 21 | Adamawa | 24 |
+| Akwa Ibom | 33 | Anambra | 23 |
 | Bauchi | 41 | Bayelsa | 16 |
 | Benue | 17 | Borno | 21 |
 | Cross River | 23 | Delta | 23 |
@@ -285,12 +285,12 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Gombe | 21 | Imo | 18 |
 | Jigawa | 16 | Kaduna | 49 |
 | Kano | 25 | Katsina | 21 |
-| Kebbi | 18 | Kogi | 18 |
+| Kebbi | 18 | Kogi | 21 |
 | Kwara | 17 | Lagos | 108 |
 | Nasarawa | 20 | Niger | 26 |
 | Ogun | 68 | Ondo | 17 |
 | Osun | 21 | Oyo | 43 |
-| Plateau | 18 | Rivers | 28 |
+| Plateau | 20 | Rivers | 28 |
 | Sokoto | 19 | Taraba | 18 |
 | Yobe | 18 | Zamfara | 13 |
 | Federal Capital Territory | 38 | | |
@@ -379,6 +379,14 @@ This five-state continuation adds 17 distinct records: Borno (four), Jigawa (one
 The new contacts include Maiduguri counselling and psychosocial support, community safe-space referral, local humanitarian and nutrition programmes; named Karu, Lafia and Keffi services; Ile-Ife survivor, student-counselling and ministry routes; Minna legal-aid, therapy and protection referrals; and a Jigawa state primary-care and nutrition navigation route. FINDEF’s Gusau office is a contact route for food-security and livelihood enquiries, not a current distribution point. Ministries and nonprofit offices are not represented as shelters; safe-house services do not establish present beds or capacity. Current intake, phone access, safety, eligibility, costs and availability are unconfirmed. The 2025 Zamfara Womanity Index reports a major shelter gap; the 2026 Q1 budget shows shelter construction funding, which is not evidence of an operating shelter, so Zamfara remains without a public shelter-intake listing. Jigawa also remains without a state-specific housing entry in this catalog. All new records are source-reviewed, not phone-confirmed or exhaustive.
 
 Sources: [Borno Ministry of Women Affairs](https://bomwasd.bornostate.gov.ng/), [Salama Centre Maiduguri](https://salamacentre.org/), [Hallmark Leadership Initiative](https://www.hallmarkleadership.org/), [Sirri Care Foundation programmes](https://www.sirricare.org/programs), [FRAD Foundation](https://fradfoundation.org/), [Jigawa Primary Health Care Development Agency](https://phc.moh.jg.gov.ng/), [Jigawa Ministry of Health contact](https://moh.jg.gov.ng/contact.php), [Nasarawa provider directory](https://invictusafrica.org/content/nasarawa/), [Osun provider directory](https://invictusafrica.org/content/osun/), [Niger provider directory](https://invictusafrica.org/content/niger/), [FINDEF programmes and contact](https://findef.org/), and [Zamfara 2025 Womanity Index](https://invictusafrica.org/wp-content/uploads/2025/12/Zamfara-1.pdf) / [2026 Q1 budget report](https://zamfara.gov.ng/wp-content/uploads/2026/04/Zamfara-State-2026-First-Quarter-Budget-Performance-Report.pdf).
+
+### Low-coverage five-state follow-up — Abia, Adamawa, Anambra, Kogi and Plateau — October 31, 2026
+
+This additive batch adds 16 distinct source-reviewed contacts and does not remove or replace existing records. New totals: Abia 21 (8 treatment/health, 2 peer/community, 0 housing, 1 food, 2 funding, 8 urgent support); Adamawa 24 (2, 3, 0, 2, 2, 15); Anambra 23 (5, 2, 0, 1, 4, 11); Kogi 21 (3, 3, 0, 1, 2, 12); Plateau 20 (1, 5, 2, 1, 2, 9). Categories are treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, and urgent support. Four states in this cohort still have no qualifying local housing listing. Nigeria now totals 1,020 state-linked records; no jurisdiction meets the 75-record planning floor yet.
+
+The contacts include Abia's local Caritas and Vicar Hope Foundation medical centre; Adamawa humanitarian and recovery offices and programmes; Anambra rights, counselling, psychosocial and women’s-development routes; three Lokoja protection/legal-support contacts; and Plateau safe-accommodation and survivor-care referral leads. Plateau’s 2025 state review says the Jos SARC was the state's only functional centre at that time and describes limited rural access. Kogi's directory includes entries whose stated geographic focus conflicts with their physical address; these were excluded from this batch. ERDI's government NGO profile is dated 2020 and must be revalidated before relying on it. CWEENS and the Bokkos SARC are referral leads, not verified current shelter beds. All listings are source-reviewed, not phone-confirmed, capacity-confirmed, or exhaustive.
+
+Sources: [Caritas Nigeria Abia office](https://caritasnigeria.org/abia/), [Vicar Hope Foundation medical centre and contact](https://www.vicarhopefoundation.net/contact.php), [Adamawa State Planning Commission ERDI profile](https://adspc.ad.gov.ng/ngos/emergency-relieve-for-the-displaced-initiative/), [IJDPN current programmes](https://ijdpn.org.ng/), [Adamawa humanitarian ministry](https://mrr.adamawastate.gov.ng/contact-us/), [Life Helpers Initiative field offices](https://lhinigeria.org/contact), [CIRDDOC Anambra contact](https://cirddoc.org/contact-us/), [Anambra Orange Pages](https://invictusafrica.org/content/anambra/), [Anambra Women Development Centre](https://lens.anambrastate.gov.ng/mdas/women-development-centre-awka), [Kogi Orange Pages](https://invictusafrica.org/content/kogi/), [Plateau Orange Pages](https://invictusafrica.org/content/plateau/), and [Plateau 2025 Womanity Index](https://invictusafrica.org/wp-content/uploads/2025/12/Plateau-1.pdf).
 
 ## Australia: states and territories
 
