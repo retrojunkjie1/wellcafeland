@@ -271,26 +271,26 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed November 1, 2026. The calculator reports 1,944 records total, with a range of 29–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. Nine jurisdictions meet the 75-record planning floor; none meets all six category floors, and no state is marked complete. Counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed November 1, 2026. The calculator reports 1,962 records total, with a range of 30–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. Nine jurisdictions meet the 75-record planning floor; none meets all six category floors, and no state is marked complete. Counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 77 | Adamawa | 32 |
-| Akwa Ibom | 33 | Anambra | 77 |
+| Abia | 77 | Adamawa | 41 |
+| Akwa Ibom | 34 | Anambra | 77 |
 | Bauchi | 41 | Bayelsa | 42 |
 | Benue | 76 | Borno | 52 |
 | Cross River | 35 | Delta | 77 |
 | Ebonyi | 33 | Edo | 32 |
 | Ekiti | 31 | Enugu | 49 |
-| Gombe | 30 | Imo | 123 |
+| Gombe | 32 | Imo | 123 |
 | Jigawa | 43 | Kaduna | 49 |
 | Kano | 75 | Katsina | 30 |
 | Kebbi | 100 | Kogi | 45 |
 | Kwara | 46 | Lagos | 108 |
 | Nasarawa | 43 | Niger | 32 |
 | Ogun | 75 | Ondo | 62 |
-| Osun | 30 | Oyo | 43 |
-| Plateau | 29 | Rivers | 38 |
+| Osun | 32 | Oyo | 43 |
+| Plateau | 33 | Rivers | 38 |
 | Sokoto | 49 | Taraba | 72 |
 | Yobe | 45 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
@@ -699,3 +699,13 @@ Updated totals in category order (treatment/recovery and health access, peer/com
 The Rivers provider profiles come from Invictus Africa's Orange Pages, a dated provider directory; contact details and service descriptions must be reconfirmed, especially before sharing sensitive information or travelling. These organizations list shelter/safe-space support, but their public offices are not shelter addresses and do not confirm a bed, capacity, or immediate response. CHIYN states that its confidential accommodation and peer-support programmes serve marginalized people and other vulnerable groups; its public Minna office is not the accommodation site, and the source does not publish group schedules or current capacity. RAiSE lists vocational training, not a cash grant. HOHDI's past food distributions and reported January 2026 microcredit activity do not establish current intake, current distribution, a grant, or an open loan cycle. Edo food organizations publish programme information or food-bank identity, but neither confirms current household intake or available stock. Gender Mobile and FOSHPAD are listed for counselling and psychosocial support; FOSHPAD's directory record does not publish a phone number. All additions are source-reviewed, not phone-confirmed by WellnessCafe, and do not establish current capacity, eligibility, or exhaustive coverage.
 
 Sources: [CHIYN programmes and interventions](https://chiynigeria.org/programs/), [CHIYN Minna contact](https://chiynigeria.org/contact/), [RAiSE Foundation women's empowerment and trade-support programme](https://raisefoundation.org.ng/wemp/), [HOHDI activities and food programmes](https://www.hohdi.org.ng/), [HOHDI contact and Katsina office](https://www.hohdi.org.ng/about), [Invictus Africa Rivers provider directory](https://invictusafrica.org/content/rivers/), [Invictus Africa Ekiti provider directory](https://invictusafrica.org/content/ekiti/), [Gender Mobile Initiative contact and case-support route](https://www.gendermobile.org/contact-us), [Christine's Hope Foundation mission and contact](https://christineshopefoundation.org/Pages/contact.html), and [De Providence Bridge Food Bank Initiatives contact page](https://deprovidencebridgefoodbankinitiatives.com/contact-us.php).
+
+### Nigeria category-gap batch — Adamawa, Akwa Ibom, Gombe, Osun and Plateau — November 1, 2026
+
+Added 18 distinct source-reviewed category listings without removing or replacing existing entries: Adamawa (9), Akwa Ibom (1), Gombe (2), Osun (2), and Plateau (4). They add program/referral contacts for youth trauma-healing and vocational support, humanitarian health and child protection, counselling referrals, and mental-health rehabilitation; community networks and a mothers' nutrition-group enquiry; shelter referral and food-security/nutrition pathways; and livelihood, skills, and MSME support enquiries. These are categorized by their published function and are not represented as guaranteed clinical care, a shelter placement, food stock, or cash grants.
+
+Updated totals in category order (treatment/recovery and health access, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support): Adamawa 41 (6, 3, 3, 7, 5, 17); Akwa Ibom 34 (4, 3, 5, 4, 4, 14); Gombe 32 (9, 4, 3, 3, 4, 9); Osun 32 (8, 3, 3, 3, 4, 11); and Plateau 33 (7, 6, 2, 5, 4, 9). Nigeria now has 1,962 state-linked category records across 37 jurisdictions, ranging from 30 to 123. Nine jurisdictions meet the 75-record planning floor; none meets all six category floors. All five states in this batch remain below 75 and have one or more categories below five; none is complete.
+
+Adamawa contacts come from the Adamawa State Planning Commission NGO registry; its intervention labels and contact details do not prove an active service cycle. The Akwa Ibom Youths Development Forum is a youth-development network, not a recovery meeting. Alkali Foundation's source describes mothers' community nutrition groups but does not publish a current schedule. The Osun ministry contact is an administrative secretariat, not the Transit Home address, and a confidential referral must be arranged safely. Plateau's Intellect Health Care Rehab Center listing is from a third-party provider directory and requires confirmation of credentials, fees, admission criteria, and present operation. PLASMIDA is MSME training/finance navigation, not a guaranteed individual grant; FUDECO's pastoralist livelihood work likewise does not confirm open cash assistance. All additions are source-reviewed, not phone-confirmed by WellnessCafe; present availability, eligibility, safety, capacity, fees, and exhaustive coverage are not established. Call or use the linked source to confirm current details before sharing sensitive information or travelling.
+
+Sources: [Adamawa State Planning Commission local NGO registry](https://adspc.ad.gov.ng/local-ngos/), [CASSON state chapters](https://cassonnigeria.org/about/state-chapters/), [Nigeria Mental Health Service Providers directory](https://mymentalhealthandi.com/nigeria-mental-health-service-providers/), [Akwa Ibom Youths Development Forum](https://www.akwaibomyouthsdevelopmentforum.org/), [Invictus Africa Osun Womanity Index](https://invictusafrica.org/wp-content/uploads/2024/12/OSUN.pdf) and [Osun Orange Pages directory](https://invictusafrica.org/content/osun/), [Naza Agape Foundation IDP project](https://www.nazaagape.org/idp-project/) and [contact information](https://www.nazaagape.org/), [Alkali Foundation community nutrition and mothers' groups](https://www.alkalifoundation.org/volunteer), [PLASMIDA programmes](https://plasmida.plateaustate.gov.ng/programs) and [about/contact](https://plasmida.plateaustate.gov.ng/about), and [FUDECO contact](https://fudeco-ngo.org/contact-us/).
