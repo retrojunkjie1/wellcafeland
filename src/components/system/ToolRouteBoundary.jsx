@@ -70,7 +70,7 @@ class ToolErrorBoundary extends React.Component {
  * Wraps tool route content: catches render errors and provides Suspense fallback.
  * Never leaves the user with a blank screen.
  */
-export default function ToolRouteBoundary({ children }) {
+export default function ToolRouteBoundary({ children, loadingClassName = "" }) {
 
   const notReadyFallback = (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
@@ -89,7 +89,8 @@ export default function ToolRouteBoundary({ children }) {
     <div
       role="status"
       aria-live="polite"
-      className="mx-auto flex min-h-[40vh] max-w-xl items-center justify-center px-4 text-center text-sm text-white/60"
+      className={`mx-auto flex min-h-[40vh] max-w-xl items-center justify-center px-4 text-center text-sm text-white/60 ${loadingClassName}`}
+      style={loadingClassName ? { minHeight: "calc(100dvh - 6.0625rem)" } : undefined}
     >
       <span className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4">
         Opening your wellness space…
