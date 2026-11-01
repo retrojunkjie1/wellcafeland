@@ -1,6 +1,6 @@
 # WellnessCafe resource directory coverage register
 
-**Last reconciled:** 2026-10-31
+**Last reconciled:** 2026-11-01
 **Purpose:** the working source of truth for where the directory is live, which subnational areas it represents, and what still needs research. Update this register in the same change as every directory batch.
 
 ## Status rules
@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,944 state-linked category records. Current counts range from 29 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; nine jurisdictions meet the 75-record planning floor, but none meets all six category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize large gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 2,951 state-linked category records. Seven-category calculator totals range from 75 to 123, but include the separate general healthcare-access category. Excluding that category, the six support categories total 1,980 records and range from 30 to 123; 10 jurisdictions have 75+ support-category records. | In progress; no jurisdiction meets the five-listing minimum in all six support categories. The 75+ seven-category totals must not be presented as meeting that service-category floor. | Continue state-by-state batches; prioritize real local food, housing, peer, and benefits pathways. Preserve existing records and distinguish public-source review from phone confirmation, current availability, and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,29 +271,59 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed November 1, 2026. The calculator reports 1,962 records total, with a range of 30–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. Nine jurisdictions meet the 75-record planning floor; none meets all six category floors, and no state is marked complete. Counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed November 1, 2026. The calculator reports 2,951 records across seven categories (including general healthcare access), with a range of 75–123 across 37 jurisdictions. Because facility-level primary-care records raise the overall total, the six actual support categories are shown separately below: 1,980 records, range 30–123, with 10 jurisdictions at 75 or above. None has at least five listings in all six support categories. These are category records (an organization can appear in multiple relevant categories), not unique organizations. No state is marked complete; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
-| State / territory | Listings | State / territory | Listings |
-|---|---:|---|---:|
-| Abia | 77 | Adamawa | 41 |
-| Akwa Ibom | 34 | Anambra | 77 |
-| Bauchi | 41 | Bayelsa | 42 |
-| Benue | 76 | Borno | 52 |
-| Cross River | 35 | Delta | 77 |
-| Ebonyi | 33 | Edo | 32 |
-| Ekiti | 31 | Enugu | 49 |
-| Gombe | 32 | Imo | 123 |
-| Jigawa | 43 | Kaduna | 49 |
-| Kano | 75 | Katsina | 30 |
-| Kebbi | 100 | Kogi | 45 |
-| Kwara | 46 | Lagos | 108 |
-| Nasarawa | 43 | Niger | 32 |
-| Ogun | 75 | Ondo | 62 |
-| Osun | 32 | Oyo | 43 |
-| Plateau | 33 | Rivers | 38 |
-| Sokoto | 49 | Taraba | 72 |
-| Yobe | 45 | Zamfara | 52 |
-| Federal Capital Territory | 38 | | |
+| State / territory | Total | Programs | Peer | Housing | Food | Funding | Urgent |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Abia | 102 | 60 | 3 | 1 | 1 | 3 | 11 |
+| Adamawa | 75 | 6 | 3 | 3 | 7 | 5 | 17 |
+| Akwa Ibom | 75 | 4 | 3 | 5 | 4 | 4 | 14 |
+| Anambra | 104 | 56 | 2 | 1 | 6 | 5 | 11 |
+| Bauchi | 75 | 11 | 5 | 2 | 4 | 6 | 13 |
+| Bayelsa | 75 | 25 | 1 | 1 | 4 | 3 | 8 |
+| Benue | 76 | 54 | 1 | 4 | 1 | 2 | 14 |
+| Borno | 75 | 34 | 1 | 1 | 3 | 3 | 10 |
+| Cross River | 75 | 3 | 3 | 1 | 2 | 3 | 23 |
+| Delta | 77 | 53 | 5 | 0 | 2 | 3 | 14 |
+| Ebonyi | 75 | 14 | 3 | 0 | 1 | 4 | 11 |
+| Edo | 75 | 8 | 2 | 1 | 4 | 3 | 14 |
+| Ekiti | 75 | 7 | 1 | 2 | 1 | 3 | 17 |
+| Enugu | 75 | 15 | 3 | 1 | 3 | 12 | 15 |
+| Gombe | 75 | 9 | 4 | 3 | 3 | 4 | 9 |
+| Imo | 123 | 107 | 1 | 1 | 1 | 2 | 11 |
+| Jigawa | 75 | 23 | 0 | 0 | 3 | 4 | 13 |
+| Kaduna | 75 | 5 | 5 | 3 | 4 | 9 | 23 |
+| Kano | 75 | 55 | 1 | 0 | 2 | 6 | 11 |
+| Katsina | 75 | 8 | 2 | 1 | 4 | 3 | 12 |
+| Kebbi | 100 | 78 | 3 | 1 | 4 | 5 | 9 |
+| Kogi | 75 | 24 | 3 | 0 | 2 | 4 | 12 |
+| Kwara | 75 | 25 | 1 | 1 | 3 | 3 | 13 |
+| Lagos | 108 | 66 | 7 | 3 | 5 | 5 | 22 |
+| Nasarawa | 75 | 24 | 2 | 2 | 1 | 4 | 10 |
+| Niger | 75 | 6 | 7 | 2 | 1 | 4 | 12 |
+| Ogun | 75 | 36 | 2 | 7 | 5 | 5 | 20 |
+| Ondo | 78 | 48 | 2 | 1 | 3 | 2 | 9 |
+| Osun | 75 | 8 | 3 | 3 | 3 | 4 | 11 |
+| Oyo | 75 | 7 | 3 | 1 | 11 | 5 | 16 |
+| Plateau | 75 | 7 | 6 | 2 | 5 | 4 | 9 |
+| Rivers | 75 | 14 | 1 | 6 | 2 | 5 | 10 |
+| Sokoto | 75 | 30 | 3 | 1 | 4 | 4 | 8 |
+| Taraba | 79 | 56 | 5 | 3 | 2 | 3 | 7 |
+| Yobe | 75 | 23 | 1 | 2 | 4 | 2 | 13 |
+| Zamfara | 79 | 36 | 2 | 1 | 7 | 3 | 7 |
+| Federal Capital Territory | 75 | 6 | 4 | 3 | 3 | 2 | 20 |
+
+The `Total` column includes healthcare access. The six columns after it are the actual support categories and do not include that healthcare category. Abia, Anambra, Ondo, Taraba, and Zamfara are the current research cohort. Their new listings are additive; the totals below do not indicate that category gaps or statewide coverage are complete.
+
+### Five-state category-gap follow-up — Abia, Anambra, Ondo, Taraba and Zamfara — November 1, 2026
+
+Added 14 distinct source-reviewed category records in `nigeriaFiveStateGapFollowupNov2026.js`, preserving all previous entries: Abia (caregiver peer groups and a state Halfway Home referral enquiry); Anambra (food and housing-assistance enquiries from Paulina Elujioke Foundation, plus Nissi Helps scholarship and enterprise-support enquiries); Ondo (child-focused food security, a carefully scoped child/family shelter-support enquiry, and LAPDO counselling/psychosocial enquiries); Taraba (a Saturday community mental-health session, organization-only TY Danjuma Community Fund grants, and Caritas Takum survivor-safety referral); Zamfara (two separate HDLi food and treatment/livelihood enquiries and a seasonal Al-Sadaqah food-relief route).
+
+Updated seven-category calculator totals (healthcare access, treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support): Abia 102 (23, 60, 3, 1, 1, 3, 11); Anambra 104 (23, 56, 2, 1, 6, 5, 11); Ondo 78 (13, 48, 2, 1, 3, 2, 9); Taraba 79 (3, 56, 5, 3, 2, 3, 7); Zamfara 79 (23, 36, 2, 1, 7, 3, 7). Their support-category shortfalls to five per category remain: Abia (peer +2, housing +4, food +4, funding +2); Anambra (peer +3, housing +4); Ondo (peer +3, housing +4, food +2, funding +3); Taraba (housing +2, food +3, funding +2); and Zamfara (peer +3, housing +4, funding +2). These are gap counts, not targets to fill with unsuitable or duplicate records.
+
+Safety and scope are preserved in each record. The Abia halfway-home source is a 2025 report and does not confirm current operation or intake. Paulina Elujioke's housing contact is an assistance enquiry, not a shelter; God Made Mum's housing entry is scoped to children and families and does not establish an adult bed. Taraba's Caritas record is a protection referral, not a shelter location or placement. The cited 2025 Ondo and Zamfara state reviews report no state adult shelter coverage; confidential or ad hoc support must not be represented as a public walk-in shelter. Food distributions, grants, counselling, meeting schedules, eligibility and present availability are not confirmed by phone. None of the new records or jurisdiction totals establish exhaustive coverage.
+
+Sources: [Reach & Touch parent-training and caregiver groups](https://www.reachandtouchcharity.org/programmes/parent-training), [Paulina Elujioke Foundation contact](https://paulinaelujiokefoundation.com/contact-us/), [Nissi Helps Foundation activities](https://nissihelpsfoundation.org/activities/) and [contact](https://nissihelpsfoundation.org/contact/), [God Made Mum Ondo programmes](https://god-made-mum-ondo.co.uk/our-work), [Ondo Womanity Index 2025](https://invictusafrica.org/wp-content/uploads/2025/12/Ondo-1.pdf), [LAPDO](https://lapdo.org/) and [Invictus Africa Orange Pages](https://invictusafrica.org/wp-content/uploads/2023/12/Orange-Pages-Third-Edition.pdf), [Angee Mental Health Platform](https://mentalhealth.angeefoundation.org/), [TY Danjuma Foundation Community Fund](https://tydanjumafoundation.org/community-fund/) and [Taraba contact](https://tydanjumafoundation.org/contact-us/), [UNHCR Nigeria GBV referral guidance](https://help.unhcr.org/nigeria/services-in-nigeria/gender-based-violence-gbv), [Caritas Nigeria Taraba field update](https://caritasnigeria.org/caritas-nigeria-strengthens-teams-through-field-visits/), [HDLi](https://hdlinitiative.org/), [Al-Sadaqah Jariyah contact](https://www.sadaqahjariyahhumanitarian.org/contact-us), [February 2026 Zamfara relief distribution report](https://dailytimesng.com/ramadan-organization-distributes-food-to-2000-idps-in-zamfara/), [Abia Ministry of Women Affairs](https://womenaffairs.abiastate.gov.ng/), [Abia Womanity Index 2025](https://invictusafrica.org/wp-content/uploads/2025/12/Abia.pdf), and [Abia Government contact](https://abia.icowebagency.com/contact).
 
 ### Five-state Nigeria access expansion — Kogi, Kwara, Sokoto, Adamawa and Gombe — October 31, 2026
 

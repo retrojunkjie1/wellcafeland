@@ -152,6 +152,14 @@ import {
   NIGERIA_NEXT_GAP_HOUSING_NOV2026,
   NIGERIA_NEXT_GAP_PROGRAMS_NOV2026,
 } from "./nigeriaNextCategoryGapBatchNov2026.js";
+import {
+  NIGERIA_FIVE_STATE_GAP_CIRCLES_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_FOOD_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_FUNDING_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_HOUSING_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_PEER_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_PROGRAMS_NOV2026,
+} from "./nigeriaFiveStateGapFollowupNov2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -433,6 +441,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_SIXTH_FIVE_STATE_SUPPORT_NOV2026,
   ...NIGERIA_GAP_PROGRAMS_NOV2026,
   ...NIGERIA_NEXT_GAP_PROGRAMS_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_PROGRAMS_NOV2026,
 ];
 
 export const NIGERIA_CITIES = [
@@ -549,6 +558,8 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_GAP_HOUSING_NOV2026,
   ...NIGERIA_NEXT_GAP_HOUSING_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_HOUSING_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_CIRCLES_NOV2026.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -670,6 +681,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_GAP_FOOD_NOV2026,
   ...NIGERIA_NEXT_GAP_FOOD_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_FOOD_NOV2026,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -785,6 +797,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_KOGI_ACCESS_OCT31.filter((record) => record.primaryCategory === "funding"),
   ...NIGERIA_GAP_FUNDING_NOV2026,
   ...NIGERIA_NEXT_GAP_FUNDING_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_FUNDING_NOV2026,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -918,4 +931,5 @@ export const NIGERIA_PEER_RESOURCES = [
   ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "circles"),
   ...NIGERIA_GAP_CIRCLES_NOV2026,
   ...NIGERIA_NEXT_GAP_CIRCLES_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_PEER_NOV2026,
 ];
