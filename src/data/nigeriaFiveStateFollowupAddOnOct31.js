@@ -1,0 +1,155 @@
+/**
+ * Additional public-source routes found while deepening the Oct 31 Nigeria
+ * low-coverage cohort. These supplement the original entries and do not
+ * imply telephone confirmation, active intake, or comprehensive coverage.
+ */
+const reviewed = (record) => ({
+  ...record,
+  country: "Nigeria",
+  checkedAt: "2026-10-31",
+  sourceReviewedAt: "2026-10-31",
+  sourceReviewed: true,
+  sourceReviewStatus: "opened-public-source",
+  phoneConfirmed: false,
+  exhaustiveCoverage: false,
+  verified: true,
+});
+
+const NIGERIA_FIVE_STATE_ADDON_ALL_OCT31 = [
+  reviewed({
+    id: "bayelsa-safe-haven-positivity-mental-wellbeing",
+    name: "Safe Haven Positivity Initiative — mental-wellbeing and support enquiries",
+    primaryCategory: "programs",
+    resourceType: "Community mental-wellbeing initiative · counselling enquiries · resource referrals",
+    description: "Safe Haven Positivity Initiative publishes a Yenagoa address and says it works on mental-wellbeing education, community outreach and counselling support. Contact the team to ask whether one-to-one counselling is currently available, who provides it, whether fees apply, what privacy protections are used, and whether referrals are available. Its published contact is not a crisis line and does not establish clinical licensure or emergency response.",
+    phone: "+2347052719662",
+    email: "info.safehavenpositivity@gmail.com",
+    link: "https://shpinitiative.com.ng/contact-us/",
+    source: "Safe Haven Positivity Initiative · official contact and service information",
+    sourceEvidenceUrl: "https://shpinitiative.com.ng/contact-us/",
+    city: "Yenagoa",
+    state: "Bayelsa",
+    region: "Yenagoa, Bayelsa State, Nigeria",
+    address: "No. 20 Azambi Plaza, Old CMTV Road, Opolo 2, Yenagoa, Bayelsa State",
+    locationLine: "Yenagoa · ask about current counselling and community-support availability before visiting",
+  }),
+  reviewed({
+    id: "benue-women-affairs-social-welfare-safe-shelter-referral",
+    name: "Benue Women Affairs and Social Welfare — survivor safety and shelter referral enquiries",
+    primaryCategory: "housing",
+    resourceType: "State social-welfare referral · GBV response · child protection · safe-shelter coordination",
+    description: "The Benue ministry describes coordinating GBV response, counselling, legal support and shelter, and publishes two ministry hotlines. Contact the team to request a confidential assessment and a safe referral; ask where to meet and how to communicate safely. The ministry office is not itself a shelter, shelter locations are not published here, and a placement is not guaranteed. If a device may be monitored, use a safer phone or contact method.",
+    phone: "07047956037",
+    alternatePhone: "08156290735",
+    link: "https://womenaffairs.benuestate.gov.ng/about-us/",
+    source: "Benue State Ministry of Women Affairs and Social Welfare · official mandate, hotline and referral information",
+    sourceEvidenceUrl: "https://womenaffairs.benuestate.gov.ng/about-us/",
+    city: "Makurdi",
+    state: "Benue",
+    region: "Benue State, Nigeria",
+    address: "Benue State Rehabilitation Board, Km 13 Apir–Makurdi–Aliade Road, Makurdi, Benue State",
+    locationLine: "Benue State referral · call before visiting; no shelter address or placement capacity is published",
+    directoryRole: "state-referral",
+  }),
+  reviewed({
+    id: "benue-sema-disaster-response-coordination",
+    name: "Benue State Emergency Management Agency — disaster incident and relief coordination",
+    primaryCategory: "emergency",
+    resourceType: "State emergency-management agency · disaster reporting · relief coordination",
+    description: "Benue SEMA publishes emergency incident reporting, disaster coordination and relief-material distribution functions. Contact it to report a flood, fire, displacement or other disaster and ask which verified team serves the affected locality. Published hotline numbers differ across sections of its site; call 09116000180 first or check the official contact page before relying on another number. This is an agency contact, not a confirmed rescue-dispatch line or guarantee of immediate relief.",
+    phone: "09116000180",
+    alternatePhone: "09158886958",
+    email: "hello@benuesema.com",
+    link: "https://www.benuesema.com/",
+    source: "Benue State Emergency Management Agency · official incident, service and contact pages",
+    sourceEvidenceUrl: "https://www.benuesema.com/",
+    city: "Makurdi",
+    state: "Benue",
+    region: "Benue State, Nigeria",
+    locationLine: "Statewide disaster coordination · call to confirm the active response contact for your locality",
+    directoryRole: "state-referral",
+  }),
+  reviewed({
+    id: "jigawa-ministry-health-emergency-medical-services",
+    name: "Jigawa Ministry of Health — emergency medical services contact",
+    primaryCategory: "emergency",
+    resourceType: "State health department · emergency medical services navigation",
+    description: "Jigawa’s Ministry of Health publishes 0706 807 7847 as its Emergency Medical Services contact and lists its Dutse secretariat. Call to ask what emergency medical response or facility serves your location and whether the number is currently operating. This listing is a ministry-published contact; WellnessCafe has not called it and does not guarantee dispatch, ambulance availability or response time. For immediate danger, use the appropriate local emergency service where available and safe.",
+    phone: "+2347068077847",
+    email: "info@moh.jg.gov.ng",
+    link: "https://moh.jg.gov.ng/",
+    source: "Jigawa State Ministry of Health · official contact page",
+    sourceEvidenceUrl: "https://moh.jg.gov.ng/",
+    city: "Dutse",
+    state: "Jigawa",
+    region: "Jigawa State, Nigeria",
+    address: "New Secretariat Complex, Block B-Q2/Q3, Ground and First Floor, PMB 1003, Dutse, Jigawa State",
+    locationLine: "Statewide emergency-medical enquiry · verify current response coverage and nearest facility by phone",
+    directoryRole: "state-referral",
+  }),
+  reviewed({
+    id: "kwara-social-investment-programme-benefit-enquiries",
+    name: "Kwara State Social Investment Programme — social-protection and programme enquiries",
+    primaryCategory: "funding",
+    resourceType: "State social-investment office · poverty-alleviation and social-protection navigation",
+    description: "KWASSIP says its state programme works to address poverty, unemployment and economic disparity. Contact the Ilorin office to ask which specific social-protection or empowerment programmes are currently open, the responsible intake channel, eligibility, deadlines and required documents. This general office is not a cash-grant application, individual benefit decision or guarantee of active enrolment.",
+    email: "kwassip@kwarastate.gov.ng",
+    link: "https://kwassip.kwarastate.gov.ng/contact-us/",
+    source: "Kwara State Social Investment Programme · official contact and mandate pages",
+    sourceEvidenceUrl: "https://kwassip.kwarastate.gov.ng/contact-us/",
+    city: "Ilorin",
+    state: "Kwara",
+    region: "Ilorin, Kwara State, Nigeria",
+    address: "KWASSIP Office, beside Fresh Hotel, Fate Road, Ilorin, Kwara State",
+    locationLine: "Ilorin · email to identify an active programme, eligibility and official application route",
+    directoryRole: "administrative-office",
+  }),
+];
+
+const NIGERIA_FIVE_STATE_ADDON_FOOD_ALL_OCT31 = [
+  reviewed({
+    id: "bayelsa-friends-orphans-support-network-food-care",
+    name: "Friends of Orphans Support Network — child and family food-support enquiries",
+    primaryCategory: "food",
+    resourceType: "Child-welfare nonprofit · food and hygiene support · referral enquiries",
+    description: "The organization publishes a Yenagoa chapter and describes recurring food, hygiene and care support for orphaned children and vulnerable families. Contact the chapter to ask which households can be referred, what safeguarding or consent applies, whether the programme is active in your community and whether support is available. This is a targeted support enquiry, not an open food pantry or guaranteed distribution.",
+    phone: "+2348032350168",
+    alternatePhone: "07059164453",
+    email: "friendsoforphans.ng@gmail.com",
+    link: "https://friendsoforphanssupport.org/",
+    source: "Friends of Orphans Support Network · official chapter contact and programme information",
+    sourceEvidenceUrl: "https://friendsoforphanssupport.org/",
+    city: "Yenagoa",
+    state: "Bayelsa",
+    region: "Yenagoa, Bayelsa State, Nigeria",
+    address: "Suite 9, Ebiene Plaza, Isaac Boro Expressway, Okaka, Yenagoa, Bayelsa State",
+    locationLine: "Yenagoa · targeted child and family referrals; confirm current programme and intake before visiting",
+  }),
+  reviewed({
+    id: "jigawa-sema-feeding-centre-food-programme-enquiries",
+    name: "Jigawa SEMA — feeding-centre programme and food-access enquiries",
+    primaryCategory: "food",
+    resourceType: "State emergency-management agency · feeding-programme contact and complaint route",
+    description: "Jigawa SEMA’s current public programme page lets people identify a feeding centre and submit complaints about access to the feeding programme. Call 0700-JIGAWA or use its published form to ask which centres are active, when meals are served and who qualifies. A centre complaint channel does not mean food is available at every location or that households can collect food without meeting programme rules.",
+    phone: "0700-JIGAWA",
+    email: "info@sema.jigawa.gov.ng",
+    link: "https://ramadan.jigawastate.gov.ng/complaint.php",
+    source: "Jigawa State Emergency Management Agency · current feeding-programme complaint/contact page",
+    sourceEvidenceUrl: "https://ramadan.jigawastate.gov.ng/complaint.php",
+    city: "Dutse",
+    state: "Jigawa",
+    region: "Jigawa State, Nigeria",
+    locationLine: "State programme contact · confirm centre, schedule and eligibility; this is not a walk-in pantry",
+    directoryRole: "state-referral",
+  }),
+];
+
+export const NIGERIA_FIVE_STATE_ADDON_PROGRAMS_OCT31 = NIGERIA_FIVE_STATE_ADDON_ALL_OCT31
+  .filter((record) => record.primaryCategory === "programs");
+export const NIGERIA_FIVE_STATE_ADDON_HOUSING_OCT31 = NIGERIA_FIVE_STATE_ADDON_ALL_OCT31
+  .filter((record) => record.primaryCategory === "housing");
+export const NIGERIA_FIVE_STATE_ADDON_FUNDING_OCT31 = NIGERIA_FIVE_STATE_ADDON_ALL_OCT31
+  .filter((record) => record.primaryCategory === "funding");
+export const NIGERIA_FIVE_STATE_ADDON_EMERGENCY_OCT31 = NIGERIA_FIVE_STATE_ADDON_ALL_OCT31
+  .filter((record) => record.primaryCategory === "emergency");
+export const NIGERIA_FIVE_STATE_ADDON_FOOD_OCT31 = NIGERIA_FIVE_STATE_ADDON_FOOD_ALL_OCT31;
