@@ -113,6 +113,17 @@ after(async () => {
 });
 
 test("client-to-practitioner journey connects, shares by choice, messages, receives support, and schedules", async () => {
+  await assert.rejects(
+    providerOverview(providerRequest({ clientId })),
+    (error) => error.code === "permission-denied",
+    "a practitioner must not read a client's overview before an accepted connection",
+  );
+  await assert.rejects(
+    sendClientMessage(clientRequest({ practitionerId: providerId, content: "A message before connection" })),
+    (error) => error.code === "permission-denied",
+    "a client must not open practitioner messaging before an accepted connection",
+  );
+
   const requestedConnection = await requestConnection(clientRequest({
     practitionerId: providerId,
     introduction: "I would like support building a steady routine.",
@@ -131,6 +142,12 @@ test("client-to-practitioner journey connects, shares by choice, messages, recei
   assert.equal(overview.checkins.length, 1);
   assert.equal(overview.checkins[0].daysSinceLastUse, 14);
   assert.equal("gratitude" in overview.checkins[0], false);
+
+  await setShare(clientRequest({ practitionerId: providerId, scopes: { recoveryProgress: false } }));
+  const revokedOverview = await providerOverview(providerRequest({ clientId }));
+  assert.equal(revokedOverview.shared, false);
+  assert.deepEqual(revokedOverview.checkins, [], "revoking consent must remove previously shared check-ins from the next practitioner read");
+  await setShare(clientRequest({ practitionerId: providerId, scopes: { recoveryProgress: true } }));
 
   await sendProviderMessage(providerRequest({ clientId, content: "What kind of support would feel useful this week?" }));
   await sendClientMessage(clientRequest({ practitionerId: providerId, content: "A short grounding practice would help." }));

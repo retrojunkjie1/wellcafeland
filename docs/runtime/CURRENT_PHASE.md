@@ -1,5 +1,9 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-01 — Cross-role client/practitioner privacy regression coverage
+
+Expanded the existing emulator journey contract to verify that a practitioner cannot read a client's overview or receive client messages before an accepted connection, and that revoking recovery-progress consent removes previously shared check-ins from the next practitioner read. The existing journey then restores consent and continues through messaging, support invitation, progress sharing, and appointment scheduling. This is additive test coverage; application behavior and directory records were not changed. The focused journey test and full `npm run verify:release` suite passed, including the production build and Firebase predeploy checks. No Hosting or Functions deployment was made because runtime code did not change. The separate-account live acceptance journey and full-system DoD remain open.
+
 ### 2026-10-29 — Firebase Admin v14 migration candidate (CI review pending)
 
 Prepared a separate upgrade to Firebase Admin 14.5.0 and Firebase Functions 7.4.0, using an internal modular-API facade for existing Functions and emulator fixtures. The repository did not use `firebase-functions-test`, so the unused package was removed; its published peer range excludes Admin v14 and otherwise prevents a clean install. Admin SDK namespace imports in Functions and maintenance scripts now route through the facade. Initial local checks confirmed the facade loads the modular v14 exports, exposes Firestore/Auth/App Check, server timestamps and app lifecycle, and all touched JavaScript files pass syntax checks. This is a migration candidate only: required GitHub checks and Functions emulator behavior must pass before merge or deployment. No production behavior or deployment is claimed as verified here.
