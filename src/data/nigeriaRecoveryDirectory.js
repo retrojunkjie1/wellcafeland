@@ -132,6 +132,13 @@ import {
 } from "./nigeriaFiveStateAccessExpansionOct31.js";
 import { NIGERIA_FIVE_STATE_PHCS_OCT31 } from "./nigeriaFiveStatePhcExpansionOct31.js";
 import { NIGERIA_FIVE_STATE_PRIMARY_CARE_NOV2026 } from "./nigeriaFiveStatePrimaryCareNov2026.js";
+import {
+  NIGERIA_GAP_CIRCLES_NOV2026,
+  NIGERIA_GAP_FOOD_NOV2026,
+  NIGERIA_GAP_FUNDING_NOV2026,
+  NIGERIA_GAP_HOUSING_NOV2026,
+  NIGERIA_GAP_PROGRAMS_NOV2026,
+} from "./nigeriaCategoryGapBatchNov2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -404,6 +411,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_SOKOTO_PHCS_OCT31,
   ...NIGERIA_FIVE_STATE_PHCS_OCT31,
   ...NIGERIA_FIVE_STATE_PRIMARY_CARE_NOV2026,
+  ...NIGERIA_GAP_PROGRAMS_NOV2026,
 ];
 
 export const NIGERIA_CITIES = [
@@ -502,6 +510,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_GAP_HOUSING_NOV2026,
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -621,6 +630,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_SOKOTO_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_GAP_FOOD_NOV2026,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -734,6 +744,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
   ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
   ...NIGERIA_KOGI_ACCESS_OCT31.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_GAP_FUNDING_NOV2026,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -865,4 +876,5 @@ export const NIGERIA_PEER_RESOURCES = [
   ...NIGERIA_FIVE_STATE_DEEPENING_CIRCLES_OCT31,
   ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "circles"),
   ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "circles"),
+  ...NIGERIA_GAP_CIRCLES_NOV2026,
 ];

@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,575 state-linked category records. Current counts range from 23 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,944 state-linked category records. Current counts range from 29 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; nine jurisdictions meet the 75-record planning floor, but none meets all six category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize large gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,28 +271,28 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,575 records total, with a range of 23–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All jurisdictions remain **in progress** against the 75-record planning floor and the minimum of five in every category; no state is marked complete. Counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed November 1, 2026. The calculator reports 1,944 records total, with a range of 29–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. Nine jurisdictions meet the 75-record planning floor; none meets all six category floors, and no state is marked complete. Counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 27 | Adamawa | 32 |
-| Akwa Ibom | 33 | Anambra | 27 |
-| Bauchi | 41 | Bayelsa | 23 |
-| Benue | 26 | Borno | 52 |
-| Cross River | 35 | Delta | 27 |
-| Ebonyi | 33 | Edo | 30 |
-| Ekiti | 29 | Enugu | 49 |
+| Abia | 77 | Adamawa | 32 |
+| Akwa Ibom | 33 | Anambra | 77 |
+| Bauchi | 41 | Bayelsa | 42 |
+| Benue | 76 | Borno | 52 |
+| Cross River | 35 | Delta | 77 |
+| Ebonyi | 33 | Edo | 32 |
+| Ekiti | 31 | Enugu | 49 |
 | Gombe | 30 | Imo | 123 |
-| Jigawa | 23 | Kaduna | 49 |
-| Kano | 25 | Katsina | 28 |
-| Kebbi | 100 | Kogi | 25 |
+| Jigawa | 43 | Kaduna | 49 |
+| Kano | 75 | Katsina | 30 |
+| Kebbi | 100 | Kogi | 45 |
 | Kwara | 46 | Lagos | 108 |
-| Nasarawa | 23 | Niger | 28 |
+| Nasarawa | 43 | Niger | 32 |
 | Ogun | 75 | Ondo | 62 |
 | Osun | 30 | Oyo | 43 |
-| Plateau | 29 | Rivers | 28 |
+| Plateau | 29 | Rivers | 38 |
 | Sokoto | 49 | Taraba | 72 |
-| Yobe | 25 | Zamfara | 52 |
+| Yobe | 45 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
 
 ### Five-state Nigeria access expansion — Kogi, Kwara, Sokoto, Adamawa and Gombe — October 31, 2026
@@ -689,3 +689,13 @@ Updated totals in category order (treatment/recovery and health access, peer/com
 GRID3 v4.0 identifies the facility, facility type, LGA, ward, coordinates, public ownership and a source-reported functional status. Its publisher explicitly describes the layer as non-exhaustive and not field-validated. “Functional” is a dataset status, not confirmation that a facility is open today or has capacity. The source does not provide current hours, service menus, direct phone numbers, eligibility, accessibility or fees. These entries are general primary-care access points in the existing health-access category; they do not establish specialist mental-health or substance-use treatment. Verify safe access, current operation, services and any charges with local health authorities before travel. Records are source-reviewed, not phone-confirmed by WellnessCafe.
 
 Source: [CIESIN/Columbia University, GRID3 NGA — Health Facilities v4.0 (2026), DOI 10.7916/pjpv-9q55, CC BY 4.0](https://www.arcgis.com/home/item.html?id=9df52e12d0b5422f8f73c44d0dc91f8b); [feature layer](https://services3.arcgis.com/BU6Aadhn6tbBEdyk/arcgis/rest/services/GRID3_NGA_Health_Facilities_v4_0/FeatureServer/0).
+
+### Nigeria category-gap batch — Katsina, Niger, Rivers, Ekiti and Edo — November 1, 2026
+
+Added 20 service-specific, source-reviewed records across five under-covered states without removing or replacing existing entries: Katsina (2), Niger (4), Rivers (10), Ekiti (2), and Edo (2). New routes include CHIYN's Minna health-linkage, peer-support, and confidential safe-accommodation enquiries; RAiSE women's vocational-trade training; HOHDI Katsina food-programme and microcredit enquiries; two separately identified Edo food-programme leads; nine Rivers mental-health/counselling and confidential safety-support pathways; and a Rivers livelihood-support enquiry. The detailed contacts and cautions remain attached to each listing.
+
+Updated totals in category order (treatment/recovery and health access, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support): Katsina 30 (8, 2, 1, 4, 3, 12); Niger 32 (6, 7, 2, 1, 4, 12); Rivers 38 (14, 1, 6, 2, 5, 10); Ekiti 31 (7, 1, 2, 1, 3, 17); and Edo 32 (8, 2, 1, 4, 3, 14). The live calculator reports 1,944 state-linked category records across 37 jurisdictions. All five remain below the 75-record planning floor and each still has at least one category below five. None is complete.
+
+The Rivers provider profiles come from Invictus Africa's Orange Pages, a dated provider directory; contact details and service descriptions must be reconfirmed, especially before sharing sensitive information or travelling. These organizations list shelter/safe-space support, but their public offices are not shelter addresses and do not confirm a bed, capacity, or immediate response. CHIYN states that its confidential accommodation and peer-support programmes serve marginalized people and other vulnerable groups; its public Minna office is not the accommodation site, and the source does not publish group schedules or current capacity. RAiSE lists vocational training, not a cash grant. HOHDI's past food distributions and reported January 2026 microcredit activity do not establish current intake, current distribution, a grant, or an open loan cycle. Edo food organizations publish programme information or food-bank identity, but neither confirms current household intake or available stock. Gender Mobile and FOSHPAD are listed for counselling and psychosocial support; FOSHPAD's directory record does not publish a phone number. All additions are source-reviewed, not phone-confirmed by WellnessCafe, and do not establish current capacity, eligibility, or exhaustive coverage.
+
+Sources: [CHIYN programmes and interventions](https://chiynigeria.org/programs/), [CHIYN Minna contact](https://chiynigeria.org/contact/), [RAiSE Foundation women's empowerment and trade-support programme](https://raisefoundation.org.ng/wemp/), [HOHDI activities and food programmes](https://www.hohdi.org.ng/), [HOHDI contact and Katsina office](https://www.hohdi.org.ng/about), [Invictus Africa Rivers provider directory](https://invictusafrica.org/content/rivers/), [Invictus Africa Ekiti provider directory](https://invictusafrica.org/content/ekiti/), [Gender Mobile Initiative contact and case-support route](https://www.gendermobile.org/contact-us), [Christine's Hope Foundation mission and contact](https://christineshopefoundation.org/Pages/contact.html), and [De Providence Bridge Food Bank Initiatives contact page](https://deprovidencebridgefoodbankinitiatives.com/contact-us.php).
