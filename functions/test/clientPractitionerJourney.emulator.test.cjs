@@ -20,6 +20,7 @@ const requestConnection = connections.requestPractitionerConnection.run;
 const listProviderRequests = connections.listPractitionerConnectionRequests.run;
 const respondToConnection = connections.respondToPractitionerConnection.run;
 const listClientRequests = connections.listMyPractitionerConnectionRequests.run;
+const endConnection = connections.endMyPractitionerConnection.run;
 const setShare = care.setPractitionerShare.run;
 const providerOverview = care.getProviderClientOverview.run;
 const sendPractice = care.sendPractitionerSupportTool.run;
@@ -202,7 +203,33 @@ test("client-to-practitioner journey connects, shares by choice, messages, recei
   assert.ok(clientActivity.docs.every((doc) => !doc.data().content && !doc.data().introduction && !doc.data().meetingLink));
   assert.ok(providerActivity.docs.every((doc) => !doc.data().content && !doc.data().introduction && !doc.data().meetingLink));
 
-  await assignments.docs[0].ref.update({ status: "ended" });
+  const ended = await endConnection(clientRequest({ practitionerId: providerId }));
+  assert.deepEqual(ended, { ok: true, alreadyEnded: false, cancelledSessions: 1 });
+  const [endedAssignment, endedShare, endedAppointment] = await Promise.all([
+    assignments.docs[0].ref.get(),
+    db.collection("client_practitioner_shares").doc(`${clientId}_${providerId}`).get(),
+    db.collection("appointments").doc(scheduled.id).get(),
+  ]);
+  assert.equal(endedAssignment.get("status"), "ended");
+  assert.deepEqual(endedShare.get("scopes"), {
+    recoveryProgress: false,
+    wellnessPatterns: false,
+    writtenReflections: false,
+    assessments: false,
+    careCoordination: false,
+    visitPreparation: false,
+  });
+  assert.equal(endedAppointment.get("status"), "cancelled");
+  assert.equal(endedAppointment.get("cancelReason"), "connection-ended-by-client");
+  await assert.rejects(
+    setShare(clientRequest({ practitionerId: providerId, scopes: { recoveryProgress: true } })),
+    (error) => error.code === "permission-denied",
+    "sharing cannot be restored after the connection ends",
+  );
   await assert.rejects(listClientMessages(clientRequest({ practitionerId: providerId })), (error) => error.code === "permission-denied");
+  await assert.rejects(sendClientMessage(clientRequest({ practitionerId: providerId, content: "A message after connection ended" })), (error) => error.code === "permission-denied");
+  await assert.rejects(sendProviderMessage(providerRequest({ clientId, content: "A message after connection ended" })), (error) => error.code === "permission-denied");
   await assert.rejects(providerOverview(providerRequest({ clientId })), (error) => error.code === "permission-denied");
+  const repeatedEnd = await endConnection(clientRequest({ practitionerId: providerId }));
+  assert.deepEqual(repeatedEnd, { ok: true, alreadyEnded: true, cancelledSessions: 0 });
 });
