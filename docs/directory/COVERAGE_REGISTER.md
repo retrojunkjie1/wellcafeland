@@ -5,6 +5,7 @@
 
 ## Status rules
 
+- A country or subnational area is **not complete** merely because it has one or more records, has reached a numerical floor, or appeared in a batch. Mark an area **Complete for the initial directory floor** only when its source-reviewed, distinct local records meet the applicable count and all six support-category floors, with no known category being represented only by a generic national referral. This is a scoped milestone, not exhaustive coverage, live capacity, or phone confirmation. Keep the broader status **In progress** while local depth, source freshness, and underserved-area review remain open.
 - **Meets the current directory floor** means the U.S. coverage calculator reports at least 75 distinct state-linked records across the six support categories and at least five records in each category. Counts above 125 also meet this floor when category balance passes; the planning range is not a cap. This milestone does not mean every provider has confirmed by phone, every town is covered, or coverage is exhaustive.
 - **Above planning range** means the state has more than 125 distinct records. Preserve those records and audit for category balance and duplicates; do not remove working listings to force the count down.
 - **In progress** means the current catalog has fewer than 75 distinct state-linked records, or a country/subdivision has not had its local coverage reviewed.
@@ -27,6 +28,30 @@
 | Russia | No country catalog entries yet. | Planned — crisis-sensitive research | Research safe, current support and displaced-person/refugee routes; clearly scope service access and avoid exposing confidential locations. |
 
 Other countries remain in the discovery queue. Add them here once selected for a specific source-reviewed batch; do not present a country alias or empty page as a built directory.
+
+## Directory delivery plan and work queue
+
+This is the cross-country inventory for deciding what to build next. “Some listings” means only that at least one record exists; it never means the country or subnational area is complete. The detailed state, province, territory, and region tables below remain the authoritative area-by-area ledger. Update this queue and those tables together after each source-reviewed batch.
+
+| Country / program | Areas to directory | Completed to initial floor | Active / remaining |
+|---|---|---:|---|
+| United States | 50 states + District of Columbia (51 jurisdictions) | 51/51 meet the initial six-category count floor | All 51 remain in locality/source freshness review; keep expanding meaningful city/county coverage and preserve listings above the planning band. |
+| Nigeria | 36 states + Federal Capital Territory (37 jurisdictions) | 0/37 | All 37 remain below the six-category starting floor; second-round work is queued. Continue distinct local service contacts and retain the category-gap ledger; national-only routes do not close a state. |
+| Australia | 6 states + 2 territories | 0/8 marked complete | All 8 have state-tagged records, with local clusters in 15 cities; every area remains in progress pending balanced category and locality review. |
+| United Kingdom | England, Scotland, Wales, Northern Ireland | 0/4 marked complete | All four remain in progress. Expand England beyond London/Manchester and deepen the other three nations beyond the current Glasgow, Edinburgh, Cardiff, and Belfast batch. |
+| Canada | 10 provinces + 3 territories | 0/13 marked complete | Toronto/Ontario is the only locally tagged area in this snapshot; build province/territory cohorts across the remaining 12 and deepen Ontario beyond Toronto. |
+| New Zealand | 16 regional-council areas (not states) | 0/16 marked complete | Auckland, Wellington, Canterbury, and Otago have some local listings; 12 regions have none in this snapshot. All 16 remain in progress until reviewed. |
+| Ukraine | National and safe-to-publish subnational/service-area coverage | 0 | Not started. First establish safe, current, public or remote referral routes and location-disclosure rules; do not imply service access in occupied or unsafe areas. |
+| Russia | National and safe-to-publish subnational/service-area coverage | 0 | Not started. First establish safe, current, public referral routes and scope; do not expose confidential locations or imply access where it cannot be confirmed. |
+| Additional countries | To be selected and scoped | 0 | Discovery queue. Add a country only with a named scope, source plan, appropriate locality model, and safety review where needed. |
+
+### Batch size and quality contract
+
+- **UK next batch:** deliver at least **25 net-new, distinct, source-reviewed local service records** in one coherent batch, covering multiple categories and preferably more than one locality. A batch of five or fewer is not a meaningful UK expansion. Choose localities from the live gap map; do not keep cycling the same cities while other constituent nations or English regions have no local coverage.
+- **UK progress target:** build toward **75–125 distinct local records per constituent country** as an initial planning range, not an artificial cap or completion claim. Track local category coverage alongside counts. If a reliable source cannot support a category or locality, record the gap and the research tried; never pad counts with duplicate branches, generic country hotlines, service-finder pages, office-only contacts misrepresented as service sites, or unverified providers.
+- **Every country batch:** publish the planned area cohort and category gap before research; add useful service/access details and primary-source URLs; check duplicates and existing/legacy modules first; report net-new counts by area and category, contacts that need confirmation, and remaining gaps; update this register in the same change. Batch size is a delivery expectation, not permission to lower source quality.
+- **Meaningful progress:** a batch only counts as progress when it adds distinct usable local contacts and improves geographic/category coverage. A small source-backed safety correction can still be necessary, but it must be reported as a correction rather than directory growth.
+- **No backward build:** preserve committed and approved records, IDs, routes, category mappings, and user-facing access. Add and reconcile forward; do not delete or reclassify existing entries to make a counter or status look better.
 
 ## United States: state and DC coverage
 
