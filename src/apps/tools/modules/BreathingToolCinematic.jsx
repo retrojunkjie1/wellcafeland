@@ -261,7 +261,7 @@ const BreathingToolCinematic = ({ tool, onComplete, onCancel }) => {
 
   return (
     <CinematicContainer theme={tool?.theme || "calm"}>
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-full flex flex-col">
         {/* Header - Fixed */}
         <div className="px-4 py-4 border-b border-white/10 backdrop-blur-sm bg-slate-950/80">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
