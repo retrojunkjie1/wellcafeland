@@ -86,6 +86,11 @@ import {
   NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31,
 } from "./nigeriaFiveStateDeepeningOct31.js";
 import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "./nigeriaOgunCrossRiverExpansionOct31.js";
+import {
+  NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
+  NIGERIA_MULTI_STATE_ACCESS_FUNDING_OCT31_PART2,
+  NIGERIA_MULTI_STATE_ACCESS_PROGRAMS_OCT31_PART2,
+} from "./nigeriaMultiStateAccessExpansionOct31Part2.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -340,6 +345,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_PLATEAU_PROGRAMS_OCT31,
   ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_MULTI_STATE_ACCESS_PROGRAMS_OCT31_PART2,
 ];
 
 export const NIGERIA_CITIES = [
@@ -542,6 +548,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_FIVE_STATE_DEEPENING_FOOD_OCT31,
   ...NIGERIA_PLATEAU_FOOD_OCT31,
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -648,6 +655,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_PART3_FUNDING,
   ...NIGERIA_FIVE_STATE_DEEPENING_FUNDING_OCT31,
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_MULTI_STATE_ACCESS_FUNDING_OCT31_PART2,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
