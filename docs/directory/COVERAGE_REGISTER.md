@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,046 state-linked category records. Current counts range from 16 to 108. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,093 state-linked category records. Current counts range from 17 to 108. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,7 +271,7 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,046 records total, with a range of 16–108 across the 37 tracked jurisdictions. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,093 records total, with a range of 17–108 across the 37 tracked jurisdictions. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
@@ -282,18 +282,26 @@ Current state-linked record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/dat
 | Cross River | 23 | Delta | 23 |
 | Ebonyi | 25 | Edo | 20 |
 | Ekiti | 21 | Enugu | 49 |
-| Gombe | 21 | Imo | 18 |
+| Gombe | 21 | Imo | 42 |
 | Jigawa | 21 | Kaduna | 49 |
 | Kano | 25 | Katsina | 21 |
-| Kebbi | 18 | Kogi | 21 |
+| Kebbi | 19 | Kogi | 21 |
 | Kwara | 23 | Lagos | 108 |
 | Nasarawa | 20 | Niger | 26 |
-| Ogun | 68 | Ondo | 17 |
+| Ogun | 68 | Ondo | 19 |
 | Osun | 21 | Oyo | 43 |
 | Plateau | 20 | Rivers | 28 |
-| Sokoto | 19 | Taraba | 18 |
-| Yobe | 18 | Zamfara | 16 |
+| Sokoto | 19 | Taraba | 36 |
+| Yobe | 19 | Zamfara | 17 |
 | Federal Capital Territory | 38 | | |
+
+### Five-state continuation — Zamfara, Ondo, Imo, Kebbi and Taraba — October 31, 2026
+
+Added 46 distinct local contacts in the five lowest-count jurisdictions while retaining the existing directory: 24 Imo LGA primary-healthcare contact routes, 18 named Taraba PHCC locations published by the state Ministry of Health, an Akure food-bank intake route, an Ondo mental-health outreach enquiry, a Kebbi humanitarian-office programme contact, and a Gusau humanitarian referral for Zamfara's Anka LGA. The Imo directory lists three malformed/nonstandard contact numbers; those records were excluded. The Taraba Ministry's facility page does not publish facility-level phone numbers or street directions, so each record links to its official facility list and prompts users to confirm current access before travelling. These are primary-care access routes, not claims that every PHCC offers specialist mental-health or addiction treatment.
+
+Current counts after this batch, in category order treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support: Zamfara 17 (2, 2, 0, 4, 2, 7); Ondo 19 (5, 2, 0, 2, 2, 8); Imo 42 (26, 1, 1, 1, 2, 11); Kebbi 19 (5, 1, 0, 2, 2, 9); and Taraba 36 (21, 4, 1, 2, 2, 6). The added Yobe humanitarian health/nutrition programme contact brings Yobe to 19 (2, 1, 1, 2, 2, 11). Nigeria totals 1,093 state-linked category records. Every jurisdiction remains below the 75-record minimum, and all five target states retain one or more category gaps; none is complete, phone-confirmed or exhaustively covered.
+
+Ondo's 2025 Womanity Index reports that there was no adult shelter in the state at the time of its assessment and warns that listed SARC capacity was not functioning as full-service centres. No adult shelter or fully operating SARC was fabricated to fill those categories; this remains a documented coverage gap requiring fresh verification. Source leads: [MyImo PHCC contacts and facilities](https://www.myimoapp.com/hospitals), [Taraba Ministry PHCC locations](https://health.tarabastate.gov.ng/facilities), [Sunshine Food Bank](https://sunshinefoodbank.org/), [Tosola Sunshine Foundation](https://tsfrf.org/), [Life Helpers Initiative programmes](https://lhinigeria.org/programs), [Life Helpers Initiative Yobe health and nutrition programme](https://lhinigeria.org/health), [Life Helpers Initiative ECHO work in Zamfara](https://lhinigeria.org/causes/echo-project/), and [Ondo 2025 Womanity Index findings](https://invictusafrica.org/wp-content/uploads/2025/12/Ondo-1.pdf).
 
 ### Low-coverage five-jurisdiction follow-up — October 31, 2026
 

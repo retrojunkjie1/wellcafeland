@@ -49,6 +49,14 @@ import {
   NIGERIA_LOW_COVERAGE_FOLLOWUP_CIRCLES_OCT_2026,
   NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026,
 } from "./nigeriaLowCoverageStateFollowupOct2026.js";
+import {
+  NIGERIA_IMO_PHCC_ACCESS_OCT31,
+  NIGERIA_NEXT_LOWEST_EMERGENCY_OCT31,
+  NIGERIA_NEXT_LOWEST_FOOD_OCT31,
+  NIGERIA_NEXT_LOWEST_HOUSING_OCT31,
+  NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
+  NIGERIA_TARABA_PHCC_ACCESS_OCT31,
+} from "./nigeriaNextLowestCohortOct31.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -292,6 +300,9 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_FIVE_STATE_ADDON_PROGRAMS_OCT31,
   ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
+  ...NIGERIA_IMO_PHCC_ACCESS_OCT31,
+  ...NIGERIA_TARABA_PHCC_ACCESS_OCT31,
+  ...NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
 ];
 
 export const NIGERIA_CITIES = [
@@ -378,6 +389,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_FIVE_STATE_ADDON_HOUSING_OCT31,
   ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_NEXT_LOWEST_HOUSING_OCT31,
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -480,6 +492,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FIVE_STATE_FOOD_OCT31,
   ...NIGERIA_FIVE_STATE_ADDON_FOOD_OCT31,
   ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_NEXT_LOWEST_FOOD_OCT31,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -655,6 +668,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "emergency"),
   ...NIGERIA_LOW_COVERAGE_FIVE_STATE_EMERGENCY_OCT31,
   ...NIGERIA_FIVE_STATE_ADDON_EMERGENCY_OCT31,
+  ...NIGERIA_NEXT_LOWEST_EMERGENCY_OCT31,
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
