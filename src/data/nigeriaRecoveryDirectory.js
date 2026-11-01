@@ -136,6 +136,7 @@ import { NIGERIA_FIVE_STATE_GRID3_ACCESS_NOV2026 } from "./nigeriaFiveStateGrid3
 import { NIGERIA_NEXT_FIVE_STATE_GRID3_ACCESS_NOV2026 } from "./nigeriaNextFiveStateGrid3AccessNov2026.js";
 import { NIGERIA_THIRD_FIVE_STATE_HEALTH_ACCESS_NOV2026 } from "./nigeriaThirdFiveStateHealthAccessNov2026.js";
 import { NIGERIA_FOURTH_FIVE_STATE_HEALTH_ACCESS_NOV2026 } from "./nigeriaFourthFiveStateHealthAccessNov2026.js";
+import { NIGERIA_FIFTH_FIVE_STATE_HEALTH_ACCESS_NOV2026 } from "./nigeriaFifthFiveStateHealthAccessNov2026.js";
 import {
   NIGERIA_GAP_CIRCLES_NOV2026,
   NIGERIA_GAP_FOOD_NOV2026,
@@ -426,6 +427,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_NEXT_FIVE_STATE_GRID3_ACCESS_NOV2026,
   ...NIGERIA_THIRD_FIVE_STATE_HEALTH_ACCESS_NOV2026,
   ...NIGERIA_FOURTH_FIVE_STATE_HEALTH_ACCESS_NOV2026,
+  ...NIGERIA_FIFTH_FIVE_STATE_HEALTH_ACCESS_NOV2026,
   ...NIGERIA_GAP_PROGRAMS_NOV2026,
   ...NIGERIA_NEXT_GAP_PROGRAMS_NOV2026,
 ];
@@ -492,6 +494,22 @@ export const NIGERIA_HOUSING_RESOURCES = [
     description: "For refugees and asylum-seekers in Nigeria, UNHCR lists protection contacts and country support. Ask about safe accommodation, legal/protection help, and current referral routes. This service is eligibility-specific and is not a general public shelter line.",
     phone: "+2349010660647", alternatePhone: "+2348031230399", link: "https://help.unhcr.org/nigeria/about-unhcr-in-nigeria/contact-us/", source: "UNHCR Nigeria", verified: true,
     country: "Nigeria", region: "Nigeria", locationLine: "Nigeria · for refugees and asylum-seekers; call for current office hours and local referral", checkedAt: CHECKED_AT,
+  },
+  {
+    id: "nana-khadija-sokoto-short-term-shelter-referral",
+    name: "Nana Khadija Centre — short-term safe-shelter referral",
+    resourceType: "Survivor support · safe-shelter referral · availability must be confirmed",
+    description: "Nana Khadija Centre is listed at Sokoto Specialist Hospital. A Spotlight Initiative case study reports that the centre is linked to a shelter for survivors who need a short-term safe place. The shelter address is not published here. Contact the centre first to confirm that the referral pathway is active, whether a safe placement is available, and how to reach help safely; this listing does not promise a bed or walk-in access.",
+    phone: "07042274748", alternatePhone: "08061981109", email: "nanakhadijacentre@gmail.com",
+    link: "https://invictusafrica.org/content/sokoto/",
+    source: "Invictus Africa Sokoto provider directory; Spotlight Initiative Nana Khadija Centre case study",
+    sourceEvidenceUrl: "https://invictusafrica.org/content/sokoto/",
+    secondarySourceUrl: "https://www.spotlightinitiative.org/develop-one-stop-centre",
+    sourceReviewedAt: "2026-11-01", sourceReviewed: true,
+    sourceReviewStatus: "source-reviewed-current-shelter-capacity-unconfirmed",
+    verified: false, phoneConfirmed: false, exhaustiveCoverage: false,
+    city: "Sokoto", state: "Sokoto", country: "Nigeria", region: "Sokoto, Nigeria",
+    locationLine: "Sokoto Specialist Hospital · call first; linked short-term shelter location and availability are not published",
   },
   {
     id: "rivers-social-welfare-safe-home", name: "Rivers State Ministry of Social Welfare — Safe Home referral",

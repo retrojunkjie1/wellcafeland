@@ -70,6 +70,29 @@ describe("category fallback pathways", () => {
     }
   });
 
+  it("brings the fifth five-jurisdiction cohort to the 75-entry floor and preserves the sourced Sokoto shelter referral", () => {
+    const expected = {
+      Kwara: 29,
+      Enugu: 26,
+      Kaduna: 26,
+      Sokoto: 25,
+      Borno: 23,
+    };
+    for (const [state, healthCount] of Object.entries(expected)) {
+      const categories = getNigeriaStateCoverage(state);
+      expect(categories.reduce((count, category) => count + category.records.length, 0)).toBe(75);
+      const healthRecords = categories.find(({ id }) => id === "health").records;
+      expect(healthRecords).toHaveLength(healthCount);
+      const records = getCuratedFallback("health", "primary health facility clinic", state);
+      expect(records).toHaveLength(healthCount);
+      expect(records.every((item) => item.state === state && item.directoryRole === "mapped-primary-health-facility" && item.sourceRecordId && item.sourceEvidenceUrl && item.sourceVersion === "v4.0" && !item.verified && !item.phoneConfirmed)).toBe(true);
+    }
+
+    const sokotoHousing = getNigeriaStateCoverage("Sokoto").find(({ id }) => id === "housing").records;
+    expect(sokotoHousing.some((item) => item.id === "nana-khadija-sokoto-short-term-shelter-referral" && item.phone && item.sourceEvidenceUrl && item.secondarySourceUrl && !item.verified && !item.phoneConfirmed)).toBe(true);
+    expect(getCuratedFallback("housing", "safe shelter", "Sokoto").some((item) => item.id === "nana-khadija-sokoto-short-term-shelter-referral")).toBe(true);
+  });
+
   it("adds source-reviewed Ogun and Cross River contacts to their exact directory categories", () => {
     const records = NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31;
     expect(records).toHaveLength(16);
