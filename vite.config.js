@@ -119,6 +119,9 @@ export default defineConfig(({ mode }) => {
               "./src/data/connecticutDirectory.js",
             ],
             "nigeria-resource-directory": ["./src/data/nigeriaRecoveryDirectory.js"],
+            // Keep mapped primary-care records independently cacheable and
+            // prevent the Nigeria aggregate catalog from growing past its ceiling.
+            "nigeria-primary-care-facilities": ["./src/data/nigeriaFiveStatePrimaryCareNov2026.js"],
             // Preserve the same static catalog lookup while splitting the two largest
             // Nigeria source batches out of the aggregate export chunk.
             "nigeria-next-five-state-expansion": ["./src/data/nigeriaNextFiveStateExpansion.js"],

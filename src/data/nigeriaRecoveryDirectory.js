@@ -131,6 +131,7 @@ import {
   NIGERIA_SOKOTO_PHCS_OCT31,
 } from "./nigeriaFiveStateAccessExpansionOct31.js";
 import { NIGERIA_FIVE_STATE_PHCS_OCT31 } from "./nigeriaFiveStatePhcExpansionOct31.js";
+import { NIGERIA_FIVE_STATE_PRIMARY_CARE_NOV2026 } from "./nigeriaFiveStatePrimaryCareNov2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -402,6 +403,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_KWARA_PHCS_OCT31,
   ...NIGERIA_SOKOTO_PHCS_OCT31,
   ...NIGERIA_FIVE_STATE_PHCS_OCT31,
+  ...NIGERIA_FIVE_STATE_PRIMARY_CARE_NOV2026,
 ];
 
 export const NIGERIA_CITIES = [
