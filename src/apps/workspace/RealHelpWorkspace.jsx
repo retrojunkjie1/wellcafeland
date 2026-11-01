@@ -45,6 +45,7 @@ function toCuratedWorkspaceResource(resource, domain) {
     name: resource.name,
     title: resource.name,
     description: resource.description,
+    summary: resource.summary || "",
     website: resource.link || resource.sourceUrl,
     url: resource.link || resource.sourceUrl,
     phone: resource.phone || null,
@@ -63,6 +64,14 @@ function toCuratedWorkspaceResource(resource, domain) {
     country: resource.country || "",
     region: resource.region || resource.country || "",
     locationLine: resource.locationLine || "",
+    mapUrl: resource.mapUrl || "",
+    latitude: resource.latitude ?? null,
+    longitude: resource.longitude ?? null,
+    sourceRecordId: resource.sourceRecordId || "",
+    sourceEvidenceUrl: resource.sourceEvidenceUrl || "",
+    sourceReviewedAt: resource.sourceReviewedAt || "",
+    sourceReviewStatus: resource.sourceReviewStatus || "",
+    directoryRole: resource.directoryRole || "",
     postalCode: resource.postalCode || "",
     sourceManaged: resource.sourceManaged === true,
     curated: true,
@@ -967,6 +976,7 @@ const RealHelpWorkspace = () => {
                             {item.name || item.title}
                           </h3>
                         </div>
+                        {item.directoryRole === "mapped-primary-health-facility" && item.summary && <p className="mt-1 text-xs leading-relaxed text-white/55">{item.summary}</p>}
                         <div className="mt-1 flex min-w-0 items-start gap-1.5 text-sm text-white/60">
                           {(item.address || item.locationLine || item.region) && (
                             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -1175,6 +1185,8 @@ const RealHelpWorkspace = () => {
               {selectedDetail.alternatePhone && <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"><dt className="text-[11px] uppercase tracking-wide text-white/45">Additional phone</dt><dd className="mt-1 text-sm text-white/85"><a className="underline decoration-white/30 underline-offset-2" href={`tel:${String(selectedDetail.alternatePhone).replace(/[^+\d]/g, "")}`}>{selectedDetail.alternatePhone}</a></dd></div>}
               {selectedDetail.email && <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"><dt className="text-[11px] uppercase tracking-wide text-white/45">Email</dt><dd className="mt-1 break-words text-sm text-white/85"><a className="underline decoration-white/30 underline-offset-2" href={`mailto:${selectedDetail.email}`}>{selectedDetail.email}</a></dd></div>}
               {selectedDetail.source && <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"><dt className="text-[11px] uppercase tracking-wide text-white/45">Organization or directory</dt><dd className="mt-1 text-sm text-white/85">{selectedDetail.source}</dd></div>}
+              {selectedDetail.sourceRecordId && <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"><dt className="text-[11px] uppercase tracking-wide text-white/45">Source record ID</dt><dd className="mt-1 break-all text-sm text-white/85">{selectedDetail.sourceRecordId}</dd></div>}
+              {Number.isFinite(selectedDetail.latitude) && Number.isFinite(selectedDetail.longitude) && <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3"><dt className="text-[11px] uppercase tracking-wide text-white/45">Mapped coordinates</dt><dd className="mt-1 text-sm text-white/85">{selectedDetail.latitude}, {selectedDetail.longitude}</dd></div>}
             </dl>
             {selectedDetail.id?.endsWith("who-treatment-systems") && (
               <section className="mt-5 space-y-3" aria-labelledby="who-contact-heading">
@@ -1196,7 +1208,17 @@ const RealHelpWorkspace = () => {
                 <p className="text-xs leading-relaxed text-white/45">Contact details from the WHO official contact directory. WHO country-level treatment data describes health systems and does not provide a live clinic locator.</p>
               </section>
             )}
-            <p className="mt-4 text-xs leading-relaxed text-white/50">{selectedDetail.isFoodDirectoryResult ? "Call ahead to confirm public access, today’s hours, and availability." : hasUSSupportNumbers ? "Please contact the organization to confirm current services, eligibility, cost, and availability. If you need immediate emergency help in the U.S., call or text 988; call 911 for immediate danger." : "Please contact the organization to confirm current services, eligibility, cost, and availability. For immediate danger, contact emergency services where you are."}</p>
+            <p className="mt-4 text-xs leading-relaxed text-white/50">{selectedDetail.sourceReviewStatus === "source-record-reviewed-current-access-unconfirmed" ? "This is a mapped source record, not confirmation that the facility is open, accepts the public, or provides a particular service today. Confirm with a local health authority before travelling." : selectedDetail.isFoodDirectoryResult ? "Call ahead to confirm public access, today’s hours, and availability." : hasUSSupportNumbers ? "Please contact the organization to confirm current services, eligibility, cost, and availability. If you need immediate emergency help in the U.S., call or text 988; call 911 for immediate danger." : "Please contact the organization to confirm current services, eligibility, cost, and availability. For immediate danger, contact emergency services where you are."}</p>
+            {selectedDetail.mapUrl && (
+              <a href={selectedDetail.mapUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 px-4 text-sm font-semibold text-white transition hover:bg-white/10">
+                Open facility map pin <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            )}
+            {selectedDetail.sourceEvidenceUrl && (
+              <a href={selectedDetail.sourceEvidenceUrl} target="_blank" rel="noopener noreferrer" className="mt-5 ml-2 inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 px-4 text-sm font-semibold text-white transition hover:bg-white/10">
+                View source dataset <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            )}
             {(selectedDetail.website || selectedDetail.url) && !selectedDetail.id?.endsWith("who-treatment-systems") && (
               <a
                 href={selectedDetail.website || selectedDetail.url}
