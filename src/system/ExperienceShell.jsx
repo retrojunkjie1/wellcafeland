@@ -87,7 +87,7 @@ export default function ExperienceShell() {
       style={{ height: "100dvh" }}
     >
       {/* Global header — single AppTopBar, no overlap */}
-      <AppTopBar isGuest={isGuest} isAuthenticated={isAuthenticated} user={user} onLogout={logout} />
+      <AppTopBar isGuest={isGuest} isAuthenticated={isAuthenticated} user={user} authLoading={authLoading} onLogout={logout} />
 
       {/* MainSurface */}
       <main

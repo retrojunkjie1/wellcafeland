@@ -30,7 +30,7 @@ const PRACTITIONER_LINKS = [
   { label: "Messages", to: "/provider/messages", icon: MessageCircle },
 ];
 
-export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
+export default function AppTopBar({ isAuthenticated, user = null, authLoading = false, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const menuRef = useRef(null);
@@ -260,13 +260,14 @@ export default function AppTopBar({ isAuthenticated, user = null, onLogout }) {
             <button
               type="button"
               className="wc-topbar-control wc-account-trigger"
-              aria-label={`Account: ${hasNamedAccount ? accountLabel : "Guest session"}`}
+              aria-label={authLoading ? "Checking account" : `Account: ${hasNamedAccount ? accountLabel : "Guest session"}`}
               aria-expanded={accountOpen}
               aria-controls="wc-account-panel"
+              disabled={authLoading}
               onClick={() => setAccountOpen((open) => !open)}
             >
               <UserRound className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span className="wc-account-trigger__label">{hasNamedAccount ? accountLabel : "Guest"}</span>
+              {!authLoading && <span className="wc-account-trigger__label">{hasNamedAccount ? accountLabel : "Guest"}</span>}
             </button>
             {accountOpen && (
               <section id="wc-account-panel" className="wc-account-panel" aria-label="Account status and actions">
