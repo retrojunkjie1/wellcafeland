@@ -11,6 +11,7 @@ import { NIGERIA_SARC_AUG_2026_EXPANSION } from "@/data/nigeriaSarcAug2026Expans
 import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "@/data/nigeriaNemaOfficeOct2026Expansion";
 import { NIGERIA_FRSC_UNIT_COMMAND_EXPANSION } from "@/data/nigeriaFrscUnitCommandExpansion";
 import { NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31 } from "@/data/nigeriaFiveStateDeepeningOct31";
+import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "@/data/nigeriaOgunCrossRiverExpansionOct31";
 import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage, NIGERIA_DIRECTORY_COVERAGE } from "@/data/nigeriaDirectoryCoverage";
 
@@ -19,6 +20,37 @@ vi.mock("@/services/foodDirectory", () => ({
 }));
 
 describe("category fallback pathways", () => {
+  it("adds source-reviewed Ogun and Cross River contacts to their exact directory categories", () => {
+    const records = NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31;
+    expect(records).toHaveLength(16);
+    expect(new Set(records.map(({ id }) => id)).size).toBe(16);
+    expect(records.every(({ sourceReviewed, phoneConfirmed, exhaustiveCoverage, link, source }) =>
+      sourceReviewed && !phoneConfirmed && !exhaustiveCoverage && link && source
+    )).toBe(true);
+
+    const expected = {
+      Ogun: { programs: 36, circles: 2, housing: 7, food: 5, funding: 5, emergency: 20 },
+      "Cross River": { programs: 3, circles: 3, housing: 1, food: 2, funding: 3, emergency: 23 },
+    };
+    for (const [state, categories] of Object.entries(expected)) {
+      const coverage = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id, records: items }) => [id, items]));
+      expect(Object.values(coverage).reduce((total, items) => total + items.length, 0))
+        .toBe(Object.values(categories).reduce((total, count) => total + count, 0));
+      for (const [category, count] of Object.entries(categories)) {
+        expect(coverage[category]).toHaveLength(count);
+      }
+    }
+
+    for (const { id, primaryCategory } of records) {
+      const state = id.startsWith("cross-river-") ? "Cross River" : "Ogun";
+      const stateCategoryIds = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id: category, records: items }) => [
+        category,
+        new Set(items.map(({ id: recordId }) => recordId)),
+      ]));
+      expect(stateCategoryIds[primaryCategory].has(id)).toBe(true);
+    }
+  });
+
   it("keeps the next five-state Nigeria cohort source-reviewed and accurately qualified", () => {
     const records = NIGERIA_NEXT_FIVE_STATE_EXPANSION;
     const ids = records.map(({ id }) => id);
