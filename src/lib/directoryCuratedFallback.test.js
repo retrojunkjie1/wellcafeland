@@ -34,6 +34,24 @@ describe("category fallback pathways", () => {
     expect(categories.reduce((count, category) => count + category.records.length, 0)).toBe(75);
   });
 
+  it("adds the third five-jurisdiction cohort to location search and its own health category", () => {
+    const expected = {
+      "Cross River": { total: 75, health: 40 },
+      Rivers: { total: 75, health: 37 },
+      "Federal Capital Territory": { total: 75, health: 37, query: "FCT, Abuja" },
+      Bauchi: { total: 75, health: 34 },
+      Bayelsa: { total: 75, health: 33 },
+    };
+    for (const [state, target] of Object.entries(expected)) {
+      const categories = getNigeriaStateCoverage(state);
+      expect(categories.reduce((count, category) => count + category.records.length, 0)).toBe(target.total);
+      expect(categories.find(({ id }) => id === "health").records).toHaveLength(target.health);
+      const records = getCuratedFallback("health", "", target.query || state);
+      expect(records).toHaveLength(target.health);
+      expect(records.every((item) => item.directoryRole === "mapped-primary-health-facility" && item.sourceRecordId && item.sourceEvidenceUrl && !item.verified && !item.phoneConfirmed)).toBe(true);
+    }
+  });
+
   it("adds source-reviewed Ogun and Cross River contacts to their exact directory categories", () => {
     const records = NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31;
     expect(records).toHaveLength(16);
@@ -44,7 +62,7 @@ describe("category fallback pathways", () => {
 
     const expected = {
       Ogun: { programs: 36, circles: 2, housing: 7, food: 5, funding: 5, emergency: 20 },
-      "Cross River": { programs: 3, circles: 3, housing: 1, food: 2, funding: 3, emergency: 23 },
+      "Cross River": { programs: 3, circles: 3, housing: 1, food: 2, funding: 3, emergency: 23, health: 40 },
     };
     for (const [state, categories] of Object.entries(expected)) {
       const coverage = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id, records: items }) => [id, items]));
