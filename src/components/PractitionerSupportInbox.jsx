@@ -81,7 +81,12 @@ export default function PractitionerSupportInbox() {
     };
   }, [activeUserId, authLoading, load]);
 
-  if (authLoading || !user || user.isAnonymous || (!items.length && !loading && !error)) return null;
+  // Do not mount an empty loading panel. The inbox is checked on page entry
+  // and again when the tab regains focus; showing its shell before each read
+  // resolves makes a whole block of copy flash in and back out when there is
+  // no practitioner-shared support. Keep existing items stable during refresh
+  // and surface errors so the client can retry.
+  if (authLoading || !user || user.isAnonymous || (!items.length && !error)) return null;
   const open = async (item) => {
     const actionUid = activeUserId;
     setWorkingId(item.id); setError("");
@@ -124,7 +129,6 @@ export default function PractitionerSupportInbox() {
   };
   return <section aria-label="Support from your practitioner" className="rounded-2xl border border-emerald-200/20 bg-emerald-200/[0.045] p-4 text-white sm:p-5">
     <div className="mb-3 flex items-center gap-2"><HeartHandshake className="h-5 w-5 text-emerald-200" /><div><h2 className="font-semibold">A practice was shared with you</h2><p className="text-xs text-white/50">Add it to Daily Practice, open it once, or dismiss it. You choose.</p></div></div>
-    {loading && <p role="status" className="rounded-lg border border-white/10 bg-slate-950/40 p-3 text-sm text-white/55">Checking for support shared with you…</p>}
     {error && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-200/20 bg-rose-300/[0.06] p-3 text-sm text-rose-100"><span>{error}</span><button type="button" onClick={load} disabled={loading || !!workingId} className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-white/15 px-3 text-white/80 disabled:opacity-50"><RefreshCw className="h-3.5 w-3.5" />Try again</button></div>}
     <div className="space-y-2">{items.map((item) => { const tool = TOOLS.find((entry) => entry.id === item.toolId); const working = workingId === item.id; return <article key={item.id} className="rounded-xl border border-white/10 bg-slate-950/55 p-3">
       <p className="text-xs text-emerald-100/70">From {item.practitionerName}</p><h3 className="mt-1 flex items-center gap-2 text-sm font-medium"><Sparkles className="h-4 w-4 text-amber-200" />{tool?.name || "A support tool"}</h3>{item.message && <p className="mt-1 text-sm leading-relaxed text-white/65">{item.message}</p>}
