@@ -52,6 +52,24 @@ describe("category fallback pathways", () => {
     }
   });
 
+  it("brings the fourth five-jurisdiction cohort to the 75-entry floor with distinct mapped health access", () => {
+    const expected = {
+      Jigawa: 32,
+      Nasarawa: 32,
+      Oyo: 32,
+      Kogi: 30,
+      Yobe: 30,
+    };
+    for (const [state, healthCount] of Object.entries(expected)) {
+      const categories = getNigeriaStateCoverage(state);
+      expect(categories.reduce((count, category) => count + category.records.length, 0)).toBe(75);
+      expect(categories.find(({ id }) => id === "health").records).toHaveLength(healthCount);
+      const records = getCuratedFallback("health", "primary health facility clinic", state);
+      expect(records).toHaveLength(healthCount);
+      expect(records.every((item) => item.directoryRole === "mapped-primary-health-facility" && item.sourceRecordId && item.sourceEvidenceUrl && !item.verified && !item.phoneConfirmed)).toBe(true);
+    }
+  });
+
   it("adds source-reviewed Ogun and Cross River contacts to their exact directory categories", () => {
     const records = NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31;
     expect(records).toHaveLength(16);

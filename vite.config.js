@@ -125,6 +125,7 @@ export default defineConfig(({ mode }) => {
             "nigeria-five-state-grid3-access": ["./src/data/nigeriaFiveStateGrid3AccessNov2026.js"],
             "nigeria-next-five-state-grid3-access": ["./src/data/nigeriaNextFiveStateGrid3AccessNov2026.js"],
             "nigeria-third-five-state-health-access": ["./src/data/nigeriaThirdFiveStateHealthAccessNov2026.js"],
+            "nigeria-fourth-five-state-health-access": ["./src/data/nigeriaFourthFiveStateHealthAccessNov2026.js"],
             // Preserve the same static catalog lookup while splitting the two largest
             // Nigeria source batches out of the aggregate export chunk.
             "nigeria-next-five-state-expansion": ["./src/data/nigeriaNextFiveStateExpansion.js"],
