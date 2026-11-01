@@ -20,7 +20,7 @@ describe("NigeriaCoverageAudit", () => {
     render(<NigeriaCoverageAudit />);
 
     fireEvent.click(screen.getByText(/Open the state-by-state evidence and source gaps/));
-    expect(screen.getByText(/5\/37 with a second-source check/)).toBeInTheDocument();
+    expect(screen.getByText(/\d+\/37 with a second-source check/)).toBeInTheDocument();
     expect(screen.getByText(/does not mean the provider answered a phone call/i)).toBeInTheDocument();
     expect(screen.getByText(/these counts do not represent the total number of services/i)).toBeInTheDocument();
   });

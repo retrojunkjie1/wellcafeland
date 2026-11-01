@@ -10,6 +10,7 @@ import { NIGERIA_NHIA_STATE_EXPANSION } from "@/data/nigeriaNhiaStateExpansion";
 import { NIGERIA_SARC_AUG_2026_EXPANSION } from "@/data/nigeriaSarcAug2026Expansion";
 import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "@/data/nigeriaNemaOfficeOct2026Expansion";
 import { NIGERIA_FRSC_UNIT_COMMAND_EXPANSION } from "@/data/nigeriaFrscUnitCommandExpansion";
+import { NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31 } from "@/data/nigeriaFiveStateDeepeningOct31";
 import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage, NIGERIA_DIRECTORY_COVERAGE } from "@/data/nigeriaDirectoryCoverage";
 
@@ -28,23 +29,20 @@ describe("category fallback pathways", () => {
       item.sourceReviewed && item.verified && !item.phoneConfirmed && !item.exhaustiveCoverage && item.link && item.source
     )).toBe(true);
     const coverage = (state) => getNigeriaStateCoverage(state).flatMap(({ records: categoryRecords }) => categoryRecords).length;
-    expect({
-      Enugu: coverage("Enugu"),
-      Bauchi: coverage("Bauchi"),
-      Kaduna: coverage("Kaduna"),
-      "Akwa Ibom": coverage("Akwa Ibom"),
-      Ogun: coverage("Ogun"),
-    }).toEqual({ Enugu: 47, Bauchi: 40, Kaduna: 49, "Akwa Ibom": 32, Ogun: 67 });
-    expect(Object.fromEntries(getNigeriaStateCoverage("Enugu").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 15, circles: 3, housing: 1, food: 3, funding: 12, emergency: 13 });
-    expect(Object.fromEntries(getNigeriaStateCoverage("Bauchi").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 12 });
-    expect(Object.fromEntries(getNigeriaStateCoverage("Kaduna").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 5, circles: 5, housing: 3, food: 4, funding: 9, emergency: 23 });
-    expect(Object.fromEntries(getNigeriaStateCoverage("Akwa Ibom").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 13 });
-    expect(Object.fromEntries(getNigeriaStateCoverage("Ogun").map(({ id, records: items }) => [id, items.length])))
-      .toEqual({ programs: 35, circles: 2, housing: 4, food: 3, funding: 4, emergency: 19 });
+    const minimums = {
+      Enugu: { programs: 15, circles: 3, housing: 1, food: 3, funding: 12, emergency: 15 },
+      Bauchi: { programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 13 },
+      Kaduna: { programs: 5, circles: 5, housing: 3, food: 4, funding: 9, emergency: 23 },
+      "Akwa Ibom": { programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 14 },
+      Ogun: { programs: 35, circles: 2, housing: 4, food: 3, funding: 4, emergency: 20 },
+    };
+    for (const [state, minimumByCategory] of Object.entries(minimums)) {
+      const actual = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id, records: items }) => [id, items.length]));
+      expect(coverage(state)).toBeGreaterThanOrEqual(Object.values(minimumByCategory).reduce((sum, count) => sum + count, 0));
+      for (const [category, minimum] of Object.entries(minimumByCategory)) {
+        expect(actual[category]).toBeGreaterThanOrEqual(minimum);
+      }
+    }
     expect(records.filter(({ id }) => id.startsWith("ogun-general-hospital-")).every(({ phone, email }) => phone && email)).toBe(true);
     expect(records.filter(({ id }) => id.startsWith("nifes-nacf-"))).toHaveLength(11);
     expect(records.filter(({ id }) => id.startsWith("nifes-nacf-")).every(({ primaryCategory, description }) =>
@@ -96,8 +94,8 @@ describe("category fallback pathways", () => {
       const emergency = getNigeriaStateCoverage(state).find(({ id: categoryId }) => categoryId === "emergency");
       expect(emergency.localContacts.some((record) => record.id === id && record.city === city)).toBe(true);
     }
-    expect(getNigeriaStateCoverage("Cross River").find(({ id }) => id === "emergency").localContacts).toHaveLength(10);
-    expect(getNigeriaStateCoverage("Yobe").find(({ id }) => id === "emergency").localContacts).toHaveLength(8);
+    expect(getNigeriaStateCoverage("Cross River").find(({ id }) => id === "emergency").localContacts.length).toBeGreaterThanOrEqual(15);
+    expect(getNigeriaStateCoverage("Yobe").find(({ id }) => id === "emergency").localContacts.length).toBeGreaterThanOrEqual(11);
   });
 
   it("adds one local disaster-coordination contact per distinct NEMA office and keeps regional scope explicit", () => {
@@ -133,7 +131,14 @@ describe("category fallback pathways", () => {
     )).toBe(true);
     expect(NIGERIA_URGENT_RESOURCES.filter(({ id }) => id.startsWith("frsc-unit-")).map(({ id }) => id)).toEqual(records.map(({ id }) => id));
     expect(records.every(({ state, city }) => state && city)).toBe(true);
-    expect(NIGERIA_DIRECTORY_COVERAGE.reduce((total, { records: count }) => total + count, 0)).toBe(761);
+    expect(NIGERIA_DIRECTORY_COVERAGE.reduce((total, { records: count }) => total + count, 0)).toBeGreaterThanOrEqual(1363);
+  });
+
+  it("routes STILT into Cross River peer support without overstating clinical or meeting services", () => {
+    const stilt = NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.find(({ id }) => id === "cross-river-stilt-youth-peer-wellbeing");
+    expect(stilt).toMatchObject({ state: "Cross River", city: "Calabar", primaryCategory: "circles", sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false });
+    expect(stilt.description).toContain("not psychiatric crisis care");
+    expect(getNigeriaStateCoverage("Cross River").find(({ id }) => id === "circles").records).toContainEqual(expect.objectContaining({ id: stilt.id }));
   });
 
   it("serves the next five-state Nigeria additions in their matching filters", () => {

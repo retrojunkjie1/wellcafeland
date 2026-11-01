@@ -79,6 +79,12 @@ import {
   NIGERIA_PLATEAU_FOOD_OCT31,
   NIGERIA_PLATEAU_PROGRAMS_OCT31,
 } from "./nigeriaPlateauExpansionOct31.js";
+import {
+  NIGERIA_FIVE_STATE_DEEPENING_CIRCLES_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_FOOD_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_FUNDING_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31,
+} from "./nigeriaFiveStateDeepeningOct31.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -331,6 +337,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAM_ENQUIRIES,
   ...NIGERIA_PLATEAU_PROGRAMS_OCT31,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "programs"),
 ];
 
 export const NIGERIA_CITIES = [
@@ -528,6 +535,8 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_SERVICE_ACCESS_FOOD_OCT31,
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_LOW_COVERAGE_PART3_FOOD,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_FIVE_STATE_DEEPENING_FOOD_OCT31,
   ...NIGERIA_PLATEAU_FOOD_OCT31,
 ];
 
@@ -633,6 +642,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_FIVE_STATE_FUNDING_OCT31,
   ...NIGERIA_FIVE_STATE_ADDON_FUNDING_OCT31,
   ...NIGERIA_LOW_COVERAGE_PART3_FUNDING,
+  ...NIGERIA_FIVE_STATE_DEEPENING_FUNDING_OCT31,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -709,6 +719,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_SERVICE_ACCESS_EMERGENCY_OCT31,
   ...NIGERIA_SERVICE_ACCESS_EMERGENCY_LOCAL_OCT31,
   ...NIGERIA_LOW_COVERAGE_PART3_EMERGENCY,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "emergency"),
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
@@ -752,4 +763,6 @@ export const NIGERIA_PEER_RESOURCES = [
   ...fiveJurisdiction("circles").map((record) => ({ ...record, directoryRole: "meeting-finder" })),
   ...NIGERIA_LOW_COVERAGE_FOLLOWUP_CIRCLES_OCT_2026,
   ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
+  ...NIGERIA_FIVE_STATE_DEEPENING_CIRCLES_OCT31,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "circles"),
 ];
