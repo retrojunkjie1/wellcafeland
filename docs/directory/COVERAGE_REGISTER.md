@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,323 state-linked category records. Current counts range from 19 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,345 state-linked category records. Current counts range from 19 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,7 +271,7 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,330 records total, with a range of 19–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,345 records total, with a range of 19–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
@@ -280,20 +280,28 @@ Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in
 | Bauchi | 41 | Bayelsa | 19 |
 | Benue | 26 | Borno | 21 |
 | Cross River | 23 | Delta | 23 |
-| Ebonyi | 25 | Edo | 20 |
+| Ebonyi | 25 | Edo | 30 |
 | Ekiti | 21 | Enugu | 49 |
 | Gombe | 21 | Imo | 123 |
 | Jigawa | 21 | Kaduna | 49 |
 | Kano | 25 | Katsina | 21 |
 | Kebbi | 61 | Kogi | 21 |
 | Kwara | 23 | Lagos | 108 |
-| Nasarawa | 20 | Niger | 26 |
+| Nasarawa | 21 | Niger | 26 |
 | Ogun | 68 | Ondo | 62 |
 | Osun | 21 | Oyo | 43 |
 | Plateau | 20 | Rivers | 28 |
-| Sokoto | 19 | Taraba | 72 |
-| Yobe | 19 | Zamfara | 52 |
+| Sokoto | 20 | Taraba | 72 |
+| Yobe | 22 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
+
+### Four-state service-access expansion — Edo, Yobe, Nasarawa and Sokoto — October 31, 2026
+
+Added 15 distinct source-reviewed records across named community providers and state programme enquiry routes, preserving existing listings. Current totals and category order (treatment/recovery, peer/community, housing/safe place, food/essentials, funding/benefits, urgent support) are: Edo 30 (8, 2, 1, 2, 3, 14); Nasarawa 21 (3, 2, 2, 1, 3, 10); Sokoto 20 (4, 3, 0, 2, 3, 8); and Yobe 22 (3, 1, 2, 3, 2, 11). Bayelsa remains 19 (4, 1, 1, 3, 3, 7). Nigeria totals 1,345 category records. None of these jurisdictions meets the 75-record planning floor, and Sokoto still has no qualifying local housing listing. No state is marked complete.
+
+The Edo batch adds counselling, psychosocial referral, skills and community-provider enquiries drawn from [Edo Orange Pages](https://invictusafrica.org/content/edo/), the [Princess Ejemen food bank](https://ejemenfoundation.org/food-bank-services/), and [Edo MHAPA programmes](https://edomhapa.ng/programmes/) and [contact details](https://edomhapa.ng/contact/). Yobe additions use [HOPLE](https://hople.org/contact), [Mary Dinah Foundation](https://marydinahfoundation.org/contact-us/), and [NIRA CDF](https://www.niracdf.org/contact-us/). Nasarawa's [CARES coordinating unit](https://www.cares.na.gov.ng/contact-us.php) is an administrative programme-enquiry route. Sokoto's [Life Helpers Initiative](https://lhinigeria.org/contact) listing is a programme enquiry at its published office.
+
+These public-source details have not been phone-confirmed by WellnessCafe and do not establish exhaustive coverage or current intake. State programme offices are not guaranteed grants. HOPLE and the Edo housing referral do not confirm an open bed or placement. Food-bank listings do not guarantee walk-in supplies or distribution. Ask about service area, eligibility, availability, safe access, and current contact details before travelling.
 
 ### Five-state continuation — Zamfara, Ondo, Imo, Kebbi and Taraba — October 31, 2026
 
