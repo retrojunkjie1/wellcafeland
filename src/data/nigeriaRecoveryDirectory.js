@@ -26,6 +26,7 @@ import {
   NIGERIA_LOW_COVERAGE_RESEARCH_PROGRAMS_OCT_2026,
 } from "./nigeriaLowCoverageResearchBatchOct2026.js";
 import { NIGERIA_LOW_COVERAGE_COHORT_OCT31 } from "./nigeriaLowCoverageCohortOct31.js";
+import { NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31 } from "./nigeriaFiveStateFollowupPart2Oct31.js";
 import {
   NIGERIA_FIVE_STATE_ADDON_EMERGENCY_OCT31,
   NIGERIA_FIVE_STATE_ADDON_FOOD_OCT31,
@@ -289,6 +290,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LOW_COVERAGE_FIVE_STATE_PROGRAMS_OCT31,
   ...NIGERIA_FIVE_STATE_ADDON_PROGRAMS_OCT31,
+  ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
 ];
 
@@ -375,6 +377,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_RESEARCH_HOUSING_OCT_2026,
   ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_FIVE_STATE_ADDON_HOUSING_OCT31,
+  ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -476,6 +479,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_LOW_COVERAGE_FIVE_STATE_FOOD_OCT31,
   ...NIGERIA_FIVE_STATE_ADDON_FOOD_OCT31,
+  ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "food"),
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
