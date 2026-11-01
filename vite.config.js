@@ -73,8 +73,9 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             "framer-motion": ["framer-motion"],
-            // Keep the growing country-scoped directory data out of the
-            // shared fallback chunk so the two assets stay independently cacheable.
+            // Keep the UK locality catalog in its own cacheable bundle while the
+            // other international country catalogs remain in their existing module.
+            "uk-international-support-directory": ["./src/data/ukInternationalSupportDirectory.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
