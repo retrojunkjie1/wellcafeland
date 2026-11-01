@@ -31,6 +31,7 @@ const DOMAIN_TO_PRIORITY = {
 };
 
 const CATEGORY_SEARCH_TERMS = {
+  health: "primary health facility clinic",
   housing: "recovery housing shelter",
   food: "food pantry food assistance",
   funding: "recovery treatment financial assistance",
@@ -234,6 +235,8 @@ const RealHelpWorkspace = () => {
       } else if (activeTab === "programs") {
         curated = internationalSearch ? [] : await listSupportPrograms({ region: region || undefined });
         curated = [...curated, ...getCuratedFallback("programs", query, region).map((item) => toCuratedWorkspaceResource(item, "programs"))];
+      } else if (activeTab === "health") {
+        curated = getCuratedFallback("health", query, region).map((item) => toCuratedWorkspaceResource(item, "assistance"));
       } else if (activeTab === "circles") {
         const localCircles = internationalSearch ? [] : await listCircles({ region: region || undefined });
         const peerPathways = getCuratedFallback("peer", query, region).map((item) => toCuratedWorkspaceResource(item, "peer"));
@@ -274,7 +277,7 @@ const RealHelpWorkspace = () => {
       const q = typedQuery.length >= MIN_QUERY_LEN ? typedQuery : (region.trim() ? CATEGORY_SEARCH_TERMS[activeTab] : "")
       if (q) {
         const locationAwareQuery = internationalSearch ? `${q} official contact phone address` : q;
-        const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : activeTab === "emergency" ? "hotlines" : activeTab === "circles" ? "peer" : "programs");
+        const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" || activeTab === "health" ? "assistance" : activeTab === "emergency" ? "hotlines" : activeTab === "circles" ? "peer" : "programs");
 
         // International categories all use the same live discovery service.
         // Category filtering is applied before cards are rendered, and the
@@ -368,7 +371,7 @@ const RealHelpWorkspace = () => {
     const typedQuery = String(query || "").trim();
     const nextQuery = typedQuery.length >= MIN_QUERY_LEN ? typedQuery : (region.trim() ? CATEGORY_SEARCH_TERMS[activeTab] : "");
     if (!nextQuery) return;
-    const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : activeTab === "emergency" ? "hotlines" : activeTab === "circles" ? "peer" : "programs");
+    const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" || activeTab === "health" ? "assistance" : activeTab === "emergency" ? "hotlines" : activeTab === "circles" ? "peer" : "programs");
     setLoadingMoreResults(true);
     try {
       const page = internationalSearch || activeTab !== "food"
@@ -444,7 +447,7 @@ const RealHelpWorkspace = () => {
     setSavingIds((previous) => new Set(previous).add(itemId));
     setActionNotice(null);
     try {
-      const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" ? "assistance" : activeTab === "emergency" ? "hotlines" : activeTab === "circles" ? "peer" : "programs");
+      const domain = resolvedDomain || (activeTab === "housing" ? "housing" : activeTab === "food" ? "food.essentials" : activeTab === "funding" ? "grants" : activeTab === "programs" || activeTab === "health" ? "assistance" : activeTab === "emergency" ? "hotlines" : activeTab === "circles" ? "peer" : "programs");
       
       const response = await saveFavoriteResource(domain, {
         id: item.id,
@@ -609,6 +612,7 @@ const RealHelpWorkspace = () => {
   };
 
   const supportTypes = [
+    { id: "health", label: "Healthcare access", group: "Health services" },
     { id: "housing", label: "Housing and a safe place", group: "Food and essentials" },
     { id: "food", label: "Food and groceries", group: "Food and essentials" },
     { id: "programs", label: "Treatment and recovery programs", group: "Care and recovery" },
@@ -663,7 +667,7 @@ const RealHelpWorkspace = () => {
   const broaderLocationResults = requiresLocationProof
     ? allResults.filter((item) => !matchesHelpLocation(item, region))
     : [];
-  const showBroaderWhenNoLocalMatch = requiresLocationProof && locatedResults.length === 0 && (["funding", "emergency", "circles", "programs", "housing"].includes(activeTab) || activeTab === "food");
+  const showBroaderWhenNoLocalMatch = requiresLocationProof && locatedResults.length === 0 && (["funding", "emergency", "circles", "programs", "housing", "health"].includes(activeTab) || activeTab === "food");
   const hasSearchIntent = Boolean(query.trim() || region.trim());
   const showingFallback = Boolean(searchResponse?.fallback || searchResponse?.meta?.fallback);
   const liveSearchUnavailable = Boolean(
@@ -721,6 +725,9 @@ const RealHelpWorkspace = () => {
                 </optgroup>
                 <optgroup label="Care and recovery">
                   {supportTypes.filter((type) => type.group === "Care and recovery").map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}
+                </optgroup>
+                <optgroup label="Health services">
+                  {supportTypes.filter((type) => type.group === "Health services").map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}
                 </optgroup>
                 <optgroup label="Immediate safety">
                   {supportTypes.filter((type) => type.group === "Immediate safety").map((type) => <option key={type.id} value={type.id}>{type.label}</option>)}

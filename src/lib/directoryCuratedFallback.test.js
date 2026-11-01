@@ -14,12 +14,26 @@ import { NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31 } from "@/data/nigeriaFiveS
 import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "@/data/nigeriaOgunCrossRiverExpansionOct31";
 import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage, NIGERIA_DIRECTORY_COVERAGE } from "@/data/nigeriaDirectoryCoverage";
+import { isHelpCategoryRelevant } from "@/apps/workspace/assistanceListingUtils";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
 }));
 
 describe("category fallback pathways", () => {
+  it("keeps mapped primary-care points searchable as health access, separate from recovery programs", () => {
+    const records = getCuratedFallback("health", "primary health facility clinic", "Katsina, Nigeria");
+    expect(records).toHaveLength(45);
+    expect(records.every((item) => item.directoryRole === "mapped-primary-health-facility")).toBe(true);
+    expect(records.every((item) => isHelpCategoryRelevant(item, "health"))).toBe(true);
+    expect(records.every((item) => !isHelpCategoryRelevant(item, "programs"))).toBe(true);
+    expect(getCuratedFallback("programs", "", "Katsina, Nigeria").some((item) => item.directoryRole === "mapped-primary-health-facility")).toBe(false);
+
+    const categories = getNigeriaStateCoverage("Katsina");
+    expect(categories.find(({ id }) => id === "health").records).toHaveLength(45);
+    expect(categories.reduce((count, category) => count + category.records.length, 0)).toBe(75);
+  });
+
   it("adds source-reviewed Ogun and Cross River contacts to their exact directory categories", () => {
     const records = NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31;
     expect(records).toHaveLength(16);

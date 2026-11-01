@@ -553,10 +553,16 @@ export function getCuratedFallback(domain, query, region = "") {
         const treatmentResources = [
           ...localMatches(NIGERIA_LOCAL_RECOVERY_RESOURCES),
           ...(countryOnlySearch ? NIGERIA_STATE_RECOVERY_SERVICES : []),
-        ].filter((item) => /treatment|counsel|rehabilitation|addiction|detox|clinic|therapy|psychiatric|mental.health|hospital|legal|disability|primary.care|health|nutrition|employment|livelihood|skills|advocacy/i.test(`${item.resourceType || ""} ${item.name || ""}`) && !/meeting|peer support|mutual support/i.test(item.resourceType || ""));
+        ].filter((item) => item.directoryRole !== "mapped-primary-health-facility" && /treatment|counsel|rehabilitation|addiction|detox|clinic|therapy|psychiatric|mental.health|hospital|legal|disability|primary.care|health|nutrition|employment|livelihood|skills|advocacy/i.test(`${item.resourceType || ""} ${item.name || ""}`) && !/meeting|peer support|mutual support/i.test(item.resourceType || ""));
         return [...treatmentResources, ...GLOBAL_TREATMENT_RESOURCES];
       }
       return GLOBAL_TREATMENT_RESOURCES;
+    }
+    if (domainKey === "health") {
+      return nigeriaSearch
+        ? (countryOnlySearch ? NIGERIA_LOCAL_RECOVERY_RESOURCES : localMatches(NIGERIA_LOCAL_RECOVERY_RESOURCES))
+            .filter((item) => item.directoryRole === "mapped-primary-health-facility")
+        : [];
     }
     if (domainKey === "housing") return nigeriaSearch ? NIGERIA_HOUSING_RESOURCES : GLOBAL_HOUSING_RESOURCES;
     if (domainKey === "food.essentials") return nigeriaSearch ? [

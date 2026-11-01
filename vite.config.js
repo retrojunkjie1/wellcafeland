@@ -123,6 +123,7 @@ export default defineConfig(({ mode }) => {
             // prevent the Nigeria aggregate catalog from growing past its ceiling.
             "nigeria-primary-care-facilities": ["./src/data/nigeriaFiveStatePrimaryCareNov2026.js"],
             "nigeria-five-state-grid3-access": ["./src/data/nigeriaFiveStateGrid3AccessNov2026.js"],
+            "nigeria-next-five-state-grid3-access": ["./src/data/nigeriaNextFiveStateGrid3AccessNov2026.js"],
             // Preserve the same static catalog lookup while splitting the two largest
             // Nigeria source batches out of the aggregate export chunk.
             "nigeria-next-five-state-expansion": ["./src/data/nigeriaNextFiveStateExpansion.js"],

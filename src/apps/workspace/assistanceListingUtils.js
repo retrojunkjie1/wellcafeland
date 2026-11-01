@@ -1,6 +1,7 @@
 import { normalizeExternalUrl } from "@/utils/normalizeUrl";
 
 const CATEGORY_TERMS = {
+  health: /health|primary care|clinic|hospital|dispensary/i,
   housing: /housing|shelter|safe house|safe home|homeless|refuge|accommodation|survivor support/i,
   food: /food[- ]bank|food[- ]pantry|food[- ]assistance|food[- ]relief|food[- ]support|hunger relief|meal program|community kitchen|grocery|nutrition support|feeding program/i,
   funding: /benefit|cash assistance|social protection|grant|financial assistance|utility assistance|income support|welfare|social register/i,
@@ -19,6 +20,7 @@ const CATEGORY_EXCLUSIONS = {
 };
 
 export function isHelpCategoryRelevant(item, category) {
+  if (item?.directoryRole === "mapped-primary-health-facility" && category !== "health") return false;
   const terms = CATEGORY_TERMS[category];
   if (!terms) return true;
   const tags = Array.isArray(item?.tags) ? item.tags.join(" ") : item?.tags || "";
