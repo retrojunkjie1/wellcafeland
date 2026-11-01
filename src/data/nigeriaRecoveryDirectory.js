@@ -59,6 +59,8 @@ import {
 } from "./nigeriaNextLowestCohortOct31.js";
 import { NIGERIA_IMO_LOCAL_FACILITIES_OCT31 } from "./nigeriaImoFacilityExpansionOct31.js";
 import { NIGERIA_FOUR_STATE_PHC_OCT31 } from "./nigeriaFourStatePhcBatchOct31.js";
+import { NIGERIA_KEBBI_BHCPF_EXPANSION_MAR2026 } from "./nigeriaKebbiBhcpfExpansionMar2026.js";
+import { NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026 } from "./nigeriaKebbiCommunityAccessOct2026.js";
 import {
   NIGERIA_SERVICE_ACCESS_EMERGENCY_OCT31,
   NIGERIA_SERVICE_ACCESS_EMERGENCY_LOCAL_OCT31,
@@ -345,6 +347,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_IMO_LOCAL_FACILITIES_OCT31,
   ...NIGERIA_TARABA_PHCC_ACCESS_OCT31,
   ...NIGERIA_FOUR_STATE_PHC_OCT31,
+  ...NIGERIA_KEBBI_BHCPF_EXPANSION_MAR2026,
   ...NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
   ...NIGERIA_SERVICE_ACCESS_PROGRAMS_OCT31,
   ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "programs"),
@@ -667,6 +670,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "funding"),
   ...NIGERIA_MULTI_STATE_ACCESS_FUNDING_OCT31_PART2,
   ...NIGERIA_STATE_ACCESS_FUNDING_OCT31,
+  ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "funding"),
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -791,4 +795,5 @@ export const NIGERIA_PEER_RESOURCES = [
   ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
   ...NIGERIA_FIVE_STATE_DEEPENING_CIRCLES_OCT31,
   ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "circles"),
+  ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "circles"),
 ];
