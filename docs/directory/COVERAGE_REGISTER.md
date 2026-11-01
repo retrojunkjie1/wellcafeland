@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,389 state-linked category records. Current counts range from 20 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 1,454 state-linked category records. Current counts range from 21 to 123. The catalog includes source-reviewed state and local contacts across health, treatment, peer/community, housing, food, benefits, protection, humanitarian support, and emergency navigation. | In progress; no jurisdiction meets all count and six-category floors. | Continue state-by-state batches; build distinct local contacts across all six categories and prioritize the large remaining gaps. Preserve existing records and distinguish public-source review from phone confirmation and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -271,29 +271,45 @@ These are source leads for continued work, not completion claims. Each jurisdict
 
 ## Nigeria: states and Federal Capital Territory
 
-Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,389 records total, with a range of 20–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
+Current state-linked category-record counts from `NIGERIA_DIRECTORY_COVERAGE` in `src/data/nigeriaDirectoryCoverage.js`, refreshed October 31, 2026. The calculator reports 1,454 records total, with a range of 21–123 across the 37 tracked jurisdictions. These are category records (an organization can appear in more than one relevant category), not a count of unique organizations. All remain **in progress** against the 75-record planning floor; counts must grow through distinct, useful local resources, not repeated national hotlines.
 
 | State / territory | Listings | State / territory | Listings |
 |---|---:|---|---:|
-| Abia | 22 | Adamawa | 24 |
+| Abia | 27 | Adamawa | 24 |
 | Akwa Ibom | 33 | Anambra | 27 |
-| Bauchi | 41 | Bayelsa | 20 |
+| Bauchi | 41 | Bayelsa | 21 |
 | Benue | 26 | Borno | 23 |
 | Cross River | 35 | Delta | 23 |
 | Ebonyi | 25 | Edo | 30 |
-| Ekiti | 21 | Enugu | 49 |
+| Ekiti | 29 | Enugu | 49 |
 | Gombe | 23 | Imo | 123 |
 | Jigawa | 22 | Kaduna | 49 |
-| Kano | 25 | Katsina | 21 |
-| Kebbi | 100 | Kogi | 21 |
+| Kano | 25 | Katsina | 23 |
+| Kebbi | 100 | Kogi | 23 |
 | Kwara | 23 | Lagos | 108 |
-| Nasarawa | 21 | Niger | 26 |
+| Nasarawa | 22 | Niger | 26 |
 | Ogun | 75 | Ondo | 62 |
-| Osun | 21 | Oyo | 43 |
+| Osun | 30 | Oyo | 43 |
 | Plateau | 29 | Rivers | 28 |
 | Sokoto | 23 | Taraba | 72 |
 | Yobe | 22 | Zamfara | 52 |
 | Federal Capital Territory | 38 | | |
+
+### Osun wellbeing and family-access expansion — October 31, 2026
+
+Added nine distinct Osun category records while preserving prior entries: five treatment/recovery and psychosocial pathways (CLiCs listening support, LHDI child/family support, UNIOSUN Teaching Hospital Medical Social Services, ELAPOP rehabilitation enquiries, and Akinkanju Network women’s wellbeing support), two food/nutrition enquiry routes (LHDI and O.O.S.E.E.F), one state social-protection navigation route (Osun SOCU), and one child/family shelter-support referral enquiry (LHDI). The same LHDI provider appears in multiple categories only where its public service description names distinct nutrition and shelter-support functions; these category records do not imply it operates a food pantry or shelter.
+
+The live calculator now reports Osun at 30 records: 8 treatment/recovery, 3 peer/community, 2 housing/safe place, 3 food/essentials, 3 funding/benefits, and 11 urgent-support records. Nigeria totals 1,454 state-linked category records across 37 jurisdictions. Osun and all other jurisdictions remain below 75, except those already numerically over the floor; no jurisdiction meets the five-per-category balance floor, so none is complete. All additions are public-source reviewed, not phone-confirmed. CLiCs listening is not clinical care or 24-hour crisis response; hospital and recovery intake must be confirmed directly; LHDI and O.O.S.E.E.F do not guarantee an active food cycle, shelter placement, grant, or eligibility.
+
+Sources: [CLiCs services and published contact hours](https://www.clicsnet.com/), [Livingspring Human Development Initiative services and contact](https://www.lhdi.org.ng/), [UNIOSUN Teaching Hospital Medical Social Services](https://uth-osogbo.org.ng/department-info.php?id=108), [ELAPOP Rehab contact](https://elapoprehab.com/contact/), [Akinkanju Network contact and services](https://akinkanju.org/contact/), [Osun State Operations Coordinating Unit](https://www.osunstate.gov.ng/ministries/state-operation-coordinating-unit-socu/), and [O.O.S.E.E.F programmes and contact](https://www.olorunnisolaoyenikesocioeconomicempowernmentfoundation.com.ng/).
+
+### Abia treatment and emergency access expansion — October 31, 2026
+
+Added five Abia-local category records without replacing existing listings: two additional specialist mental-health contacts (Downtown Specialist Clinics Annex and Health Planet Psychotherapy Clinic, both in Umuahia) plus separate published state police, ambulance/child-protection, and fire-service contact routes. Abia now has 27 records: 10 treatment/recovery, 2 peer/community, **0 housing/safe-place**, 1 food/essentials, 3 funding/benefits, and 11 urgent-support records. The live directory still has a clear Abia housing gap; the small food count reflects absence of a confirmed current city-level pantry/intake route in this research batch, not proof that no food support exists. Nigeria total is 1,454 state-linked category records.
+
+Clinic services, appointments, eligibility, clinician credentials, and fees were not independently verified by phone. Emergency numbers are transcribed from the state government page and likewise were not called; it does not establish response time or dispatch. The national 112 route remains visible in the descriptions for immediate danger. The separate state emergency cards are different agency contact routes, not separate proof of available responders.
+
+Sources: [Downtown Specialist Clinics Annex services and contact](https://www.downtownspecialistclinics.com/), [Health Planet Psychotherapy Clinic](https://www.healthplanetpsychotherapy.com/), and [Abia State Government Emergency Services](https://abiastate.gov.ng/emergency-services-2-2/).
 
 ### Five-state service-access expansion — Kebbi, Gombe, Sokoto, Borno and Jigawa — October 31, 2026
 

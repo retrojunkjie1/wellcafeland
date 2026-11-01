@@ -100,6 +100,14 @@ import {
   NIGERIA_STATE_ACCESS_HOUSING_OCT31,
   NIGERIA_STATE_ACCESS_PROGRAMS_OCT31,
 } from "./nigeriaStateAccessDeepeningOct31.js";
+import {
+  NIGERIA_ABIA_ACCESS_PROGRAMS_OCT31,
+  NIGERIA_ABIA_URGENT_ACCESS_OCT31,
+  NIGERIA_OSUN_ACCESS_FOOD_OCT31,
+  NIGERIA_OSUN_ACCESS_FUNDING_OCT31,
+  NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
+  NIGERIA_OSUN_ACCESS_PROGRAMS_OCT31,
+} from "./nigeriaOsunAccessExpansionOct31.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -357,6 +365,8 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "programs"),
   ...NIGERIA_MULTI_STATE_ACCESS_PROGRAMS_OCT31_PART2,
   ...NIGERIA_STATE_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_OSUN_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_ABIA_ACCESS_PROGRAMS_OCT31,
 ];
 
 export const NIGERIA_CITIES = [
@@ -450,6 +460,7 @@ export const NIGERIA_HOUSING_RESOURCES = [
   ...NIGERIA_LOW_COVERAGE_PART3_HOUSING,
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "housing"),
   ...NIGERIA_STATE_ACCESS_HOUSING_OCT31,
+  ...NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -562,6 +573,7 @@ export const NIGERIA_FOOD_RESOURCES = [
   ...NIGERIA_PLATEAU_FOOD_OCT31,
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "food"),
   ...NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
+  ...NIGERIA_OSUN_ACCESS_FOOD_OCT31,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -671,6 +683,7 @@ export const NIGERIA_FUNDING_RESOURCES = [
   ...NIGERIA_MULTI_STATE_ACCESS_FUNDING_OCT31_PART2,
   ...NIGERIA_STATE_ACCESS_FUNDING_OCT31,
   ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_OSUN_ACCESS_FUNDING_OCT31,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -750,6 +763,7 @@ export const NIGERIA_URGENT_RESOURCES = [
   ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "emergency"),
   ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "emergency"),
   ...NIGERIA_STATE_ACCESS_EMERGENCY_OCT31,
+  ...NIGERIA_ABIA_URGENT_ACCESS_OCT31,
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
