@@ -232,4 +232,35 @@ test("client-to-practitioner journey connects, shares by choice, messages, recei
   await assert.rejects(providerOverview(providerRequest({ clientId })), (error) => error.code === "permission-denied");
   const repeatedEnd = await endConnection(clientRequest({ practitionerId: providerId }));
   assert.deepEqual(repeatedEnd, { ok: true, alreadyEnded: true, cancelledSessions: 0 });
+
+  const reconnectedRequest = await requestConnection(clientRequest({
+    practitionerId: providerId,
+    introduction: "I would like to reconnect and choose my sharing settings again.",
+  }));
+  assert.equal(reconnectedRequest.status, "pending");
+  await respondToConnection(providerRequest({ requestId: reconnectedRequest.requestId, decision: "accept" }));
+  const [activeAssignment] = (await db.collection("clientProviderAssignments")
+    .where("clientId", "==", clientId)
+    .where("providerId", "==", providerId)
+    .where("status", "==", "active")
+    .get()).docs;
+  const reconnectedShare = await db.collection("client_practitioner_shares").doc(`${clientId}_${providerId}`).get();
+  assert.ok(activeAssignment);
+  assert.notEqual(activeAssignment.id, endedAssignment.id);
+  assert.equal(reconnectedShare.get("assignmentId"), activeAssignment.id);
+  assert.deepEqual(reconnectedShare.get("scopes"), {
+    recoveryProgress: false,
+    wellnessPatterns: false,
+    writtenReflections: false,
+    assessments: false,
+    careCoordination: false,
+    visitPreparation: false,
+  });
+  const privateAfterReconnect = await providerOverview(providerRequest({ clientId }));
+  assert.equal(privateAfterReconnect.shared, false);
+  assert.deepEqual(privateAfterReconnect.checkins, []);
+  await setShare(clientRequest({ practitionerId: providerId, scopes: { recoveryProgress: true } }));
+  const sharedAfterReconnect = await providerOverview(providerRequest({ clientId }));
+  assert.equal(sharedAfterReconnect.shared, true);
+  assert.equal(sharedAfterReconnect.checkins.length, 1);
 });
