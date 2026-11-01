@@ -18,7 +18,7 @@
 | Country | Current catalog snapshot | Coverage status | Next work |
 |---|---:|---|---|
 | United States | All 50 states plus DC are in the coverage calculator; the live snapshot reports 51/51 meeting the 75-record and six-category floors (32 in the 75–125 planning band; 19 above it). | Initial numeric/category floor met; locality depth and source freshness remain in progress | Continue locality and source review; preserve all above-range records. Latest committed cohort: CO, MT, ND, OH and RI. |
-| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 2,951 state-linked category records. Seven-category calculator totals range from 75 to 123, but include the separate general healthcare-access category. Excluding that category, the six support categories total 1,980 records and range from 30 to 123; 10 jurisdictions have 75+ support-category records. | In progress; no jurisdiction meets the five-listing minimum in all six support categories. The 75+ seven-category totals must not be presented as meeting that service-category floor. | Continue state-by-state batches; prioritize real local food, housing, peer, and benefits pathways. Preserve existing records and distinguish public-source review from phone confirmation, current availability, and exhaustive coverage. |
+| Nigeria | All 36 states and the Federal Capital Territory are tracked (37 jurisdictions), with 2,957 state-linked category records. Seven-category calculator totals range from 75 to 123, but include the separate general healthcare-access category. Excluding that category, the six support categories total 1,986 records and range from 31 to 123; 10 jurisdictions have 75+ support-category records. | In progress; no jurisdiction meets the five-listing planning minimum in all six support categories. The 75+ seven-category totals must not be presented as meeting that service-category floor. | Current closeout batch is recorded below. Keep 325 category slots to the five-per-category planning minimum visible as a backlog; continue only with distinct, source-backed local contacts. Preserve existing records and distinguish public-source review from phone confirmation, current availability, and exhaustive coverage. |
 | Australia | 539 country catalog records across 6 states and 2 territories; state-tagged records exist in all 8. Local records currently span 15 cities. | In progress | Expand beyond current city clusters and review every state and territory by category and locality. |
 | United Kingdom | 31 catalog records; 13 are tagged to Greater London or Greater Manchester, with the remainder country-level. | In progress | Build local coverage across England, Scotland, Wales and Northern Ireland; London and Manchester are not UK-wide coverage. |
 | Canada | 25 catalog records; 7 tagged to Ontario/Toronto and 18 country-level. | In progress | Build province- and territory-specific services, starting beyond Toronto. |
@@ -739,3 +739,54 @@ Updated totals in category order (treatment/recovery and health access, peer/com
 Adamawa contacts come from the Adamawa State Planning Commission NGO registry; its intervention labels and contact details do not prove an active service cycle. The Akwa Ibom Youths Development Forum is a youth-development network, not a recovery meeting. Alkali Foundation's source describes mothers' community nutrition groups but does not publish a current schedule. The Osun ministry contact is an administrative secretariat, not the Transit Home address, and a confidential referral must be arranged safely. Plateau's Intellect Health Care Rehab Center listing is from a third-party provider directory and requires confirmation of credentials, fees, admission criteria, and present operation. PLASMIDA is MSME training/finance navigation, not a guaranteed individual grant; FUDECO's pastoralist livelihood work likewise does not confirm open cash assistance. All additions are source-reviewed, not phone-confirmed by WellnessCafe; present availability, eligibility, safety, capacity, fees, and exhaustive coverage are not established. Call or use the linked source to confirm current details before sharing sensitive information or travelling.
 
 Sources: [Adamawa State Planning Commission local NGO registry](https://adspc.ad.gov.ng/local-ngos/), [CASSON state chapters](https://cassonnigeria.org/about/state-chapters/), [Nigeria Mental Health Service Providers directory](https://mymentalhealthandi.com/nigeria-mental-health-service-providers/), [Akwa Ibom Youths Development Forum](https://www.akwaibomyouthsdevelopmentforum.org/), [Invictus Africa Osun Womanity Index](https://invictusafrica.org/wp-content/uploads/2024/12/OSUN.pdf) and [Osun Orange Pages directory](https://invictusafrica.org/content/osun/), [Naza Agape Foundation IDP project](https://www.nazaagape.org/idp-project/) and [contact information](https://www.nazaagape.org/), [Alkali Foundation community nutrition and mothers' groups](https://www.alkalifoundation.org/volunteer), [PLASMIDA programmes](https://plasmida.plateaustate.gov.ng/programs) and [about/contact](https://plasmida.plateaustate.gov.ng/about), and [FUDECO contact](https://fudeco-ngo.org/contact-us/).
+
+
+## Nigeria closeout snapshot — November 1, 2026
+
+This closes the current Nigeria research batch and records a clean handoff point so the team can move to other product work without losing the Nigeria backlog. It does **not** mark the country or any state complete. The app’s 2,957 state-linked category records include 971 general healthcare-access records; the six core support categories total 1,986. Only 10 of 37 jurisdictions currently have at least 75 records across those six categories, and none reaches the planning minimum of five in every category. There are 325 category slots below that five-per-category planning minimum. The 75–123 seven-category raw totals must not be presented as evidence that every state has a complete support directory.
+
+The final additive closeout batch added six distinct Life Helpers Initiative local-office enquiry records in Bauchi, Borno, Ebonyi, the Federal Capital Territory, Katsina and Plateau. The official directory publishes their addresses, shared contact number, email and weekday office hours. These are programme/protection enquiry contacts; the source does not establish that each office provides a specific service directly or that an intake cycle, shelter bed, cash award or food distribution is currently open. Existing listings were retained.
+
+The state table is generated from the live six-category calculator. “Total” excludes the separate general healthcare-access category. Counts are discovery coverage only: source-reviewed listings are not phone-confirmed, exhaustive, or a guarantee of current availability, eligibility, safety, capacity or access.
+
+| State / jurisdiction | Six-category total | Treatment & recovery | Peer & community | Housing & safe place | Food & essentials | Funding & benefits | Urgent support |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Abia | 79 | 60 | 3 | 1 | 1 | 3 | 11 |
+| Adamawa | 41 | 6 | 3 | 3 | 7 | 5 | 17 |
+| Akwa Ibom | 34 | 4 | 3 | 5 | 4 | 4 | 14 |
+| Anambra | 81 | 56 | 2 | 1 | 6 | 5 | 11 |
+| Bauchi | 42 | 12 | 5 | 2 | 4 | 6 | 13 |
+| Bayelsa | 42 | 25 | 1 | 1 | 4 | 3 | 8 |
+| Benue | 76 | 54 | 1 | 4 | 1 | 2 | 14 |
+| Borno | 53 | 35 | 1 | 1 | 3 | 3 | 10 |
+| Cross River | 35 | 3 | 3 | 1 | 2 | 3 | 23 |
+| Delta | 77 | 53 | 5 | 0 | 2 | 3 | 14 |
+| Ebonyi | 34 | 15 | 3 | 0 | 1 | 4 | 11 |
+| Edo | 32 | 8 | 2 | 1 | 4 | 3 | 14 |
+| Ekiti | 31 | 7 | 1 | 2 | 1 | 3 | 17 |
+| Enugu | 49 | 15 | 3 | 1 | 3 | 12 | 15 |
+| Gombe | 32 | 9 | 4 | 3 | 3 | 4 | 9 |
+| Imo | 123 | 107 | 1 | 1 | 1 | 2 | 11 |
+| Jigawa | 43 | 23 | 0 | 0 | 3 | 4 | 13 |
+| Kaduna | 49 | 5 | 5 | 3 | 4 | 9 | 23 |
+| Kano | 75 | 55 | 1 | 0 | 2 | 6 | 11 |
+| Katsina | 31 | 9 | 2 | 1 | 4 | 3 | 12 |
+| Kebbi | 100 | 78 | 3 | 1 | 4 | 5 | 9 |
+| Kogi | 45 | 24 | 3 | 0 | 2 | 4 | 12 |
+| Kwara | 46 | 25 | 1 | 1 | 3 | 3 | 13 |
+| Lagos | 108 | 66 | 7 | 3 | 5 | 5 | 22 |
+| Nasarawa | 43 | 24 | 2 | 2 | 1 | 4 | 10 |
+| Niger | 32 | 6 | 7 | 2 | 1 | 4 | 12 |
+| Ogun | 75 | 36 | 2 | 7 | 5 | 5 | 20 |
+| Ondo | 65 | 48 | 2 | 1 | 3 | 2 | 9 |
+| Osun | 32 | 8 | 3 | 3 | 3 | 4 | 11 |
+| Oyo | 43 | 7 | 3 | 1 | 11 | 5 | 16 |
+| Plateau | 34 | 8 | 6 | 2 | 5 | 4 | 9 |
+| Rivers | 38 | 14 | 1 | 6 | 2 | 5 | 10 |
+| Sokoto | 50 | 30 | 3 | 1 | 4 | 4 | 8 |
+| Taraba | 76 | 56 | 5 | 3 | 2 | 3 | 7 |
+| Yobe | 45 | 23 | 1 | 2 | 4 | 2 | 13 |
+| Zamfara | 56 | 36 | 2 | 1 | 7 | 3 | 7 |
+| Federal Capital Territory | 39 | 7 | 4 | 3 | 3 | 2 | 20 |
+
+Source: [Life Helpers Initiative official office directory](https://lhinigeria.org/contact). The source lists 11 state offices and 8:00 a.m.–5:00 p.m. WAT weekday hours; the six entries above add offices not previously represented in the WellnessCafe Nigeria catalogue. Confirm current operation and the relevant programme before sharing sensitive information or travelling.

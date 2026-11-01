@@ -160,6 +160,7 @@ import {
   NIGERIA_FIVE_STATE_GAP_PEER_NOV2026,
   NIGERIA_FIVE_STATE_GAP_PROGRAMS_NOV2026,
 } from "./nigeriaFiveStateGapFollowupNov2026.js";
+import { NIGERIA_LHI_CLOSEOUT_OFFICES_NOV2026 } from "./nigeriaLhiOfficeCloseoutNov2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -442,6 +443,7 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
   ...NIGERIA_GAP_PROGRAMS_NOV2026,
   ...NIGERIA_NEXT_GAP_PROGRAMS_NOV2026,
   ...NIGERIA_FIVE_STATE_GAP_PROGRAMS_NOV2026,
+  ...NIGERIA_LHI_CLOSEOUT_OFFICES_NOV2026,
 ];
 
 export const NIGERIA_CITIES = [
