@@ -239,15 +239,17 @@ describe("ProviderSchedulePage client requests", () => {
     render(<MemoryRouter><ProviderSchedulePage /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("button", { name: "New Appointment" }));
     fireEvent.change(screen.getByLabelText("Client"), { target: { value: "client-1" } });
-    fireEvent.change(screen.getByLabelText("Starts · America/New_York"), { target: { value: "2026-11-10T10:00" } });
-    fireEvent.change(screen.getByLabelText("Ends · America/New_York"), { target: { value: "2026-11-10T10:45" } });
+    // Keep the manual appointment in the future so this contract remains valid
+    // after the calendar date advances; November is standard time in New York.
+    fireEvent.change(screen.getByLabelText("Starts · America/New_York"), { target: { value: "2027-11-10T10:00" } });
+    fireEvent.change(screen.getByLabelText("Ends · America/New_York"), { target: { value: "2027-11-10T10:45" } });
     fireEvent.change(screen.getByLabelText("Session format"), { target: { value: "video" } });
     fireEvent.change(screen.getByLabelText("Video meeting link"), { target: { value: "https://meet.example.org/room-1" } });
     fireEvent.click(screen.getByRole("button", { name: "Add appointment" }));
 
     await waitFor(() => expect(mocks.createAppointment).toHaveBeenCalledWith(expect.objectContaining({
-      startAt: new Date("2026-11-10T15:00:00.000Z"),
-      endAt: new Date("2026-11-10T15:45:00.000Z"),
+      startAt: new Date("2027-11-10T15:00:00.000Z"),
+      endAt: new Date("2027-11-10T15:45:00.000Z"),
       sessionFormat: "video",
       meetingLink: "https://meet.example.org/room-1",
     })));
