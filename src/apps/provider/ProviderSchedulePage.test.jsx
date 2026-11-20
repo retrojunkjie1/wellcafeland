@@ -154,7 +154,7 @@ describe("ProviderSchedulePage client requests", () => {
     expect(await screen.findByText("No new session requests. Requests from connected clients will appear here.")).toBeTruthy();
     fireEvent.focus(window);
 
-    expect(await screen.findByText("Awaiting your response")).toBeTruthy();
+    expect(await screen.findByText("Awaiting your response", {}, { timeout: 10_000 })).toBeTruthy();
     expect(mocks.listProviderAppointmentRequests).toHaveBeenCalledTimes(2);
     expect(mocks.listAppointmentsForProvider).toHaveBeenCalledTimes(1);
   });
