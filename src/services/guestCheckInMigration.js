@@ -1,5 +1,6 @@
 import { writeBatch, doc } from "firebase/firestore";
 import { auth, db } from "@/firebase";
+import { safeUUID } from "@/utils/uuid";
 
 const MAX_GUEST_CHECK_INS = 30;
 const MOODS = new Set(["excellent", "good", "okay", "difficult", "challenging"]);
@@ -29,7 +30,7 @@ function safeTimestamp(entry) {
 }
 
 /** Give local rows stable document IDs before sending, so retrying cannot duplicate them. */
-export function prepareGuestCheckInsForImport(entries, createId = () => globalThis.crypto?.randomUUID?.() || `guest-${Date.now()}-${Math.random().toString(36).slice(2)}`) {
+export function prepareGuestCheckInsForImport(entries, createId = () => `guest-${safeUUID()}`) {
   if (!Array.isArray(entries) || entries.length > MAX_GUEST_CHECK_INS) {
     throw new Error(`Choose up to ${MAX_GUEST_CHECK_INS} saved check-ins to import.`);
   }

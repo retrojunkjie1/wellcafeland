@@ -4,6 +4,7 @@ import { logError, logWarn } from "@/services/logService";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAuthHeaders } from "@/services/aiSessionClient";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
+import { safeUUID } from "@/utils/uuid";
 
 function normalizeResourceItem(raw, domain) {
   if (!raw || typeof raw !== "object") return null;
@@ -30,7 +31,7 @@ function normalizeResourceItem(raw, domain) {
     ? raw.eligibility
     : raw.category ? [raw.category] : [];
   return {
-    id: raw.id || url || `res-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: raw.id || url || `res-${safeUUID()}`,
     title,
     summary: String(summary).slice(0, 280),
     domain: domain || raw.domain || "other",

@@ -5,6 +5,7 @@ import React, { useState, useCallback } from "react";
 import { Pause, Play, Save, Square, Volume2, X, Sparkles } from "lucide-react";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "@/firebase";
+import { safeUUID } from "../../../utils/uuid";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { createToolResult, safeComplete, safeCancel } from "@/utils/toolContract";
 import { logToolUsage } from "@/services/toolTelemetry";
@@ -134,7 +135,7 @@ const JournalingTool = ({ onComplete, onCancel, _initialContext, isEmbedded = fa
     // Fallback to session storage for anonymous users
     let anonId = sessionStorage.getItem("wc-anonymous-id");
     if (!anonId) {
-      anonId = `anon-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      anonId = `anon-${safeUUID()}`;
       sessionStorage.setItem("wc-anonymous-id", anonId);
     }
     return anonId;

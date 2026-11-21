@@ -7,6 +7,7 @@
 
 import { logDebug } from "@/lib/debug";
 import { getCuratedFallback, isUSLocation } from "@/lib/directoryCuratedFallback";
+import { safeUUID } from "@/utils/uuid";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAuthHeaders } from "@/services/aiSessionClient";
 import { listResources } from "@/data/resources";
@@ -55,7 +56,7 @@ export function normalizeResult(raw) {
   const summary = description.length > 160 ? description.slice(0, 157) + "…" : description;
 
   return {
-    id: raw.id || url || `dir-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: raw.id || url || `dir-${safeUUID()}`,
     title: raw.title || raw.name || raw.headline || "Untitled Resource",
     type: raw.type || raw.category || "resource",
     phone: raw.phone || null,

@@ -1,6 +1,7 @@
 // src/apps/tools/engine/MetricsEngine.js
 // Tool Metrics and Analytics Engine
 // Phase 36: Hybrid Cinematic Aesthetic
+import { safeUUID } from "../../../utils/uuid";
 
 /**
  * Metric types for wellness tools
@@ -101,7 +102,7 @@ export class MetricsEngine {
    * Generate unique session ID
    */
   generateSessionId() {
-    return `${this.toolId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${this.toolId}-${safeUUID()}`;
   }
 
   /**
@@ -323,4 +324,3 @@ export class MetricsEngine {
     };
   }
 }
-
