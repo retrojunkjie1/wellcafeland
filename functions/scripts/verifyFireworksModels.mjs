@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Verify Fireworks models locally.
- * Reads functions/.env (or .env in cwd) and checks that FIREWORKS_MODEL_CHAT
- * and FIREWORKS_MODEL_REASONING exist in the Fireworks models list.
+ * Reads model IDs from functions/.env and checks that they exist in Fireworks.
+ * The API credential must be provided through the process environment.
  *
  * Exit codes:
  *   0 - both models exist
@@ -13,7 +13,7 @@
 
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const FUNCTIONS_ROOT = join(__dirname, "..");
@@ -64,21 +64,20 @@ function findClosestMatches(models, tokens) {
   return [...new Set(out)].slice(0, 10);
 }
 
-async function main() {
-  const env = loadEnv();
+export async function main({ env = process.env, modelEnv = loadEnv(), fetchImpl = fetch } = {}) {
   const apiKey = (env.FIREWORKS_API_KEY || "").trim();
-  const chatModel = (env.FIREWORKS_MODEL_CHAT || "").trim();
-  const reasoningModel = (env.FIREWORKS_MODEL_REASONING || "").trim();
+  const chatModel = (env.FIREWORKS_MODEL_CHAT || modelEnv.FIREWORKS_MODEL_CHAT || "").trim();
+  const reasoningModel = (env.FIREWORKS_MODEL_REASONING || modelEnv.FIREWORKS_MODEL_REASONING || "").trim();
 
   console.log("API key present:", !!apiKey);
   if (!apiKey) {
-    console.error("FIREWORKS_API_KEY missing. Add it to functions/.env");
-    process.exit(4);
+    console.error("FIREWORKS_API_KEY missing. Provide it as an environment variable; this verifier does not read credentials from files.");
+    return 4;
   }
 
   let models = [];
   try {
-    const res = await fetch(MODELS_URL, {
+    const res = await fetchImpl(MODELS_URL, {
       method: "GET",
       headers: { Authorization: `Bearer ${apiKey}` },
     });
@@ -87,7 +86,7 @@ async function main() {
     if (!Array.isArray(models)) models = [];
   } catch (e) {
     console.error("Failed to fetch models:", e.message);
-    process.exit(1);
+    return 1;
   }
 
   const chatExists = modelExistsInList(chatModel, models);
@@ -105,18 +104,22 @@ async function main() {
 
   if (!chatExists) {
     console.error("Chat model not found:", chatModel || "(empty)");
-    process.exit(2);
+    return 2;
   }
   if (!reasoningExists) {
     console.error("Reasoning model not found:", reasoningModel || "(empty)");
-    process.exit(3);
+    return 3;
   }
 
   console.log("OK: both models exist");
-  process.exit(0);
+  return 0;
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().then((exitCode) => {
+    process.exitCode = exitCode;
+  }).catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  });
+}

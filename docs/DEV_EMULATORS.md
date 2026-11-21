@@ -9,8 +9,11 @@ firebase emulators:start --only functions
 ## 2. Run Model Verify Script
 
 ```bash
+export FIREWORKS_API_KEY="<your key from a secure secret store>"
 cd functions && npm run verify:fireworks
 ```
+
+The verifier reads model IDs from `functions/.env`, but accepts the API key only from the process environment so a file credential is never forwarded in a network request.
 
 ## 3. Curl Test to aiSession
 
