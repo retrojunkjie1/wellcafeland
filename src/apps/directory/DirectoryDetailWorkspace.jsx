@@ -64,7 +64,9 @@ const DirectoryDetailWorkspace = () => {
     try {
       const result = await saveFavoriteResource(domain, item);
       if (result.ok) {
-        setSaveMessage("Saved to your favorites.");
+        setSaveMessage(result.persistence === "session"
+          ? "Saved for this session. It may not be available after you leave this page."
+          : "Saved to your favorites.");
         setTimeout(() => setSaveMessage(null), 3000);
       } else {
         setSaveMessage(result.error || "Failed to save favorite.");

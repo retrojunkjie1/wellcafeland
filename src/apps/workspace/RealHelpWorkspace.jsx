@@ -458,7 +458,12 @@ const RealHelpWorkspace = () => {
       });
       if (!response?.ok) throw new Error(response?.error || "This resource could not be saved right now.");
       setSavedIds((previous) => new Set(previous).add(itemId));
-      setActionNotice({ type: "success", message: "Saved to your favorites." });
+      setActionNotice({
+        type: "success",
+        message: response.persistence === "session"
+          ? "Saved for this session. It may not be available after you leave this page."
+          : "Saved to your favorites.",
+      });
     } catch (err) {
       console.error("Failed to save favorite:", err);
       setActionNotice({ type: "error", message: err?.message || "Could not save this resource. Please try again." });
