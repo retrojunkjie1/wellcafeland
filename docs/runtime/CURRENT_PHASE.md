@@ -1,5 +1,13 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-20 — Six-locality South Wales directory batch (release verified; deployment pending)
+
+Added 66 public-source-reviewed access records for Merthyr Tydfil (15), Bridgend (10), Barry (14), Pontypridd (10), Llanelli (8), and Neath (9), across treatment/programs (11), peer/community (9), housing (9), food/essentials (25), benefits (7), and locality-specific urgent support (5). Existing records and IDs were retained. The UK catalog now contains 1,047 records: 1,029 locality-tagged (England 419, Scotland 183, Wales 211, Northern Ireland 216) and 18 country-level routes. Wales has 22 tracked locality clusters. All four UK constituent countries remain in progress (0/4 complete); the city and country directories are not exhaustive.
+
+The batch audit found no duplicate IDs and confirmed all 66 new records have an ID, checked date, source label, and source link. Llanelli has no local public urgent-support hotline in this batch: the local crisis-team contact found is a clinical referral route, so it was not presented as a public hotline. These entries are source-reviewed, not phone-confirmed; hours, catchments, eligibility, referral, cost, capacity, opening, stock, and availability require direct confirmation.
+
+`npm run verify:release` passed: UI 144 files / 669 tests; agent contracts 58; authenticated client-agent workflows 12; client-practitioner journey 1; practitioner care 12; provider scheduling 8; practitioner messaging 4; workspace lifecycle 1; Help Directory 7; recovery sources 9; food directory 4; Firestore Rules 13; production Vite build; Firebase deployment preflight; and `git diff --check`. The Wales batch is split into the `uk-wales-south-directory` production chunk. Commit and Hosting deployment are pending at this log entry. No push or production user-journey acceptance is claimed; full system DoD remains open.
+
 ### 2026-11-20 — Scotland locality batch and Hosting release
 
 Added 77 source-reviewed local access routes across Paisley (13), Falkirk (12), Kirkcaldy (14), Dunfermline (12), Ayr (11), and Kilmarnock (15), across treatment/programs (17), peer/community (14), housing (11), food/essentials (17), grants/benefits (11), and urgent support (7). A duplicate Ayr housing-office card was removed before release. All existing entries and IDs were retained. The catalog now has 981 UK records: 963 locality-tagged (England 419, Scotland 183, Wales 145, Northern Ireland 216) and 18 country-level. Scotland has 13 locality clusters; no constituent country is marked complete or exhaustive. See the [coverage register](../directory/COVERAGE_REGISTER.md) for the sources and access caveats.
