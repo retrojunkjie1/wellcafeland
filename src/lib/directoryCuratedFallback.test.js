@@ -29,6 +29,12 @@ describe("category fallback pathways", () => {
     expect(resolveSupportCountry("London, Ontario")).toBeNull();
   });
 
+  it("resolves the six newly indexed Northern Ireland town clusters", () => {
+    for (const town of ["Ballymena", "Coleraine", "Cookstown", "Enniskillen", "Omagh", "Craigavon"]) {
+      expect(resolveSupportCountry(town)).toBe("United Kingdom");
+    }
+  });
+
   it("keeps mapped primary-care points searchable as health access, separate from recovery programs", () => {
     const records = getCuratedFallback("health", "primary health facility clinic", "Katsina, Nigeria");
     expect(records).toHaveLength(45);
