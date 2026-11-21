@@ -20,7 +20,8 @@
 
 **Required Variables** (CORRECT VALUES):
 ```
-VITE_FIREBASE_API_KEY=AIzaSyDT9KZC5cxhQoyEOmMWdufsC-gJCx7O5yA
+# Supply the Firebase web API key from a protected environment; never commit the value.
+VITE_FIREBASE_API_KEY=
 VITE_FIREBASE_AUTH_DOMAIN=wellnesscafelanding.firebaseapp.com  # FIX: was wellnesscafe-os
 VITE_FIREBASE_PROJECT_ID=wellnesscafelanding  # FIX: was wellnesscafe-os
 VITE_FIREBASE_STORAGE_BUCKET=wellnesscafelanding.firebasestorage.app  # FIX: was wellnesscafe-os
