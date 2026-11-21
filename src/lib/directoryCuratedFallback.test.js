@@ -4,12 +4,377 @@ import { getUSStateCoverage } from "@/data/usDirectoryCoverage";
 import { matchesHelpLocation } from "@/services/helpLocationMatch";
 import { NEW_YORK_BENEFIT_RESOURCES, NEW_YORK_PEER_RESOURCES, NEW_YORK_URGENT_RESOURCES } from "@/data/newYorkDirectory";
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "@/data/nigeriaFiveJurisdictionExpansion";
+import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "@/data/nigeriaNextFiveStateExpansion";
+import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "@/data/nigeriaNifesCommunityExpansion";
+import { NIGERIA_NHIA_STATE_EXPANSION } from "@/data/nigeriaNhiaStateExpansion";
+import { NIGERIA_SARC_AUG_2026_EXPANSION } from "@/data/nigeriaSarcAug2026Expansion";
+import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "@/data/nigeriaNemaOfficeOct2026Expansion";
+import { NIGERIA_FRSC_UNIT_COMMAND_EXPANSION } from "@/data/nigeriaFrscUnitCommandExpansion";
+import { NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31 } from "@/data/nigeriaFiveStateDeepeningOct31";
+import { NIGERIA_LHI_CLOSEOUT_OFFICES_NOV2026 } from "@/data/nigeriaLhiOfficeCloseoutNov2026";
+import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "@/data/nigeriaOgunCrossRiverExpansionOct31";
+import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
+import { getNigeriaStateCoverage, NIGERIA_DIRECTORY_COVERAGE } from "@/data/nigeriaDirectoryCoverage";
+import { isHelpCategoryRelevant } from "@/apps/workspace/assistanceListingUtils";
+import { getCountrySupportResources, resolveSupportCountry } from "@/data/internationalSupportDirectory";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
 }));
 
 describe("category fallback pathways", () => {
+  it("resolves Bangor, County Down separately from ambiguous city aliases", () => {
+    expect(resolveSupportCountry("Bangor, County Down")).toBe("United Kingdom");
+    expect(resolveSupportCountry("Bangor, Wales")).toBe("United Kingdom");
+    expect(resolveSupportCountry("London, Ontario")).toBeNull();
+  });
+
+  it("resolves the six newly indexed Northern Ireland town clusters", () => {
+    for (const town of ["Ballymena", "Coleraine", "Cookstown", "Enniskillen", "Omagh", "Craigavon"]) {
+      expect(resolveSupportCountry(town)).toBe("United Kingdom");
+    }
+  });
+
+  it("indexes the six-town Northern Ireland batch without duplicate or uncategorized records", () => {
+    const towns = ["Portadown", "Dungannon", "Limavady", "Ballymoney", "Ballycastle", "Larne"];
+    const records = ["programs", "peer", "housing", "food.essentials", "grants", "hotlines"]
+      .flatMap((category) => getCountrySupportResources("United Kingdom", category))
+      .filter((record) => towns.includes(record.city));
+    const ids = records.map(({ id }) => id);
+
+    expect(records).toHaveLength(41);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(Object.fromEntries(towns.map((town) => [town, records.filter(({ city }) => city === town).length])))
+      .toEqual({ Portadown: 6, Dungannon: 7, Limavady: 7, Ballymoney: 7, Ballycastle: 7, Larne: 7 });
+    for (const town of towns) expect(resolveSupportCountry(town)).toBe("United Kingdom");
+  });
+
+  it("keeps mapped primary-care points searchable as health access, separate from recovery programs", () => {
+    const records = getCuratedFallback("health", "primary health facility clinic", "Katsina, Nigeria");
+    expect(records).toHaveLength(45);
+    expect(records.every((item) => item.directoryRole === "mapped-primary-health-facility")).toBe(true);
+    expect(records.every((item) => isHelpCategoryRelevant(item, "health"))).toBe(true);
+    expect(records.every((item) => !isHelpCategoryRelevant(item, "programs"))).toBe(true);
+    expect(getCuratedFallback("programs", "", "Katsina, Nigeria").some((item) => item.directoryRole === "mapped-primary-health-facility")).toBe(false);
+
+    const categories = getNigeriaStateCoverage("Katsina");
+    expect(categories.find(({ id }) => id === "health").records).toHaveLength(45);
+    expect(categories.reduce((count, category) => count + category.records.length, 0)).toBeGreaterThanOrEqual(75);
+  });
+
+  it("adds the third five-jurisdiction cohort to location search and its own health category", () => {
+    const expected = {
+      "Cross River": { total: 75, health: 40 },
+      Rivers: { total: 75, health: 37 },
+      "Federal Capital Territory": { total: 75, health: 37, query: "FCT, Abuja" },
+      Bauchi: { total: 75, health: 34 },
+      Bayelsa: { total: 75, health: 33 },
+    };
+    for (const [state, target] of Object.entries(expected)) {
+      const categories = getNigeriaStateCoverage(state);
+      expect(categories.reduce((count, category) => count + category.records.length, 0)).toBeGreaterThanOrEqual(target.total);
+      expect(categories.find(({ id }) => id === "health").records).toHaveLength(target.health);
+      const records = getCuratedFallback("health", "", target.query || state);
+      expect(records).toHaveLength(target.health);
+      expect(records.every((item) => item.directoryRole === "mapped-primary-health-facility" && item.sourceRecordId && item.sourceEvidenceUrl && !item.verified && !item.phoneConfirmed)).toBe(true);
+    }
+  });
+
+  it("brings the fourth five-jurisdiction cohort to the 75-entry floor with distinct mapped health access", () => {
+    const expected = {
+      Jigawa: 32,
+      Nasarawa: 32,
+      Oyo: 32,
+      Kogi: 30,
+      Yobe: 30,
+    };
+    for (const [state, healthCount] of Object.entries(expected)) {
+      const categories = getNigeriaStateCoverage(state);
+      expect(categories.reduce((count, category) => count + category.records.length, 0)).toBeGreaterThanOrEqual(75);
+      expect(categories.find(({ id }) => id === "health").records).toHaveLength(healthCount);
+      const records = getCuratedFallback("health", "primary health facility clinic", state);
+      expect(records).toHaveLength(healthCount);
+      expect(records.every((item) => item.directoryRole === "mapped-primary-health-facility" && item.sourceRecordId && item.sourceEvidenceUrl && !item.verified && !item.phoneConfirmed)).toBe(true);
+    }
+  });
+
+  it("brings the fifth five-jurisdiction cohort to the 75-entry floor and preserves the sourced Sokoto shelter referral", () => {
+    const expected = {
+      Kwara: 29,
+      Enugu: 26,
+      Kaduna: 26,
+      Sokoto: 25,
+      Borno: 23,
+    };
+    for (const [state, healthCount] of Object.entries(expected)) {
+      const categories = getNigeriaStateCoverage(state);
+      expect(categories.reduce((count, category) => count + category.records.length, 0)).toBeGreaterThanOrEqual(75);
+      const healthRecords = categories.find(({ id }) => id === "health").records;
+      expect(healthRecords).toHaveLength(healthCount);
+      const records = getCuratedFallback("health", "primary health facility clinic", state);
+      expect(records).toHaveLength(healthCount);
+      expect(records.every((item) => item.state === state && item.directoryRole === "mapped-primary-health-facility" && item.sourceRecordId && item.sourceEvidenceUrl && item.sourceVersion === "v4.0" && !item.verified && !item.phoneConfirmed)).toBe(true);
+    }
+
+    const sokotoHousing = getNigeriaStateCoverage("Sokoto").find(({ id }) => id === "housing").records;
+    expect(sokotoHousing.some((item) => item.id === "nana-khadija-sokoto-short-term-shelter-referral" && item.phone && item.sourceEvidenceUrl && item.secondarySourceUrl && !item.verified && !item.phoneConfirmed)).toBe(true);
+    expect(getCuratedFallback("housing", "safe shelter", "Sokoto").some((item) => item.id === "nana-khadija-sokoto-short-term-shelter-referral")).toBe(true);
+  });
+
+  it("adds source-reviewed Ogun and Cross River contacts to their exact directory categories", () => {
+    const records = NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31;
+    expect(records).toHaveLength(16);
+    expect(new Set(records.map(({ id }) => id)).size).toBe(16);
+    expect(records.every(({ sourceReviewed, phoneConfirmed, exhaustiveCoverage, link, source }) =>
+      sourceReviewed && !phoneConfirmed && !exhaustiveCoverage && link && source
+    )).toBe(true);
+
+    const expected = {
+      Ogun: { programs: 36, circles: 2, housing: 7, food: 5, funding: 5, emergency: 20 },
+      "Cross River": { programs: 3, circles: 3, housing: 1, food: 2, funding: 3, emergency: 23, health: 40 },
+    };
+    for (const [state, categories] of Object.entries(expected)) {
+      const coverage = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id, records: items }) => [id, items]));
+      expect(Object.values(coverage).reduce((total, items) => total + items.length, 0))
+        .toBe(Object.values(categories).reduce((total, count) => total + count, 0));
+      for (const [category, count] of Object.entries(categories)) {
+        expect(coverage[category]).toHaveLength(count);
+      }
+    }
+
+    for (const { id, primaryCategory } of records) {
+      const state = id.startsWith("cross-river-") ? "Cross River" : "Ogun";
+      const stateCategoryIds = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id: category, records: items }) => [
+        category,
+        new Set(items.map(({ id: recordId }) => recordId)),
+      ]));
+      expect(stateCategoryIds[primaryCategory].has(id)).toBe(true);
+    }
+  });
+
+  it("adds the six published Life Helpers Initiative offices as local programme enquiries", () => {
+    const records = NIGERIA_LHI_CLOSEOUT_OFFICES_NOV2026;
+    expect(records).toHaveLength(6);
+    expect(new Set(records.map(({ id }) => id)).size).toBe(6);
+    expect(records.map(({ state }) => state)).toEqual([
+      "Bauchi", "Borno", "Ebonyi", "Federal Capital Territory", "Katsina", "Plateau",
+    ]);
+    expect(records.every((record) => record.primaryCategory === "programs"
+      && record.directoryRole === "local-service"
+      && record.sourceEvidenceUrl === "https://lhinigeria.org/contact"
+      && record.address && record.phone && record.email
+      && record.sourceReviewed && !record.phoneConfirmed && !record.exhaustiveCoverage
+    )).toBe(true);
+  });
+
+  it("keeps the next five-state Nigeria cohort source-reviewed and accurately qualified", () => {
+    const records = NIGERIA_NEXT_FIVE_STATE_EXPANSION;
+    const ids = records.map(({ id }) => id);
+    expect(records).toHaveLength(175);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(records.map(({ state }) => state))).toEqual(new Set(["Enugu", "Bauchi", "Kaduna", "Akwa Ibom", "Ogun"]));
+    expect(records.every((item) =>
+      item.sourceReviewed && item.verified && !item.phoneConfirmed && !item.exhaustiveCoverage && item.link && item.source
+    )).toBe(true);
+    const coverage = (state) => getNigeriaStateCoverage(state).flatMap(({ records: categoryRecords }) => categoryRecords).length;
+    const minimums = {
+      Enugu: { programs: 15, circles: 3, housing: 1, food: 3, funding: 12, emergency: 15 },
+      Bauchi: { programs: 11, circles: 5, housing: 2, food: 4, funding: 6, emergency: 13 },
+      Kaduna: { programs: 5, circles: 5, housing: 3, food: 4, funding: 9, emergency: 23 },
+      "Akwa Ibom": { programs: 4, circles: 2, housing: 5, food: 4, funding: 4, emergency: 14 },
+      Ogun: { programs: 35, circles: 2, housing: 4, food: 3, funding: 4, emergency: 20 },
+    };
+    for (const [state, minimumByCategory] of Object.entries(minimums)) {
+      const actual = Object.fromEntries(getNigeriaStateCoverage(state).map(({ id, records: items }) => [id, items.length]));
+      expect(coverage(state)).toBeGreaterThanOrEqual(Object.values(minimumByCategory).reduce((sum, count) => sum + count, 0));
+      for (const [category, minimum] of Object.entries(minimumByCategory)) {
+        expect(actual[category]).toBeGreaterThanOrEqual(minimum);
+      }
+    }
+    expect(records.filter(({ id }) => id.startsWith("ogun-general-hospital-")).every(({ phone, email }) => phone && email)).toBe(true);
+    expect(records.filter(({ id }) => id.startsWith("nifes-nacf-"))).toHaveLength(11);
+    expect(records.filter(({ id }) => id.startsWith("nifes-nacf-")).every(({ primaryCategory, description }) =>
+      primaryCategory === "circles" && description.includes("faith-based") && description.includes("not clinical")
+    )).toBe(true);
+  });
+
+  it("adds NIFES community contacts across Nigerian cities without labeling them as recovery care", () => {
+    const records = NIGERIA_NIFES_COMMUNITY_EXPANSION;
+    expect(records).toHaveLength(66);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(30);
+    expect(new Set(records.map(({ city }) => city)).size).toBe(60);
+    expect(records.every(({ link, source, phone, verified, description, resourceType }) =>
+      link === "https://nifes.org.ng/nacfnigeria/" && source.includes("NIFES") && /^\d{11}$/.test(phone) && verified &&
+      resourceType.includes("Faith-based") && description.includes("not clinical") && description.includes("whether non-associates may attend")
+    )).toBe(true);
+    expect(NIGERIA_PEER_RESOURCES.filter(({ id }) => id.startsWith("nigeria-nifes-nacf-"))).toHaveLength(66);
+    expect(getNigeriaStateCoverage("Kogi").find(({ id }) => id === "circles").localContacts)
+      .toHaveLength(3);
+  });
+
+  it("adds direct NHIA-listed state health-insurance routes without duplicating the six existing agency records", () => {
+    const records = NIGERIA_NHIA_STATE_EXPANSION;
+    expect(records).toHaveLength(31);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(31);
+    expect(records.every(({ id, primaryCategory, phone, address, source, link, directoryRole }) =>
+      id.startsWith("nigeria-nhia-state-scheme-") && primaryCategory === "funding" &&
+      /^\d{11}$/.test(phone) && address && source.includes("National Health Insurance Authority") &&
+      link === "https://www.nhia.gov.ng/sshias/" && directoryRole === "state-referral"
+    )).toBe(true);
+    for (const { state, id } of records) {
+      expect(getNigeriaStateCoverage(state).find(({ id }) => id === "funding").records.some((record) => record.id === id)).toBe(true);
+    }
+  });
+
+  it("adds the missing August 2026 SARC locations as local urgent-care contacts without claiming phone confirmation", () => {
+    const records = NIGERIA_SARC_AUG_2026_EXPANSION;
+    const ids = records.map(({ id }) => id);
+    expect(records).toHaveLength(40);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(23);
+    expect(records.every(({ id, primaryCategory, city, state, address, phone, sourceReviewed, phoneConfirmed, exhaustiveCoverage, link, sourceEvidenceUrl, directoryRole }) =>
+      id.startsWith("nigeria-sarc-") && primaryCategory === "emergency" && city && state && address && /^0\d{10}$/.test(phone) &&
+      sourceReviewed && !phoneConfirmed && !exhaustiveCoverage && link === "https://herstoryourstory.ng/resources/" &&
+      sourceEvidenceUrl === "https://herstoryourstory.ng/download/2580/" && directoryRole === "local-service"
+    )).toBe(true);
+    expect(NIGERIA_URGENT_RESOURCES.filter(({ id }) => id.startsWith("nigeria-sarc-")).map(({ id }) => id)).toEqual(ids);
+    for (const { state, city, id } of records) {
+      const emergency = getNigeriaStateCoverage(state).find(({ id: categoryId }) => categoryId === "emergency");
+      expect(emergency.localContacts.some((record) => record.id === id && record.city === city)).toBe(true);
+    }
+    expect(getNigeriaStateCoverage("Cross River").find(({ id }) => id === "emergency").localContacts.length).toBeGreaterThanOrEqual(15);
+    expect(getNigeriaStateCoverage("Yobe").find(({ id }) => id === "emergency").localContacts.length).toBeGreaterThanOrEqual(11);
+  });
+
+  it("adds one local disaster-coordination contact per distinct NEMA office and keeps regional scope explicit", () => {
+    const records = NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION;
+    expect(records).toHaveLength(14);
+    expect(new Set(records.map(({ id }) => id)).size).toBe(14);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(14);
+    expect(records.every(({ id, primaryCategory, city, state, phone, sourceReviewed, phoneConfirmed, exhaustiveCoverage, link, sourceEvidenceUrl, description, directoryRole }) =>
+      id.startsWith("nema-office-") && primaryCategory === "emergency" && city && state && /^0\d{10}$/.test(phone) &&
+      sourceReviewed && !phoneConfirmed && !exhaustiveCoverage && link === "https://nema.gov.ng/zonal-territorial-offices/" &&
+      sourceEvidenceUrl === "https://nema.gov.ng/documentations/nema-service-charter.pdf" &&
+      description.includes("not a live dispatch line") && description.includes("does not confirm") && directoryRole === "local-service"
+    )).toBe(true);
+    expect(NIGERIA_URGENT_RESOURCES.filter(({ id }) => id.startsWith("nema-office-")).map(({ id }) => id)).toEqual(records.map(({ id }) => id));
+    for (const { state, city, id } of records) {
+      const emergency = getNigeriaStateCoverage(state).find(({ id: categoryId }) => categoryId === "emergency");
+      expect(emergency.localContacts.some((record) => record.id === id && record.city === city)).toBe(true);
+    }
+    expect(getNigeriaStateCoverage("Rivers").find(({ id }) => id === "emergency").localContacts
+      .filter(({ name }) => /NEMA/i.test(name))).toHaveLength(1);
+  });
+
+  it("adds contact-bearing FRSC unit commands as local road-safety routes across Nigeria", () => {
+    const records = NIGERIA_FRSC_UNIT_COMMAND_EXPANSION;
+    expect(records).toHaveLength(216);
+    expect(new Set(records.map(({ id }) => id)).size).toBe(216);
+    expect(new Set(records.map(({ state }) => state)).size).toBe(37);
+    expect(records.every(({ id, primaryCategory, city, state, phone, email, sourceReviewed, phoneConfirmed, exhaustiveCoverage, link, sourceEvidenceUrl, description, directoryRole }) =>
+      id.startsWith("frsc-unit-") && primaryCategory === "emergency" && city && state && (phone || email) &&
+      sourceReviewed && !phoneConfirmed && !exhaustiveCoverage && link === "https://frsc.gov.ng/commands/unit-commands/" &&
+      sourceEvidenceUrl === "https://frsc.gov.ng/contact-us/" && description.includes("not promise dispatch") &&
+      description.includes("emergency contact 122") && directoryRole === "local-service"
+    )).toBe(true);
+    expect(NIGERIA_URGENT_RESOURCES.filter(({ id }) => id.startsWith("frsc-unit-")).map(({ id }) => id)).toEqual(records.map(({ id }) => id));
+    expect(records.every(({ state, city }) => state && city)).toBe(true);
+    expect(NIGERIA_DIRECTORY_COVERAGE.reduce((total, { records: count }) => total + count, 0)).toBeGreaterThanOrEqual(1363);
+  });
+
+  it("routes STILT into Cross River peer support without overstating clinical or meeting services", () => {
+    const stilt = NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.find(({ id }) => id === "cross-river-stilt-youth-peer-wellbeing");
+    expect(stilt).toMatchObject({ state: "Cross River", city: "Calabar", primaryCategory: "circles", sourceReviewed: true, phoneConfirmed: false, exhaustiveCoverage: false });
+    expect(stilt.description).toContain("not psychiatric crisis care");
+    expect(getNigeriaStateCoverage("Cross River").find(({ id }) => id === "circles").records).toContainEqual(expect.objectContaining({ id: stilt.id }));
+  });
+
+  it("serves the next five-state Nigeria additions in their matching filters", () => {
+    const cases = [
+      ["programs", "Enugu, Nigeria", "enugu-fnph-specialist-mental-health"],
+      ["housing", "Enugu, Nigeria", "enugu-citizens-rights-mediation-centre"],
+      ["programs", "Bauchi, Nigeria", "bauchi-fuhs-teaching-hospital-azare"],
+      ["peer", "Bauchi, Nigeria", "bauchi-mama-to-mama-community-support"],
+      ["hotlines", "Kaduna, Nigeria", "kaduna-kadsamhsa-crisis-referral"],
+      ["programs", "Zaria, Kaduna", "kaduna-abuth-psychiatry"],
+      ["food.essentials", "Uyo, Akwa Ibom", "akwa-ibom-gamaid-food-support"],
+      ["housing", "Uyo, Akwa Ibom", "akwa-ibom-gamaid-shelter-enquiries"],
+      ["programs", "Ota, Ogun", "ogun-mental-health-centre-ota"],
+      ["programs", "Abeokuta, Ogun", "ogun-mental-health-centre-abeokuta"],
+      ["programs", "Iperu, Ogun", "ogun-general-hospital-iperu"],
+      ["programs", "Ikenne, Ogun", "ogun-general-hospital-ikenne"],
+      ["hotlines", "Enugu", "enugu-red-cross-branch"],
+      ["hotlines", "Enugu", "enugu-wacol-tamar-survivor-support"],
+      ["grants", "Enugu", "enugu-csda-community-development-support"],
+      ["hotlines", "Kaduna", "kaduna-nhrc-state-office"],
+      ["food.essentials", "Zaria, Kaduna", "kaduna-abuwabul-khair-humanitarian-support"],
+      ["grants", "Akwa Ibom", "akwa-ibom-cooperatives-rural-development"],
+      ["hotlines", "Akwa Ibom", "akwa-ibom-pcc-state-office"],
+      ["hotlines", "Bauchi", "bauchi-red-cross-branch"],
+      ["grants", "Bauchi", "bauchi-baped-disability-support-navigation"],
+      ["hotlines", "Sagamu, Ogun", "ogun-sarc-sagamu"],
+      ["grants", "Enugu", "enugu-nbti-technology-incubation-centre"],
+      ["food.essentials", "Enugu, Nigeria", "enugu-foodbank-intercontinental-contact"],
+      ["grants", "Enugu, Nigeria", "enugu-csda-skills-grant-enquiry"],
+      ["programs", "Bauchi, Nigeria", "bauchi-alayahbi-women-children-welfare-navigation"],
+      ["hotlines", "Uyo, Akwa Ibom", "akwa-ibom-victoria-teens-survivor-support"],
+      ["food.essentials", "Abeokuta, Ogun", "ogun-abeokuta-food-bank-nutrition-support"],
+      ["housing", "Ijebu-Ode, Ogun", "ogun-ray-of-hope-ijebu-ode-survivor-support"],
+      ["hotlines", "Abeokuta, Ogun", "ogun-spring-centre-abeokuta-sarc"],
+      ["housing", "Uyo, Akwa Ibom", "akwa-ibom-fida-uyo-legal-aid"],
+      ["food.essentials", "Zaria, Kaduna", "kaduna-zahra-relief-food-support"],
+      ["grants", "Bauchi", "bauchi-nbti-technology-incubation-centre"],
+      ["grants", "Kaduna", "kaduna-nbti-technology-incubation-centre"],
+      ["grants", "Uyo, Akwa Ibom", "akwa-ibom-nbti-technology-incubation-centre"],
+      ["grants", "Abeokuta, Ogun", "ogun-nbti-abeokuta-centre"],
+      ["hotlines", "Abeokuta, Ogun", "ogun-nigerian-red-cross-abeokuta-branch"],
+      ["peer", "Enugu, Nigeria", "enugu-in-my-head-monthly-peer-support"],
+      ["hotlines", "Enugu, Nigeria", "enugu-clement-gloria-survivor-support"],
+      ["programs", "Enugu, Nigeria", "enugu-town-crier-youth-support"],
+      ["programs", "Enugu, Nigeria", "enugu-caritas-first-line-support"],
+      ["hotlines", "Enugu, Nigeria", "enugu-wacol-general-counselling-legal-support"],
+      ["programs", "Enugu, Nigeria", "enugu-winet-reproductive-health-navigation"],
+      ["grants", "Enugu, Nigeria", "enugu-heroine-women-foundation-economic-support"],
+      ["hotlines", "Enugu, Nigeria", "enugu-cirddoc-legal-counselling"],
+      ["programs", "Enugu, Nigeria", "enugu-cawdi-mental-health-referrals"],
+      ["food.essentials", "Bauchi, Nigeria", "bauchi-eifil-humanitarian-food-referral"],
+      ["peer", "Bauchi, Nigeria", "bauchi-women-children-comfort-plus-support"],
+      ["hotlines", "Bauchi, Nigeria", "bauchi-fida-legal-protection-support"],
+      ["housing", "Bauchi, Nigeria", "bauchi-motherhen-protection-referral"],
+      ["grants", "Bauchi, Nigeria", "bauchi-wrapa-womens-rights-support"],
+      ["hotlines", "Bauchi, Nigeria", "bauchi-nevdex-psychosocial-referrals"],
+      ["hotlines", "Bauchi, Nigeria", "bauchi-ashh-foundation-protection-support"],
+      ["grants", "Kaduna, Nigeria", "kaduna-hajiya-nafisa-humanitarian-support"],
+      ["food.essentials", "Kaduna, Nigeria", "kaduna-abuma-food-water-community-support"],
+      ["hotlines", "Kaduna, Nigeria", "kaduna-lanw-legal-psychosocial-support"],
+      ["grants", "Kaduna, Nigeria", "kaduna-girl-child-concerns-scholarships"],
+      ["housing", "Zaria, Kaduna", "kaduna-basileia-vulnerable-persons-shelter-referral"],
+      ["housing", "Igabi LGA, Kaduna", "kaduna-cersdov-shelter-protection-referral"],
+      ["programs", "Kaduna, Nigeria", "kaduna-ecaph-rigasa-community-health-protection"],
+      ["hotlines", "Kaduna, Nigeria", "kaduna-fida-legal-support"],
+      ["hotlines", "Zaria, Kaduna", "kaduna-zaria-fida-legal-support"],
+      ["grants", "Kaduna, Nigeria", "kaduna-wrapa-women-rights-economic-support"],
+      ["grants", "Sabo Tasha, Kaduna", "kaduna-zamani-counselling-economic-empowerment"],
+      ["programs", "Oruk Anam, Akwa Ibom", "akwa-ibom-wolcam-residential-mental-health-care"],
+      ["food.essentials", "Ota, Ogun", "ogun-feeding-hope-food-bank-ota"],
+      ["programs", "Abeokuta, Ogun", "ogun-abeokuta-state-hospital-care"],
+      ["programs", "Ijebu Ode, Ogun", "ogun-ijebu-ode-state-hospital-care"],
+      ["programs", "Ota, Ogun", "ogun-ota-state-hospital-care"],
+      ["programs", "Ilaro, Ogun", "ogun-ilaro-state-hospital-care"],
+      ["programs", "Isara, Ogun", "ogun-isara-state-hospital-care"],
+      ["housing", "Ijebu-Ode, Ogun", "ogun-rohcof-ijebu-ode"],
+      ["hotlines", "Sagamu, Ogun", "ogun-ceega-sagamu"],
+      ["housing", "Ota, Ogun", "ogun-triumphant-ota"],
+      ["hotlines", "Sango-Ota, Ogun", "ogun-pcof-sango-ota"],
+      ["housing", "Ogun", "ogun-fida-legal-support"],
+    ];
+
+    for (const [category, region, id] of cases) {
+      expect(getCuratedFallback(category, "", region).map(({ id: recordId }) => recordId), `${category} in ${region}`)
+        .toContain(id);
+    }
+  });
+
   it("keeps the Nigeria five-jurisdiction source-review cohort distinct and honestly qualified", () => {
     const ids = NIGERIA_FIVE_JURISDICTION_EXPANSION.map(({ id }) => id);
     expect(ids).toHaveLength(77);

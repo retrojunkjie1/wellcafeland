@@ -1,4 +1,166 @@
 import { NIGERIA_FIVE_JURISDICTION_EXPANSION } from "./nigeriaFiveJurisdictionExpansion.js";
+import { NIGERIA_NEXT_FIVE_STATE_EXPANSION } from "./nigeriaNextFiveStateExpansion.js";
+import { NIGERIA_NIFES_COMMUNITY_EXPANSION } from "./nigeriaNifesCommunityExpansion.js";
+import { NIGERIA_NHIA_STATE_EXPANSION } from "./nigeriaNhiaStateExpansion.js";
+import { NIGERIA_SARC_AUG_2026_EXPANSION } from "./nigeriaSarcAug2026Expansion.js";
+import { NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION } from "./nigeriaNemaOfficeOct2026Expansion.js";
+import { NIGERIA_FRSC_UNIT_COMMAND_EXPANSION } from "./nigeriaFrscUnitCommandExpansion.js";
+import { NIGERIA_LAGOS_MIND_PHC_EXPANSION } from "./nigeriaLagosMindPhcExpansion.js";
+import { NIGERIA_ORANGE_PAGES_OCT_2026_EXPANSION } from "./nigeriaOrangePagesOct2026Expansion.js";
+import { NIGERIA_ORANGE_PAGES_FOLLOWUP } from "./nigeriaOrangePagesOct2026Followup.js";
+import { NIGERIA_NHRC_STATE_OFFICES } from "./nigeriaNhrcStateOfficesOct2026.js";
+import { NIGERIA_RED_CROSS_BRANCHES } from "./nigeriaRedCrossBranchOct2026.js";
+import { NIGERIA_FIDA_BRANCH_OCT_2026 } from "./nigeriaFidaBranchOct2026.js";
+import {
+  NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY,
+  NIGERIA_NEXT_LOW_COVERAGE_FOOD,
+  NIGERIA_NEXT_LOW_COVERAGE_FUNDING,
+  NIGERIA_NEXT_LOW_COVERAGE_HOUSING,
+  NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS,
+} from "./nigeriaLowCoverageNextFiveOct2026.js";
+import {
+  NIGERIA_LOW_COVERAGE_RESEARCH_EMERGENCY_OCT_2026,
+  NIGERIA_LOW_COVERAGE_RESEARCH_FOOD_OCT_2026,
+  NIGERIA_LOW_COVERAGE_RESEARCH_FUNDING_OCT_2026,
+  NIGERIA_LOW_COVERAGE_RESEARCH_HOUSING_OCT_2026,
+  NIGERIA_LOW_COVERAGE_RESEARCH_PROGRAMS_OCT_2026,
+} from "./nigeriaLowCoverageResearchBatchOct2026.js";
+import { NIGERIA_LOW_COVERAGE_COHORT_OCT31 } from "./nigeriaLowCoverageCohortOct31.js";
+import { NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31 } from "./nigeriaFiveStateFollowupPart2Oct31.js";
+import {
+  NIGERIA_FIVE_STATE_ADDON_EMERGENCY_OCT31,
+  NIGERIA_FIVE_STATE_ADDON_FOOD_OCT31,
+  NIGERIA_FIVE_STATE_ADDON_FUNDING_OCT31,
+  NIGERIA_FIVE_STATE_ADDON_HOUSING_OCT31,
+  NIGERIA_FIVE_STATE_ADDON_PROGRAMS_OCT31,
+} from "./nigeriaFiveStateFollowupAddOnOct31.js";
+import {
+  NIGERIA_LOW_COVERAGE_FIVE_STATE_EMERGENCY_OCT31,
+  NIGERIA_LOW_COVERAGE_FIVE_STATE_FOOD_OCT31,
+  NIGERIA_LOW_COVERAGE_FIVE_STATE_FUNDING_OCT31,
+  NIGERIA_LOW_COVERAGE_FIVE_STATE_PROGRAMS_OCT31,
+} from "./nigeriaLowCoverageFiveStateFollowupOct31.js";
+import {
+  NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
+  NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
+  NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
+} from "./nigeriaLowCoverageStateBatchOct2026.js";
+import {
+  NIGERIA_LOW_COVERAGE_FOLLOWUP_CIRCLES_OCT_2026,
+  NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026,
+} from "./nigeriaLowCoverageStateFollowupOct2026.js";
+import {
+  NIGERIA_IMO_PHCC_ACCESS_OCT31,
+  NIGERIA_NEXT_LOWEST_EMERGENCY_OCT31,
+  NIGERIA_NEXT_LOWEST_FOOD_OCT31,
+  NIGERIA_NEXT_LOWEST_HOUSING_OCT31,
+  NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
+  NIGERIA_TARABA_PHCC_ACCESS_OCT31,
+} from "./nigeriaNextLowestCohortOct31.js";
+import { NIGERIA_IMO_LOCAL_FACILITIES_OCT31 } from "./nigeriaImoFacilityExpansionOct31.js";
+import { NIGERIA_FOUR_STATE_PHC_OCT31 } from "./nigeriaFourStatePhcBatchOct31.js";
+import { NIGERIA_KEBBI_BHCPF_EXPANSION_MAR2026 } from "./nigeriaKebbiBhcpfExpansionMar2026.js";
+import { NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026 } from "./nigeriaKebbiCommunityAccessOct2026.js";
+import {
+  NIGERIA_SERVICE_ACCESS_EMERGENCY_OCT31,
+  NIGERIA_SERVICE_ACCESS_EMERGENCY_LOCAL_OCT31,
+  NIGERIA_SERVICE_ACCESS_FOOD_OCT31,
+  NIGERIA_SERVICE_ACCESS_HOUSING_OCT31,
+  NIGERIA_SERVICE_ACCESS_HOUSING_REFERRALS_OCT31,
+  NIGERIA_SERVICE_ACCESS_PROGRAMS_OCT31,
+} from "./nigeriaServiceAccessFollowupOct31.js";
+import {
+  NIGERIA_LOW_COVERAGE_PART3_FOOD,
+  NIGERIA_LOW_COVERAGE_PART3_FUNDING,
+  NIGERIA_LOW_COVERAGE_PART3_HOUSING,
+  NIGERIA_LOW_COVERAGE_PART3_PROGRAMS,
+  NIGERIA_LOW_COVERAGE_PART3_EMERGENCY,
+  NIGERIA_LOW_COVERAGE_PART3_PROGRAM_ENQUIRIES,
+} from "./nigeriaLowCoverageExpansionOct31Part3.js";
+import {
+  NIGERIA_PLATEAU_FOOD_OCT31,
+  NIGERIA_PLATEAU_PROGRAMS_OCT31,
+} from "./nigeriaPlateauExpansionOct31.js";
+import {
+  NIGERIA_FIVE_STATE_DEEPENING_CIRCLES_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_FOOD_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_FUNDING_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31,
+} from "./nigeriaFiveStateDeepeningOct31.js";
+import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "./nigeriaOgunCrossRiverExpansionOct31.js";
+import {
+  NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
+  NIGERIA_MULTI_STATE_ACCESS_FUNDING_OCT31_PART2,
+  NIGERIA_MULTI_STATE_ACCESS_PROGRAMS_OCT31_PART2,
+} from "./nigeriaMultiStateAccessExpansionOct31Part2.js";
+import {
+  NIGERIA_STATE_ACCESS_EMERGENCY_OCT31,
+  NIGERIA_STATE_ACCESS_FOOD_OCT31,
+  NIGERIA_STATE_ACCESS_FUNDING_OCT31,
+  NIGERIA_STATE_ACCESS_HOUSING_OCT31,
+  NIGERIA_STATE_ACCESS_PROGRAMS_OCT31,
+} from "./nigeriaStateAccessDeepeningOct31.js";
+import {
+  NIGERIA_ABIA_ACCESS_PROGRAMS_OCT31,
+  NIGERIA_ABIA_URGENT_ACCESS_OCT31,
+  NIGERIA_OSUN_ACCESS_FOOD_OCT31,
+  NIGERIA_OSUN_ACCESS_FUNDING_OCT31,
+  NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
+  NIGERIA_OSUN_ACCESS_PROGRAMS_OCT31,
+} from "./nigeriaOsunAccessExpansionOct31.js";
+import {
+  NIGERIA_FIVE_STATE_DEEPENING_NEXT_PROGRAMS_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_NEXT_FOOD_OCT31,
+  NIGERIA_FIVE_STATE_DEEPENING_NEXT_EMERGENCY_OCT31,
+  NIGERIA_KATSINA_SAFESPACE_PSYCHOSOCIAL_OCT31,
+} from "./nigeriaFiveStateDeepeningNextOct31.js";
+import {
+  DELTA_STATE_ACCESS_OCT31_PART2,
+  NIGERIA_BORNO_MAIDUGURI_HEALTH_ACCESS_OCT31,
+  NIGERIA_EBONYI_PREP_ACCESS_OCT31,
+  NIGERIA_GOMBE_COMMUNITY_PROGRAMS_OCT31,
+  NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2,
+} from "./nigeriaFiveStateAccessOct31Part2.js";
+import {
+  NIGERIA_ADAMAWA_ACCESS_OCT31,
+  NIGERIA_GOMBE_ACCESS_OCT31,
+  NIGERIA_KOGI_ACCESS_OCT31,
+  NIGERIA_KWARA_ACCESS_OCT31,
+  NIGERIA_KWARA_PHCS_OCT31,
+  NIGERIA_SOKOTO_ACCESS_OCT31,
+  NIGERIA_SOKOTO_PHCS_OCT31,
+} from "./nigeriaFiveStateAccessExpansionOct31.js";
+import { NIGERIA_FIVE_STATE_PHCS_OCT31 } from "./nigeriaFiveStatePhcExpansionOct31.js";
+import { NIGERIA_FIVE_STATE_PRIMARY_CARE_NOV2026 } from "./nigeriaFiveStatePrimaryCareNov2026.js";
+import { NIGERIA_FIVE_STATE_GRID3_ACCESS_NOV2026 } from "./nigeriaFiveStateGrid3AccessNov2026.js";
+import { NIGERIA_NEXT_FIVE_STATE_GRID3_ACCESS_NOV2026 } from "./nigeriaNextFiveStateGrid3AccessNov2026.js";
+import { NIGERIA_THIRD_FIVE_STATE_HEALTH_ACCESS_NOV2026 } from "./nigeriaThirdFiveStateHealthAccessNov2026.js";
+import { NIGERIA_FOURTH_FIVE_STATE_HEALTH_ACCESS_NOV2026 } from "./nigeriaFourthFiveStateHealthAccessNov2026.js";
+import { NIGERIA_FIFTH_FIVE_STATE_HEALTH_ACCESS_NOV2026 } from "./nigeriaFifthFiveStateHealthAccessNov2026.js";
+import { NIGERIA_SIXTH_FIVE_STATE_HEALTH_ACCESS_NOV2026, NIGERIA_SIXTH_FIVE_STATE_SUPPORT_NOV2026 } from "./nigeriaSixthFiveStateAccessNov2026.js";
+import {
+  NIGERIA_GAP_CIRCLES_NOV2026,
+  NIGERIA_GAP_FOOD_NOV2026,
+  NIGERIA_GAP_FUNDING_NOV2026,
+  NIGERIA_GAP_HOUSING_NOV2026,
+  NIGERIA_GAP_PROGRAMS_NOV2026,
+} from "./nigeriaCategoryGapBatchNov2026.js";
+import {
+  NIGERIA_NEXT_GAP_CIRCLES_NOV2026,
+  NIGERIA_NEXT_GAP_FOOD_NOV2026,
+  NIGERIA_NEXT_GAP_FUNDING_NOV2026,
+  NIGERIA_NEXT_GAP_HOUSING_NOV2026,
+  NIGERIA_NEXT_GAP_PROGRAMS_NOV2026,
+} from "./nigeriaNextCategoryGapBatchNov2026.js";
+import {
+  NIGERIA_FIVE_STATE_GAP_CIRCLES_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_FOOD_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_FUNDING_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_HOUSING_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_PEER_NOV2026,
+  NIGERIA_FIVE_STATE_GAP_PROGRAMS_NOV2026,
+} from "./nigeriaFiveStateGapFollowupNov2026.js";
+import { NIGERIA_LHI_CLOSEOUT_OFFICES_NOV2026 } from "./nigeriaLhiOfficeCloseoutNov2026.js";
 
 /**
  * Nigeria recovery and substance-use service contacts.
@@ -12,7 +174,17 @@ const NDLEA_DIRECTORY_URL = "https://www.ndlea.gov.ng/rehabilitation";
 const CHECKED_AT = "2026-10-22";
 const FEDERAL_HEALTH_DIRECTORY_URL = "https://health.gov.ng/specialty-hospitals/";
 
-const fiveJurisdiction = (category) => NIGERIA_FIVE_JURISDICTION_EXPANSION
+const reviewedExpansion = [
+  ...NIGERIA_FIVE_JURISDICTION_EXPANSION,
+  ...NIGERIA_NEXT_FIVE_STATE_EXPANSION,
+  ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
+  ...NIGERIA_ORANGE_PAGES_OCT_2026_EXPANSION,
+  ...NIGERIA_ORANGE_PAGES_FOLLOWUP,
+  ...NIGERIA_NHRC_STATE_OFFICES,
+  ...NIGERIA_RED_CROSS_BRANCHES,
+  ...NIGERIA_FIDA_BRANCH_OCT_2026,
+];
+const fiveJurisdiction = (category) => reviewedExpansion
   .filter((record) => record.primaryCategory === category);
 
 const stateCommands = [
@@ -223,6 +395,55 @@ export const NIGERIA_LOCAL_RECOVERY_RESOURCES = [
     locationLine: "Lagos State · also lists 020 1410 6463 and WhatsApp 090 9000 6463", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("programs"),
+  ...NIGERIA_LOW_COVERAGE_PROGRAMS_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_NEXT_LOW_COVERAGE_PROGRAMS,
+  ...NIGERIA_LOW_COVERAGE_RESEARCH_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_LOW_COVERAGE_FIVE_STATE_PROGRAMS_OCT31,
+  ...NIGERIA_FIVE_STATE_ADDON_PROGRAMS_OCT31,
+  ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_LAGOS_MIND_PHC_EXPANSION,
+  ...NIGERIA_IMO_PHCC_ACCESS_OCT31,
+  ...NIGERIA_IMO_LOCAL_FACILITIES_OCT31,
+  ...NIGERIA_TARABA_PHCC_ACCESS_OCT31,
+  ...NIGERIA_FOUR_STATE_PHC_OCT31,
+  ...NIGERIA_KEBBI_BHCPF_EXPANSION_MAR2026,
+  ...NIGERIA_NEXT_LOWEST_PROGRAMS_OCT31,
+  ...NIGERIA_SERVICE_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_LOW_COVERAGE_PART3_PROGRAM_ENQUIRIES,
+  ...NIGERIA_PLATEAU_PROGRAMS_OCT31,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_MULTI_STATE_ACCESS_PROGRAMS_OCT31_PART2,
+  ...NIGERIA_STATE_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_OSUN_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_ABIA_ACCESS_PROGRAMS_OCT31,
+  ...NIGERIA_BORNO_MAIDUGURI_HEALTH_ACCESS_OCT31,
+  ...NIGERIA_GOMBE_COMMUNITY_PROGRAMS_OCT31,
+  ...NIGERIA_FIVE_STATE_DEEPENING_NEXT_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "programs"),
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_EBONYI_PREP_ACCESS_OCT31,
+  ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "programs"),
+  ...NIGERIA_KWARA_PHCS_OCT31,
+  ...NIGERIA_SOKOTO_PHCS_OCT31,
+  ...NIGERIA_FIVE_STATE_PHCS_OCT31,
+  ...NIGERIA_FIVE_STATE_PRIMARY_CARE_NOV2026,
+  ...NIGERIA_FIVE_STATE_GRID3_ACCESS_NOV2026,
+  ...NIGERIA_NEXT_FIVE_STATE_GRID3_ACCESS_NOV2026,
+  ...NIGERIA_THIRD_FIVE_STATE_HEALTH_ACCESS_NOV2026,
+  ...NIGERIA_FOURTH_FIVE_STATE_HEALTH_ACCESS_NOV2026,
+  ...NIGERIA_FIFTH_FIVE_STATE_HEALTH_ACCESS_NOV2026,
+  ...NIGERIA_SIXTH_FIVE_STATE_HEALTH_ACCESS_NOV2026,
+  ...NIGERIA_SIXTH_FIVE_STATE_SUPPORT_NOV2026,
+  ...NIGERIA_GAP_PROGRAMS_NOV2026,
+  ...NIGERIA_NEXT_GAP_PROGRAMS_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_PROGRAMS_NOV2026,
+  ...NIGERIA_LHI_CLOSEOUT_OFFICES_NOV2026,
 ];
 
 export const NIGERIA_CITIES = [
@@ -230,6 +451,14 @@ export const NIGERIA_CITIES = [
   "Aba", "Uyo", "Onitsha", "Bauchi", "Yenagoa", "Makurdi", "Maiduguri", "Ogwashi-Uku",
   "Abakaliki", "Gombe", "Owerri", "Dutse", "Kaduna", "Katsina", "Birnin Kebbi", "Lokoja",
   "Ilorin", "Lafia", "Minna", "Akure", "Jos", "Sokoto",
+  "Gwagwalada", "Idah", "Ankpa", "Bida", "Kontagora", "Suleja", "Damaturu", "Yelwa",
+  "Gwallameji", "Azare", "Pankshin", "Vom", "Zawan", "Agbor", "Auchi", "Warri", "Abraka",
+  "Sapele", "Afikpo", "Ishiagu", "Nnewi", "Ijebu-Ode", "Kafanchan", "Keffi", "Owo",
+  "Ado-Ekiti", "Mokwa", "New Bussa", "Ede", "Iree", "Gusau", "Kaura Namoda", "Ogoja",
+  "Wukari", "Numan", "Mubi", "Zaria", "Dutsin-Ma",
+  "Umuahia", "Yola", "Asaba", "Calabar",
+  "Ikot Ekpene", "Enugwu-Ukwu", "Ikang", "Ugep", "Ikom", "Ughelli", "Uromi",
+  "Oye", "Ikere-Ekiti", "Bwari", "Kalgo", "Igando", "Potiskum", "Nguru", "Gashua", "Geidam",
 ];
 
 export const NIGERIA_STATES = [
@@ -281,6 +510,22 @@ export const NIGERIA_HOUSING_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "Nigeria · for refugees and asylum-seekers; call for current office hours and local referral", checkedAt: CHECKED_AT,
   },
   {
+    id: "nana-khadija-sokoto-short-term-shelter-referral",
+    name: "Nana Khadija Centre — short-term safe-shelter referral",
+    resourceType: "Survivor support · safe-shelter referral · availability must be confirmed",
+    description: "Nana Khadija Centre is listed at Sokoto Specialist Hospital. A Spotlight Initiative case study reports that the centre is linked to a shelter for survivors who need a short-term safe place. The shelter address is not published here. Contact the centre first to confirm that the referral pathway is active, whether a safe placement is available, and how to reach help safely; this listing does not promise a bed or walk-in access.",
+    phone: "07042274748", alternatePhone: "08061981109", email: "nanakhadijacentre@gmail.com",
+    link: "https://invictusafrica.org/content/sokoto/",
+    source: "Invictus Africa Sokoto provider directory; Spotlight Initiative Nana Khadija Centre case study",
+    sourceEvidenceUrl: "https://invictusafrica.org/content/sokoto/",
+    secondarySourceUrl: "https://www.spotlightinitiative.org/develop-one-stop-centre",
+    sourceReviewedAt: "2026-11-01", sourceReviewed: true,
+    sourceReviewStatus: "source-reviewed-current-shelter-capacity-unconfirmed",
+    verified: false, phoneConfirmed: false, exhaustiveCoverage: false,
+    city: "Sokoto", state: "Sokoto", country: "Nigeria", region: "Sokoto, Nigeria",
+    locationLine: "Sokoto Specialist Hospital · call first; linked short-term shelter location and availability are not published",
+  },
+  {
     id: "rivers-social-welfare-safe-home", name: "Rivers State Ministry of Social Welfare — Safe Home referral",
     resourceType: "State safe-home service · temporary shelter · protection referral",
     description: "The Rivers State Ministry lists temporary shelter, care coordination, and safety planning for vulnerable people needing urgent protection. Call to ask for assessment, eligibility, safe referral steps, and current availability before travelling. The published ministry contact is not a shelter walk-in address.",
@@ -295,6 +540,28 @@ export const NIGERIA_HOUSING_RESOURCES = [
     city: "Ibadan", state: "Oyo", country: "Nigeria", region: "Ibadan, Oyo, Nigeria", locationLine: "Ibadan · confidential shelter location; contact for safe referral; 24-hour shelter service described by organization", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("housing"),
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_NEXT_LOW_COVERAGE_HOUSING,
+  ...NIGERIA_LOW_COVERAGE_RESEARCH_HOUSING_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_FIVE_STATE_ADDON_HOUSING_OCT31,
+  ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_NEXT_LOWEST_HOUSING_OCT31,
+  ...NIGERIA_SERVICE_ACCESS_HOUSING_OCT31,
+  ...NIGERIA_SERVICE_ACCESS_HOUSING_REFERRALS_OCT31,
+  ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_LOW_COVERAGE_PART3_HOUSING,
+  ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_STATE_ACCESS_HOUSING_OCT31,
+  ...NIGERIA_OSUN_ACCESS_HOUSING_OCT31,
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "housing"),
+  ...NIGERIA_GAP_HOUSING_NOV2026,
+  ...NIGERIA_NEXT_GAP_HOUSING_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_HOUSING_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_CIRCLES_NOV2026.filter((record) => record.primaryCategory === "housing"),
 ];
 
 export const NIGERIA_FOOD_RESOURCES = [
@@ -390,6 +657,33 @@ export const NIGERIA_FOOD_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "Participating public primary schools nationwide · pupil eligibility applies", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("food"),
+  ...NIGERIA_LOW_COVERAGE_FOOD_OCT_2026,
+  ...NIGERIA_NEXT_LOW_COVERAGE_FOOD,
+  ...NIGERIA_LOW_COVERAGE_RESEARCH_FOOD_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_LOW_COVERAGE_FIVE_STATE_FOOD_OCT31,
+  ...NIGERIA_FIVE_STATE_ADDON_FOOD_OCT31,
+  ...NIGERIA_FIVE_STATE_FOLLOWUP_PART2_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_NEXT_LOWEST_FOOD_OCT31,
+  ...NIGERIA_SERVICE_ACCESS_FOOD_OCT31,
+  ...NIGERIA_LOW_COVERAGE_PART3_PROGRAMS.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_LOW_COVERAGE_PART3_FOOD,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_FIVE_STATE_DEEPENING_FOOD_OCT31,
+  ...NIGERIA_FIVE_STATE_DEEPENING_NEXT_FOOD_OCT31,
+  ...NIGERIA_STATE_ACCESS_FOOD_OCT31,
+  ...NIGERIA_PLATEAU_FOOD_OCT31,
+  ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_MULTI_STATE_ACCESS_FOOD_OCT31_PART2,
+  ...NIGERIA_OSUN_ACCESS_FOOD_OCT31,
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_KOGI_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_SOKOTO_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "food"),
+  ...NIGERIA_GAP_FOOD_NOV2026,
+  ...NIGERIA_NEXT_GAP_FOOD_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_FOOD_NOV2026,
 ];
 
 // State-level referrals into the Food Bank Network Nigeria (FBNN). Its public
@@ -486,6 +780,26 @@ export const NIGERIA_FUNDING_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "State and local-government implementation nationwide · ask about current local enrollment", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("funding"),
+  ...NIGERIA_NHIA_STATE_EXPANSION,
+  ...NIGERIA_LOW_COVERAGE_FUNDING_OCT_2026,
+  ...NIGERIA_NEXT_LOW_COVERAGE_FUNDING,
+  ...NIGERIA_LOW_COVERAGE_RESEARCH_FUNDING_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_LOW_COVERAGE_FIVE_STATE_FUNDING_OCT31,
+  ...NIGERIA_FIVE_STATE_ADDON_FUNDING_OCT31,
+  ...NIGERIA_LOW_COVERAGE_PART3_FUNDING,
+  ...NIGERIA_FIVE_STATE_DEEPENING_FUNDING_OCT31,
+  ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_MULTI_STATE_ACCESS_FUNDING_OCT31_PART2,
+  ...NIGERIA_STATE_ACCESS_FUNDING_OCT31,
+  ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_OSUN_ACCESS_FUNDING_OCT31,
+  ...NIGER_STATE_ACCESS_PROGRAMS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
+  ...DELTA_STATE_ACCESS_OCT31_PART2.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_KOGI_ACCESS_OCT31.filter((record) => record.primaryCategory === "funding"),
+  ...NIGERIA_GAP_FUNDING_NOV2026,
+  ...NIGERIA_NEXT_GAP_FUNDING_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_FUNDING_NOV2026,
 ];
 
 export const NIGERIA_STATE_BENEFIT_CONTACTS = Object.entries(NIGERIA_STATE_CAPITALS).map(([state, capital]) => {
@@ -549,6 +863,28 @@ export const NIGERIA_URGENT_RESOURCES = [
     city: "Lagos", state: "Lagos", country: "Nigeria", region: "Lagos, Nigeria", locationLine: "Lagos State · 24-hour support is stated by the agency; safe-shelter access must be confirmed", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("emergency"),
+  ...NIGERIA_SARC_AUG_2026_EXPANSION,
+  ...NIGERIA_NEMA_OFFICE_OCT_2026_EXPANSION,
+  ...NIGERIA_FRSC_UNIT_COMMAND_EXPANSION,
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_PROGRAMS_OCT_2026.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_NEXT_LOW_COVERAGE_EMERGENCY,
+  ...NIGERIA_LOW_COVERAGE_RESEARCH_EMERGENCY_OCT_2026,
+  ...NIGERIA_LOW_COVERAGE_COHORT_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_LOW_COVERAGE_FIVE_STATE_EMERGENCY_OCT31,
+  ...NIGERIA_FIVE_STATE_ADDON_EMERGENCY_OCT31,
+  ...NIGERIA_NEXT_LOWEST_EMERGENCY_OCT31,
+  ...NIGERIA_SERVICE_ACCESS_EMERGENCY_OCT31,
+  ...NIGERIA_SERVICE_ACCESS_EMERGENCY_LOCAL_OCT31,
+  ...NIGERIA_LOW_COVERAGE_PART3_EMERGENCY,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_FIVE_STATE_DEEPENING_NEXT_EMERGENCY_OCT31,
+  ...NIGERIA_KATSINA_SAFESPACE_PSYCHOSOCIAL_OCT31,
+  ...NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_STATE_ACCESS_EMERGENCY_OCT31,
+  ...NIGERIA_ABIA_URGENT_ACCESS_OCT31,
+  ...NIGERIA_KWARA_ACCESS_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_ADAMAWA_ACCESS_OCT31.filter((record) => record.primaryCategory === "emergency"),
+  ...NIGERIA_GOMBE_ACCESS_OCT31.filter((record) => record.primaryCategory === "emergency"),
 ];
 
 export const NIGERIA_PEER_RESOURCES = [
@@ -590,4 +926,12 @@ export const NIGERIA_PEER_RESOURCES = [
     country: "Nigeria", region: "Nigeria", locationLine: "Nigeria-wide helpline and state commands · ask for a city-specific referral", checkedAt: CHECKED_AT,
   },
   ...fiveJurisdiction("circles").map((record) => ({ ...record, directoryRole: "meeting-finder" })),
+  ...NIGERIA_LOW_COVERAGE_FOLLOWUP_CIRCLES_OCT_2026,
+  ...NIGERIA_NIFES_COMMUNITY_EXPANSION,
+  ...NIGERIA_FIVE_STATE_DEEPENING_CIRCLES_OCT31,
+  ...NIGERIA_FIVE_STATE_DEEPENING_PROGRAMS_OCT31.filter((record) => record.primaryCategory === "circles"),
+  ...NIGERIA_KEBBI_COMMUNITY_ACCESS_OCT2026.filter((record) => record.primaryCategory === "circles"),
+  ...NIGERIA_GAP_CIRCLES_NOV2026,
+  ...NIGERIA_NEXT_GAP_CIRCLES_NOV2026,
+  ...NIGERIA_FIVE_STATE_GAP_PEER_NOV2026,
 ];

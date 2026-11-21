@@ -67,6 +67,24 @@ describe("PractitionerSupportInbox", () => {
     expect(mocks.listMyPractitionerSupport).toHaveBeenCalledTimes(2);
   });
 
+  it("does not flash an empty inbox panel during initial or focus refreshes", async () => {
+    let finishRefresh;
+    mocks.listMyPractitionerSupport
+      .mockResolvedValueOnce({ items: [] })
+      .mockImplementationOnce(() => new Promise((resolve) => { finishRefresh = resolve; }));
+
+    render(<MemoryRouter><PractitionerSupportInbox /></MemoryRouter>);
+    await waitFor(() => expect(mocks.listMyPractitionerSupport).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("region", { name: "Support from your practitioner" })).toBeNull();
+
+    fireEvent.focus(window);
+    await waitFor(() => expect(mocks.listMyPractitionerSupport).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("region", { name: "Support from your practitioner" })).toBeNull();
+
+    finishRefresh({ items: [] });
+    await waitFor(() => expect(screen.queryByRole("region", { name: "Support from your practitioner" })).toBeNull());
+  });
+
   it("keeps the item visible and offers retry if marking it opened fails", async () => {
     mocks.listMyPractitionerSupport.mockResolvedValue({ items: [{ id: "support-2", practitionerName: "Avery", toolId: "grounding" }] });
     mocks.markPractitionerSupportSeen.mockRejectedValueOnce(new Error("Connection lost"));

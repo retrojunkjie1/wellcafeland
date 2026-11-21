@@ -12,6 +12,7 @@ import {
 } from "./nigeriaRecoveryDirectory.js";
 
 export const NIGERIA_DIRECTORY_CATEGORIES = [
+  { id: "health", label: "Healthcare access" },
   { id: "programs", label: "Treatment & recovery" },
   { id: "circles", label: "Peer & community" },
   { id: "housing", label: "Housing & safe place" },
@@ -22,7 +23,8 @@ export const NIGERIA_DIRECTORY_CATEGORIES = [
 
 const STATES = [...new Set(NIGERIA_STATES.filter((state) => state !== "FCT"))];
 const SOURCES_BY_CATEGORY = {
-  programs: NIGERIA_LOCAL_RECOVERY_RESOURCES,
+  health: NIGERIA_LOCAL_RECOVERY_RESOURCES.filter((item) => item.directoryRole === "mapped-primary-health-facility"),
+  programs: NIGERIA_LOCAL_RECOVERY_RESOURCES.filter((item) => item.directoryRole !== "mapped-primary-health-facility"),
   circles: [
     ...NIGERIA_PEER_RESOURCES,
     ...NIGERIA_LOCAL_RECOVERY_RESOURCES.filter((item) => /peer|meeting|group/i.test(item.resourceType || "")),
@@ -114,3 +116,12 @@ export const NIGERIA_COVERAGE_TOTALS = {
   localServiceContacts: NIGERIA_DIRECTORY_COVERAGE.reduce((sum, state) => sum + state.categories.reduce((count, category) => count + category.localContacts.length, 0), 0),
   stateReferralRoutes: NIGERIA_DIRECTORY_COVERAGE.reduce((sum, state) => sum + state.categories.reduce((count, category) => count + category.referralRoutes.length, 0), 0),
 };
+
+export const NIGERIA_DIRECTORY_STARTING_FLOOR = 75;
+export const NIGERIA_DIRECTORY_STARTING_FLOOR_PROGRESS = NIGERIA_DIRECTORY_COVERAGE.map(({ state, records }) => ({
+  state,
+  records,
+  target: NIGERIA_DIRECTORY_STARTING_FLOOR,
+  remaining: Math.max(0, NIGERIA_DIRECTORY_STARTING_FLOOR - records),
+  floorMet: records >= NIGERIA_DIRECTORY_STARTING_FLOOR,
+}));

@@ -105,6 +105,15 @@ describe("AppTopBar role-separated navigation", () => {
     expect(screen.getByRole("button", { name: /Sign in to an account/ })).toBeTruthy();
   });
 
+  it("does not flash guest text while Firebase is restoring the account", () => {
+    mocks.useSessionIdentity.mockReturnValue({ isLoading: true, isProvider: false, isAdmin: false, providerType: null, mode: "loading" });
+    mocks.useAdminClaim.mockReturnValue({ adminReady: false, isAdmin: false, claims: {} });
+    render(<MemoryRouter><AppTopBar authLoading user={null} /><LocationProbe /></MemoryRouter>);
+
+    expect(screen.getByRole("button", { name: "Checking account" })).toBeDisabled();
+    expect(screen.queryByText("Guest", { selector: ".wc-account-trigger__label" })).toBeNull();
+  });
+
   it("ends an anonymous guest session before opening sign-in", async () => {
     const { onLogout } = openMenu({ mode: "guest" }, false, "/", { uid: "guest", isAnonymous: true });
     fireEvent.click(screen.getByRole("button", { name: "Account: Guest session" }));

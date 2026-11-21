@@ -73,8 +73,14 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks: {
             "framer-motion": ["framer-motion"],
-            // Keep the growing country-scoped directory data out of the
-            // shared fallback chunk so the two assets stay independently cacheable.
+            // Keep the UK locality catalog in its own cacheable bundle while the
+            // other international country catalogs remain in their existing module.
+            "uk-international-support-directory": ["./src/data/ukInternationalSupportDirectory.js"],
+            "uk-northern-ireland-directory": ["./src/data/ukNorthernIrelandDirectory.js"],
+            "uk-northern-ireland-next-directory": ["./src/data/ukNorthernIrelandNextDirectory.js"],
+            "uk-northern-ireland-further-directory": ["./src/data/ukNorthernIrelandFurtherDirectory.js"],
+            "uk-scotland-further-directory": ["./src/data/ukScotlandFurtherDirectory.js"],
+            "uk-wales-south-directory": ["./src/data/ukWalesSouthFurtherDirectory.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
@@ -119,6 +125,20 @@ export default defineConfig(({ mode }) => {
               "./src/data/connecticutDirectory.js",
             ],
             "nigeria-resource-directory": ["./src/data/nigeriaRecoveryDirectory.js"],
+            // Keep mapped primary-care records independently cacheable and
+            // prevent the Nigeria aggregate catalog from growing past its ceiling.
+            "nigeria-primary-care-facilities": ["./src/data/nigeriaFiveStatePrimaryCareNov2026.js"],
+            "nigeria-five-state-grid3-access": ["./src/data/nigeriaFiveStateGrid3AccessNov2026.js"],
+            "nigeria-next-five-state-grid3-access": ["./src/data/nigeriaNextFiveStateGrid3AccessNov2026.js"],
+            "nigeria-third-five-state-health-access": ["./src/data/nigeriaThirdFiveStateHealthAccessNov2026.js"],
+            "nigeria-fourth-five-state-health-access": ["./src/data/nigeriaFourthFiveStateHealthAccessNov2026.js"],
+            "nigeria-fifth-five-state-health-access": ["./src/data/nigeriaFifthFiveStateHealthAccessNov2026.js"],
+            "nigeria-sixth-five-state-access": ["./src/data/nigeriaSixthFiveStateAccessNov2026.js"],
+            // Preserve the same static catalog lookup while splitting the two largest
+            // Nigeria source batches out of the aggregate export chunk.
+            "nigeria-next-five-state-expansion": ["./src/data/nigeriaNextFiveStateExpansion.js"],
+            "nigeria-five-jurisdiction-expansion": ["./src/data/nigeriaFiveJurisdictionExpansion.js"],
+            "nigeria-five-state-access-oct31-part2": ["./src/data/nigeriaFiveStateAccessOct31Part2.js"],
             "delaware-resource-directory": ["./src/data/delawareDirectory.js"],
             "hawaii-resource-directory": ["./src/data/hawaiiDirectory.js"],
             "idaho-resource-directory": ["./src/data/idahoDirectory.js"],

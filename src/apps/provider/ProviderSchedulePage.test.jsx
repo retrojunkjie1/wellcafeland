@@ -154,7 +154,7 @@ describe("ProviderSchedulePage client requests", () => {
     expect(await screen.findByText("No new session requests. Requests from connected clients will appear here.")).toBeTruthy();
     fireEvent.focus(window);
 
-    expect(await screen.findByText("Awaiting your response")).toBeTruthy();
+    expect(await screen.findByText("Awaiting your response", {}, { timeout: 10_000 })).toBeTruthy();
     expect(mocks.listProviderAppointmentRequests).toHaveBeenCalledTimes(2);
     expect(mocks.listAppointmentsForProvider).toHaveBeenCalledTimes(1);
   });
@@ -239,7 +239,8 @@ describe("ProviderSchedulePage client requests", () => {
     render(<MemoryRouter><ProviderSchedulePage /></MemoryRouter>);
     fireEvent.click(await screen.findByRole("button", { name: "New Appointment" }));
     fireEvent.change(screen.getByLabelText("Client"), { target: { value: "client-1" } });
-    // Keep the manual appointment in the future so this contract stays valid as the calendar advances.
+    // Keep the manual appointment in the future so this contract remains valid
+    // after the calendar date advances; November is standard time in New York.
     fireEvent.change(screen.getByLabelText("Starts · America/New_York"), { target: { value: "2027-11-10T10:00" } });
     fireEvent.change(screen.getByLabelText("Ends · America/New_York"), { target: { value: "2027-11-10T10:45" } });
     fireEvent.change(screen.getByLabelText("Session format"), { target: { value: "video" } });

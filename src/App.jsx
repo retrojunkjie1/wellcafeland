@@ -201,7 +201,7 @@ const App = () => {
           <Route path="/recovery/stories" element={<RecoveryStoriesPage />} />
           <Route path="/milestones" element={<MilestonesPage />} />
           <Route path="/agents" element={<AgentsPage />} />
-          <Route path="/tools" element={<ToolRouteBoundary><ToolsPage /></ToolRouteBoundary>} />
+          <Route path="/tools" element={<ToolRouteBoundary loadingClassName="wc-daily-practice relative w-full max-w-none overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-amber-900/20"><ToolsPage /></ToolRouteBoundary>} />
           <Route path="/tools/classic" element={<Navigate to="/tools" replace />} />
           <Route path="/tools/:toolId" element={<ToolRouteBoundary><ToolDetailPage /></ToolRouteBoundary>} />
           <Route path="/tools/voice-journal" element={<ToolRouteBoundary><VoiceJournal /></ToolRouteBoundary>} />

@@ -21,6 +21,7 @@ import { VoiceSessionProvider } from "@/experience/voice/VoiceSessionProvider";
 import { useOSStore } from "@/stores/useOSStore";
 import { setTheme } from "@/theme/themeStore";
 import RouteContentBoundary from "@/components/routing/RouteContentBoundary";
+import Loading from "@/components/Loading";
 
 const isChatRoute = (path) => path === "/" || path.startsWith("/chat");
 const isToolDetailRoute = (path) =>
@@ -86,7 +87,7 @@ export default function ExperienceShell() {
       style={{ height: "100dvh" }}
     >
       {/* Global header — single AppTopBar, no overlap */}
-      <AppTopBar isGuest={isGuest} isAuthenticated={isAuthenticated} user={user} onLogout={logout} />
+      <AppTopBar isGuest={isGuest} isAuthenticated={isAuthenticated} user={user} authLoading={authLoading} onLogout={logout} />
 
       {/* MainSurface */}
       <main
@@ -98,7 +99,13 @@ export default function ExperienceShell() {
           <OSPageChrome />
           <KillSwitchGate>
             <RouteContentBoundary resetKey={location.key}>
-              <Outlet />
+              <React.Suspense fallback={(
+                <div className="flex min-h-[45vh] items-center justify-center" role="status" aria-live="polite">
+                  <Loading message="Opening this page…" />
+                </div>
+              )}>
+                <Outlet />
+              </React.Suspense>
             </RouteContentBoundary>
           </KillSwitchGate>
         </NavigationProvider>

@@ -4,29 +4,9 @@
  * not independent checks of local capacity, eligibility, or current openings.
  */
 
-const REVIEWED_AT = "2026-10-23";
+import { pathway } from "./internationalSupportDirectoryPathway.js";
+import { UK_SUPPORT_DIRECTORY } from "./ukInternationalSupportDirectory.js";
 
-function pathway(country, countryCode, category, id, name, resourceType, description, phone, link, source, extra = {}) {
-  return {
-    id: `${countryCode.toLowerCase()}-${id}`,
-    country,
-    countryCode,
-    region: country,
-    directoryRole: extra.directoryRole || (extra.city ? "local-provider" : "national-referral"),
-    resourceType,
-    name,
-    description,
-    phone: phone || null,
-    link,
-    source,
-    checkedAt: REVIEWED_AT,
-    locationLine: `Nationwide ${country} contact or service finder`,
-    ...extra,
-    category,
-  };
-}
-
-const UK = "United Kingdom";
 const CANADA = "Canada";
 const AUSTRALIA = "Australia";
 const NEW_ZEALAND = "New Zealand";
@@ -56,27 +36,6 @@ const TORONTO = {
   ],
 };
 
-const MANCHESTER = {
-  programs: [
-    pathway(UK, "GB", "programs", "manchester-cgl-drug-alcohol", "Change Grow Live — Manchester Drug and Alcohol Service", "Community substance-use treatment and recovery support", "Self-referral is accepted. The service describes assessment, harm reduction, medically assisted treatment, community detox, referral for inpatient detox, peer groups, and aftercare. Contact the team to discuss your needs and confirm current access before travelling.", "0161 823 6306", "https://www.nhs.uk/services/service-directory/change-grow-live-drug-and-alcohol-service-%E2%80%93-manchester/N11029679", "NHS service directory and Change Grow Live", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", address: "Phoenix Mills, 20 Piercy Street, Ancoats, Manchester M4 7HY", locationLine: "Manchester residents · self-referral accepted · Monday–Friday, 9am–5pm" }),
-    pathway(UK, "GB", "programs", "manchester-smithfield-detox", "Turning Point — Smithfield Detox Unit", "24/7 inpatient drug and alcohol detoxification", "A specialist inpatient unit providing medically managed detox and psychosocial support. The NHS lists self-referral or referral by another agency. Call admissions to confirm the assessment process and whether the service fits your situation.", "0161 827 8570", "https://www.nhs.uk/services/service-directory/turning-point-smithfield-detox-unit/N10863240", "NHS service directory", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", address: "Thompson Street, Collyhurst, Manchester M4 5FY", locationLine: "Manchester · inpatient service · call before attending" }),
-  ],
-  peer: [
-    pathway(UK, "GB", "peer", "manchester-lgbt-foundation-recovery", "LGBT Foundation — drug and alcohol recovery support", "Specialist recovery groups and one-to-one support", "Works with Manchester's drug and alcohol service to offer one-to-one support, drop-ins, recovery groups, harm-reduction advice, and referrals. For LGBTQ+ people affected by drugs, alcohol, or chemsex. Call to confirm group schedule and how to join.", "0345 330 3030", "https://www.nhs.uk/services/service-directory/lgbt-foundation/N11066730", "NHS service directory and LGBT Foundation", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", address: "Fairbairn House, 2nd Floor, 72 Sackville Street, Manchester M1 3NJ", locationLine: "Manchester · contact to register and confirm current group times" }),
-  ],
-  housing: [
-    pathway(UK, "GB", "housing", "manchester-emergency-homelessness", "Manchester City Council — nowhere safe to stay tonight", "24-hour homelessness response", "If you have nowhere to stay tonight, Manchester City Council publishes this 24-hour number for homelessness emergencies. Explain where you are and what makes the situation urgent so staff can advise on the next step. The service does not publish a walk-in bed list.", "0161 234 5001", "https://www.manchester.gov.uk/people-and-communities/in-an-emergency", "Manchester City Council", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", locationLine: "Manchester City Council area · 24 hours a day" }),
-  ],
-  "food.essentials": [
-    pathway(UK, "GB", "food.essentials", "manchester-cost-of-living-food", "Manchester Cost of Living Advice Line — food and essentials", "Food support, benefits, bills, and cost-of-living advice", "For Manchester residents struggling with food or energy costs. Advisers can help locate community food provision, discuss benefits and rent, and explain other local support. The council lists this line Monday to Friday, 9am–4:30pm; check the service page if your council area is uncertain.", "0800 023 2692", "https://www.manchester.gov.uk/people-and-communities/help-with-the-cost-of-living-crisis/cost-of-living-advice-line", "Manchester City Council", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", locationLine: "Manchester residents · phone advice Monday–Friday, 9am–4:30pm" }),
-  ],
-  grants: [
-    pathway(UK, "GB", "grants", "manchester-benefits-contact", "Manchester benefits team", "Local benefits and application support", "Contact the council about benefit claims, evidence, appointments, or difficulties applying. Reception is appointment-only for benefits, so call first; the council also points residents to library locations for document copying.", "0161 234 5003", "https://www.manchester.gov.uk/benefits-and-support/benefits-contacts-appointments-and-reception-points", "Manchester City Council", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", locationLine: "Manchester residents · call before visiting" }),
-  ],
-  hotlines: [
-    pathway(UK, "GB", "hotlines", "manchester-council-emergency-response", "Manchester urgent social care and safety response", "24-hour local emergency contact", "Manchester City Council lists this number for urgent social-care concerns and homelessness when someone has nowhere to stay at night. For immediate threat to life or safety, call 999.", "0161 234 5001", "https://www.manchester.gov.uk/people-and-communities/in-an-emergency", "Manchester City Council", { city: "Manchester", state: "Greater Manchester", region: "Manchester, UK", locationLine: "Manchester City Council area · 24/7 emergency-only council line" }),
-  ],
-};
 
 const SYDNEY = {
   programs: [
@@ -149,26 +108,6 @@ const SYDNEY = {
 
 // Additional metro records: explicit service scope, intake path and published
 // contact details keep these useful without implying that capacity is live.
-const LONDON = {
-  programs: [
-    pathway(UK, "GB", "programs", "london-better-lives-islington", "Better Lives — Islington drug and alcohol service", "Free confidential assessment and treatment", "Adults aged 18+ can self-refer by phone, online, or at a drop-in. The NHS Trust lists assessment, treatment, family support, peer mentors, and specialist staff. Service area: Islington; ask the team which of its three sites is best for you and confirm current intake before travelling.", "0203 317 6650", "https://www.northlondonmentalhealth.nhs.uk/service-details/service/better-lives-islingtons-drug-and-alcohol-service-157/", "North London NHS Foundation Trust", { city: "London", state: "Greater London", region: "London, UK", address: "309 Gray’s Inn Road, London WC1X 8QS (one of three sites)", locationLine: "Islington residents · self-referral · weekday drop-in; call for current hours" }),
-  ],
-  peer: [
-    pathway(UK, "GB", "peer", "london-aa-southern-service-office", "Alcoholics Anonymous — Southern Service Office", "London-area peer recovery contact and meeting directory", "Contact the London service office for help connecting with AA groups in southern and central London. The listed address is an administrative service office, not a meeting venue; use the official meeting finder or call to confirm a meeting place, time, and access before travelling.", "020 7407 9217", "https://www.alcoholics-anonymous.org.uk/helpline/contact/", "Alcoholics Anonymous Great Britain", { city: "London", state: "Greater London", region: "London, UK", address: "Unit B, 15 Bell Yard Mews, London SE1 3TY", locationLine: "London service office · weekdays 10am–4pm · not a meeting venue" }),
-  ],
-  housing: [
-    pathway(UK, "GB", "housing", "london-manna-centre-day-support", "Manna Centre — practical help for people without a safe place", "Day-centre housing advice, food, clothing, showers, and health support", "The Lambeth Council directory lists a walk-in day centre for single homeless people. Support includes housing and welfare advice, food, clothing, showers, visiting health workers, and employment advice. Advice is first come, first served; call to confirm today's access. This is a day centre, not overnight accommodation.", "020 7403 1931", "https://www.lambeth.gov.uk/housing/finding-home/homelessness-prevention-housing-advice/day-centres-rough-sleepers/manna-centre", "Lambeth Council", { city: "London", state: "Greater London", region: "London, UK", address: "6 Melior Street, London SE1 3QP", locationLine: "London Bridge area · walk-in day centre · no overnight beds" }),
-  ],
-  "food.essentials": [
-    pathway(UK, "GB", "food.essentials", "london-manna-centre-food", "Manna Centre — free food and essentials", "Day-centre food, clothing, showers, and welfare support", "For single homeless people and others in need, the council-listed centre provides free food and practical support alongside housing and welfare advice. Drop-in access is first come, first served. Call before travelling to confirm current service hours and availability.", "020 7403 1931", "https://www.lambeth.gov.uk/housing/finding-home/homelessness-prevention-housing-advice/day-centres-rough-sleepers/manna-centre", "Lambeth Council", { city: "London", state: "Greater London", region: "London, UK", address: "6 Melior Street, London SE1 3QP", locationLine: "London Bridge area · food and practical support at a day centre" }),
-  ],
-  grants: [
-    pathway(UK, "GB", "grants", "london-local-benefit-and-cost-support", "London local benefit and hardship support", "Borough benefit, housing-cost, and emergency assistance routes", "London boroughs manage their own benefit advice, council-tax reductions, housing-cost help, and emergency hardship schemes. Select your borough on the Mayor of London's local support page, then contact that borough or advice centre to check eligibility and apply. This is a local-route directory, not a direct cash grant.", null, "https://www.london.gov.uk/programmes-strategies/communities-and-social-justice/help-cost-living/income-and-budgeting/local-support", "Greater London Authority", { city: "London", state: "Greater London", region: "London, UK", locationLine: "Choose your London borough for the responsible council and advice service" }),
-  ],
-  hotlines: [
-    pathway(UK, "GB", "hotlines", "london-cnwl-mental-health-crisis-line", "NHS Central and North West London — 24/7 crisis line", "Urgent mental-health support for London boroughs in the CNWL area", "Call for urgent mental-health support, emotional support, and advice. The free line is open 24/7 for adults, children, people not previously known to services, and concerned carers. The trust serves specific London boroughs; call 111 and choose the mental-health option if your borough is outside its area. For immediate danger, call 999.", "0800 0234 650", "https://www.cnwl.nhs.uk/patients-and-carers/help-mental-physical-health-crisis", "Central and North West London NHS Foundation Trust", { city: "London", state: "Greater London", region: "London, UK", locationLine: "CNWL London boroughs · free 24/7 crisis line · check borough coverage" }),
-  ],
-};
 
 const MELBOURNE = {
   programs: [
@@ -783,56 +722,12 @@ const WOLLONGONG = {
   grants: [pathway(AUSTRALIA, "AU", "grants", "wollongong-illawarra-legal-financial-counselling", "Illawarra Legal Centre — financial and tenancy counselling", "Free financial counselling, welfare rights and tenant advice", "The City of Wollongong lists free legal advice, tenancy and welfare-rights services, and financial counselling for the Wollongong, Shellharbour and Kiama areas. Call during listed service hours to check eligibility and book; this is advice and advocacy, not a cash-grant program.", "02 4276 1939", "https://illawarralegalcentre.org.au/", "City of Wollongong", { city: "Wollongong", state: "New South Wales", region: "Wollongong, Australia", address: "Suite 4, Level 2, 166 Keira Street, Wollongong NSW 2500", locationLine: "Wollongong · free advice and financial counselling · call for current appointment" })],
 };
 
+// Additional nation- and city-specific UK pathways. The cited council, NHS,
+// and provider pages publish these routes; users should still confirm intake,
+// opening hours, eligibility, and current availability directly.
+
 export const INTERNATIONAL_SUPPORT_DIRECTORY = {
-  "United Kingdom": {
-    countryCode: "GB",
-    aliases: ["uk", "u.k.", "great britain", "britain", "england", "scotland", "wales", "northern ireland"],
-    cityAliases: ["london", "manchester", "birmingham", "liverpool", "glasgow", "edinburgh", "cardiff", "belfast", "leeds", "bristol"],
-    categories: {
-      programs: [
-        pathway(UK, "GB", "programs", "frank-treatment-navigation", "FRANK — drug and alcohol support", "Treatment navigation · national helpline", "Free, confidential advice about drugs and help finding local treatment options. Call to discuss what support is available in your area; FRANK is a navigation service, not a treatment clinic.", "0300 123 6600", "https://www.talktofrank.com/", "FRANK · UK government-supported service"),
-        pathway(UK, "GB", "programs", "nhs-alcohol-treatment", "NHS — alcohol support and treatment", "Public health service finder", "Explore NHS information about alcohol treatment and support, then use your GP or local council's commissioned service for an assessment. Local services and referral routes vary.", null, "https://www.nhs.uk/live-well/alcohol-advice/alcohol-support/", "National Health Service (NHS)"),
-        pathway(UK, "GB", "programs", "nhs-drug-treatment", "NHS — help with drug addiction", "Public health service finder", "Read NHS guidance and use its routes to seek help for drug dependence. For a local service, ask your GP or council about the commissioned treatment provider in your area.", null, "https://www.nhs.uk/live-well/healthy-body/drug-addiction-getting-help/", "National Health Service (NHS)"),
-        ...LONDON.programs,
-        ...MANCHESTER.programs,
-      ],
-      peer: [
-        pathway(UK, "GB", "peer", "aa-uk-helpline", "Alcoholics Anonymous Great Britain", "Peer recovery · 24-hour help line and meeting finder", "Speak with AA or search its current meeting finder for local groups. Call ahead to confirm the meeting time, format, and venue.", "0800 9177 650", "https://www.alcoholics-anonymous.org.uk/", "Alcoholics Anonymous Great Britain"),
-        pathway(UK, "GB", "peer", "na-uk-meeting-finder", "Narcotics Anonymous UK", "Peer recovery · meeting finder", "Search the UK NA meeting finder for in-person and online groups. Meeting details are maintained by local NA communities and can change.", null, "https://ukna.org/", "Narcotics Anonymous UK"),
-        pathway(UK, "GB", "peer", "smart-uk-meetings", "SMART Recovery UK", "Peer recovery · meeting finder", "Find SMART Recovery groups and online meetings. Check each listing for current schedule, format, and joining instructions.", null, "https://smartrecovery.org.uk/", "SMART Recovery UK"),
-        ...LONDON.peer,
-        ...MANCHESTER.peer,
-      ],
-      housing: [
-        pathway(UK, "GB", "housing", "shelter-england", "Shelter England — urgent housing advice", "Housing and homelessness advice · England", "Call for advice if you are homeless, at risk of losing your home, or have nowhere safe to sleep. Shelter England covers England; Scotland, Wales, and Northern Ireland have separate housing routes. It is an advice line, not an accommodation vacancy list.", "0808 800 4444", "https://england.shelter.org.uk/", "Shelter England · contact details also published by local councils"),
-        pathway(UK, "GB", "housing", "gov-uk-homeless-help", "Find your local council's homelessness team", "Emergency housing referral · local authority", "The local council can assess homelessness and may offer emergency or longer-term housing support. Open the official guide and select the nation where you live; eligibility and duties differ across the UK.", null, "https://www.gov.uk/if-youre-homeless-at-risk-of-homelessness", "GOV.UK · Department for Levelling Up, Housing and Communities"),
-        pathway(UK, "GB", "housing", "refuge-domestic-abuse", "National Domestic Abuse Helpline", "Confidential refuge and safety planning · England", "For women experiencing domestic abuse in England, call for confidential support and help locating refuge options. Do not travel to an address without speaking to the service first; refuge locations are confidential.", "0808 2000 247", "https://www.nationaldahelpline.org.uk/", "Refuge and Women's Aid"),
-        ...LONDON.housing,
-        ...MANCHESTER.housing,
-      ],
-      "food.essentials": [
-        pathway(UK, "GB", "food.essentials", "trussell-help-through-hardship", "Trussell — Help through Hardship", "Food and essentials · referral and advice line · England and Wales", "Free, confidential advice for people struggling to afford essentials. Advisers can check benefit options and may help arrange emergency food support. Open Monday to Friday, 9am–5pm; this is not a walk-in pantry.", "0808 208 2138", "https://foodbank.trussell.org.uk/help-and-advice/help-through-hardship-helpline", "Trussell and Citizens Advice"),
-        pathway(UK, "GB", "food.essentials", "trussell-foodbank-finder", "Find a Trussell food bank", "Food bank locator · England, Wales, and Northern Ireland", "Search for a local food bank and check how referrals work in your area. Some locations require a referral and food availability changes; contact the local service before travelling.", null, "https://www.trussell.org.uk/emergency-food/find-a-foodbank", "Trussell"),
-        pathway(UK, "GB", "food.essentials", "gov-uk-free-school-meals", "Free school meals and local support", "Government food benefit information", "Check the official eligibility guidance and application route for free school meals in England. Scotland, Wales, and Northern Ireland use their own application routes.", null, "https://www.gov.uk/apply-free-school-meals", "GOV.UK · Department for Education"),
-        ...LONDON["food.essentials"],
-        ...MANCHESTER["food.essentials"],
-      ],
-      grants: [
-        pathway(UK, "GB", "grants", "universal-credit-helpline", "Universal Credit — claim and payment support", "Government benefit · helpline", "Call about a Universal Credit claim or payment. The helpline is open Monday to Friday, 8am–6pm; it serves England, Scotland, and Wales. Northern Ireland has a separate service centre.", "0800 328 5644", "https://www.gov.uk/universal-credit/contact-universal-credit", "Department for Work and Pensions (DWP)"),
-        pathway(UK, "GB", "grants", "citizens-advice-help-to-claim", "Citizens Advice — Help to Claim", "Benefits application support", "Get confidential help understanding and making a Universal Credit claim. Citizens Advice can help with eligibility questions, the application, and preparing for the first appointment.", null, "https://www.citizensadvice.org.uk/benefits/universal-credit/claiming/", "Citizens Advice · service information published by GOV.UK"),
-        pathway(UK, "GB", "grants", "gov-uk-benefits", "GOV.UK — benefits and financial support", "Government benefit finder", "Use the official service to explore benefits, eligibility, and applications. The right benefit and application route depend on where you live and your circumstances.", null, "https://www.gov.uk/browse/benefits", "GOV.UK"),
-        ...LONDON.grants,
-        ...MANCHESTER.grants,
-      ],
-      hotlines: [
-        pathway(UK, "GB", "hotlines", "uk-emergency-999-112", "Emergency services", "Immediate danger · emergency line", "If someone is in immediate danger or needs urgent medical help in the UK, call 999 or 112.", "999", "https://www.gov.uk/guidance/999-and-112-the-uks-national-emergency-numbers", "UK Government"),
-        pathway(UK, "GB", "hotlines", "samaritans-uk", "Samaritans", "Emotional support · free 24-hour listening line", "Call free at any time, day or night, to talk with a trained listening volunteer. If there is immediate danger, call 999.", "116 123", "https://www.samaritans.org/how-we-can-help/contact-samaritan/", "Samaritans"),
-        pathway(UK, "GB", "hotlines", "nhs-111-urgent-help", "NHS 111 — urgent medical help", "Urgent health advice · England", "For urgent medical help that is not a life-threatening emergency in England, use NHS 111 online or by phone. Scotland, Wales, and Northern Ireland have different urgent-care routes.", "111", "https://111.nhs.uk/", "National Health Service (NHS)"),
-        ...LONDON.hotlines,
-        ...MANCHESTER.hotlines,
-      ],
-    },
-  },
+  "United Kingdom": UK_SUPPORT_DIRECTORY,
   Canada: {
     countryCode: "CA",
     aliases: ["canada", "ca"],
@@ -1062,12 +957,11 @@ export function resolveSupportCountry(location = "") {
     const candidates = [country.toLowerCase(), countryCode.toLowerCase(), ...aliases];
     if (candidates.some((alias) => new RegExp(`(?:^|[^a-z0-9])${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z0-9])`).test(normalized))) return country;
   }
-  // A bare major city is accepted as a convenience. For a multi-part place
-  // such as "London, Ontario", require the user to include the country.
-  if (!normalized.includes(",")) {
-    for (const country of COUNTRY_KEYS) {
-      if (INTERNATIONAL_SUPPORT_DIRECTORY[country].cityAliases?.includes(normalized)) return country;
-    }
+  // Exact listed city aliases may include a qualifier such as "Bangor, County
+  // Down". Ambiguous multi-part places like "London, Ontario" are not aliases
+  // and still require the user to include the country.
+  for (const country of COUNTRY_KEYS) {
+    if (INTERNATIONAL_SUPPORT_DIRECTORY[country].cityAliases?.includes(normalized)) return country;
   }
   return null;
 }

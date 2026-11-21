@@ -16,7 +16,7 @@ const CinematicContainer = ({ children, theme = "calm", className = "" }) => {
   const gradient = gradients[theme] || gradients.calm;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${gradient} relative overflow-hidden ${className}`}>
+    <div className={`min-h-full bg-gradient-to-b ${gradient} relative overflow-hidden ${className}`}>
       {/* Ambient glow overlay */}
       <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/40 pointer-events-none" />
       

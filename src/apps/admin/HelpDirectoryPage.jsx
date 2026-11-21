@@ -8,7 +8,7 @@ import USCoverageAudit from "./USCoverageAudit";
 
 const FILTERS = ["draft", "published", "paused", "archived", "all"];
 const EMPTY = { name: "", category: "housing", description: "", address: "", city: "", state: "", subdivision: "", postalCode: "", phone: "", alternatePhone: "", email: "", country: "United States", countryCode: "US", sourceName: "", sourceUrl: "", permissionBasis: "", checkedAt: new Date().toISOString().slice(0, 10) };
-const CATEGORY_LABELS = { housing: "Housing", food: "Food", funding: "Financial support", programs: "Programs", circles: "Peer and community support", emergency: "Urgent support", transport: "Transportation", other: "Other support" };
+const CATEGORY_LABELS = { housing: "Housing", food: "Food", funding: "Financial support", programs: "Programs", health: "Healthcare access", circles: "Peer and community support", emergency: "Urgent support", transport: "Transportation", other: "Other support" };
 const ISSUE_LABELS = { wrong_address: "Address may be wrong", wrong_phone: "Phone may be wrong", hours_or_availability: "Hours or availability changed", services_changed: "Services or eligibility changed", closed: "May be closed", other: "Other issue" };
 const dateLabel = (value) => value ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" }) : "Not recorded";
 
