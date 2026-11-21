@@ -78,6 +78,7 @@ export default defineConfig(({ mode }) => {
             "uk-international-support-directory": ["./src/data/ukInternationalSupportDirectory.js"],
             "uk-northern-ireland-directory": ["./src/data/ukNorthernIrelandDirectory.js"],
             "uk-northern-ireland-next-directory": ["./src/data/ukNorthernIrelandNextDirectory.js"],
+            "uk-northern-ireland-further-directory": ["./src/data/ukNorthernIrelandFurtherDirectory.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
