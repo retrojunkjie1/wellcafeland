@@ -1,8 +1,10 @@
 // src/services/directoryService.js
 // Global Directory service for searching providers, housing, grants, assistance, hotlines, programs
-// Fully supports anonymous users with localStorage fallback
+// Anonymous directory favorites sync through Firebase Auth; an in-memory
+// session-only fallback is used if account storage is unavailable.
 
 import { collection, query, getDocs, orderBy, limit, doc, getDoc, setDoc } from "firebase/firestore";
+import { signInAnonymously } from "firebase/auth";
 import { db, auth } from "@/firebase";
 import { getAnonymousUserId } from "@/lib/userId";
 import { searchResources } from "./resourceSearch";
@@ -18,6 +20,70 @@ const DOMAINS = ["providers", "housing", "grants", "assistance", "hotlines", "pr
 // In-memory cache for recent search results (keyed by domain+query)
 const recentSearchCache = new Map();
 const CACHE_MAX_SIZE = 50; // Keep last 50 searches
+// Directory favorites can reveal sensitive support interests. If Firestore is
+// unavailable, keep them only in this page session rather than browser storage.
+const sessionFavorites = new Map();
+const LEGACY_FAVORITES_PREFIX = "wc-favorites-";
+
+function getLegacyFavoriteEntries(userId) {
+  try {
+    const allowedKeys = new Set([
+      userId && `${LEGACY_FAVORITES_PREFIX}${userId}`,
+      `${LEGACY_FAVORITES_PREFIX}${getAnonymousUserId()}`,
+    ].filter(Boolean));
+    const entries = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!allowedKeys.has(key)) continue;
+      const raw = localStorage.getItem(key);
+      const parsed = JSON.parse(raw || "[]");
+      if (Array.isArray(parsed)) entries.push({ key, favorites: parsed });
+    }
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
+async function migrateLegacyFavorites(userId) {
+  if (!db || !userId) return [];
+  const migrated = [];
+  for (const { key, favorites } of getLegacyFavoriteEntries(userId)) {
+    let complete = true;
+    for (const favorite of favorites) {
+      const domain = typeof favorite?.domain === "string" ? favorite.domain : "";
+      const itemId = typeof favorite?.itemId === "string"
+        ? favorite.itemId
+        : (domain && typeof favorite?.id === "string" && favorite.id.startsWith(`${domain}_`)
+          ? favorite.id.slice(domain.length + 1)
+          : "");
+      if (!domain || !itemId) {
+        complete = false;
+        continue;
+      }
+      const favoriteId = `${domain}_${itemId}`;
+      const data = {
+        domain,
+        itemId,
+        title: typeof favorite.title === "string" ? favorite.title : "Saved resource",
+        url: typeof favorite.url === "string" ? favorite.url : (typeof favorite.itemUrl === "string" ? favorite.itemUrl : ""),
+        description: typeof favorite.description === "string" ? favorite.description : "",
+        createdAt: favorite.createdAt || new Date().toISOString(),
+      };
+      try {
+        await setDoc(doc(db, "users", userId, "favorites", favoriteId), data, { merge: true });
+        migrated.push({ id: favoriteId, ...data });
+      } catch {
+        complete = false;
+      }
+    }
+    // Delete only after every recognizable entry in this key was copied.
+    if (complete) {
+      try { localStorage.removeItem(key); } catch { /* retain the legacy copy */ }
+    }
+  }
+  return migrated;
+}
 
 /**
  * Get current user ID (authenticated or anonymous)
@@ -499,17 +565,20 @@ export async function getDirectoryItem(domain, id) {
 }
 
 /**
- * Save a resource to favorites
- * Works for anonymous users with localStorage fallback
+ * Save a resource to favorites without persisting sensitive interests in browser storage.
  */
 export async function saveFavoriteResource(domain, item) {
-  const userId = getCurrentUserId();
-  
-  if (!userId) {
-    return { ok: false, error: "Unable to identify user" };
-  }
-
   try {
+    let userId = auth?.currentUser?.uid;
+    if (!userId && auth && db) {
+      try {
+        const credential = await signInAnonymously(auth);
+        userId = credential?.user?.uid || auth.currentUser?.uid;
+      } catch {
+        // A session-only save remains available when guest auth is unavailable.
+      }
+    }
+
     const favoriteData = {
       domain,
       itemId: item.id,
@@ -519,40 +588,27 @@ export async function saveFavoriteResource(domain, item) {
       createdAt: new Date().toISOString(),
     };
 
-    // Try Firestore first
-    if (db) {
+    const favoriteId = `${domain}_${item.id}`;
+    if (db && userId) {
       try {
-        const favoriteId = `${domain}_${item.id}`;
         const favoriteRef = doc(db, "users", userId, "favorites", favoriteId);
         await setDoc(favoriteRef, favoriteData, { merge: true });
-        return { ok: true };
+        sessionFavorites.delete(`${userId}:${favoriteId}`);
+        return { ok: true, persistence: "account" };
       } catch (err) {
-        console.warn("Failed to save favorite to Firestore, using localStorage:", err);
+        if (import.meta.env.DEV) console.warn("Directory favorite could not sync to account:", err?.code);
       }
     }
 
-    // Fallback to localStorage
-    try {
-      const key = `wc-favorites-${userId}`;
-      const existing = JSON.parse(localStorage.getItem(key) || "[]");
-      const favoriteId = `${domain}_${item.id}`;
-      const updated = existing
-        .filter((favorite) => favorite.id !== favoriteId)
-        .map((favorite) => ({
-          id: favorite.id,
-          domain: favorite.domain,
-          itemId: favorite.itemId,
-          createdAt: favorite.createdAt,
-        }));
-      // Keep the device copy to a resource reference. Titles, descriptions,
-      // contact details, and coordinates can reveal sensitive support interests.
-      updated.push({ id: favoriteId, domain, itemId: item.id, createdAt: favoriteData.createdAt });
-      localStorage.setItem(key, JSON.stringify(updated));
-      return { ok: true };
-    } catch (err) {
-      console.error("Failed to save favorite to localStorage:", err);
-      return { ok: false, error: "Failed to save favorite" };
-    }
+    const sessionUserId = userId || getCurrentUserId() || "guest-session";
+    sessionFavorites.set(`${sessionUserId}:${favoriteId}`, {
+      id: favoriteId,
+      ...favoriteData,
+      createdAt: favoriteData.createdAt,
+      _sessionOwnerId: sessionUserId,
+      _sessionOnly: true,
+    });
+    return { ok: true, persistence: "session" };
   } catch (err) {
     console.error("Error saving favorite:", err);
     return { ok: false, error: err.message || "Unknown error" };
@@ -560,81 +616,65 @@ export async function saveFavoriteResource(domain, item) {
 }
 
 /**
- * List user's favorite resources
- * Works for anonymous users
+ * List account-backed or current-session directory favorites.
  */
 export async function listFavorites(domain) {
-  const userId = getCurrentUserId();
-  
-  if (!userId) {
-    return [];
-  }
-
-  try {
-    // Try Firestore first
-    if (db) {
-      try {
-        const favoritesRef = collection(db, "users", userId, "favorites");
-        const q = query(favoritesRef, orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-
-        const favorites = [];
-        querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (!domain || data.domain === domain) {
-            favorites.push({
-              id: docSnap.id,
-              ...data,
-              createdAt: data.createdAt?.toDate?.() || data.createdAt,
-            });
-          }
-        });
-
-        return favorites;
-      } catch (err) {
-        console.warn("Failed to load favorites from Firestore, using localStorage:", err);
-      }
-    }
-
-    // Fallback to localStorage
+  let userId = auth?.currentUser?.uid;
+  if (!userId && auth && db) {
     try {
-      const key = `wc-favorites-${userId}`;
-      const existing = JSON.parse(localStorage.getItem(key) || "[]");
-      const minimized = existing.map((favorite) => ({
-        id: favorite.id,
-        domain: favorite.domain,
-        itemId: favorite.itemId,
-        createdAt: favorite.createdAt,
-      }));
-      // Migrate older device copies that stored full resource descriptions.
-      if (JSON.stringify(minimized) !== JSON.stringify(existing)) {
-        localStorage.setItem(key, JSON.stringify(minimized));
-      }
-      const visibleFavorites = domain
-        ? minimized.filter((favorite) => favorite.domain === domain)
-        : minimized;
-      return Promise.all(visibleFavorites.map(async (favorite) => {
-        const resource = favorite.domain && favorite.itemId
-          ? await getDirectoryItem(favorite.domain, favorite.itemId)
-          : null;
-        return {
-          ...favorite,
-          ...(resource || {}),
-          id: favorite.id,
-          domain: favorite.domain,
-          itemId: favorite.itemId,
-          title: resource?.title || "Saved resource",
-          createdAt: favorite.createdAt,
-        };
-      }));
-    } catch (err) {
-      console.error("Failed to load favorites from localStorage:", err);
-      return [];
+      const credential = await signInAnonymously(auth);
+      userId = credential?.user?.uid || auth.currentUser?.uid;
+    } catch {
+      // Return current-session saves below.
     }
-  } catch (err) {
-    console.error("Error listing favorites:", err);
-    return [];
   }
+
+  if (db && userId) {
+    const migratedFavorites = await migrateLegacyFavorites(userId);
+    try {
+      const favoritesRef = collection(db, "users", userId, "favorites");
+      const q = query(favoritesRef, orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const favorites = [];
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!domain || data.domain === domain) {
+          favorites.push({
+            id: docSnap.id,
+            ...data,
+            createdAt: data.createdAt?.toDate?.() || data.createdAt,
+          });
+        }
+      });
+      const session = [...sessionFavorites.values()].filter((favorite) =>
+        favorite._sessionOnly && favorite._sessionOwnerId === userId && (!domain || favorite.domain === domain)
+      );
+      const pendingLegacyFavorites = getLegacyFavoriteEntries(userId)
+        .flatMap(({ favorites }) => favorites)
+        .filter((favorite) => !domain || favorite.domain === domain);
+      const byId = new Map([...migratedFavorites, ...favorites, ...session]
+        .filter((favorite) => !domain || favorite.domain === domain)
+        .map((favorite) => [favorite.id, favorite]));
+      for (const favorite of pendingLegacyFavorites) byId.set(favorite.id, favorite);
+      return [...byId.values()];
+    } catch (err) {
+      if (import.meta.env.DEV) console.warn("Directory favorites could not load from account:", err?.code);
+      if (migratedFavorites.length) return migratedFavorites;
+    }
+  }
+
+  const sessionUserId = userId || getCurrentUserId() || "guest-session";
+  const session = [...sessionFavorites.values()].filter((favorite) =>
+    favorite._sessionOnly && favorite._sessionOwnerId === sessionUserId && (!domain || favorite.domain === domain)
+  );
+  const legacy = getLegacyFavoriteEntries(sessionUserId).flatMap(({ favorites }) => favorites).filter((favorite) => !domain || favorite.domain === domain);
+  return Promise.all([...session, ...legacy].map(async (favorite) => {
+    const resource = favorite.domain && favorite.itemId
+      ? await getDirectoryItem(favorite.domain, favorite.itemId)
+      : null;
+    return { ...favorite, ...(resource || {}), id: favorite.id, domain: favorite.domain,
+      itemId: favorite.itemId, title: resource?.title || favorite.title || "Saved resource" };
+  }));
 }
 
 /**
