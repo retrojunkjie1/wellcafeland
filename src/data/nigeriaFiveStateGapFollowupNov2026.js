@@ -282,4 +282,3 @@ export const NIGERIA_FIVE_STATE_GAP_FUNDING_NOV2026 = NIGERIA_FIVE_STATE_GAP_CIR
 
 export const NIGERIA_FIVE_STATE_GAP_PEER_NOV2026 = NIGERIA_FIVE_STATE_GAP_CIRCLES_NOV2026
   .filter((item) => item.primaryCategory === "circles");
-
