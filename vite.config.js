@@ -76,6 +76,8 @@ export default defineConfig(({ mode }) => {
             // Keep the UK locality catalog in its own cacheable bundle while the
             // other international country catalogs remain in their existing module.
             "uk-international-support-directory": ["./src/data/ukInternationalSupportDirectory.js"],
+            "uk-northern-ireland-directory": ["./src/data/ukNorthernIrelandDirectory.js"],
+            "uk-northern-ireland-next-directory": ["./src/data/ukNorthernIrelandNextDirectory.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.

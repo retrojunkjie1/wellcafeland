@@ -16,7 +16,7 @@ import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "@/data/nigeriaOgunCros
 import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage, NIGERIA_DIRECTORY_COVERAGE } from "@/data/nigeriaDirectoryCoverage";
 import { isHelpCategoryRelevant } from "@/apps/workspace/assistanceListingUtils";
-import { resolveSupportCountry } from "@/data/internationalSupportDirectory";
+import { getCountrySupportResources, resolveSupportCountry } from "@/data/internationalSupportDirectory";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
@@ -33,6 +33,20 @@ describe("category fallback pathways", () => {
     for (const town of ["Ballymena", "Coleraine", "Cookstown", "Enniskillen", "Omagh", "Craigavon"]) {
       expect(resolveSupportCountry(town)).toBe("United Kingdom");
     }
+  });
+
+  it("indexes the six-town Northern Ireland batch without duplicate or uncategorized records", () => {
+    const towns = ["Portadown", "Dungannon", "Limavady", "Ballymoney", "Ballycastle", "Larne"];
+    const records = ["programs", "peer", "housing", "food.essentials", "grants", "hotlines"]
+      .flatMap((category) => getCountrySupportResources("United Kingdom", category))
+      .filter((record) => towns.includes(record.city));
+    const ids = records.map(({ id }) => id);
+
+    expect(records).toHaveLength(41);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(Object.fromEntries(towns.map((town) => [town, records.filter(({ city }) => city === town).length])))
+      .toEqual({ Portadown: 6, Dungannon: 7, Limavady: 7, Ballymoney: 7, Ballycastle: 7, Larne: 7 });
+    for (const town of towns) expect(resolveSupportCountry(town)).toBe("United Kingdom");
   });
 
   it("keeps mapped primary-care points searchable as health access, separate from recovery programs", () => {
