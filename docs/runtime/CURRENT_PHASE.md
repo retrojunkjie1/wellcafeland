@@ -1,5 +1,11 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-21 — High and medium CodeQL findings remediated (main deployed)
+
+Closed the two CodeQL findings tracked in the security-remediation work. PR [#131](https://github.com/retrojunkjie1/wellcafeland/pull/131) (`57b11939299325def094b7cc27a2a7e27882457e`) moved directory favorites out of browser localStorage into owner-scoped Firestore storage, retaining session-only fallback when persistence is unavailable and preserving legacy data unless migration fully succeeds. PR [#132](https://github.com/retrojunkjie1/wellcafeland/pull/132) (`f9070d42bfa40a1b0134f6c9667a84677d0083a1`) made the Fireworks model verifier take its API key only from the process environment; `.env` continues to provide nonsecret model IDs.
+
+GitHub-hosted required checks passed on both PRs. Focused favorite-storage and verifier tests passed; the hosted release suite passed tests, production build, Firebase client/App Check preflight, Hosting deployment, and voice-functions deployment. Main deployment workflow [44939158459](https://github.com/retrojunkjie1/wellcafeland/actions/runs/44939158459) and CodeQL workflow [44939158267](https://github.com/retrojunkjie1/wellcafeland/actions/runs/44939158267) completed successfully. GitHub reports CodeQL alerts #1 (`js/clear-text-storage-of-sensitive-data`) and #58 (`js/file-access-to-http`) as fixed, with no open CodeQL alerts at the post-scan check. Both `wellnesscafelanding.web.app` and `wellnesscafe.app` returned HTTP 200 after deployment. This verifies release availability and alert closure, not authenticated favorite persistence in a live user journey or full-system Definition of Done.
+
 ### 2026-11-21 — Six England localities (Hosting and voice Functions deployed)
 
 Added 53 source-reviewed access routes across Brighton & Hove (8), Milton Keynes (10), Stoke-on-Trent (10), Sunderland (7), York (9), and Wakefield (9), covering treatment/programs (7), peer/community (9), housing (12), food/essentials (11), grants/benefits (10), and urgent support (4). All prior catalog records and IDs were retained. The current UK catalog reconciles to 1,100 records: 1,082 locality-tagged (England 472, Scotland 183, Wales 211, Northern Ireland 216) and 18 country-level routes. England now has 27 tracked locality clusters; none of the four UK countries is marked complete or exhaustive.
