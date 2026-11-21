@@ -957,12 +957,11 @@ export function resolveSupportCountry(location = "") {
     const candidates = [country.toLowerCase(), countryCode.toLowerCase(), ...aliases];
     if (candidates.some((alias) => new RegExp(`(?:^|[^a-z0-9])${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^a-z0-9])`).test(normalized))) return country;
   }
-  // A bare major city is accepted as a convenience. For a multi-part place
-  // such as "London, Ontario", require the user to include the country.
-  if (!normalized.includes(",")) {
-    for (const country of COUNTRY_KEYS) {
-      if (INTERNATIONAL_SUPPORT_DIRECTORY[country].cityAliases?.includes(normalized)) return country;
-    }
+  // Exact listed city aliases may include a qualifier such as "Bangor, County
+  // Down". Ambiguous multi-part places like "London, Ontario" are not aliases
+  // and still require the user to include the country.
+  for (const country of COUNTRY_KEYS) {
+    if (INTERNATIONAL_SUPPORT_DIRECTORY[country].cityAliases?.includes(normalized)) return country;
   }
   return null;
 }

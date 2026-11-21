@@ -16,12 +16,19 @@ import { NIGERIA_OGUN_CROSS_RIVER_EXPANSION_OCT31 } from "@/data/nigeriaOgunCros
 import { NIGERIA_PEER_RESOURCES, NIGERIA_URGENT_RESOURCES } from "@/data/nigeriaRecoveryDirectory";
 import { getNigeriaStateCoverage, NIGERIA_DIRECTORY_COVERAGE } from "@/data/nigeriaDirectoryCoverage";
 import { isHelpCategoryRelevant } from "@/apps/workspace/assistanceListingUtils";
+import { resolveSupportCountry } from "@/data/internationalSupportDirectory";
 
 vi.mock("@/services/foodDirectory", () => ({
   getFoodStateCode: (value) => ({ California: "CA", Colorado: "CO", CO: "CO", Texas: "TX", TX: "TX" }[value] || null),
 }));
 
 describe("category fallback pathways", () => {
+  it("resolves Bangor, County Down separately from ambiguous city aliases", () => {
+    expect(resolveSupportCountry("Bangor, County Down")).toBe("United Kingdom");
+    expect(resolveSupportCountry("Bangor, Wales")).toBe("United Kingdom");
+    expect(resolveSupportCountry("London, Ontario")).toBeNull();
+  });
+
   it("keeps mapped primary-care points searchable as health access, separate from recovery programs", () => {
     const records = getCuratedFallback("health", "primary health facility clinic", "Katsina, Nigeria");
     expect(records).toHaveLength(45);
