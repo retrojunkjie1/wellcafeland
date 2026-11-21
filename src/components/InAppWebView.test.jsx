@@ -36,4 +36,20 @@ describe("InAppWebView", () => {
     expect(screen.getByText(/Your WellnessCafe search stays open/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: new RegExp(`Continue to ${heading === "Apply for Colorado benefits" ? "Colorado PEAK benefits" : "MyFriendBen benefits check"}`) })).toHaveAttribute("target", "_blank");
   });
+
+  it.each(["javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "https://user:password@example.org/"]) (
+    "does not create external navigation for an unsafe URL: %s",
+    (url) => {
+      render(<InAppWebView url={url} title="Resource" onClose={vi.fn()} onOpenExternally />);
+
+      expect(screen.getByRole("alert")).toHaveTextContent(/invalid or uses an unsupported address/i);
+      expect(screen.queryByRole("link")).toBeNull();
+    },
+  );
+
+  it("continues to open a valid provider URL on http when that is the only published address", () => {
+    render(<InAppWebView url="http://example.org/help" title="Resource" onClose={vi.fn()} onOpenExternally />);
+
+    expect(screen.getByRole("link", { name: /Open official resource/ })).toHaveAttribute("href", "http://example.org/help");
+  });
 });

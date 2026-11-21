@@ -4,48 +4,67 @@
 import React from "react";
 import { ExternalLink, ArrowLeft } from "lucide-react";
 
-function getSourcePreview(url) {
+function parseSafeExternalUrl(value) {
   try {
-    const host = new URL(url).hostname.replace(/^www\./, "");
-    if (host === "feedingamerica.org" || host.endsWith(".feedingamerica.org")) {
-      return {
-        title: "Feeding America food bank finder",
-        heading: "Find a local food bank",
-        description: "Feeding America’s network connects people with local food banks. Each local partner shares its own pantry locations, hours, and services. Search the official finder by ZIP code, then confirm details with the food bank before traveling.",
-      };
-    }
-    if (host === "mealsonwheelsamerica.org" || host.endsWith(".mealsonwheelsamerica.org")) {
-      return {
-        title: "Meals on Wheels service finder",
-        heading: "Find meal support for older adults",
-        description: "Meals on Wheels programs are run by local providers. Services and eligibility vary by area. Use the official ZIP-code finder to connect with a nearby program and confirm its details.",
-      };
-    }
-    if (host === "co.myfriendben.org" || host.endsWith(".myfriendben.org")) {
-      return {
-        eyebrow: "BENEFIT FINDER",
-        title: "MyFriendBen benefits check",
-        heading: "See benefit options that may fit",
-        description: "MyFriendBen helps Denver residents explore public benefits, local programs, and tax credits. It can show estimated value and application effort; the benefit provider makes the final eligibility decision.",
-      };
-    }
-    if (host === "peak.my.site.com" || host.endsWith(".peak.my.site.com") || host === "peak.state.co.us") {
-      return {
-        eyebrow: "STATE BENEFIT APPLICATION",
-        title: "Colorado PEAK benefits",
-        heading: "Apply for Colorado benefits",
-        description: "Colorado PEAK is the state’s online place to check and apply for food, cash, medical, and other benefits. You can apply as a guest or create an account to save progress and track an application.",
-      };
-    }
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    if (parsed.username || parsed.password) return null;
+    return parsed;
   } catch {
     return null;
+  }
+}
+
+function getSourcePreview(parsedUrl) {
+  const host = parsedUrl.hostname.replace(/^www\./, "");
+  if (host === "feedingamerica.org" || host.endsWith(".feedingamerica.org")) {
+    return {
+      title: "Feeding America food bank finder",
+      heading: "Find a local food bank",
+      description: "Feeding America’s network connects people with local food banks. Each local partner shares its own pantry locations, hours, and services. Search the official finder by ZIP code, then confirm details with the food bank before traveling.",
+    };
+  }
+  if (host === "mealsonwheelsamerica.org" || host.endsWith(".mealsonwheelsamerica.org")) {
+    return {
+      title: "Meals on Wheels service finder",
+      heading: "Find meal support for older adults",
+      description: "Meals on Wheels programs are run by local providers. Services and eligibility vary by area. Use the official ZIP-code finder to connect with a nearby program and confirm its details.",
+    };
+  }
+  if (host === "co.myfriendben.org" || host.endsWith(".myfriendben.org")) {
+    return {
+      eyebrow: "BENEFIT FINDER",
+      title: "MyFriendBen benefits check",
+      heading: "See benefit options that may fit",
+      description: "MyFriendBen helps Denver residents explore public benefits, local programs, and tax credits. It can show estimated value and application effort; the benefit provider makes the final eligibility decision.",
+    };
+  }
+  if (host === "peak.my.site.com" || host.endsWith(".peak.my.site.com") || host === "peak.state.co.us") {
+    return {
+      eyebrow: "STATE BENEFIT APPLICATION",
+      title: "Colorado PEAK benefits",
+      heading: "Apply for Colorado benefits",
+      description: "Colorado PEAK is the state’s online place to check and apply for food, cash, medical, and other benefits. You can apply as a guest or create an account to save progress and track an application.",
+    };
   }
   return null;
 }
 
 export default function InAppWebView({ url, title = "Preview", onClose, onOpenExternally }) {
   if (!url) return null;
-  const sourcePreview = getSourcePreview(url);
+  const externalUrl = parseSafeExternalUrl(url);
+  if (!externalUrl) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 p-6" role="alert">
+        <p className="max-w-lg text-center text-white/80">This resource link is invalid or uses an unsupported address.</p>
+        <button type="button" onClick={onClose} className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-5 font-medium text-white/85 hover:bg-white/10">
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Return to results
+        </button>
+      </div>
+    );
+  }
+  const safeHref = externalUrl.href;
+  const sourcePreview = getSourcePreview(externalUrl);
   const displayTitle = sourcePreview?.title || title;
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950">
@@ -54,7 +73,7 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
         <div className="flex items-center gap-2 flex-shrink-0">
           {onOpenExternally && (
             <a
-              href={url}
+              href={safeHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/20 px-3 text-sm text-white/80 hover:bg-white/10 transition"
@@ -84,7 +103,7 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
               <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">{sourcePreview.heading}</h1>
               <p className="mt-4 text-base leading-relaxed text-white/75">{sourcePreview.description}</p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-200 px-5 font-semibold text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+                <a href={safeHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-200 px-5 font-semibold text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
                   Continue to {sourcePreview.title} <ExternalLink aria-hidden="true" className="h-4 w-4" />
                 </a>
                 <span className="text-sm text-white/55">Your WellnessCafe search stays open in this tab.</span>
@@ -97,9 +116,9 @@ export default function InAppWebView({ url, title = "Preview", onClose, onOpenEx
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-200/80">External resource</p>
               <h1 className="mt-3 text-2xl font-semibold text-white sm:text-3xl">Continue to the organization’s website</h1>
               <p className="mt-4 text-base leading-relaxed text-white/75">This provider’s website cannot be displayed inside WellnessCafe. Open it in a separate browser tab to view current information. Your search stays open here.</p>
-              <p className="mt-3 break-all text-sm text-white/45">{new URL(url).hostname}</p>
+              <p className="mt-3 break-all text-sm text-white/45">{externalUrl.hostname}</p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-200 px-5 font-semibold text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
+                <a href={safeHref} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-amber-200 px-5 font-semibold text-slate-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200">
                   Open official resource <ExternalLink aria-hidden="true" className="h-4 w-4" />
                 </a>
                 <button type="button" onClick={onClose} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/20 px-5 font-medium text-white/85 hover:bg-white/10">

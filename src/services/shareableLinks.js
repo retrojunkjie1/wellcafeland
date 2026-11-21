@@ -1,12 +1,14 @@
 // src/services/shareableLinks.js
 
+import { safeUUID } from "@/utils/uuid";
+
 const SHAREABLE_LINKS_KEY = "wc-shareable-links-v1";
 
 /**
  * Generate a unique token for a shareable link
  */
 function generateToken() {
-  return `share_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  return `share_${safeUUID()}`;
 }
 
 /**
@@ -15,10 +17,33 @@ function generateToken() {
 function getAllLinks() {
   try {
     const raw = localStorage.getItem(SHAREABLE_LINKS_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (!raw) return Object.create(null);
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return Object.create(null);
+
+    const links = Object.create(null);
+    for (const [token, value] of Object.entries(parsed)) {
+      Object.defineProperty(links, token, { value, enumerable: true, configurable: true, writable: true });
+    }
+    return links;
   } catch {
-    return {};
+    return Object.create(null);
   }
+}
+
+function isShareToken(token) {
+  // Accept existing timestamp-based tokens while minting only UUID-backed tokens.
+  return typeof token === "string" && /^share_[A-Za-z0-9_-]{1,160}$/.test(token);
+}
+
+function withoutToken(links, token) {
+  const remaining = Object.create(null);
+  for (const [storedToken, value] of Object.entries(links)) {
+    if (storedToken !== token) {
+      Object.defineProperty(remaining, storedToken, { value, enumerable: true, configurable: true, writable: true });
+    }
+  }
+  return remaining;
 }
 
 /**
@@ -44,11 +69,11 @@ export function createShareableLink(session) {
     const links = getAllLinks();
 
     // Store session data with token
-    links[token] = {
+    Object.defineProperty(links, token, { value: {
       session: session,
       createdAt: new Date().toISOString(),
       expiresAt: null, // Can add expiration later
-    };
+    }, enumerable: true, configurable: true, writable: true });
 
     saveAllLinks(links);
 
@@ -70,8 +95,11 @@ export function createShareableLink(session) {
  */
 export function getSessionFromToken(token) {
   try {
+    if (!isShareToken(token)) return null;
     const links = getAllLinks();
-    const linkData = links[token];
+    const linkData = Object.hasOwn(links, token)
+      ? Object.entries(links).find(([storedToken]) => storedToken === token)?.[1]
+      : null;
 
     if (!linkData) return null;
 
@@ -80,8 +108,7 @@ export function getSessionFromToken(token) {
       const expires = new Date(linkData.expiresAt);
       if (expires < new Date()) {
         // Expired, remove it
-        delete links[token];
-        saveAllLinks(links);
+        saveAllLinks(withoutToken(links, token));
         return null;
       }
     }
@@ -97,9 +124,9 @@ export function getSessionFromToken(token) {
  */
 export function deleteShareableLink(token) {
   try {
+    if (!isShareToken(token)) return;
     const links = getAllLinks();
-    delete links[token];
-    saveAllLinks(links);
+    saveAllLinks(withoutToken(links, token));
   } catch {
     // Silent fail
   }

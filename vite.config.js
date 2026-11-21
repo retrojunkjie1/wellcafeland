@@ -52,13 +52,13 @@ export default defineConfig(({ mode }) => {
           target: functionsBase,
           changeOrigin: true,
           secure: false,
-          rewrite: (p) => (p.replace(/^\/aiSession/, "/aiSession")),
+          rewrite: (p) => p,
         },
         "/globalResourceSearch": {
           target: functionsBase,
           changeOrigin: true,
           secure: false,
-          rewrite: (p) => (p.replace(/^\/globalResourceSearch/, "/globalResourceSearch")),
+          rewrite: (p) => p,
         },
       },
       headers: {

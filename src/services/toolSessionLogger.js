@@ -5,6 +5,7 @@
 
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/firebase";
+import { safeUUID } from "@/utils/uuid";
 
 const TOOL_SESSIONS_COLLECTION = "toolSessions";
 const STORAGE_KEY = "wc_tool_sessions_pending";
@@ -36,7 +37,7 @@ export async function logToolSessionBegin(slug) {
     }
   }
 
-  const id = `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  const id = `local_${safeUUID()}`;
   const pending = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
   pending.push({ id, ...payload });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
@@ -75,7 +76,7 @@ export async function logToolSessionComplete({ slug, completed }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(pending));
   } else {
     pending.push({
-      id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      id: `local_${safeUUID()}`,
       ...payload,
       startAt: new Date().toISOString(),
       completedAt: new Date().toISOString(),

@@ -166,6 +166,7 @@ test("writes an MP4 capture with its matching extension and removes the temporar
           assert.equal(model, "whisper-1");
           assert.equal(language, "en");
           assert.deepEqual(await fs.promises.readFile(uploadPath), Buffer.from("voice bytes"));
+          assert.equal((await fs.promises.stat(uploadPath)).mode & 0o777, 0o600);
           return { text: "A captured sentence." };
         },
       },

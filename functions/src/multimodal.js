@@ -85,7 +85,7 @@ async function transcribeAudioPayload({ audio, mimeType }, openai) {
   const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "wellnesscafe-stt-"));
   const tmp = path.join(tempDir, `recording${audioType.extension}`);
   try {
-    await fs.promises.writeFile(tmp, buffer);
+    await fs.promises.writeFile(tmp, buffer, { flag: "wx", mode: 0o600 });
     const transcript = await openai.audio.transcriptions.create({
       file: fs.createReadStream(tmp),
       model: "whisper-1",
@@ -93,8 +93,7 @@ async function transcribeAudioPayload({ audio, mimeType }, openai) {
     });
     return { status: 200, body: { ok: true, text: transcript.text } };
   } finally {
-    await fs.promises.unlink(tmp).catch(() => {});
-    await fs.promises.rmdir(tempDir).catch(() => {});
+    await fs.promises.rm(tempDir, { recursive: true, force: true }).catch(() => {});
   }
 }
 
@@ -237,21 +236,11 @@ exports.chat = onRequest(
 
       // ===== STT (if audio input) =====
       if (audioInput) {
-        const buffer = Buffer.from(audioInput, "base64");
-        const tmp = path.join(os.tmpdir(), `audio-${Date.now()}.webm`);
-        let transcript;
-        try {
-          await fs.promises.writeFile(tmp, buffer);
-          transcript = await openai.audio.transcriptions.create({
-            file: fs.createReadStream(tmp),
-            model: "whisper-1",
-            language: "en",
-          });
-        } finally {
-          await fs.promises.unlink(tmp).catch(() => {});
+        const transcription = await transcribeAudioPayload({ audio: audioInput, mimeType: "audio/webm" }, openai);
+        if (transcription.status !== 200) {
+          return res.status(transcription.status).json(transcription.body);
         }
-
-        history.push({ role: "user", content: transcript.text });
+        history.push({ role: "user", content: transcription.body.text });
       }
 
       const lastUser = history.filter(m => m.role === "user").pop();

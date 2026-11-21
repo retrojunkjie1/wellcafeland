@@ -3,6 +3,7 @@
 // Phase 38: Full Intelligent Cinematic Tool Engine
 
 import { logEvent } from '@/services/telemetry';
+import { safeUUID } from "../../utils/uuid";
 
 /**
  * Calculate coherence score based on breath timing consistency
@@ -96,7 +97,7 @@ export class SessionEngineV3 {
   }
 
   generateSessionId() {
-    return `${this.toolId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${this.toolId}-${safeUUID()}`;
   }
 
   startSession(targetCycles = 5) {
@@ -362,4 +363,3 @@ export class SessionEngineV3 {
     };
   }
 }
-

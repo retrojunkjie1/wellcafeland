@@ -1528,8 +1528,7 @@ export const NIGERIA_FRSC_UNIT_COMMAND_EXPANSION = unitCommands.map((unit) => {
     .replace(/\b[a-z]/g, (letter) => letter.toUpperCase())
     .replace(/^Km /, "KM ")
     .replace(/^Cbd /, "CBD ")
-    .replace(/^Nass$/, "NASS")
-    .replace(/^B\//, "B/");
+    .replace(/^Nass$/, "NASS");
   const { state, unitCode, phone, email } = unit;
   const city = locality;
   const id = `frsc-unit-${unitCode.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;

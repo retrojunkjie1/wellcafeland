@@ -10,6 +10,7 @@ import { getHousingProvider } from "./housingService";
 import { getGrant } from "./grantsService";
 import { getSupportProgram } from "./supportProgramsService";
 import { getCircle } from "./circlesService";
+import { safeUUID } from "@/utils/uuid";
 
 const MIN_RESULTS = 5;
 const DOMAINS = ["providers", "housing", "grants", "assistance", "hotlines", "programs", "government_assistance"];
@@ -176,7 +177,7 @@ function mapExternalResultsToDirectory(externalResults, domain, query) {
     }
 
     return {
-      id: `external-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `external-${safeUUID()}`,
       title: result.title || result.name || result.headline || "Untitled Resource",
       description: result.snippet || result.description || result.abstract || "",
       category,
@@ -438,7 +439,7 @@ export async function getDirectoryItem(domain, id) {
         };
       }
     } catch (err) {
-      console.error(`Error getting ${domain}/${decodedId} from Firestore:`, err);
+      console.error("Error getting directory item from Firestore:", err?.code || "UNKNOWN");
     }
   }
 
@@ -535,8 +536,17 @@ export async function saveFavoriteResource(domain, item) {
       const key = `wc-favorites-${userId}`;
       const existing = JSON.parse(localStorage.getItem(key) || "[]");
       const favoriteId = `${domain}_${item.id}`;
-      const updated = existing.filter((f) => f.id !== favoriteId);
-      updated.push({ id: favoriteId, ...favoriteData });
+      const updated = existing
+        .filter((favorite) => favorite.id !== favoriteId)
+        .map((favorite) => ({
+          id: favorite.id,
+          domain: favorite.domain,
+          itemId: favorite.itemId,
+          createdAt: favorite.createdAt,
+        }));
+      // Keep the device copy to a resource reference. Titles, descriptions,
+      // contact details, and coordinates can reveal sensitive support interests.
+      updated.push({ id: favoriteId, domain, itemId: item.id, createdAt: favoriteData.createdAt });
       localStorage.setItem(key, JSON.stringify(updated));
       return { ok: true };
     } catch (err) {
@@ -590,9 +600,33 @@ export async function listFavorites(domain) {
     try {
       const key = `wc-favorites-${userId}`;
       const existing = JSON.parse(localStorage.getItem(key) || "[]");
-      return domain
-        ? existing.filter((f) => f.domain === domain)
-        : existing;
+      const minimized = existing.map((favorite) => ({
+        id: favorite.id,
+        domain: favorite.domain,
+        itemId: favorite.itemId,
+        createdAt: favorite.createdAt,
+      }));
+      // Migrate older device copies that stored full resource descriptions.
+      if (JSON.stringify(minimized) !== JSON.stringify(existing)) {
+        localStorage.setItem(key, JSON.stringify(minimized));
+      }
+      const visibleFavorites = domain
+        ? minimized.filter((favorite) => favorite.domain === domain)
+        : minimized;
+      return Promise.all(visibleFavorites.map(async (favorite) => {
+        const resource = favorite.domain && favorite.itemId
+          ? await getDirectoryItem(favorite.domain, favorite.itemId)
+          : null;
+        return {
+          ...favorite,
+          ...(resource || {}),
+          id: favorite.id,
+          domain: favorite.domain,
+          itemId: favorite.itemId,
+          title: resource?.title || "Saved resource",
+          createdAt: favorite.createdAt,
+        };
+      }));
     } catch (err) {
       console.error("Failed to load favorites from localStorage:", err);
       return [];

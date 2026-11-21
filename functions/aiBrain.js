@@ -143,11 +143,6 @@ const OPENAI_TIMEOUT_MS = 25000;
 const JSON_TEMPERATURE = 0.35;
 const JSON_MAX_TOKENS = 900;
 
-function maskKeyForLog(key) {
-  if (!key || key.length < 4) return "****";
-  return `****${key.slice(-4)}`;
-}
-
 function safeJsonParse(str, fallback = null) {
   try {
     return JSON.parse(str);
@@ -867,10 +862,7 @@ async function handleSession(req, res) {
       }
     }
 
-    const { key: apiKey, source: keySource } = getResolvedOpenAIKey();
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[aiSession] openai_key", { present: !!apiKey, source: keySource, masked: apiKey ? maskKeyForLog(apiKey) : undefined });
-    }
+    const { key: apiKey } = getResolvedOpenAIKey();
     if (!apiKey) {
       return res.status(200).json({
         ok: false,

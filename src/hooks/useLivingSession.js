@@ -2,15 +2,17 @@
 
 import { useState, useCallback, useMemo } from "react";
 
+import { safeUUID } from "../utils/uuid";
+
 const SESSION_KEY = "wc_session_id";
 const ROLE_KEY = "wc_chat_role";
 const TURN_KEY = "wc_turn_id";
 
 function getSessionId() {
-  if (typeof sessionStorage === "undefined") return "wc_" + Date.now() + "_" + Math.random();
+  if (typeof sessionStorage === "undefined") return `wc_${safeUUID()}`;
   let id = sessionStorage.getItem(SESSION_KEY);
   if (!id) {
-    id = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : "wc_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+    id = `wc_${safeUUID()}`;
     sessionStorage.setItem(SESSION_KEY, id);
   }
   return id;

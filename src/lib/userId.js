@@ -25,8 +25,8 @@ export function getAnonymousUserId() {
   } catch (err) {
     // Fallback if localStorage fails
     console.warn("Failed to get/set anonymous user ID:", err);
-    // Return a session-only ID (won't persist but won't break)
-    return "anon_session_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+    // Keep working for this session without weakening the ID's unpredictability.
+    return "anon_session_" + safeUUID();
   }
 }
 
