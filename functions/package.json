@@ -8,6 +8,7 @@
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
     "verify:fireworks": "node ./scripts/verifyFireworksModels.mjs",
+    "test:fireworks-verifier": "node --test test/verifyFireworksModels.test.cjs",
     "test:agent-controls": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-agent-controls \"node test/agentControls.emulator.test.cjs\"",
     "test:admin-observability": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-admin-observability \"node test/adminObservability.emulator.test.cjs\"",
     "test:practitioner-care": "FIREBASE_EMULATORS_PATH=/tmp/wellnesscafe-firebase-emulators npx --yes firebase-tools@15.31.0 emulators:exec --only firestore --project demo-wellnesscafe-practitioner \"node test/practitionerCare.emulator.test.cjs\"",
