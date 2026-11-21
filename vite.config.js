@@ -66,9 +66,11 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      // Vite measures raw minified bytes: this route-only LiveKit chunk is 561 KB / 148 KB gzip.
-      // Keep an explicit ceiling for this lazy media vendor instead of warning at the generic 500 KB mark.
-      chunkSizeWarningLimit: 575,
+      // LiveKit is dynamically imported only when a user joins an in-app session.
+      // Its current vendor asset is about 584 KB minified / 154 KB gzip; keep a
+      // narrow explicit ceiling for this route-only vendor instead of warning
+      // at the generic 500 KB mark. Directory chunks remain separately split.
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
           manualChunks: {
@@ -81,6 +83,7 @@ export default defineConfig(({ mode }) => {
             "uk-northern-ireland-further-directory": ["./src/data/ukNorthernIrelandFurtherDirectory.js"],
             "uk-scotland-further-directory": ["./src/data/ukScotlandFurtherDirectory.js"],
             "uk-wales-south-directory": ["./src/data/ukWalesSouthFurtherDirectory.js"],
+            "uk-england-six-localities-directory": ["./src/data/ukEnglandSixLocalitiesNov2026.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
