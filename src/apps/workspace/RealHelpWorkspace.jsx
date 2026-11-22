@@ -18,6 +18,7 @@ import { getCuratedFallback, isNigeriaLocation, isUSLocation } from "@/lib/direc
 import InAppWebView from "@/components/InAppWebView";
 import { reportHelpListingIssue, searchPublicHelpListings } from "@/services/helpDirectory";
 import { dedupeResourceListings, isHelpCategoryRelevant } from "./assistanceListingUtils";
+import { filterListingsToCountryScope } from "./assistanceCountryScope";
 import { getAssistanceSearchStatus, getCuratedSearchStatus, getFriendlySearchFailure } from "./assistanceSearchStatus";
 import { getPracticeReturnTarget } from "../assistance/assistanceReturnPath";
 import { returnFromTool } from "@/navigation/toolReturn";
@@ -642,12 +643,13 @@ const RealHelpWorkspace = () => {
   };
 
   const dedupedResults = dedupeResourceListings([...curatedResults, ...results]);
+  const countryScopedResults = filterListingsToCountryScope(dedupedResults, region);
   // Nigeria's live and saved resource feeds have historically contained
   // records from neighboring categories. Keep that data from being presented
   // as a local answer unless the listing itself identifies the service type.
   const allResults = isNigeriaLocation(region)
-      ? dedupedResults.filter((item) => isHelpCategoryRelevant(item, activeTab))
-    : dedupedResults;
+    ? countryScopedResults.filter((item) => isHelpCategoryRelevant(item, activeTab))
+    : countryScopedResults;
   const localFoodResults = activeTab === "food"
     ? allResults.filter((item) => item.isFoodDirectoryResult).sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
     : [];
