@@ -81,5 +81,6 @@ export function matchesHelpLocation(record, requestedLocation) {
 
   const normalizedRequest = normalize(requested);
   const tokens = normalizedRequest.split(" ").filter((token) => token.length > 1);
-  return tokens.length > 0 && tokens.every((token) => fields.all.includes(token));
+  const fieldTokens = new Set(fields.all.split(" ").filter(Boolean));
+  return tokens.length > 0 && tokens.every((token) => fieldTokens.has(token));
 }
