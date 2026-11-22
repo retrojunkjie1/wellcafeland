@@ -1,14 +1,14 @@
 # WellnessCafe OS — Execution Roadmap
 
 **Roadmap authority:** [Master Blueprint and Definition of Done](../architecture/MASTER_VISION_BLUEPRINT.md)
-**Status date:** 2026-10-02
+**Status date:** 2026-11-22
 **Purpose:** sequence delivery across the whole OS without getting stuck in one role or repeating audits without closing journeys.
 
 The blueprint defines the vision, compartments, and exit criteria. This file is the shorter execution view. `CURRENT_PHASE.md` is the release/build diary, and `RETURN_TO_BACKLOG.md` holds open/deferred work. Existing Phase 1–6 labels remain useful capability groupings, but they are not a rule that only one part of the OS may improve at a time.
 
 ## Where we are
 
-The build has deployed meaningful work in practitioner experience, client-shared practices, resource discovery, the app shell, themes, and tool usability. The current status is **cross-phase integration**: the OS has substantial slices, but role-to-role journeys and protected account workflows still need end-to-end validation. A successful deployment is not the same as an end-to-end verified release.
+The build has deployed meaningful work in practitioner experience, client-shared practices, resource discovery, the app shell, themes, and tool usability. The current status is **cross-phase integration**: the OS has substantial slices, but role-to-role journeys and protected account workflows still need end-to-end validation. A successful deployment is not the same as an end-to-end verified release. The latest release checkpoint is recorded in [CURRENT_PHASE](../runtime/CURRENT_PHASE.md).
 
 Recovery Meeting Finder work is now a bounded capability track: permission requests, admin review, manual approved-feed validation/import, publication approval, search, and audited pause/restore are deployed. Do not keep polishing this slice in isolation. Remaining feed acquisition, freshness, source partnerships, and coverage stay in the backlog; return when the broader directory milestone is selected or a concrete production issue is found.
 
@@ -36,9 +36,11 @@ Finish reviewed onboarding, practical offerings, timezone-aware schedules, secur
 
 ### 4. In parallel: God-Eye and intelligence operations
 
-Server-authoritative pause/enable controls and audit events are implemented for the five agents with production handlers; `aiSession` enforces those states, and the console derives test eligibility from the same server source. The account-wide **Custom AI sessions** switch now also gates custom session generation on the server, while clearly marking the other seven settings that still lack connected runtime behavior. Next: continue the broader console review for event health, risk visibility, and application queues. Remaining registered agents must stay explicitly marked as unsupported until their production handlers exist.
+The canonical catalog maps 25 agents to production handler IDs. The last recorded authenticated live God-Eye check (2026-10-13) showed 25/25 enabled, none paused, and none without a handler. Local contracts cover 25/25 and the authenticated emulator workflow exercises all 25; the latest evidence records 0/25 individually observed in production. Handler registration and an enabled switch do not certify each agent's behavior or complete its intended workflow. PR #138 (released 2026-11-22) aligned six client-facing cards with existing consent-led routes and removed unsupported risk-monitoring claims. Next: continue the role-specific workflow evaluation, including an authorized live admin/practitioner/client walkthrough, and review event health, risk visibility, and application queues. The Custom AI sessions server gate is implemented; audit each other global setting against its consumer before describing it as runtime enforcement.
 
 **Exit:** authorized admins can complete a review and operate the central agent system with auditable outcomes and no unnecessary access to private client content.
+
+**Agent evidence boundary:** The 25/25 local contract and emulator counts come from fixtures and emulators. The 2026-10-13 live count verifies catalog registration and control availability only; it is not individual live-behavior certification. Keep these measures separate in God-Eye and release reports.
 
 **Governance gate status (partially production-verified):** Alpha Owner authority is separated from delegated admin assignments. The verified Alpha Owner account is provisioned, and the live God-Eye console plus its App Check-enforced access, operations, settings, queue-count, and review callables have been confirmed. Queue counts disclose only aggregates; the meeting-source total also checks its dedicated review scope. Regional practitioner, giver, and local-help review queues now constrain Firestore reads to assigned service areas, with emulator coverage for mixed-region data. Admin access changes are recorded server-side; the Alpha Owner-only, bounded history view is now deployed and loaded successfully in the live Roles workspace. Delegated assignment lifecycle, the full Firestore Rules release, production scoped-admin access, and multi-account role tests remain open; private reflections and broad user-profile reads remain out of scope. Do not mark the governance gate complete until those boundaries have production or Rules Emulator evidence.
 

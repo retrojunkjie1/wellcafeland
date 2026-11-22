@@ -1,6 +1,6 @@
 # WellnessCafe OS — Master Blueprint and Definition of Done
 
-**Version:** 2.0 · **Reviewed:** 2026-09-25
+**Version:** 2.1 · **Reviewed:** 2026-11-22
 **Status:** Living product constitution · **Roadmap authority:** this document
 **Companion records:** [Phase roadmap](../roadmap/PHASE_ROADMAP.md) · [Current build log](../runtime/CURRENT_PHASE.md) · [Return-to backlog](../runtime/RETURN_TO_BACKLOG.md)
 
@@ -120,6 +120,7 @@ A feature or release is done only when all relevant criteria below are met. A po
 
 - Role-aware navigation, a shared dark/light appearance control, and removal of the permanent multi-destination bottom rail were deployed; route-by-route visual consistency remains open.
 - The practitioner network has applications, reviewed and public-record discovery, active connections, timezone-aware schedule work, secure messaging paths, client-selected share scopes, and service-specific practice recommendations. The verified Alpha Owner can now enter the live God-Eye console; its metrics, event stream, Risk Radar, settings, review counts, and implemented agent controls loaded. A live client/practitioner two-account walkthrough remains outstanding.
+- The 25-agent catalog maps all entries to production handler IDs, and the last recorded authenticated live console check reported 25/25 enabled. Local contracts and authenticated emulator scenarios cover all 25 entries, but the current evidence records 0/25 agents individually observed in production. Handler availability is not behavior certification; role-specific workflow evaluation and a separate client/practitioner/admin walkthrough remain open. The 2026-11-22 agent-card correction aligned six client-facing entries with existing consent-led routes and removed unsupported risk-monitoring claims.
 - Client Daily Practice has a personal shelf for practices a practitioner shares, plus an optional collapsed catalog. Client choice and opt-in follow-up are part of the recent direction; full production walkthrough still needs two real accounts.
 - Several practice routes were simplified, differentiated, themed, and checked on mobile. A complete all-tools visual/interaction audit is still open.
 - Practical-support and provider directory work is deployed, with honest source labels and in-app source details. Coverage and data partnerships remain incomplete.
@@ -169,7 +170,7 @@ Work is grouped by OS capability rather than treating every existing phase numbe
 **Goal:** restore dependable admin access and make the intelligence layer genuinely observable and controllable.
 
 - Confirm admin claim assignment and route guards with the intended admin identity.
-- Agent pause/enable controls are server-authoritative for the five implemented production agents; every change is audited and the AI handler enforces the same state. Remaining work: verify live admin entry, review the complete event/health/risk surfaces, and implement real handlers before exposing the other registered agents as testable controls.
+- Agent pause/enable controls are server-authoritative and audited for the 25 catalog handler IDs; `aiSession` enforces the same enabled state. The last authenticated live count is dated 2026-10-13 and verifies availability, not individual behavior. Remaining work: evaluate role-specific workflows in controlled production sessions, verify live admin/practitioner/client journeys, and review the complete event/health/risk surfaces.
 - Separate operational metrics from sensitive client content. Preserve audit export without exposing unnecessary PHI.
 
 **Exit:** an authorized admin can reliably review applications, inspect agent and system health, run a test, change permitted settings, and see an auditable outcome.
