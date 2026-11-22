@@ -315,10 +315,21 @@ export function isUSLocation(region = "") {
 }
 
 export function isNigeriaLocation(region = "") {
-  const normalized = String(region).trim().toLowerCase();
-  return /\bnigeria\b|\bng\b/.test(normalized) ||
-    NIGERIA_CITIES.some((city) => normalized.includes(city.toLowerCase())) ||
-    NIGERIA_STATES.some((state) => normalized.includes(state.toLowerCase()));
+  const normalized = String(region)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+  const padded = ` ${normalized} `;
+  const matchesLocationName = (name) => {
+    const normalizedName = String(name).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    return normalizedName && padded.includes(` ${normalizedName} `);
+  };
+
+  return /\b(?:nigeria|ng)\b/.test(normalized) ||
+    NIGERIA_CITIES.some(matchesLocationName) ||
+    NIGERIA_STATES.some(matchesLocationName);
 }
 
 // Public Dallas-area peer supports, checked against the organizations' own
