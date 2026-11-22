@@ -255,21 +255,22 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
   assert.equal(response.status, "accepted");
   assert.equal((await scheduling.respondToMyAppointment.run(clientRequest({ appointmentId: response.appointmentId }))).status, "confirmed");
 
-  // The scheduled slot is intentionally tomorrow to keep availability checks
-  // deterministic. Move only the policy clock into its valid join window while
-  // minting credentials; restore it immediately after both calls.
-  const realNow = Date.now;
-  Date.now = () => startAt.getTime() - 5 * 60_000;
+  // Keep the scheduling request on a deterministic future date, then move only
+  // the test appointment into the valid join window. Avoid replacing Date.now
+  // around Firestore calls: the SDK uses it to calculate RPC deadlines.
+  const joinWindowStart = new Date(Date.now() + 8 * 60_000);
+  joinWindowStart.setSeconds(0, 0);
+  const joinWindowEnd = new Date(joinWindowStart.getTime() + 45 * 60_000);
+  await db.collection("appointments").doc(response.appointmentId).update({
+    startAt: admin.firestore.Timestamp.fromDate(joinWindowStart),
+    endAt: admin.firestore.Timestamp.fromDate(joinWindowEnd),
+  });
   let clientToken;
   let practitionerToken;
-  try {
-    [clientToken, practitionerToken] = await Promise.all([
-      issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
-      issueVideoToken(signedIn(applicantUid, { appointmentId: response.appointmentId }, providerClaims)),
-    ]);
-  } finally {
-    Date.now = realNow;
-  }
+  [clientToken, practitionerToken] = await Promise.all([
+    issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
+    issueVideoToken(signedIn(applicantUid, { appointmentId: response.appointmentId }, providerClaims)),
+  ]);
   const tokenClaims = (token) => JSON.parse(Buffer.from(token.participantToken.split(".")[1], "base64url").toString("utf8"));
   assert.equal(clientToken.role, "client");
   assert.equal(practitionerToken.role, "practitioner");
@@ -284,14 +285,8 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
     .where("clientId", "==", clientUid).where("providerId", "==", applicantUid).limit(1).get();
   assert.equal(connectionRecord.size, 1);
   await connectionRecord.docs[0].ref.update({ status: "ended" });
-  const realNowAfterEnd = Date.now;
-  Date.now = () => startAt.getTime() - 5 * 60_000;
-  try {
-    await assert.rejects(
-      issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
-      (error) => error.code === "permission-denied" && /connection.*no longer active/i.test(error.message),
-    );
-  } finally {
-    Date.now = realNowAfterEnd;
-  }
+  await assert.rejects(
+    issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
+    (error) => error.code === "permission-denied" && /connection.*no longer active/i.test(error.message),
+  );
 });
