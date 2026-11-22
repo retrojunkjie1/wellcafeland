@@ -11,6 +11,7 @@ import { safeUUID } from "@/utils/uuid";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAuthHeaders } from "@/services/aiSessionClient";
 import { listResources } from "@/data/resources";
+import { filterListingsToCountryScope } from "@/services/locationCountryScope";
 
 function getEndpoint() {
   return buildApiUrl("/globalResourceSearch");
@@ -205,6 +206,7 @@ async function buildFallbackResponse({ query, domain, category, location, limit,
     })).filter(Boolean)
     fallbackSource = "curated"
   }
+  items = filterListingsToCountryScope(items, location);
   const meta = buildFallbackMeta(fallbackSource, items.length, code)
   // Saved entries can keep the page useful, but they do not mean the live
   // search succeeded. Preserve that state so the UI never presents a failed
@@ -321,18 +323,25 @@ async function searchDirectoryImpl({
         nextPageToken: data.nextPageToken || null,
         meta: data.meta || {},
       })
+      const scopedItems = filterListingsToCountryScope(normalized.items, location);
 
-      if (normalized.items.length === 0) {
-        const out = { ok: true, items: [], nextPageToken: null, meta: { empty: true }, error: null }
+      if (scopedItems.length === 0) {
+        const out = {
+          ok: true,
+          items: [],
+          nextPageToken: normalized.nextPageToken,
+          meta: { ...normalized.meta, empty: true, sourceCount: 0 },
+          error: null,
+        }
         if (!pageToken) setClientCached(cacheKey, out)
         return out
       }
 
       const out = {
         ok: true,
-        items: normalized.items,
+        items: scopedItems,
         nextPageToken: normalized.nextPageToken,
-        meta: normalized.meta,
+        meta: { ...normalized.meta, sourceCount: scopedItems.length },
         error: null,
       }
       if (!pageToken) setClientCached(cacheKey, out)

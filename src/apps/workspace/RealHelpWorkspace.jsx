@@ -18,7 +18,7 @@ import { getCuratedFallback, isNigeriaLocation, isUSLocation } from "@/lib/direc
 import InAppWebView from "@/components/InAppWebView";
 import { reportHelpListingIssue, searchPublicHelpListings } from "@/services/helpDirectory";
 import { dedupeResourceListings, isHelpCategoryRelevant } from "./assistanceListingUtils";
-import { filterListingsToCountryScope } from "./assistanceCountryScope";
+import { filterListingsToCountryScope } from "@/services/locationCountryScope";
 import { getAssistanceSearchStatus, getCuratedSearchStatus, getFriendlySearchFailure } from "./assistanceSearchStatus";
 import { getPracticeReturnTarget } from "../assistance/assistanceReturnPath";
 import { returnFromTool } from "@/navigation/toolReturn";
@@ -1148,7 +1148,7 @@ const RealHelpWorkspace = () => {
                   {foodLocationBusy ? "Loading more listings…" : "Load more food listings"}
                 </button>
               )}
-              {activeTab !== "food" && searchResponse?.nextPageToken && (
+              {(activeTab !== "food" || internationalSearch) && searchResponse?.nextPageToken && (
                 <button
                   type="button"
                   onClick={loadMoreDirectoryResults}
