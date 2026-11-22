@@ -12,31 +12,34 @@ const AGENTS = [
     id: "seer",
     name: "The Seer",
     icon: Eye,
-    description: "Observes patterns in your recovery journey and identifies trends.",
+    description: "Review selected check-in details for patterns you choose to reflect on.",
     color: "text-cyan-400",
     bgColor: "bg-cyan-400/10",
     borderColor: "border-cyan-400/30",
-    placeholder: "Ask about patterns in your recovery journey...",
+    toolPath: "/milestones",
+    toolLabel: "Review selected check-ins",
   },
   {
     id: "oracle",
     name: "The Oracle",
     icon: Sparkles,
-    description: "Provides deep wisdom by connecting your context with long-term memory.",
+    description: "Offers brief, compassionate guidance based on the question you choose to share.",
     color: "text-purple-400",
     bgColor: "bg-purple-400/10",
     borderColor: "border-purple-400/30",
     placeholder: "Ask for guidance or wisdom...",
+    supportsPrompt: true,
   },
   {
     id: "sentinel",
     name: "The Sentinel",
     icon: Shield,
-    description: "Monitors for risk and flags alerts to keep you safe.",
+    description: "Helps you choose a support option. It does not monitor risk or send alerts.",
     color: "text-red-400",
     bgColor: "bg-red-400/10",
     borderColor: "border-red-400/30",
-    placeholder: "Ask about risk assessment or safety...",
+    toolPath: "/support",
+    toolLabel: "Choose a support option",
   },
   {
     id: "scribe",
@@ -47,6 +50,7 @@ const AGENTS = [
     bgColor: "bg-emerald-300/10",
     borderColor: "border-emerald-300/30",
     placeholder: "What would you like a reflection prompt about?",
+    supportsPrompt: true,
   },
   {
     id: "lantern",
@@ -57,6 +61,7 @@ const AGENTS = [
     bgColor: "bg-amber-200/10",
     borderColor: "border-amber-200/30",
     placeholder: "What would you like explained?",
+    supportsPrompt: true,
   },
   {
     id: "anchor",
@@ -69,6 +74,7 @@ const AGENTS = [
     placeholder: "What would help you feel a little more present right now?",
     toolPath: "/tools/grounding",
     toolLabel: "Open grounding guide",
+    supportsPrompt: true,
   },
   {
     id: "breathkeeper",
@@ -81,16 +87,18 @@ const AGENTS = [
     placeholder: "What would make a breathing practice feel comfortable for you?",
     toolPath: "/tools/breathing",
     toolLabel: "Open breathing guide",
+    supportsPrompt: true,
   },
   {
     id: "mirror",
     name: "Mirror",
     icon: ScanHeart,
-    description: "Reflects your own words back gently, without assuming what they mean.",
+    description: "Offers an optional reflection on writing you choose to share in Journaling.",
     color: "text-violet-300",
     bgColor: "bg-violet-300/10",
     borderColor: "border-violet-300/30",
-    placeholder: "What would you like reflected back?",
+    toolPath: "/tools/journaling",
+    toolLabel: "Open Journaling",
   },
   {
     id: "shepherd",
@@ -100,7 +108,6 @@ const AGENTS = [
     color: "text-lime-300",
     bgColor: "bg-lime-300/10",
     borderColor: "border-lime-300/30",
-    placeholder: "What kind of connection would feel comfortable?",
     toolPath: "/circles",
     toolLabel: "Explore peer circles",
   },
@@ -112,7 +119,8 @@ const AGENTS = [
     color: "text-amber-200",
     bgColor: "bg-amber-200/10",
     borderColor: "border-amber-200/30",
-    placeholder: "What matters to you as you decide what to do next?",
+    toolPath: "/tools/urge-surfing",
+    toolLabel: "Explore a practical next step",
   },
   {
     id: "gardener",
@@ -122,9 +130,8 @@ const AGENTS = [
     color: "text-lime-300",
     bgColor: "bg-lime-300/10",
     borderColor: "border-lime-300/30",
-    placeholder: "Is there an effort or small moment you'd like to recognize?",
     toolPath: "/milestones",
-    toolLabel: "Open milestones",
+    toolLabel: "Review your milestones",
   },
 ];
 
@@ -157,10 +164,9 @@ const AgentsPage = () => {
       if (result && result.success) {
         setResponse(result.result || result);
       } else {
-        setError(result?.error || "Agent couldn't respond. Please try again.");
+        setError("This response isn’t available right now. Please try again.");
       }
-    } catch (err) {
-      console.error("Agent call error:", err);
+    } catch {
       setError("Connection failed. Please try again.");
     } finally {
       setLoading(false);
@@ -228,7 +234,7 @@ const AgentsPage = () => {
               <p className="text-sm text-white/70">{selectedAgent.description}</p>
             </div>
 
-            {/* Question Form */}
+            {selectedAgent.supportsPrompt ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
                 <textarea
@@ -258,6 +264,19 @@ const AgentsPage = () => {
                 )}
               </button>
             </form>
+            ) : (
+              <div className="space-y-3 rounded-lg border border-white/10 bg-white/5 p-5">
+                <p className="text-sm text-white/70">
+                  Continue only if this feels useful. You can leave without sharing anything.
+                </p>
+                <a
+                  href={selectedAgent.toolPath}
+                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/20 px-5 text-sm font-medium text-white transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-wcGold"
+                >
+                  {selectedAgent.toolLabel}
+                </a>
+              </div>
+            )}
 
             {/* Response Display */}
             {error && (
@@ -387,34 +406,10 @@ const AgentsPage = () => {
                       </div>
                     )}
 
-                    {response.riskLevel && (
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.1em] text-white/50 mb-1">Risk Level</p>
-                        <p className={`text-sm font-medium ${
-                          response.riskLevel === "high" ? "text-red-400" :
-                          response.riskLevel === "medium" ? "text-amber-400" :
-                          "text-green-400"
-                        }`}>
-                          {response.riskLevel.toUpperCase()}
-                        </p>
-                      </div>
-                    )}
-
-                    {response.alerts && Array.isArray(response.alerts) && response.alerts.length > 0 && (
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.1em] text-red-400 mb-2">Alerts</p>
-                        <ul className="space-y-1">
-                          {response.alerts.map((alert, idx) => (
-                            <li key={idx} className="text-sm text-red-300">⚠️ {alert}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
                     {!response.summary && !response.insights && !response.wisdom && !response.steps && !response.reflection && !response.invitation && !response.takeaway && !response.question && (
-                      <pre className="text-xs text-white/60 overflow-auto">
-                        {JSON.stringify(response, null, 2)}
-                      </pre>
+                      <p role="status" className="text-sm text-white/70">
+                        This response isn’t available in a format this page can safely display. Please try again.
+                      </p>
                     )}
                   </div>
                 )}
