@@ -7,7 +7,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/debug", () => ({ logDebug: vi.fn() }));
-vi.mock("@/lib/directoryCuratedFallback", () => ({ getCuratedFallback: mocks.getCuratedFallback, isUSLocation: (value = "") => /\b(?:united states|usa|denver|dallas|aurora|colorado|texas|california|oklahoma)\b|,\s*(?:CO|TX|CA|OK)$/i.test(value) }));
+vi.mock("@/lib/directoryCuratedFallback", () => ({
+  getCuratedFallback: mocks.getCuratedFallback,
+  isUSLocation: (value = "") => /\b(?:united states|usa|denver|dallas|aurora|colorado|texas|california|oklahoma)\b|,\s*(?:CO|TX|CA|OK)$/i.test(value),
+  isNigeriaLocation: (value = "") => /\b(?:nigeria|ng|lagos|abuja)\b/i.test(value),
+}));
 vi.mock("@/services/apiBase", () => ({ buildApiUrl: (path) => `https://api.example.test${path}` }));
 vi.mock("@/services/aiSessionClient", () => ({ getAuthHeaders: mocks.getAuthHeaders }));
 vi.mock("@/data/resources", () => ({ listResources: mocks.listResources }));
@@ -83,5 +87,20 @@ describe("directory search availability", () => {
     expect(result.items.map((item) => item.id)).toContain("global-meetings");
     expect(mocks.listResources).not.toHaveBeenCalled();
     expect(mocks.getCuratedFallback).toHaveBeenCalledWith("assistance", "recovery groups", "Dubai");
+  });
+
+  it("filters live international search results to the selected country before returning them", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(200, {
+      ok: true,
+      results: [
+        { id: "uk-food", title: "London food support", city: "London", country: "United Kingdom" },
+        { id: "ng-food", title: "Lagos food support", city: "Lagos", country: "Nigeria", phone: "+2348000000000" },
+      ],
+    })));
+
+    const result = await searchDirectory({ query: "food assistance", domain: "food.essentials", location: "London" });
+
+    expect(result.items.map(({ id }) => id)).toEqual(["uk-food"]);
+    expect(result.meta.sourceCount).toBe(1);
   });
 });
