@@ -4,6 +4,7 @@ import { logError, logWarn } from "@/services/logService";
 import { buildApiUrl } from "@/services/apiBase";
 import { getAuthHeaders } from "@/services/aiSessionClient";
 import { getCuratedFallback } from "@/lib/directoryCuratedFallback";
+import { filterListingsToCountryScope } from "@/services/locationCountryScope";
 import { safeUUID } from "@/utils/uuid";
 
 function normalizeResourceItem(raw, domain) {
@@ -129,14 +130,17 @@ export async function searchResources({ query, domain, region, category, limit =
   if (pageToken) {
     const nextPage = await callFunctionSearch({ query: cleanQuery, domain: domainNorm, region, category, limit, pageToken, signal });
     const backendFallback = nextPage.provider === "fallback" || nextPage.meta?.fallback === true;
+    const scopedResults = nextPage.ok && !backendFallback
+      ? filterListingsToCountryScope(nextPage.results.map((item) => normalizeResourceItem(item, domainNorm)).filter(Boolean), region)
+      : [];
     return {
       ok: nextPage.ok && !backendFallback,
-      results: nextPage.ok && !backendFallback ? nextPage.results.map((item) => normalizeResourceItem(item, domainNorm)).filter(Boolean) : [],
+      results: scopedResults,
       fallback: backendFallback,
       error: nextPage.error || (backendFallback ? "Live search is unavailable. Saved pathways are shown above." : null),
       query: nextPage.query || cleanQuery,
       nextPageToken: backendFallback ? null : nextPage.nextPageToken,
-      meta: { ...(nextPage.meta || {}), domain: domainNorm, liveAvailable: !backendFallback },
+      meta: { ...(nextPage.meta || {}), domain: domainNorm, liveAvailable: !backendFallback, sourceCount: scopedResults.length },
     };
   }
 
@@ -159,16 +163,17 @@ export async function searchResources({ query, domain, region, category, limit =
   }
 
   const backendFallback = upstream.provider === "fallback" || upstream.meta?.fallback === true;
+  const liveQuerySucceeded = upstream.ok && !backendFallback;
   const liveResults = upstream.ok && !backendFallback
-    ? upstream.results.map((item) => normalizeResourceItem(item, domainNorm)).filter(Boolean)
+    ? filterListingsToCountryScope(upstream.results.map((item) => normalizeResourceItem(item, domainNorm)).filter(Boolean), region)
     : [];
   const providerResults = Array.isArray(reviewedProviders)
-    ? reviewedProviders.map((item) => normalizeResourceItem(item, domainNorm)).filter(Boolean)
+    ? filterListingsToCountryScope(reviewedProviders.map((item) => normalizeResourceItem(item, domainNorm)).filter(Boolean), region)
     : [];
   const freshResults = [...providerResults, ...liveResults];
 
-  if (freshResults.length) {
-    const liveAvailable = liveResults.length > 0;
+  if (freshResults.length || (liveQuerySucceeded && upstream.nextPageToken)) {
+    const liveAvailable = liveQuerySucceeded;
     return {
       ok: true,
       results: freshResults,
@@ -176,11 +181,11 @@ export async function searchResources({ query, domain, region, category, limit =
       error: !liveAvailable ? upstream.error || "Live search did not return fresh results; showing reviewed listings and saved support pathways." : null,
       query: upstream.query || cleanQuery,
       nextPageToken: liveAvailable ? upstream.nextPageToken : null,
-      meta: { ...(upstream.meta || {}), domain: domainNorm, liveAvailable },
+      meta: { ...(upstream.meta || {}), domain: domainNorm, liveAvailable, sourceCount: freshResults.length },
     };
   }
 
-  const savedResults = curatedResults(domainNorm, cleanQuery, region);
+  const savedResults = filterListingsToCountryScope(curatedResults(domainNorm, cleanQuery, region), region);
   return {
     ok: savedResults.length > 0,
     results: savedResults,
