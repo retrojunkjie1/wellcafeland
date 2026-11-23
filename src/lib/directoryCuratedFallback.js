@@ -529,23 +529,6 @@ export function getCuratedFallback(domain, query, region = "") {
     const normalizedRegion = String(region).toLowerCase();
     const nigeriaSearch = isNigeriaLocation(region);
     const internationalCountry = !nigeriaSearch ? resolveSupportCountry(region) : null;
-    const nigeriaDirectory = nigeriaSearch
-      ? [
-          ...NIGERIA_LOCAL_RECOVERY_RESOURCES,
-          ...NIGERIA_HOUSING_RESOURCES,
-          ...NIGERIA_FOOD_RESOURCES,
-          ...NIGERIA_FOOD_STATE_REFERRALS,
-          ...NIGERIA_FUNDING_RESOURCES,
-          ...NIGERIA_STATE_BENEFIT_CONTACTS,
-          ...NIGERIA_CURRENT_RELIEF_RESOURCES,
-          ...NIGERIA_URGENT_RESOURCES,
-          ...NIGERIA_PEER_RESOURCES,
-          ...ABUJA_PEER_RESOURCES,
-          ...LAGOS_PEER_MEETINGS,
-          ...LAGOS_TREATMENT_RESOURCES,
-        ]
-      : [];
-    const nigeriaLocal = nigeriaDirectory.filter((item) => matchesHelpLocation(item, region));
     const countryOnlySearch = /\bnigeria\b|\bng\b/.test(normalizedRegion) && !NIGERIA_CITIES.some((city) => normalizedRegion.includes(city.toLowerCase())) && !NIGERIA_STATES.some((state) => normalizedRegion.includes(state.toLowerCase()));
     const localMatches = (items) => items.filter((item) => matchesHelpLocation(item, region));
     if (internationalCountry) {
