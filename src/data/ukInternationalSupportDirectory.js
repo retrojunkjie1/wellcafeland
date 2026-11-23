@@ -7,6 +7,7 @@ import { UK_CITY_BATCH_20261120_SCOTLAND_FURTHER } from "./ukScotlandFurtherDire
 import { UK_CITY_BATCH_20261120_WALES_SOUTH } from "./ukWalesSouthFurtherDirectory.js";
 import { UK_CITY_BATCH_20261121_ENGLAND_SIX } from "./ukEnglandSixLocalitiesNov2026.js";
 import { UK_CITY_BATCH_20261121_ENGLAND_DEPTH } from "./ukEnglandLocalityDepthNov2026.js";
+import { UK_CITY_BATCH_20261122_ENGLAND_FIVE } from "./ukEnglandFiveCityBatchNov2026.js";
 
 const UK = "United Kingdom";
 
@@ -669,7 +670,6 @@ const UK_CITY_BATCH_20261101_OXFORD_CAMBRIDGE_NORWICH_READING_PORTSMOUTH = (() =
   const add = (city, state, category, slug, name, kind, description, phone, url, source, address = "", locationLine = "") => records.push(pathway(UK, "GB", category, `${city.toLowerCase()}-${slug}`, name, kind, description, phone, url, source, { city, state, region: `${city}, England`, ...(address ? { address } : {}), ...(locationLine ? { locationLine } : {}), checkedAt: "2026-11-01" }));
   const oxFood = "https://www.oxford.gov.uk/people-communities/free-low-cost-food-oxford";
   const camFood = "https://www.cambridgeshire.gov.uk/council/communities/support-with-the-cost-of-living/food-support-in-your-area";
-  const norFood = "https://www.norwich.gov.uk/cost-living-support/food-support";
   const norBank = "https://norwich.foodbank.org.uk/locations/";
   const pFood = "https://www.portsmouth.gov.uk/food-banks-pantries-and-larders-and-community-meals?page=1";
   const rFood = "https://www.reading.gov.uk/benefits-and-financial-support/money-matters/help-with-food-costs/";
@@ -947,7 +947,7 @@ export const UK_SUPPORT_DIRECTORY = {
     aliases: ["uk", "u.k.", "great britain", "britain", "england", "scotland", "wales", "northern ireland"],
     // Keep bare Perth resolving to Australia as it did before this UK batch;
     // "Perth, Scotland" still resolves via the explicit Scotland country alias.
-    cityAliases: ["london", "manchester", "birmingham", "liverpool", "glasgow", "edinburgh", "cardiff", "belfast", "derry", "derry/londonderry", "londonderry", "lisburn", "newry", "armagh", "newtownards", "bangor ni", "bangor county down", "bangor, county down", "ballymena", "coleraine", "cookstown", "enniskillen", "omagh", "craigavon", "portadown", "dungannon", "limavady", "ballymoney", "ballycastle", "larne", "antrim", "newtownabbey", "carrickfergus", "ballyclare", "magherafelt", "banbridge", "leeds", "bristol", "bradford", "sheffield", "nottingham", "newcastle", "newcastle upon tyne", "leicester", "coventry", "dundee", "swansea", "bath", "exeter", "plymouth", "southampton", "aberdeen", "inverness", "stirling", "newport", "oxford", "cambridge", "norwich", "reading", "portsmouth", "wrexham", "rhyl", "bangor", "aberystwyth", "carmarthen", "colwyn bay", "llandudno", "llandudno junction", "caernarfon", "holyhead", "denbigh", "ruthin", "prestatyn", "merthyr tydfil", "merthyr", "bridgend", "barry", "pontypridd", "llanelli", "neath", "paisley", "falkirk", "kirkcaldy", "dunfermline", "ayr", "kilmarnock", "brighton", "brighton & hove", "hove", "milton keynes", "stoke-on-trent", "stoke on trent", "sunderland", "york", "wakefield"],
+    cityAliases: ["london", "manchester", "birmingham", "liverpool", "glasgow", "edinburgh", "cardiff", "belfast", "derry", "derry/londonderry", "londonderry", "lisburn", "newry", "armagh", "newtownards", "bangor ni", "bangor county down", "bangor, county down", "ballymena", "coleraine", "cookstown", "enniskillen", "omagh", "craigavon", "portadown", "dungannon", "limavady", "ballymoney", "ballycastle", "larne", "antrim", "newtownabbey", "carrickfergus", "ballyclare", "magherafelt", "banbridge", "leeds", "bristol", "bradford", "sheffield", "nottingham", "newcastle", "newcastle upon tyne", "leicester", "coventry", "dundee", "swansea", "bath", "exeter", "plymouth", "southampton", "aberdeen", "inverness", "stirling", "newport", "oxford", "cambridge", "norwich", "reading", "portsmouth", "wrexham", "rhyl", "bangor", "aberystwyth", "carmarthen", "colwyn bay", "llandudno", "llandudno junction", "caernarfon", "holyhead", "denbigh", "ruthin", "prestatyn", "merthyr tydfil", "merthyr", "bridgend", "barry", "pontypridd", "llanelli", "neath", "paisley", "falkirk", "kirkcaldy", "dunfermline", "ayr", "kilmarnock", "brighton", "brighton & hove", "hove", "milton keynes", "stoke-on-trent", "stoke on trent", "sunderland", "york", "wakefield", "derby", "hull", "kingston upon hull", "peterborough", "ipswich", "wolverhampton"],
     categories: {
       programs: [
         ...UK_LOCAL.programs,
@@ -972,6 +972,7 @@ export const UK_SUPPORT_DIRECTORY = {
         ...UK_CITY_BATCH_20261120_WALES_SOUTH.programs,
         ...UK_CITY_BATCH_20261121_ENGLAND_SIX.programs,
         ...UK_CITY_BATCH_20261121_ENGLAND_DEPTH.programs,
+        ...UK_CITY_BATCH_20261122_ENGLAND_FIVE.programs,
       ],
       peer: [
         ...UK_LOCAL.peer,
@@ -996,6 +997,7 @@ export const UK_SUPPORT_DIRECTORY = {
         ...UK_CITY_BATCH_20261120_WALES_SOUTH.peer,
         ...UK_CITY_BATCH_20261121_ENGLAND_SIX.peer,
         ...UK_CITY_BATCH_20261121_ENGLAND_DEPTH.peer,
+        ...UK_CITY_BATCH_20261122_ENGLAND_FIVE.peer,
       ],
       housing: [
         ...UK_LOCAL.housing,
@@ -1020,6 +1022,7 @@ export const UK_SUPPORT_DIRECTORY = {
         ...UK_CITY_BATCH_20261120_WALES_SOUTH.housing,
         ...UK_CITY_BATCH_20261121_ENGLAND_SIX.housing,
         ...UK_CITY_BATCH_20261121_ENGLAND_DEPTH.housing,
+        ...UK_CITY_BATCH_20261122_ENGLAND_FIVE.housing,
       ],
       "food.essentials": [
         ...UK_LOCAL["food.essentials"],
@@ -1039,6 +1042,7 @@ export const UK_SUPPORT_DIRECTORY = {
         ...UK_CITY_BATCH_20261120_WALES_SOUTH["food.essentials"],
         ...UK_CITY_BATCH_20261121_ENGLAND_SIX["food.essentials"],
         ...UK_CITY_BATCH_20261121_ENGLAND_DEPTH["food.essentials"],
+        ...UK_CITY_BATCH_20261122_ENGLAND_FIVE["food.essentials"],
         pathway(UK, "GB", "food.essentials", "trussell-help-through-hardship", "Trussell — Help through Hardship", "Food and essentials · referral and advice line · England and Wales", "Free, confidential advice for people struggling to afford essentials. Advisers can check benefit options and may help arrange emergency food support. Open Monday to Friday, 9am–5pm; this is not a walk-in pantry.", "0808 208 2138", "https://foodbank.trussell.org.uk/help-and-advice/help-through-hardship-helpline", "Trussell and Citizens Advice"),
         pathway(UK, "GB", "food.essentials", "trussell-foodbank-finder", "Find a Trussell food bank", "Food bank locator · England, Wales, and Northern Ireland", "Search for a local food bank and check how referrals work in your area. Some locations require a referral and food availability changes; contact the local service before travelling.", null, "https://www.trussell.org.uk/emergency-food/find-a-foodbank", "Trussell"),
         pathway(UK, "GB", "food.essentials", "gov-uk-free-school-meals", "Free school meals and local support", "Government food benefit information", "Check the official eligibility guidance and application route for free school meals in England. Scotland, Wales, and Northern Ireland use their own application routes.", null, "https://www.gov.uk/apply-free-school-meals", "GOV.UK · Department for Education"),
@@ -1063,6 +1067,7 @@ export const UK_SUPPORT_DIRECTORY = {
         ...UK_CITY_BATCH_20261120_WALES_SOUTH.grants,
         ...UK_CITY_BATCH_20261121_ENGLAND_SIX.grants,
         ...UK_CITY_BATCH_20261121_ENGLAND_DEPTH.grants,
+        ...UK_CITY_BATCH_20261122_ENGLAND_FIVE.grants,
         pathway(UK, "GB", "grants", "universal-credit-helpline", "Universal Credit — claim and payment support", "Government benefit · helpline", "Call about a Universal Credit claim or payment. The helpline is open Monday to Friday, 8am–6pm; it serves England, Scotland, and Wales. Northern Ireland has a separate service centre.", "0800 328 5644", "https://www.gov.uk/universal-credit/contact-universal-credit", "Department for Work and Pensions (DWP)"),
         pathway(UK, "GB", "grants", "citizens-advice-help-to-claim", "Citizens Advice — Help to Claim", "Benefits application support", "Get confidential help understanding and making a Universal Credit claim. Citizens Advice can help with eligibility questions, the application, and preparing for the first appointment.", null, "https://www.citizensadvice.org.uk/benefits/universal-credit/claiming/", "Citizens Advice · service information published by GOV.UK"),
         pathway(UK, "GB", "grants", "gov-uk-benefits", "GOV.UK — benefits and financial support", "Government benefit finder", "Use the official service to explore benefits, eligibility, and applications. The right benefit and application route depend on where you live and your circumstances.", null, "https://www.gov.uk/browse/benefits", "GOV.UK"),
@@ -1086,6 +1091,7 @@ export const UK_SUPPORT_DIRECTORY = {
         ...UK_CITY_BATCH_20261120_WALES_SOUTH.hotlines,
         ...UK_CITY_BATCH_20261121_ENGLAND_SIX.hotlines,
         ...UK_CITY_BATCH_20261121_ENGLAND_DEPTH.hotlines,
+        ...UK_CITY_BATCH_20261122_ENGLAND_FIVE.hotlines,
         pathway(UK, "GB", "hotlines", "uk-emergency-999-112", "Emergency services", "Immediate danger · emergency line", "If someone is in immediate danger or needs urgent medical help in the UK, call 999 or 112.", "999", "https://www.gov.uk/guidance/999-and-112-the-uks-national-emergency-numbers", "UK Government"),
         pathway(UK, "GB", "hotlines", "samaritans-uk", "Samaritans", "Emotional support · free 24-hour listening line", "Call free at any time, day or night, to talk with a trained listening volunteer. If there is immediate danger, call 999.", "116 123", "https://www.samaritans.org/how-we-can-help/contact-samaritan/", "Samaritans"),
         pathway(UK, "GB", "hotlines", "nhs-111-urgent-help", "NHS 111 — urgent medical help", "Urgent health advice · England", "For urgent medical help that is not a life-threatening emergency in England, use NHS 111 online or by phone. Scotland, Wales, and Northern Ireland have different urgent-care routes.", "111", "https://111.nhs.uk/", "National Health Service (NHS)"),

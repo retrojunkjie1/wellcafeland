@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { filterListingsToCountryScope } from "./locationCountryScope";
+import { resolveSupportCountry } from "@/data/internationalSupportDirectory";
 
 describe("filterListingsToCountryScope", () => {
   it("keeps London and UK-wide food support while removing Nigerian listings", () => {
@@ -21,4 +22,11 @@ describe("filterListingsToCountryScope", () => {
 
     expect(filterListingsToCountryScope(listings, "Springfield")).toEqual(listings);
   });
+
+  it.each(["Derby", "Hull", "Kingston upon Hull", "Peterborough", "Ipswich", "Wolverhampton"])(
+    "recognizes %s as a United Kingdom locality",
+    (place) => {
+      expect(resolveSupportCountry(place)).toBe("United Kingdom");
+    },
+  );
 });
