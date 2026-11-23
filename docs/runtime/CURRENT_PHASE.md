@@ -1,5 +1,13 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-22 — Country-safe resource search and Netlify direct-route recovery (released)
+
+PR [#141](https://github.com/retrojunkjie1/wellcafeland/pull/141) merged as `6050d7f8fa9d2702d301f36b7cbf72ea2e441faf`. Live, reviewed, and curated results are constrained to the recognized country selected in resource search; structured city matching no longer mistakes an address such as “London Road” in Kilmarnock for London. The live `https://wellnesscafe.app/assistance?priority=food&region=London` search was observed to show the London Manna Centre result without the Kilmarnock listing. PR #141's final focused tests passed (102 tests across the workspace and curated-fallback suites), and the required hosted regression/build checks passed. Firebase Hosting and the declared voice Functions deployment completed; the feature change does not certify every location record or all country aliases.
+
+PR [#142](https://github.com/retrojunkjie1/wellcafeland/pull/142) merged as `aaa45acd877ef268be63d2eb39f39a5c0b9ce8e7`. Netlify now rewrites direct client-side paths to the SPA entry document. Its required regression/build checks and deploy-preview passed. The merged production Netlify deploy `6b038811d01ec2535c8e5702` reached `ready`; independent requests to `/assistance?priority=food&region=London`, `/tools?flickercheck=1`, and `/agents` each returned HTTP 200 `text/html`. This verifies direct-route delivery, not signed-in data, media, or full client-side journey behavior. The equivalent Firebase custom-domain resource search remains separately verified under PR #141.
+
+Cross-role production acceptance, controlled App Check token acceptance/rejection, individual agent behavior certification, actual two-account LiveKit media, comprehensive accessibility and compliance review, and full-system DoD remain open. Continue client-journey integration and record account/configuration blockers separately from code defects; do not claim a complete release from route availability alone.
+
 ### 2026-11-22 — Agent-flow correction merged and released
 
 PR [#138](https://github.com/retrojunkjie1/wellcafeland/pull/138) merged into `main` as `d8e597cc53338ebe2e8aa833cde84b2cd0104eb0`. It aligns Seer, Sentinel, Mirror, Shepherd, Compass, and Gardener with existing client routes, removes unsupported risk-monitoring and alert claims, preserves supported question flows, and replaces raw agent response/error display with safe copy. It also fixes the workspace-lifecycle emulator test's global-clock override so Firestore RPCs retain real deadlines.
