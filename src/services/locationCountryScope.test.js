@@ -27,6 +27,16 @@ describe("filterListingsToCountryScope", () => {
     expect(filterListingsToCountryScope(listings, "London").map(({ id }) => id)).toEqual(["consistent"]);
   });
 
+  it("rejects a foreign city or structured address even when a provider labels it GB", () => {
+    const listings = [
+      { id: "mislabelled-lagos", city: "Lagos", country: "United Kingdom", countryCode: "GB" },
+      { id: "nested-nigeria-address", city: "London", country: "United Kingdom", countryCode: "GB", address: { country: "Nigeria", city: "Abuja" } },
+      { id: "genuine-london", city: "London", country: "United Kingdom", countryCode: "GB", address: "London, UK" },
+    ];
+
+    expect(filterListingsToCountryScope(listings, "London").map(({ id }) => id)).toEqual(["genuine-london"]);
+  });
+
   it("leaves results unchanged when the requested place has no recognized country", () => {
     const listings = [{ id: "regional-resource", city: "Springfield" }];
 

@@ -1,8 +1,15 @@
 import { isNigeriaLocation } from "@/lib/directoryCuratedFallback";
 import { resolveSupportCountry } from "@/data/internationalSupportDirectory";
 
+function locationText(value) {
+  if (value && typeof value === "object") {
+    return Object.values(value).map(locationText).filter(Boolean).join(" ");
+  }
+  return String(value || "").trim();
+}
+
 function countryFromLocation(value) {
-  const text = String(value || "").trim();
+  const text = locationText(value);
   if (!text) return null;
   if (isNigeriaLocation(text)) return "Nigeria";
   const resolved = resolveSupportCountry(text);
@@ -21,15 +28,13 @@ function countryFromCode(value) {
 }
 
 function listingCountries(item) {
-  // Keep every explicit location signal. If the provider returns a country
-  // name and ISO code that disagree, treating either one as authoritative
-  // could leak a cross-country result into a local search.
-  const explicit = [countryFromLocation(item?.country), countryFromCode(item?.countryCode)].filter(Boolean);
-  if (explicit.length) return [...new Set(explicit)];
-
-  return [item?.city, item?.state, item?.province, item?.region, item?.locationLine, item?.address]
+  // Reconcile every known signal, including the city/address, against the
+  // explicit country fields. A provider can mislabel a result's country while
+  // still returning an unmistakable foreign city or address.
+  return [item?.country, countryFromCode(item?.countryCode), item?.city, item?.state, item?.province, item?.region, item?.locationLine, item?.address]
     .map(countryFromLocation)
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((country, index, countries) => countries.indexOf(country) === index);
 }
 
 /**
