@@ -42,6 +42,7 @@ function normalizeResourceItem(raw, domain) {
     city: city || null,
     state: state || null,
     country: country || null,
+    countryCode: raw.countryCode || raw.country_code || address.countryCode || location.countryCode || null,
     postalCode: postalCode || null,
     locationLine,
     locationLabel: raw.locationLabel || (addressLine ? "Address" : locationLine ? "Service area" : null),

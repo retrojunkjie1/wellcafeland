@@ -66,6 +66,7 @@ export function normalizeResult(raw) {
     city: raw.city || null,
     state: raw.state || raw.region || null,
     country: raw.country || null,
+    countryCode: raw.countryCode || raw.country_code || null,
     postalCode: raw.postalCode || raw.zip || null,
     locationLine: raw.locationLine || null,
     locationLabel: raw.locationLabel || (raw.address ? "Address" : "Service area"),

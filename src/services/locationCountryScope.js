@@ -21,8 +21,11 @@ function countryFromCode(value) {
 }
 
 function listingCountries(item) {
-  const explicit = countryFromLocation(item?.country) || countryFromCode(item?.countryCode);
-  if (explicit) return [explicit];
+  // Keep every explicit location signal. If the provider returns a country
+  // name and ISO code that disagree, treating either one as authoritative
+  // could leak a cross-country result into a local search.
+  const explicit = [countryFromLocation(item?.country), countryFromCode(item?.countryCode)].filter(Boolean);
+  if (explicit.length) return [...new Set(explicit)];
 
   return [item?.city, item?.state, item?.province, item?.region, item?.locationLine, item?.address]
     .map(countryFromLocation)
