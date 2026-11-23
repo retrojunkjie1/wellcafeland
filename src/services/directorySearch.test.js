@@ -94,7 +94,7 @@ describe("directory search availability", () => {
       ok: true,
       results: [
         { id: "uk-food", title: "London food support", city: "London", country: "United Kingdom" },
-        { id: "ng-food", title: "Lagos food support", city: "Lagos", country: "Nigeria", phone: "+2348000000000" },
+        { id: "ng-food", title: "Lagos food support", city: "London", countryCode: "NG", phone: "+2348000000000" },
       ],
     })));
 
