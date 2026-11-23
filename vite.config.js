@@ -83,8 +83,12 @@ export default defineConfig(({ mode }) => {
             "uk-northern-ireland-further-directory": ["./src/data/ukNorthernIrelandFurtherDirectory.js"],
             "uk-scotland-further-directory": ["./src/data/ukScotlandFurtherDirectory.js"],
             "uk-scotland-depth-directory": ["./src/data/ukScotlandDepthNov2026.js"],
+            "uk-scotland-rural-directory": ["./src/data/ukScottishRuralFiveLocalitiesNov2026.js"],
             "uk-wales-south-directory": ["./src/data/ukWalesSouthFurtherDirectory.js"],
             "uk-england-six-localities-directory": ["./src/data/ukEnglandSixLocalitiesNov2026.js"],
+            "uk-england-locality-depth-directory": ["./src/data/ukEnglandLocalityDepthNov2026.js"],
+            "uk-england-five-city-directory": ["./src/data/ukEnglandFiveCityBatchNov2026.js"],
+            "uk-england-major-city-depth-directory": ["./src/data/ukEnglandMajorCityDepthNov2026.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
             // Keep local catalog records in regional assets as the directory grows.
             // These are still loaded through the same static catalog imports, so lookup behavior is unchanged.
