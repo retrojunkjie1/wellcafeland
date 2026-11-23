@@ -1,4 +1,5 @@
 import { getFoodStateCode } from "@/services/foodDirectory";
+import { INTERNATIONAL_SUPPORT_DIRECTORY, resolveSupportCountry } from "@/data/internationalSupportDirectory";
 
 function text(value) {
   if (value && typeof value === "object") {
@@ -45,6 +46,17 @@ function inferredStateCode(value) {
   return getFoodStateCode(finalPart);
 }
 
+function isCountryWideLocation(requested) {
+  if (["nigeria", "ng", "nga", "federal republic of nigeria"].includes(normalize(requested))) return true;
+  const country = resolveSupportCountry(requested);
+  if (!country) return false;
+  const countryRecord = INTERNATIONAL_SUPPORT_DIRECTORY[country];
+  const normalizedRequest = normalize(requested);
+  return [country, countryRecord?.countryCode, ...(countryRecord?.aliases || [])]
+    .filter(Boolean)
+    .some((candidate) => normalize(candidate) === normalizedRequest);
+}
+
 /**
  * True only when a listing contains location evidence matching the user's area.
  * This intentionally confirms city/state/ZIP text only; it never estimates distance.
@@ -84,8 +96,8 @@ export function matchesHelpLocation(record, requestedLocation) {
   // example, "London Road, Kilmarnock" was treated as local to London).
   // If a listing has no explicit city, keep it in the wider-area section
   // instead of labeling it as a nearby match based on an address fragment.
-  if (!requestedState && !requested.includes(",")) {
-    const requestedCity = normalize(requested);
+  if (!requestedState && !isCountryWideLocation(requested)) {
+    const requestedCity = normalize(requested.split(",")[0]);
     if (fields.city) return normalize(fields.city) === requestedCity;
     return false;
   }
