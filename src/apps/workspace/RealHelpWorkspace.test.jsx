@@ -287,6 +287,12 @@ describe("real-world assistance search states", () => {
     expect(matchesHelpLocation({ name: "No address listed" }, "Denver, CO")).toBe(false);
   });
 
+  it("does not mistake a street name for a city in nearby results", () => {
+    expect(matchesHelpLocation({ city: "London", address: "6 Melior Street, London SE1 3QP" }, "London")).toBe(true);
+    expect(matchesHelpLocation({ city: "Kilmarnock", address: "Muslim Education Centre, London Road, Kilmarnock" }, "London")).toBe(false);
+    expect(matchesHelpLocation({ address: "Muslim Education Centre, London Road, Kilmarnock" }, "London")).toBe(false);
+  });
+
   it("separates confirmed local housing from broader national options", async () => {
     expect(matchesHelpLocation({ city: "Denver", state: "CO", locationLine: "Denver, CO" }, "Denver, CO")).toBe(true);
     mocks.getCuratedFallback.mockReturnValue([{

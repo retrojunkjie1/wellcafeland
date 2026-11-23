@@ -79,6 +79,17 @@ export function matchesHelpLocation(record, requestedLocation) {
     return cityMatches && stateMatches;
   }
 
+  // A city-only search must compare the structured city field directly.
+  // Searching all address text lets street names masquerade as cities (for
+  // example, "London Road, Kilmarnock" was treated as local to London).
+  // If a listing has no explicit city, keep it in the wider-area section
+  // instead of labeling it as a nearby match based on an address fragment.
+  if (!requestedState && !requested.includes(",")) {
+    const requestedCity = normalize(requested);
+    if (fields.city) return normalize(fields.city) === requestedCity;
+    return false;
+  }
+
   const normalizedRequest = normalize(requested);
   const tokens = normalizedRequest.split(" ").filter((token) => token.length > 1);
   const fieldTokens = new Set(fields.all.split(" ").filter(Boolean));
