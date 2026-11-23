@@ -1,5 +1,11 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-22 — Check-in history return restored and released
+
+PR [#144](https://github.com/retrojunkjie1/wellcafeland/pull/144) merged to `main` as `4802a7f73818942510e01a7725519b8d34105026`. Dashboard check-in history now honors the validated practice return target already carried by Check-in and Milestones routes, restoring the originating practice path, query, hash, and scroll position. Standalone history remains unchanged, and external return targets are rejected.
+
+Verification: focused Check-in, Dashboard, and Milestones suites passed (3 files / 19 tests); changed-file ESLint, local production Vite build, and `git diff --check` passed. GitHub's supported Node 22 `verify` and `approved-build-protection` suites passed, as did lint, dependency review, and CodeQL. Main deployment workflow [45109478520](https://github.com/retrojunkjie1/wellcafeland/actions/runs/45109478520) completed Firebase Hosting and configured voice Functions deployment. The live `/dashboard` route returned HTTP 200 and its deployed DashboardPage JavaScript bundle returned HTTP 200 with the new return action present. The authenticated save → history → practice browser journey was not exercised; account-backed acceptance remains open. This correction does not close the full-system DoD.
+
 ### 2026-11-22 — Country-safe resource search and Netlify direct-route recovery (released)
 
 PR [#141](https://github.com/retrojunkjie1/wellcafeland/pull/141) merged as `6050d7f8fa9d2702d301f36b7cbf72ea2e441faf`. Live, reviewed, and curated results are constrained to the recognized country selected in resource search; structured city matching no longer mistakes an address such as “London Road” in Kilmarnock for London. The live `https://wellnesscafe.app/assistance?priority=food&region=London` search was observed to show the London Manna Centre result without the Kilmarnock listing. PR #141's final focused tests passed (102 tests across the workspace and curated-fallback suites), and the required hosted regression/build checks passed. Firebase Hosting and the declared voice Functions deployment completed; the feature change does not certify every location record or all country aliases.
