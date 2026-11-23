@@ -82,6 +82,7 @@ export default defineConfig(({ mode }) => {
             "uk-northern-ireland-next-directory": ["./src/data/ukNorthernIrelandNextDirectory.js"],
             "uk-northern-ireland-further-directory": ["./src/data/ukNorthernIrelandFurtherDirectory.js"],
             "uk-scotland-further-directory": ["./src/data/ukScotlandFurtherDirectory.js"],
+            "uk-scotland-depth-directory": ["./src/data/ukScotlandDepthNov2026.js"],
             "uk-wales-south-directory": ["./src/data/ukWalesSouthFurtherDirectory.js"],
             "uk-england-six-localities-directory": ["./src/data/ukEnglandSixLocalitiesNov2026.js"],
             "international-support-directory": ["./src/data/internationalSupportDirectory.js"],
