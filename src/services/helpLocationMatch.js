@@ -91,14 +91,32 @@ export function matchesHelpLocation(record, requestedLocation) {
     return cityMatches && stateMatches;
   }
 
+  // International directory cohorts can be organized by a state or province,
+  // and some source-reviewed listings have no city field. Match an explicitly
+  // named jurisdiction against structured city/state fields, never an address
+  // fragment such as "London Road".
+  const requestedLocality = normalize(requestedParts[0] || requested);
+  const canonicalJurisdiction = (value) => {
+    const normalized = normalize(value).replace(/ /g, "");
+    return ["fct", "federalcapitalterritory"].includes(normalized)
+      ? "federalcapitalterritory"
+      : normalize(value);
+  };
+  const requestedCountry = requestedParts.length > 1
+    ? resolveSupportCountry(requestedParts.at(-1))
+    : null;
+  const recordCountry = resolveSupportCountry(fields.country);
+  if (requestedCountry && recordCountry && requestedCountry !== recordCountry) return false;
+  if (fields.city && normalize(fields.city) === requestedLocality) return true;
+  if (fields.state && canonicalJurisdiction(fields.state) === canonicalJurisdiction(requestedLocality)) return true;
+
   // A city-only search must compare the structured city field directly.
   // Searching all address text lets street names masquerade as cities (for
   // example, "London Road, Kilmarnock" was treated as local to London).
   // If a listing has no explicit city, keep it in the wider-area section
   // instead of labeling it as a nearby match based on an address fragment.
   if (!requestedState && !isCountryWideLocation(requested)) {
-    const requestedCity = normalize(requested.split(",")[0]);
-    if (fields.city) return normalize(fields.city) === requestedCity;
+    if (fields.city) return normalize(fields.city) === requestedLocality;
     return false;
   }
 

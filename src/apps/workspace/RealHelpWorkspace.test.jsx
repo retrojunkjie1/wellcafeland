@@ -293,6 +293,8 @@ describe("real-world assistance search states", () => {
     expect(matchesHelpLocation({ city: "Kilmarnock", address: "Muslim Education Centre, London Road, Kilmarnock" }, "London")).toBe(false);
     expect(matchesHelpLocation({ address: "Muslim Education Centre, London Road, Kilmarnock" }, "London")).toBe(false);
     expect(matchesHelpLocation({ city: "Abuja", country: "Nigeria", locationLine: "Abuja, Nigeria" }, "Nigeria")).toBe(true);
+    expect(matchesHelpLocation({ city: "Azare", state: "Bauchi", country: "Nigeria" }, "Bauchi, Nigeria")).toBe(true);
+    expect(matchesHelpLocation({ city: "Kilmarnock", state: "Scotland", country: "United Kingdom", address: "London Road" }, "London, UK")).toBe(false);
   });
 
   it("separates confirmed local housing from broader national options", async () => {
