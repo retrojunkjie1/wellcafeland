@@ -1,13 +1,16 @@
 // src/apps/dashboard/DashboardPage.jsx
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 import SignalHeader from "@/components/dashboard/SignalHeader";
 import CheckInWeeklyReflection from "./CheckInWeeklyReflection";
 import { useAuth } from "@/context/AuthContext";
 import { listMyCheckInHistoryPage } from "@/services/checkInHistory";
 import { GUEST_CHECKINS_STORAGE_KEY } from "@/apps/core/checkInConstants";
+import { getPracticeReturnTarget } from "@/apps/assistance/assistanceReturnPath";
+import { returnFromTool } from "@/navigation/toolReturn";
 
 function guestCheckInDate(value) {
   if (value?.toDate) return value.toDate();
@@ -23,6 +26,8 @@ function guestCheckInDate(value) {
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToPractice = getPracticeReturnTarget(location.state);
   const { user, loading: authLoading } = useAuth();
   const historyScope = user && !user.isAnonymous ? `account:${user.uid}` : "guest";
 
@@ -125,6 +130,13 @@ const DashboardPage = () => {
 
 
       <section aria-labelledby="check-in-history-title" className="flex-1 space-y-4 overflow-visible">
+          {returnToPractice && <button
+            type="button"
+            onClick={() => returnFromTool(navigate, returnToPractice)}
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/15 px-4 text-sm font-medium text-white/80 transition hover:bg-white/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wcGold"
+          >
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Back to your practice
+          </button>}
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] px-4 py-4 text-sm text-slate-200 shadow-lg shadow-black/20 backdrop-blur-md">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><h2 id="check-in-history-title" className="text-lg font-semibold text-white">Your check-ins</h2><p className="mt-1 max-w-2xl text-sm text-slate-400">Check-ins stay private unless you choose sharing categories for a connected practitioner. A connection alone does not grant access.</p></div>

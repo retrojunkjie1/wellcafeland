@@ -23,11 +23,11 @@ vi.mock("@/components/dashboard/DashboardDetailsSheet", () => ({ default: () => 
 
 function CurrentPath() {
   const location = useLocation();
-  return <output data-testid="current-path">{location.pathname}</output>;
+  return <output data-testid="current-path">{location.pathname}{location.search}{location.hash}</output>;
 }
 
-function renderPage() {
-  return render(<MemoryRouter initialEntries={["/dashboard"]}><Routes><Route path="/dashboard" element={<><DashboardPage /><CurrentPath /></>} /><Route path="/check-in" element={<CurrentPath />} /><Route path="/settings/practitioner-sharing" element={<CurrentPath />} /></Routes></MemoryRouter>);
+function renderPage(initialEntries = ["/dashboard"]) {
+  return render(<MemoryRouter initialEntries={initialEntries}><Routes><Route path="/dashboard" element={<><DashboardPage /><CurrentPath /></>} /><Route path="/check-in" element={<CurrentPath />} /><Route path="/settings/practitioner-sharing" element={<CurrentPath />} /><Route path="/tools/:toolId" element={<CurrentPath />} /></Routes></MemoryRouter>);
 }
 
 afterEach(() => cleanup());
@@ -92,8 +92,33 @@ describe("client check-in history", () => {
 
   it("provides a useful action when the user has no saved entries", async () => {
     renderPage();
+    expect(screen.queryByRole("button", { name: /back to your practice/i })).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Start a check-in" }));
     expect(screen.getByTestId("current-path")).toHaveTextContent("/check-in");
+  });
+
+  it("returns to the exact safe practice location when history was opened from a check-in", async () => {
+    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    const returnTo = {
+      pathname: "/tools/breathing",
+      search: "?focus=shoulders",
+      hash: "#next-step",
+      state: null,
+      scrollY: 84,
+    };
+    renderPage([{ pathname: "/dashboard", state: { from: "daily-check-in", returnTo } }]);
+
+    expect(await screen.findByText("Your check-ins")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /back to your practice/i }));
+
+    expect(screen.getByTestId("current-path")).toHaveTextContent("/tools/breathing?focus=shoulders#next-step");
+  });
+
+  it("does not render a practice return action for an untrusted external route", async () => {
+    renderPage([{ pathname: "/dashboard", state: { returnTo: { pathname: "https://example.com" } } }]);
+
+    expect(await screen.findByText("Your check-ins")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /back to your practice/i })).toBeNull();
   });
 
   it("clears the previous account history and ignores its late response after an account switch", async () => {
