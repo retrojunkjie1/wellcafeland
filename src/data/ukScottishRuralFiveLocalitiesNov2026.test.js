@@ -35,6 +35,6 @@ describe("UK five-locality Scotland directory batch", () => {
       && cities.includes(record.city))).toBe(true);
     expect(records.every(({ id }) => existingIds.has(id))).toBe(true);
     expect(existingIds.size).toBe(existing.length);
-    expect(existing.length).toBe(1340);
+    expect(existing.length).toBe(1396);
   });
 });
