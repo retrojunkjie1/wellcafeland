@@ -30,12 +30,16 @@ const strangerUid = `lifecycle-stranger-${suffix}`;
 const createdAppointmentIds = new Set();
 const createdAppointmentRequestIds = new Set();
 const createdConnectionRequestIds = new Set();
+const authTokens = new Map();
+const authEmails = new Map();
+const TEST_PASSWORD = "Test-only-password-482!";
 
-const signedIn = (uid, data = {}, claims = {}) => ({
-  auth: { uid, token: { email_verified: true, firebase: { sign_in_provider: "password" }, ...claims } },
-  data,
-});
-const ownerRequest = (data = {}) => signedIn(ownerUid, data, { godAdmin: true });
+const signedIn = (uid, data = {}, claimOverrides = {}) => {
+  const token = authTokens.get(uid);
+  assert.ok(token, `A verified Auth Emulator identity must exist for ${uid}`);
+  return { auth: { uid, token: { ...token, ...claimOverrides } }, data };
+};
+const ownerRequest = (data = {}) => signedIn(ownerUid, data);
 const applicationData = (region) => ({
   type: "yoga",
   name: "Jordan Lee",
@@ -74,6 +78,8 @@ async function cleanup() {
     }
     try { await auth.deleteUser(uid); } catch (error) { if (error.code !== "auth/user-not-found") throw error; }
   }
+  authTokens.clear();
+  authEmails.clear();
   for (const id of [`lifecycle-giver-co-${suffix}`, `lifecycle-giver-tx-${suffix}`]) {
     await db.collection("community_supporter_applications").doc(id).delete().catch(() => {});
   }
@@ -89,7 +95,25 @@ async function cleanup() {
 }
 
 async function createVerifiedUser(uid, email) {
-  await auth.createUser({ uid, email, emailVerified: true });
+  await auth.createUser({ uid, email, emailVerified: true, password: TEST_PASSWORD });
+  authEmails.set(uid, email);
+}
+
+async function refreshEmulatorIdentity(uid) {
+  const email = authEmails.get(uid);
+  assert.ok(email, `An Auth Emulator email must exist for ${uid}`);
+  const response = await fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-api-key`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email, password: TEST_PASSWORD, returnSecureToken: true }),
+  });
+  const session = await response.json();
+  assert.equal(response.ok, true, `Auth Emulator should issue a session for ${uid}: ${JSON.stringify(session)}`);
+  const token = await auth.verifyIdToken(session.idToken);
+  assert.equal(token.uid, uid);
+  assert.equal(token.email_verified, true);
+  authTokens.set(uid, token);
+  return token;
 }
 
 before(async () => {
@@ -105,6 +129,7 @@ before(async () => {
     createVerifiedUser(strangerUid, `${strangerUid}@example.test`),
   ]);
   await auth.setCustomUserClaims(ownerUid, { godAdmin: true });
+  await Promise.all([ownerUid, reviewerUid, applicantUid, otherApplicantUid, clientUid, strangerUid].map(refreshEmulatorIdentity));
   await Promise.all([
     db.collection("users").doc(applicantUid).set({ uid: applicantUid, role: "client", roles: ["client"] }),
     db.collection("users").doc(clientUid).set({ uid: clientUid, displayName: "Casey Client", role: "client", roles: ["client"] }),
@@ -171,13 +196,13 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
   assert.deepEqual(user.get("roles"), ["client", "provider"]);
   assert.equal(authUser.customClaims.provider, true);
   assert.equal(authUser.customClaims.role, "provider");
+  await refreshEmulatorIdentity(applicantUid);
   const publicProfile = publicDirectory.practitioners.find((item) => item.id === applicantUid || item.uid === applicantUid);
   assert.ok(publicProfile, "reviewed practitioner should be discoverable");
   assert.equal("email" in publicProfile, false, "private account email must not appear in public discovery");
 
-  const providerClaims = { ...authUser.customClaims, email: authUser.email };
   const clientRequest = (data = {}) => signedIn(clientUid, data);
-  const providerRequest = (data = {}) => signedIn(applicantUid, data, providerClaims);
+  const providerRequest = (data = {}) => signedIn(applicantUid, data);
 
   await assert.rejects(
     connections.requestPractitionerConnection.run(signedIn(clientUid, {
@@ -269,7 +294,7 @@ test("scoped admin approval unlocks a consented client-practitioner video-sessio
   let practitionerToken;
   [clientToken, practitionerToken] = await Promise.all([
     issueVideoToken(signedIn(clientUid, { appointmentId: response.appointmentId })),
-    issueVideoToken(signedIn(applicantUid, { appointmentId: response.appointmentId }, providerClaims)),
+    issueVideoToken(signedIn(applicantUid, { appointmentId: response.appointmentId })),
   ]);
   const tokenClaims = (token) => JSON.parse(Buffer.from(token.participantToken.split(".")[1], "base64url").toString("utf8"));
   assert.equal(clientToken.role, "client");

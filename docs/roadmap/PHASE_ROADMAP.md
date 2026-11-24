@@ -1,7 +1,7 @@
 # WellnessCafe OS — Execution Roadmap
 
 **Roadmap authority:** [Master Blueprint and Definition of Done](../architecture/MASTER_VISION_BLUEPRINT.md)
-**Status date:** 2026-11-22
+**Status date:** 2026-11-23
 **Purpose:** sequence delivery across the whole OS without getting stuck in one role or repeating audits without closing journeys.
 
 The blueprint defines the vision, compartments, and exit criteria. This file is the shorter execution view. `CURRENT_PHASE.md` is the release/build diary, and `RETURN_TO_BACKLOG.md` holds open/deferred work. Existing Phase 1–6 labels remain useful capability groupings, but they are not a rule that only one part of the OS may improve at a time.
@@ -18,7 +18,7 @@ Server-side account verification is now enforced for practitioner application en
 
 ### 1. Now: connect and verify the built OS
 
-Backend emulator coverage now passes for scoped-admin application approval, client/practitioner connection, consent, messaging, support, scheduling, practice follow-up, and Firestore account boundaries. Close the real authorized client → practitioner → admin browser journey next: role-aware entry, application review, connection, consent, shared practice, client choice, scheduling, and optional follow-up. Record what is blocked by missing role claims or accounts. Fix only demonstrated access or integration gaps.
+Backend emulator coverage now passes for scoped-admin application approval, client/practitioner connection, consent, messaging, support, scheduling, practice follow-up, and Firestore account boundaries. Both the client–practitioner lifecycle and scoped-admin/workspace lifecycle suites now provision synthetic Auth Emulator users and use verified emulator-issued ID tokens instead of fabricated caller identities. Continue local/browser-independent integration work with those identities. Separately, complete the authorized production client → practitioner → admin walkthrough: role-aware entry, application review, connection, consent, shared practice, client choice, scheduling, and optional follow-up. Missing production accounts are not a blocker to implementation; do not create or modify real accounts without authorization. Record actual production blockers accurately and fix demonstrated access or integration gaps.
 
 **Exit:** intended roles reach the correct workspace, server-side permission checks are demonstrated in emulators and production, consent is respected, and the current release record distinguishes passed paths from blocked ones. Emulator evidence does not substitute for production role switching or a real video-call acceptance test.
 
@@ -36,7 +36,7 @@ Finish reviewed onboarding, practical offerings, timezone-aware schedules, secur
 
 ### 4. In parallel: God-Eye and intelligence operations
 
-The canonical catalog maps 25 agents to production handler IDs. The last recorded authenticated live God-Eye check (2026-10-13) showed 25/25 enabled, none paused, and none without a handler. Local contracts cover 25/25 and the authenticated emulator workflow exercises all 25; the latest evidence records 0/25 individually observed in production. Handler registration and an enabled switch do not certify each agent's behavior or complete its intended workflow. PR #138 (released 2026-11-22) aligned six client-facing cards with existing consent-led routes and removed unsupported risk-monitoring claims. Next: continue the role-specific workflow evaluation, including an authorized live admin/practitioner/client walkthrough, and review event health, risk visibility, and application queues. The Custom AI sessions server gate is implemented; audit each other global setting against its consumer before describing it as runtime enforcement.
+The canonical catalog maps 25 agents to production handler IDs. The last recorded authenticated live God-Eye check (2026-10-13) showed 25/25 enabled, none paused, and none without a handler. Local contracts cover 25/25 and the authenticated emulator workflow exercises all 25; the latest evidence records 0/25 individually observed in production. Handler registration and an enabled switch do not certify each agent's behavior or complete its intended workflow. PR #138 (released 2026-11-22) aligned six client-facing cards with existing consent-led routes and removed unsupported risk-monitoring claims. Next: continue the role-specific workflow evaluation, including an authorized live admin/practitioner/client walkthrough, and review event health, risk visibility, and application queues. The Custom AI sessions, Risk Radar, catalog/marketplace, session-sharing, and allowlisted operational-telemetry controls have local consumer gates; telemetry was newly wired on 2026-11-23 and has not yet been deployed. Recovery Tracking still lacks a defined behavior contract and Notifications has no delivery transport; keep both marked unconnected until those contracts exist.
 
 **Exit:** authorized admins can complete a review and operate the central agent system with auditable outcomes and no unnecessary access to private client content.
 

@@ -412,9 +412,8 @@ const getAdminSystemSettings = onCall({ region: "us-central1", enforceAppCheck: 
   }
 });
 
-// Public clients need only the availability of optional practice discovery.
-// Keep this response to allowlisted booleans; never expose the admin settings
-// document, audit metadata, thresholds, or notification configuration.
+// Public clients need only allowlisted product availability booleans. Never
+// expose the admin settings document, audit metadata, thresholds, or policy.
 const getPublicPracticeAvailability = onCall({ region: "us-central1", enforceAppCheck: true }, async () => {
   try {
     const snapshot = await admin.firestore().doc(SYSTEM_SETTINGS_REF).get();
@@ -422,6 +421,7 @@ const getPublicPracticeAvailability = onCall({ region: "us-central1", enforceApp
     return {
       toolsCatalog: typeof savedFeatures.toolsCatalog === "boolean" ? savedFeatures.toolsCatalog : true,
       providersMarketplace: typeof savedFeatures.providersMarketplace === "boolean" ? savedFeatures.providersMarketplace : true,
+      telemetry: typeof savedFeatures.telemetry === "boolean" ? savedFeatures.telemetry : true,
     };
   } catch (error) {
     console.error("[agentOperations] Public practice availability read failed", { code: error?.code || "UNKNOWN" });
