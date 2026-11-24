@@ -11,7 +11,9 @@ const auth = admin.auth();
 const access = require("../src/adminUserAccess");
 const findAccount = access.findAdminWorkspaceAccount.run;
 const grantWorkspace = access.grantPractitionerWorkspace.run;
+const revokeWorkspace = access.revokePractitionerWorkspace.run;
 const listEvents = access.listAdminWorkspaceAccessEvents.run;
+const requireProvider = require("../src/providerScheduling").requireProvider;
 const targetEmail = "access-candidate@example.test";
 
 function adminRequest(data = {}) {
@@ -97,6 +99,54 @@ test("an admin grants workspace access without publishing a practitioner profile
   assert.equal(audit.docs[0].get("actorUid"), "workspace-admin");
   assert.equal(audit.docs[0].get("targetUid"), target.uid);
   assert.equal(audit.docs[0].get("providerType"), "yoga");
+});
+
+test("workspace revocation closes stale-token access, preserves client access, and records the change", async () => {
+  const target = await auth.createUser({ email: targetEmail, displayName: "Practice Candidate", emailVerified: true });
+  await db.collection("users").doc(target.uid).set({
+    role: "client", roles: ["client"], workspaceIntent: "client",
+  });
+
+  await grantWorkspace(adminRequest({ email: targetEmail, providerType: "yoga" }));
+  const staleProviderRequest = {
+    auth: {
+      uid: target.uid,
+      token: { email: targetEmail, email_verified: true, role: "provider", provider: true, roles: ["client", "provider"] },
+    },
+    data: {},
+  };
+  assert.equal(await requireProvider(staleProviderRequest), target.uid);
+
+  await assert.rejects(
+    revokeWorkspace({ auth: { uid: "client", token: { role: "client" } }, data: { email: targetEmail } }),
+    (error) => error.code === "permission-denied",
+  );
+  const result = await revokeWorkspace(adminRequest({ email: targetEmail }));
+  assert.equal(result.ok, true);
+  assert.equal(result.requiresSignInRefresh, true);
+  assert.equal(result.directoryProfileUnchanged, true);
+  assert.equal(result.account.workspaceAccessActive, false);
+  assert.equal(result.account.providerType, "");
+
+  // The client’s cached ID token still says provider, but authorization reads
+  // the trusted account document and must deny the practitioner operation.
+  await assert.rejects(requireProvider(staleProviderRequest), (error) => error.code === "permission-denied");
+  const [authUser, userSnapshot, profileSnapshot, history] = await Promise.all([
+    auth.getUser(target.uid),
+    db.collection("users").doc(target.uid).get(),
+    db.collection("realHelpProviders").doc(target.uid).get(),
+    listEvents(adminRequest()),
+  ]);
+  assert.equal(authUser.customClaims.provider, false);
+  assert.equal(authUser.customClaims.role, "client");
+  assert.deepEqual(new Set(authUser.customClaims.roles), new Set(["client"]));
+  assert.equal(userSnapshot.get("practitionerWorkspaceActive"), false);
+  assert.equal(userSnapshot.get("role"), "client");
+  assert.equal(profileSnapshot.exists, false, "workspace access changes must not silently publish or rewrite a directory profile");
+  assert.equal(history.events.length, 1);
+  assert.equal(history.events[0].action, "revoked");
+  assert.equal(history.events[0].workspaceAccessActive, false);
+  assert.equal(history.events[0].email, targetEmail);
 });
 
 test("recent grant history is admin-only, deduplicated, and exposes application status only", async () => {
