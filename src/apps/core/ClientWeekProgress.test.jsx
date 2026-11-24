@@ -8,11 +8,17 @@ const mocks = vi.hoisted(() => ({
   user: { uid: "client-1", isAnonymous: false },
   loading: false,
   getMyCheckInWeekSummary: vi.fn(),
+  getPrivatePracticeProgress: vi.fn(),
+  getGuestPrivatePracticeProgress: vi.fn(),
   importGuestCheckIns: vi.fn(),
 }));
 
 vi.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: mocks.user, loading: mocks.loading }) }));
 vi.mock("@/services/checkInHistory", () => ({ getMyCheckInWeekSummary: mocks.getMyCheckInWeekSummary }));
+vi.mock("@/services/privatePracticeProgress", () => ({
+  getPrivatePracticeProgress: mocks.getPrivatePracticeProgress,
+  getGuestPrivatePracticeProgress: mocks.getGuestPrivatePracticeProgress,
+}));
 vi.mock("@/services/guestCheckInMigration", () => ({
   importGuestCheckIns: mocks.importGuestCheckIns,
   prepareGuestCheckInsForImport: (entries) => entries.map((entry, index) => ({ ...entry, migrationId: entry.migrationId || `guest-id-${index}` })),
@@ -50,6 +56,7 @@ function renderCard() {
         <Route path="/milestones" element={<><h1>Milestones route</h1><CurrentPath /></>} />
         <Route path="/check-in" element={<><h1>Check-in route</h1><CurrentPath /></>} />
         <Route path="/recovery/meetings" element={<><h1>Meeting finder route</h1><CurrentPath /></>} />
+        <Route path="/tools" element={<><h1>Daily Practice route</h1><CurrentPath /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -62,6 +69,8 @@ beforeEach(() => {
   mocks.user = { uid: "client-1", isAnonymous: false };
   mocks.loading = false;
   mocks.getMyCheckInWeekSummary.mockResolvedValue(summary);
+  mocks.getPrivatePracticeProgress.mockResolvedValue({ totalCompleted: 12, activeDaysLast7: 3 });
+  mocks.getGuestPrivatePracticeProgress.mockReturnValue({ totalCompleted: 4, activeDaysLast7: 2 });
   mocks.importGuestCheckIns.mockResolvedValue({ imported: 1 });
 });
 
@@ -75,13 +84,25 @@ describe("ClientWeekProgress", () => {
     expect(screen.getByText("A choice from your recent check-in")).toBeInTheDocument();
     expect(screen.getByText("You chose: Peer recovery support")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: /check-ins by day this week/i })).toBeInTheDocument();
+    expect(await screen.findByText("12")).toBeInTheDocument();
+    expect(screen.getByText("practice completions recorded")).toBeInTheDocument();
+    expect(screen.getByText("days with a practice in the last 7 days · choose your own rhythm")).toBeInTheDocument();
+    expect(screen.getByText(/not shared with a practitioner/i)).toBeInTheDocument();
     expect(mocks.getMyCheckInWeekSummary).toHaveBeenCalledOnce();
+    expect(mocks.getPrivatePracticeProgress).toHaveBeenCalledOnce();
 
+    fireEvent.click(screen.getByRole("button", { name: /Choose a practice/i }));
+    expect(await screen.findByRole("heading", { name: "Daily Practice route" })).toBeInTheDocument();
+
+    unmount();
+    renderCard();
+
+    expect(await screen.findByText("A choice from your recent check-in")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Find a meeting/i }));
     expect(await screen.findByRole("heading", { name: "Meeting finder route" })).toBeInTheDocument();
     expect(screen.getByTestId("current-path")).toHaveTextContent("/recovery/meetings");
 
-    unmount();
+    cleanup();
     renderCard();
     fireEvent.click(screen.getByRole("button", { name: /milestones/i }));
     expect(await screen.findByRole("heading", { name: "Milestones route" })).toBeInTheDocument();
@@ -99,7 +120,11 @@ describe("ClientWeekProgress", () => {
 
     expect(await screen.findByText(/Guest check-ins stay on this device/i)).toBeInTheDocument();
     expect(screen.getByText("gratitude notes")).toBeInTheDocument();
+    expect(await screen.findByText("4")).toBeInTheDocument();
+    expect(screen.getByText(/Saved on this device while you are a guest/i)).toBeInTheDocument();
     expect(mocks.getMyCheckInWeekSummary).not.toHaveBeenCalled();
+    expect(mocks.getPrivatePracticeProgress).not.toHaveBeenCalled();
+    expect(mocks.getGuestPrivatePracticeProgress).toHaveBeenCalledOnce();
   });
 
   it("shows an empty week without implying a broken streak and links back to check-in", async () => {
@@ -110,7 +135,7 @@ describe("ClientWeekProgress", () => {
     renderCard();
 
     expect(await screen.findByText(/No check-ins saved this week/i)).toBeInTheDocument();
-    expect(screen.queryByText(/streak/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/check-in streak/i)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /check in when ready/i }));
     expect(await screen.findByRole("heading", { name: "Check-in route" })).toBeInTheDocument();
   });
@@ -123,6 +148,17 @@ describe("ClientWeekProgress", () => {
     fireEvent.click(screen.getByRole("button", { name: /try again/i }));
     await waitFor(() => expect(screen.getByText("2 check-ins this week")).toBeInTheDocument());
     expect(mocks.getMyCheckInWeekSummary).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the check-in journey visible when practice progress fails and retries that read", async () => {
+    mocks.getPrivatePracticeProgress.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ totalCompleted: 13, activeDaysLast7: 4 });
+    renderCard();
+
+    expect(await screen.findByText("2 check-ins this week")).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Your practice progress could not load.");
+    fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+    expect(await screen.findByText("13")).toBeInTheDocument();
+    expect(mocks.getPrivatePracticeProgress).toHaveBeenCalledTimes(2);
   });
 
   it("does not turn an unsure support answer into a suggested route", async () => {
