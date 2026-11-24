@@ -7,14 +7,19 @@ process.env.FIREBASE_CONFIG = JSON.stringify({ projectId: process.env.GCLOUD_PRO
 const admin = require("../src/firebaseAdminCompat.cjs");
 if (!admin.apps.length) admin.initializeApp({ projectId: process.env.GCLOUD_PROJECT });
 const db = admin.firestore();
+const auth = admin.auth();
 
 const connections = require("../src/practitionerConnections");
 const care = require("../src/practitionerCare");
 const messaging = require("../src/practitionerMessaging");
 const scheduling = require("../src/providerScheduling");
 
-const clientId = "journey-client";
-const providerId = "journey-practitioner";
+const suffix = `${process.pid}-${Date.now()}`;
+let clientId;
+let providerId;
+let clientAuth;
+let providerAuth;
+const createdUserIds = new Set();
 
 const requestConnection = connections.requestPractitionerConnection.run;
 const listProviderRequests = connections.listPractitionerConnectionRequests.run;
@@ -38,11 +43,40 @@ const listClientAppointments = scheduling.listMyUpcomingAppointments.run;
 const confirmClientAppointment = scheduling.respondToMyAppointment.run;
 
 function clientRequest(data = {}) {
-  return { auth: { uid: clientId, token: { email_verified: true, firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: clientAuth, data };
 }
 
 function providerRequest(data = {}) {
-  return { auth: { uid: providerId, token: { email_verified: true, role: "provider", firebase: { sign_in_provider: "password" } } }, data };
+  return { auth: providerAuth, data };
+}
+
+async function createVerifiedEmulatorIdentity(label, claims = {}) {
+  const email = `journey-${label}-${suffix}@example.test`;
+  const password = "Test-only-password-482!";
+  const signup = await fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-api-key`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const created = await signup.json();
+  assert.equal(signup.ok, true, `Auth Emulator should create the ${label} test identity: ${JSON.stringify(created)}`);
+  createdUserIds.add(created.localId);
+  await auth.updateUser(created.localId, { emailVerified: true });
+  if (Object.keys(claims).length) await auth.setCustomUserClaims(created.localId, claims);
+
+  // Refresh after setting verified status and custom claims, then verify the
+  // emulator-issued token before passing its claims to the callable handler.
+  const signin = await fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo-api-key`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const session = await signin.json();
+  assert.equal(signin.ok, true, `Auth Emulator should issue a fresh ${label} session: ${JSON.stringify(session)}`);
+  const token = await auth.verifyIdToken(session.idToken);
+  assert.equal(token.uid, created.localId);
+  assert.equal(token.email_verified, true);
+  return { uid: created.localId, token };
 }
 
 function futureStart() {
@@ -75,6 +109,12 @@ async function clean() {
     "checkins", "client_practitioner_support", "client_practitioner_practice_updates",
     "provider_availability", "appointment_requests", "appointments", "realHelpProviders", "users", "support_activity_events",
   ]) await deleteCollection(name);
+  for (const uid of createdUserIds) {
+    await auth.deleteUser(uid).catch((error) => {
+      if (error.code !== "auth/user-not-found") throw error;
+    });
+  }
+  createdUserIds.clear();
 }
 
 async function seedDirectoryAndAvailability() {
@@ -104,7 +144,15 @@ async function seedDirectoryAndAvailability() {
 
 before(async () => {
   assert.ok(process.env.FIRESTORE_EMULATOR_HOST, "Run this suite through the Firestore emulator");
-  await clean();
+  assert.ok(process.env.FIREBASE_AUTH_EMULATOR_HOST, "Run this suite through the Auth emulator");
+  const [clientIdentity, providerIdentity] = await Promise.all([
+    createVerifiedEmulatorIdentity("client"),
+    createVerifiedEmulatorIdentity("practitioner", { role: "provider" }),
+  ]);
+  clientId = clientIdentity.uid;
+  providerId = providerIdentity.uid;
+  clientAuth = { uid: clientIdentity.uid, token: clientIdentity.token };
+  providerAuth = { uid: providerIdentity.uid, token: providerIdentity.token };
   await seedDirectoryAndAvailability();
 });
 
@@ -116,7 +164,10 @@ after(async () => {
 test("client-to-practitioner journey connects, shares by choice, messages, receives support, and schedules", async () => {
   await assert.rejects(
     providerOverview(providerRequest({ clientId })),
-    (error) => error.code === "permission-denied",
+    (error) => {
+      assert.equal(error.code, "permission-denied", `Expected isolated access denial, received ${error.code}: ${error.message}`);
+      return true;
+    },
     "a practitioner must not read a client's overview before an accepted connection",
   );
   await assert.rejects(
