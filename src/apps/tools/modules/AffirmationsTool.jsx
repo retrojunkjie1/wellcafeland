@@ -58,6 +58,36 @@ const STARTER_PHRASES = {
     "I am still learning, and I do not need to be finished to deserve care.",
     "I can notice one thing I handled, however small.",
   ],
+  meaning: [
+    "I can notice meaning without needing a complete answer.",
+    "Small moments can matter, even when life feels uncertain.",
+    "I can let a question stay open while I choose what matters today.",
+    "I may take one step toward something I value, at my own pace.",
+  ],
+  values: [
+    "I can choose a value that fits this moment.",
+    "A small action can express what matters to me.",
+    "I can honor rest, care, or another value without earning it.",
+    "My values can guide one choice without deciding everything.",
+  ],
+  connection: [
+    "I can choose what connection means for me.",
+    "I may reach toward someone or something when I feel ready.",
+    "Needing space and valuing connection can both be true.",
+    "I can decide what kind of support feels right today.",
+  ],
+  gratitude: [
+    "I can appreciate something small without minimizing what is hard.",
+    "More than one feeling can be present at a time.",
+    "I do not have to turn gratitude into pressure.",
+    "I can notice what supports me, if anything comes to mind.",
+  ],
+  hope: [
+    "I can leave a possibility open without knowing the outcome.",
+    "I may take one next step, ask for support, or pause.",
+    "Uncertainty does not require me to decide everything now.",
+    "I can choose what feels manageable in this moment.",
+  ],
 };
 
 const friendlyGenerationError = (error) => {

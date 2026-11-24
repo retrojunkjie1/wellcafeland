@@ -13,6 +13,7 @@ export const TOOL_COMPONENT_MANIFEST = Object.freeze({
   meditation: "MeditationTool",
   acuwellness: "AcuwellnessTool",
   affirmations: "AffirmationsTool",
+  "spiritual-reflection": "SpiritualReflectionTool",
   "emotion-regulator": "SpecializedPathwayTool",
   "shame-release": "SpecializedPathwayTool",
   "sleep-reset": "SpecializedPathwayTool",

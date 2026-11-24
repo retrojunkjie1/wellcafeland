@@ -9,6 +9,7 @@ import EducationModule from "@/apps/tools/modules/EducationModule";
 import MeditationTool from "@/apps/tools/modules/MeditationTool";
 import AcuwellnessTool from "@/apps/tools/modules/AcuwellnessTool";
 import AffirmationsTool from "@/apps/tools/modules/AffirmationsTool";
+import SpiritualReflectionTool from "@/apps/tools/modules/SpiritualReflectionTool";
 import SpecializedPathwayTool from "@/apps/tools/modules/SpecializedPathwayTool";
 import LowEnergyPlanTool from "@/apps/tools/modules/LowEnergyPlanTool";
 import VisitPrepTool from "@/apps/tools/modules/VisitPrepTool";
@@ -27,6 +28,7 @@ const COMPONENT_IMPLEMENTATIONS = {
   MeditationTool,
   AcuwellnessTool,
   AffirmationsTool,
+  SpiritualReflectionTool,
   SpecializedPathwayTool,
   LowEnergyPlanTool,
   VisitPrepTool,
