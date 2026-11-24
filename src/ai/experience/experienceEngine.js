@@ -66,7 +66,11 @@ const EXPERIENCE_ROUTES = Object.freeze({
   "recovery.affirmation": Object.freeze({
     agentId: "healer",
     buildPayload(selection) {
-      return { concern: requireChoice(selection, "concern", ["anxiety", "cravings", "shame", "sleep", "grief", "self-worth"]) };
+      const frame = selection?.frame ?? "everyday";
+      return {
+        concern: requireChoice(selection, "concern", ["anxiety", "cravings", "shame", "sleep", "grief", "self-worth"]),
+        frame: requireChoice({ frame }, "frame", ["everyday", "spiritual"]),
+      };
     },
   }),
   "community.connection-option": Object.freeze({

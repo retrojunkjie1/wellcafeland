@@ -16,6 +16,10 @@ const CONCERN_TYPES = [
   { id: "grief", label: "Grief" },
   { id: "self-worth", label: "Self-Worth" },
 ];
+const LANGUAGE_FRAMES = [
+  { id: "everyday", label: "Everyday language", description: "Non-religious, grounded wording." },
+  { id: "spiritual", label: "Spiritual or meaning-centered", description: "Only if this frame feels right to you; no belief is assumed." },
+];
 
 const STARTER_PHRASES = {
   anxiety: [
@@ -69,6 +73,7 @@ const friendlyGenerationError = (error) => {
 
 const AffirmationsTool = ({ tool }) => {
   const [selectedConcern, setSelectedConcern] = useState("anxiety");
+  const [selectedFrame, setSelectedFrame] = useState("everyday");
   const [affirmations, setAffirmations] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -90,7 +95,7 @@ const AffirmationsTool = ({ tool }) => {
       });
 
     try {
-      const { result: responseResult } = await runWellnessExperience("recovery.affirmation", { concern: selectedConcern });
+      const { result: responseResult } = await runWellnessExperience("recovery.affirmation", { concern: selectedConcern, frame: selectedFrame });
       const phrases = Array.isArray(responseResult?.phrases)
         ? responseResult.phrases.filter((phrase) => typeof phrase === "string" && phrase.trim().length > 0).slice(0, 6)
         : [];
@@ -164,6 +169,20 @@ const AffirmationsTool = ({ tool }) => {
         </div>
       </div>
 
+      <fieldset className="lux-card p-4 space-y-3" disabled={isGenerating}>
+        <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Choose the language style</legend>
+        <p className="text-xs leading-relaxed text-muted-foreground">Spiritual language is optional. We do not infer your beliefs or tradition; you can keep, edit, or leave every phrase.</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {LANGUAGE_FRAMES.map((frame) => (
+            <button key={frame.id} type="button" onClick={() => setSelectedFrame(frame.id)} aria-pressed={selectedFrame === frame.id}
+              className={`rounded-2xl border p-3 text-left transition-colors ${selectedFrame === frame.id ? "border-foreground bg-foreground/10 text-foreground" : "border-border text-muted-foreground hover:bg-muted"}`}>
+              <span className="block text-sm font-medium">{frame.label}</span>
+              <span className="mt-1 block text-xs leading-relaxed">{frame.description}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       {/* Generate Button */}
       <div className="flex justify-center">
         <button
@@ -172,7 +191,7 @@ const AffirmationsTool = ({ tool }) => {
           disabled={isGenerating}
           className="inline-flex items-center justify-center rounded-full border border-foreground bg-foreground text-background px-6 py-2 text-sm font-medium hover:bg-background hover:text-foreground disabled:opacity-60 transition-colors"
         >
-          {isGenerating ? "Generating..." : "Generate Affirmations"}
+          {isGenerating ? "Preparing phrases…" : "Prepare phrases"}
         </button>
       </div>
 

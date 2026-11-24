@@ -143,7 +143,7 @@ const ALL_TOOLS = [
   {
     id: "affirmations",
     name: "Supportive Phrases",
-    description: "Generate grounded, editable phrases for a chosen concern; reject anything that feels false or unhelpful.",
+    description: "Generate editable support phrases for a chosen concern in everyday or user-requested spiritual/meaning-centered language.",
     category: "mind-thoughts",
     duration: "Optional",
     primaryAgentId: "healer_spiritual",

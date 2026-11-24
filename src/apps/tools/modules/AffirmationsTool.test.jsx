@@ -32,22 +32,29 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("AffirmationsTool and Healer", () => {
-  it("sends only the explicitly selected concern and renders the structured phrases", async () => {
+  it("sends only the explicitly selected concern and default language frame", async () => {
     render(<AffirmationsTool tool={{ id: "affirmations" }} />);
     fireEvent.click(screen.getByRole("button", { name: "Shame" }));
-    fireEvent.click(screen.getByRole("button", { name: "Generate Affirmations" }));
+    fireEvent.click(screen.getByRole("button", { name: "Prepare phrases" }));
 
-    expect(mocks.callAgent).toHaveBeenCalledWith("healer", { concern: "shame" });
+    expect(mocks.callAgent).toHaveBeenCalledWith("healer", { concern: "shame", frame: "everyday" });
     expect((await screen.findAllByText("I can take one moment at a time.")).length).toBeGreaterThan(0);
     expect(screen.getByText((_, element) => element?.tagName === "SPAN" && element.textContent.replace(/\s/g, "") === "1/4")).toBeInTheDocument();
     expect(mocks.logToolUsage).toHaveBeenCalledWith("affirmations", expect.objectContaining({ context: { count: 4 } }));
     expect(JSON.stringify(mocks.logToolUsage.mock.calls)).not.toContain("shame");
   });
 
+  it("forwards the user's explicit spiritual language choice", async () => {
+    render(<AffirmationsTool tool={{ id: "affirmations" }} />);
+    fireEvent.click(screen.getByRole("button", { name: /Spiritual or meaning-centered/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Prepare phrases" }));
+    expect(mocks.callAgent).toHaveBeenCalledWith("healer", { concern: "anxiety", frame: "spiritual" });
+  });
+
   it("keeps usable local starter phrases when the response is incomplete", async () => {
     mocks.callAgent.mockResolvedValue({ result: { summary: "Incomplete", phrases: ["Only one optional phrase."] } });
     render(<AffirmationsTool tool={{ id: "affirmations" }} />);
-    fireEvent.click(screen.getByRole("button", { name: "Generate Affirmations" }));
+    fireEvent.click(screen.getByRole("button", { name: "Prepare phrases" }));
 
     expect(await screen.findByText(/couldn’t prepare a complete set/)).toBeInTheDocument();
     expect((await screen.findAllByText("I can take this one moment at a time.")).length).toBeGreaterThan(0);

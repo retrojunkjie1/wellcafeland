@@ -145,6 +145,15 @@ describe("choice-led WellnessCafe Experience Engine", () => {
     });
   });
 
+  it("defaults Healer to everyday language and forwards only an explicitly selected frame", () => {
+    expect(planWellnessExperience("recovery.affirmation", { concern: "grief", privateBelief: "ignored" }).payload)
+      .toEqual({ concern: "grief", frame: "everyday" });
+    expect(planWellnessExperience("recovery.affirmation", { concern: "grief", frame: "spiritual", privateBelief: "ignored" }).payload)
+      .toEqual({ concern: "grief", frame: "spiritual" });
+    expect(() => planWellnessExperience("recovery.affirmation", { concern: "grief", frame: "infer-from-profile" }))
+      .toThrow(/Choose one of the available options/);
+  });
+
   it("rejects invalid map choices, values, privacy topics, and malformed progress before invocation", async () => {
     const invalidRequests = [
       ["preferences.map", { situations: ["unlisted"], helps: ["quiet"], avoid: [] }],
