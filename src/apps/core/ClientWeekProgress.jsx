@@ -7,6 +7,7 @@ import { GUEST_CHECKINS_STORAGE_KEY } from "./checkInConstants";
 import { summarizeCheckInWeek } from "../milestones/milestoneProgress";
 import { getCheckInNextStep } from "./checkInNextStep";
 import { importGuestCheckIns, prepareGuestCheckInsForImport } from "@/services/guestCheckInMigration";
+import { getGuestPrivatePracticeProgress, getPrivatePracticeProgress } from "@/services/privatePracticeProgress";
 
 function guestSummary() {
   try {
@@ -77,6 +78,8 @@ export default function ClientWeekProgress() {
   const signedIn = Boolean(user?.uid && !user.isAnonymous);
   const scope = signedIn ? `account:${user.uid}` : "guest";
   const [state, setState] = useState({ scope: "", summary: null, loading: true, error: "" });
+  const [practiceState, setPracticeState] = useState({ scope: "", progress: null, loading: true, error: "" });
+  const [practiceRetry, setPracticeRetry] = useState(0);
   const deviceEntries = signedIn ? readGuestCheckIns() : [];
   const [importState, setImportState] = useState({ scope: "", status: "idle", message: "" });
   const sequence = useRef(0);
@@ -122,6 +125,19 @@ export default function ClientWeekProgress() {
     };
   }, [authLoading, scope, signedIn]);
 
+  useEffect(() => {
+    if (authLoading) return undefined;
+    let cancelled = false;
+    setPracticeState({ scope, progress: null, loading: true, error: "" });
+    const request = signedIn ? getPrivatePracticeProgress() : Promise.resolve(getGuestPrivatePracticeProgress());
+    request.then((progress) => {
+      if (!cancelled) setPracticeState({ scope, progress, loading: false, error: "" });
+    }).catch(() => {
+      if (!cancelled) setPracticeState({ scope, progress: null, loading: false, error: "Your practice progress could not load." });
+    });
+    return () => { cancelled = true; };
+  }, [authLoading, scope, signedIn, practiceRetry]);
+
   const handleImportDeviceEntries = async () => {
     if (!signedIn || !deviceEntries.length || currentImportState.status === "saving") return;
     setImportState({ scope, status: "saving", message: "Preparing your device copy…" });
@@ -150,6 +166,8 @@ export default function ClientWeekProgress() {
   const summary = state.scope === scope ? state.summary : null;
   const currentImportState = importState.scope === scope ? importState : { status: "idle", message: "" };
   const loading = authLoading || state.scope !== scope || state.loading;
+  const practiceLoading = authLoading || practiceState.scope !== scope || practiceState.loading;
+  const practiceProgress = practiceState.scope === scope ? practiceState.progress : null;
   const resumeStep = summary?.latestSupportChoice && summary.latestSupportChoice !== "I am not sure yet"
     ? getCheckInNextStep(summary.latestSupportChoice)
     : null;
@@ -233,6 +251,42 @@ export default function ClientWeekProgress() {
           )}
         </>
       )}
+
+      <section aria-labelledby="home-practice-progress-title" className="mt-4 rounded-2xl border border-violet-100/[0.12] bg-violet-100/[0.025] p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="rounded-xl border border-violet-100/15 bg-violet-100/[0.06] p-2 text-violet-100"><Sparkles aria-hidden="true" className="h-5 w-5" /></span>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.13em] text-violet-100/65">Daily Practice</p>
+              <h3 id="home-practice-progress-title" className="mt-1 text-base font-semibold text-white">Your practice, on your terms</h3>
+              <p className="mt-1 text-sm leading-relaxed text-white/55">Only a private completion count is shown here. Practice names, choices, and reflections are not included or shared.</p>
+            </div>
+          </div>
+          <button type="button" onClick={() => navigate("/tools")} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-violet-100/20 px-4 text-sm font-medium text-violet-50 transition hover:bg-violet-100/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-200">
+            Choose a practice<ArrowRight aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </div>
+        {practiceLoading ? (
+          <p role="status" className="mt-4 text-sm text-white/50">Loading your private practice count…</p>
+        ) : practiceState.error && practiceState.scope === scope ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200/15 bg-rose-100/[0.035] px-4 py-3">
+            <p role="alert" className="text-sm text-rose-100/80">{practiceState.error}</p>
+            <button type="button" onClick={() => setPracticeRetry((attempt) => attempt + 1)} className="min-h-10 rounded-full border border-white/15 px-4 text-sm text-white/75">Try again</button>
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/[0.07] bg-black/10 px-4 py-3">
+              <p className="text-2xl font-semibold text-white">{Number(practiceProgress?.totalCompleted) || 0}</p>
+              <p className="mt-1 text-xs text-white/55">practice completions recorded</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.07] bg-black/10 px-4 py-3">
+              <p className="text-2xl font-semibold text-white">{Number(practiceProgress?.activeDaysLast7) || 0}</p>
+              <p className="mt-1 text-xs text-white/55">days with a practice in the last 7 days · choose your own rhythm</p>
+            </div>
+          </div>
+        )}
+        <p className="mt-3 text-xs text-white/35">{signedIn ? "Private to your account. This summary is not shared with a practitioner." : "Saved on this device while you are a guest."}</p>
+      </section>
 
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/[0.08] pt-3">
         <button type="button" onClick={() => navigate("/dashboard")} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-sm font-medium text-white/80 transition hover:bg-white/[0.06]">Check-in history<ArrowRight aria-hidden="true" className="h-4 w-4" /></button>
