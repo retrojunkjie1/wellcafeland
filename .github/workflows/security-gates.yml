@@ -31,6 +31,12 @@ jobs:
           PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
         run: node scripts/check-approved-behavior-change.mjs
 
+      - name: Check production Functions deployment manifest
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/function-deployment-manifest.mjs --check
+
       - name: Run regression suite
         run: npm test -- --maxWorkers=1
 

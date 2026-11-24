@@ -59,5 +59,6 @@ jobs:
           npm ci --prefix functions
           credential_file="$RUNNER_TEMP/firebase-service-account.json"
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$credential_file"
-          GOOGLE_APPLICATION_CREDENTIALS="$credential_file" npx --yes firebase-tools deploy --only functions:aiSession,functions:multimodalTts,functions:multimodalChat,functions:cancelMyAppointment --project wellnesscafelanding --non-interactive
+          functions_to_deploy="$(node scripts/function-deployment-manifest.mjs)"
+          GOOGLE_APPLICATION_CREDENTIALS="$credential_file" npx --yes firebase-tools deploy --only "$functions_to_deploy" --project wellnesscafelanding --non-interactive
           rm -f "$credential_file"
