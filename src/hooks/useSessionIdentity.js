@@ -60,8 +60,8 @@ export function useSessionIdentity() {
 
     // Auth state is source of truth - sync immediately on mount
     const currentUser = auth.currentUser;
-    if (currentUser) {
-      // User exists, set to account mode immediately (will be updated by onAuthStateChanged)
+    if (currentUser && !currentUser.isAnonymous) {
+      // A registered account can resolve permissions while auth state settles.
       setIdentity((prev) => ({
         ...prev,
         mode: "account",
@@ -69,7 +69,8 @@ export function useSessionIdentity() {
         isLoading: true, // Still loading role details
       }));
     } else {
-      // No user, set to guest mode immediately
+      // Signed-out and Firebase anonymous sessions are guests. Anonymous auth
+      // is used by a few guest flows, but it must not become an account scope.
       const guestId = getOrCreateGuestId();
       setIdentity({
         mode: "guest",
@@ -90,7 +91,7 @@ export function useSessionIdentity() {
     let identityRequestVersion = 0;
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       const requestVersion = ++identityRequestVersion;
-      if (user) {
+      if (user && !user.isAnonymous) {
         // Clear the previous account's permissions while the new account's
         // claims and profile are being resolved. This prevents stale role
         // navigation from surviving an account switch.
@@ -190,8 +191,7 @@ export function useSessionIdentity() {
           workspaceIntent,
         });
       } else {
-        // Guest mode - generate or retrieve session guestId
-        // Auth state is source of truth: if user is null, we are in guest mode
+        // Signed-out or anonymous-auth session: use the local guest identity.
         const guestId = getOrCreateGuestId();
         setIdentity({
           mode: "guest",

@@ -31,7 +31,7 @@ const isToolDetailRoute = (path) =>
 
 export default function ExperienceShell() {
   const location = useLocation();
-  const { user, loading: authLoading, logout } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, logout } = useAuth();
   const identity = useSessionIdentity();
   const themeMode = useOSStore((state) => state.settings.themeMode);
   const interfaceDensity = useOSStore((state) => state.settings.interfaceDensity);
@@ -54,7 +54,6 @@ export default function ExperienceShell() {
     navPush(location.pathname);
   }, [location.pathname]);
 
-  const isAuthenticated = Boolean(user);
   const authReady = !authLoading && !identity.isLoading;
   const verificationRoute = ["/verify-email", "/login", "/signup", "/forgot-password", "/reset-password"].includes(location.pathname);
   const mustVerifyEmail = authReady && user && !user.isAnonymous && user.emailVerified === false;

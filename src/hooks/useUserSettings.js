@@ -1,5 +1,6 @@
 // src/hooks/useUserSettings.js
 import { useEffect, useState } from "react";
+import { auth } from "@/firebase";
 import { useOSStore } from "@/stores/useOSStore";
 import { useSessionIdentity } from "@/hooks/useSessionIdentity";
 import { getUserSettings, updateUserSettings } from "@/services/userSettingsService";
@@ -13,7 +14,17 @@ import { getUserSettings, updateUserSettings } from "@/services/userSettingsServ
 export function useUserSettings() {
   const identity = useSessionIdentity();
   const candidateUserId = identity?.userId || identity?.uid || null;
-  const userId = identity?.mode === "account" && !identity?.isLoading ? candidateUserId : null;
+  const authUser = auth?.currentUser;
+  const isAuthenticatedAccount = Boolean(
+    candidateUserId
+    && authUser?.uid === candidateUserId
+    && !authUser.isAnonymous,
+  );
+  const userId = identity?.mode === "account"
+    && !identity?.isLoading
+    && isAuthenticatedAccount
+    ? candidateUserId
+    : null;
 
   const settings = useOSStore((state) => state.settings);
   const hydrateSettings = useOSStore((state) => state.hydrateSettings);

@@ -1,14 +1,20 @@
 import React from "react";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import JournalingTool from "./JournalingTool";
 
-const { callAgent } = vi.hoisted(() => ({ callAgent: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  callAgent: vi.fn(),
+  db: null,
+  addDoc: vi.fn(),
+  identity: { userId: null, mode: "guest" },
+}));
 
-vi.mock("@/ai/agents/agentClient", () => ({ callAgent }));
-vi.mock("@/firebase", () => ({ db: null }));
+vi.mock("@/ai/agents/agentClient", () => ({ callAgent: mocks.callAgent }));
+vi.mock("firebase/firestore", () => ({ collection: vi.fn(() => ({})), addDoc: mocks.addDoc }));
+vi.mock("@/firebase", () => ({ db: mocks.db }));
 vi.mock("@/hooks/useSessionIdentity", () => ({
-  useSessionIdentity: () => ({ userId: null, mode: "guest" }),
+  useSessionIdentity: () => mocks.identity,
 }));
 vi.mock("@/utils/toolContract", () => ({
   createToolResult: vi.fn(),
@@ -28,10 +34,33 @@ vi.mock("@/hooks/useNaturalVoice", () => ({
 }));
 
 describe("JournalingTool Scribe assist", () => {
-  beforeEach(() => callAgent.mockReset());
+  beforeEach(() => {
+    mocks.callAgent.mockReset();
+    mocks.addDoc.mockReset();
+    mocks.db = null;
+    mocks.identity = { userId: null, mode: "guest" };
+    localStorage.clear();
+  });
+
+  it("keeps journal text in device storage when identity is guest, even with Firestore available", async () => {
+    mocks.db = {};
+    mocks.identity = { userId: "guest-session", mode: "guest" };
+    render(<JournalingTool />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Clear the page/ }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Journal entry" }), {
+      target: { value: "A private note for this device." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save Entry" }));
+
+    await waitFor(() => expect(JSON.parse(localStorage.getItem("wc-journal-guest-session"))).toMatchObject([
+      { text: "A private note for this device.", isAnonymous: true },
+    ]));
+    expect(mocks.addDoc).not.toHaveBeenCalled();
+  });
 
   it("requests a fresh prompt using only the selected mode and keeps entry text local", async () => {
-    callAgent.mockResolvedValue({
+    mocks.callAgent.mockResolvedValue({
       result: {
         summary: "A gentle starting point.",
         prompt: "What would help you feel a little more supported right now?",
@@ -47,11 +76,11 @@ describe("JournalingTool Scribe assist", () => {
     fireEvent.click(screen.getByRole("button", { name: "Suggest a fresh prompt" }));
 
     expect(await screen.findByText("What would help you feel a little more supported right now?")).toBeInTheDocument();
-    expect(callAgent).toHaveBeenCalledOnce();
-    expect(callAgent).toHaveBeenCalledWith("scribe", {
+    expect(mocks.callAgent).toHaveBeenCalledOnce();
+    expect(mocks.callAgent).toHaveBeenCalledWith("scribe", {
       question: expect.stringContaining('The person selected the journaling mode "Name what is here"'),
     });
-    expect(JSON.stringify(callAgent.mock.calls)).not.toContain("PRIVATE ENTRY");
+    expect(JSON.stringify(mocks.callAgent.mock.calls)).not.toContain("PRIVATE ENTRY");
 
     fireEvent.click(screen.getByRole("button", { name: "Use this question" }));
     expect(screen.getByRole("textbox", { name: "Journal entry" })).toHaveValue(
@@ -60,7 +89,7 @@ describe("JournalingTool Scribe assist", () => {
   });
 
   it("keeps spoken guidance and Scribe available in embedded Journal", async () => {
-    callAgent.mockResolvedValue({ result: { prompt: "What feels worth noticing today?" } });
+    mocks.callAgent.mockResolvedValue({ result: { prompt: "What feels worth noticing today?" } });
     render(<JournalingTool isEmbedded />);
 
     fireEvent.click(screen.getByRole("button", { name: /Clear the page/ }));
@@ -71,7 +100,7 @@ describe("JournalingTool Scribe assist", () => {
   });
 
   it("sends journal text to Mirror only after an explicit request and does not add its response to the entry", async () => {
-    callAgent.mockResolvedValue({
+    mocks.callAgent.mockResolvedValue({
       result: {
         summary: "An optional reflection.",
         reflection: "You wrote that rest felt difficult to ask for.",
@@ -86,8 +115,8 @@ describe("JournalingTool Scribe assist", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reflect this back" }));
 
     expect(await screen.findByText("You wrote that rest felt difficult to ask for.")).toBeInTheDocument();
-    expect(callAgent).toHaveBeenCalledOnce();
-    expect(callAgent).toHaveBeenCalledWith("mirror", { content: "Rest felt difficult to ask for." });
+    expect(mocks.callAgent).toHaveBeenCalledOnce();
+    expect(mocks.callAgent).toHaveBeenCalledWith("mirror", { content: "Rest felt difficult to ask for." });
     expect(entry).toHaveValue("Rest felt difficult to ask for.");
   });
 });

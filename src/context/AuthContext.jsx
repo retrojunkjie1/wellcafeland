@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
 
   // Preserve all granted spaces; `role` remains the primary route role.
   const fetchUserAccess = async (firebaseUser) => {
-    if (!firebaseUser || !auth || !db) {
+    if (!firebaseUser || firebaseUser.isAnonymous || !auth || !db) {
       return { role: null, roles: [], workspaceIntent: "client" };
     }
 
@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }) => {
 
   // Create or update user document in Firestore
   const ensureUserDoc = async (firebaseUser, userRole = "client") => {
-    if (!firebaseUser || !db) return;
+    if (!firebaseUser || firebaseUser.isAnonymous || !db) return;
 
     try {
       // Get latest token claims
@@ -164,7 +164,7 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       // Track auth state change
       try {
-        const state = firebaseUser ? "signed_in" : "signed_out";
+        const state = firebaseUser && !firebaseUser.isAnonymous ? "signed_in" : "signed_out";
         trackAuthStateChange(state, {
           uid: firebaseUser?.uid || null,
           email: firebaseUser?.email || null,
@@ -175,7 +175,7 @@ export const AuthProvider = ({ children }) => {
       }
       previousUser = firebaseUser;
       
-      if (firebaseUser) {
+      if (firebaseUser && !firebaseUser.isAnonymous) {
         // Force refresh ID token to get latest claims
         try {
           const tokenResult = await getIdTokenResult(firebaseUser, true);
@@ -214,7 +214,10 @@ export const AuthProvider = ({ children }) => {
         setWorkspaceIntent(access.workspaceIntent);
         await ensureUserDoc(firebaseUser, access.role);
       } else {
-        setUser(null);
+        // Keep the anonymous Firebase user available for supported guest flows
+        // (for example, linking a giver account), but do not load account roles,
+        // create a durable profile, or treat it as authenticated.
+        setUser(firebaseUser || null);
         setRole(null);
         setRoles([]);
         setWorkspaceIntent("client");
@@ -244,7 +247,7 @@ export const AuthProvider = ({ children }) => {
     roles,
     workspaceIntent,
     loading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !user.isAnonymous,
     isAdmin: roles.some((value) => ADMIN_ROLES.includes(value)) || role === "admin" || role === "superadmin",
     isProvider: roles.includes("provider") || roles.includes("provider_admin") || role === "provider" || role === "provider_admin",
     isClient: roles.includes("client") || (!roles.length && role === "client" && workspaceIntent !== "practitioner"),

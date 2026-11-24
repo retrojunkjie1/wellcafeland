@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getDoc: vi.fn(),
   setDoc: vi.fn(),
   firebaseUser: { uid: "test-user", email: "test@example.com", displayName: "Test User" },
+  anonymousUser: { uid: "anonymous-user", isAnonymous: true, email: null, getIdTokenResult: vi.fn() },
 }));
 
 vi.mock("firebase/auth", () => ({
@@ -25,8 +26,8 @@ vi.mock("../firebase", () => ({ auth: { name: "test-auth" }, db: { name: "test-d
 vi.mock("@/telemetry/telemetry", () => ({ logTelemetry: vi.fn(), trackAuthStateChange: vi.fn() }));
 
 function AuthSummary() {
-  const { role, isAdmin, isProvider } = useAuth();
-  return <output>{`${role || "none"}|${isAdmin}|${isProvider}`}</output>;
+  const { role, isAdmin, isProvider, isAuthenticated, user } = useAuth();
+  return <output>{`${role || "none"}|${isAdmin}|${isProvider}|${isAuthenticated}|${Boolean(user?.isAnonymous)}`}</output>;
 }
 
 function renderSignedInUser(claims) {
@@ -48,18 +49,31 @@ describe("AuthContext workspace-role mapping", () => {
   it("maps a Firebase admin boolean claim to the admin role even when the profile says client", async () => {
     renderSignedInUser({ admin: true });
 
-    expect(await screen.findByText("admin|true|false")).toBeInTheDocument();
+    expect(await screen.findByText("admin|true|false|true|false")).toBeInTheDocument();
   });
 
   it("maps a Firebase provider boolean claim to the provider role without a role string", async () => {
     renderSignedInUser({ provider: true });
 
-    expect(await screen.findByText("provider|false|true")).toBeInTheDocument();
+    expect(await screen.findByText("provider|false|true|true|false")).toBeInTheDocument();
   });
 
   it("recognizes provider roles in the signed claims array", async () => {
     renderSignedInUser({ roles: ["client", "provider"] });
 
-    expect(await screen.findByText("provider|false|true")).toBeInTheDocument();
+    expect(await screen.findByText("provider|false|true|true|false")).toBeInTheDocument();
+  });
+
+  it("retains an anonymous guest for supported linking flows without profile or role persistence", async () => {
+    mocks.onAuthStateChanged.mockImplementation((_auth, listener) => {
+      queueMicrotask(() => listener(mocks.anonymousUser));
+      return () => {};
+    });
+    render(<AuthProvider><AuthSummary /></AuthProvider>);
+
+    expect(await screen.findByText("none|false|false|false|true")).toBeInTheDocument();
+    expect(mocks.getIdTokenResult).not.toHaveBeenCalled();
+    expect(mocks.getDoc).not.toHaveBeenCalled();
+    expect(mocks.setDoc).not.toHaveBeenCalled();
   });
 });
