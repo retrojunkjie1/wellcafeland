@@ -1,7 +1,7 @@
 # WellnessCafe OS — Execution Roadmap
 
 **Roadmap authority:** [Master Blueprint and Definition of Done](../architecture/MASTER_VISION_BLUEPRINT.md)
-**Status date:** 2026-11-23
+**Status date:** 2026-11-24
 **Purpose:** sequence delivery across the whole OS without getting stuck in one role or repeating audits without closing journeys.
 
 The blueprint defines the vision, compartments, and exit criteria. This file is the shorter execution view. `CURRENT_PHASE.md` is the release/build diary, and `RETURN_TO_BACKLOG.md` holds open/deferred work. Existing Phase 1–6 labels remain useful capability groupings, but they are not a rule that only one part of the OS may improve at a time.
@@ -36,7 +36,7 @@ Finish reviewed onboarding, practical offerings, timezone-aware schedules, secur
 
 ### 4. In parallel: God-Eye and intelligence operations
 
-The canonical catalog maps 25 agents to production handler IDs. The last recorded authenticated live God-Eye check (2026-10-13) showed 25/25 enabled, none paused, and none without a handler. Local contracts cover 25/25 and the authenticated emulator workflow exercises all 25; the latest evidence records 0/25 individually observed in production. Handler registration and an enabled switch do not certify each agent's behavior or complete its intended workflow. PR #138 (released 2026-11-22) aligned six client-facing cards with existing consent-led routes and removed unsupported risk-monitoring claims. Next: continue the role-specific workflow evaluation, including an authorized live admin/practitioner/client walkthrough, and review event health, risk visibility, and application queues. The Custom AI sessions, Risk Radar, catalog/marketplace, session-sharing, and allowlisted operational-telemetry controls have local consumer gates; telemetry was newly wired on 2026-11-23 and has not yet been deployed. Recovery Tracking still lacks a defined behavior contract and Notifications has no delivery transport; keep both marked unconnected until those contracts exist.
+The canonical catalog maps 25 agents to production handler IDs. The last recorded authenticated live God-Eye check (2026-10-13) showed 25/25 enabled, none paused, and none without a handler. Local contracts cover 25/25 and the authenticated emulator workflow exercises all 25; the latest evidence records 0/25 individually observed in production. Handler registration and an enabled switch do not certify each agent's behavior or complete its intended workflow. PR #138 (released 2026-11-22) aligned six client-facing cards with existing consent-led routes and removed unsupported risk-monitoring claims. Next: continue the role-specific workflow evaluation, including an authorized live admin/practitioner/client walkthrough, and review event health, risk visibility, and application queues. The Custom AI sessions, Risk Radar, catalog/marketplace, session-sharing, and allowlisted operational-telemetry controls have local consumer gates; telemetry was released with PR #156 (main deployment run 45341825125 plus targeted Firestore rules/callable deployment); a production toggle exercise remains open. Recovery Tracking still lacks a defined behavior contract and Notifications has no delivery transport; keep both marked unconnected until those contracts exist.
 
 **Exit:** authorized admins can complete a review and operate the central agent system with auditable outcomes and no unnecessary access to private client content.
 
