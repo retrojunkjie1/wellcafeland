@@ -1,5 +1,19 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-23 — Directory work paused; cross-role journey resumed
+
+Per the project owner's direction, pause further assistance-directory expansion until it is selected again. The existing five-locality England batch remains committed locally as `221e207`; it is not represented as pushed, merged, or deployed. The current next workstream is cross-phase client → practitioner → admin integration.
+
+Re-ran the Firestore Emulator client-practitioner journey and scoped-admin workspace lifecycle against the current checkout: both passed (one test each). The suites cover connection, consent-scoped reads and revocation, messages, practitioner-shared support, appointment scheduling, disconnect/reconnect, scoped admin approval, and video-session lifecycle. These are local emulator results only. Separate authorized production accounts are still required for the live role-switching and media walkthrough; no production acceptance is claimed.
+
+### 2026-11-23 — Five-locality England directory depth batch (local verification passed; PR pending)
+
+Added 54 source-reviewed, city-scoped pathways across Coventry (20), Wolverhampton (9), Newcastle upon Tyne (6), Hull (11) and Leicester (8), with four treatment/recovery, two peer/community, two housing, 38 food/essentials, four funding/benefits, and four urgent-support records. All five cities now have at least one listing in each of the six directory categories when earlier records are included. Coventry's two new urgent routes are the local 24/7 NHS 111 mental-health option and evening Safe Haven; the other records retain provider eligibility, referral, schedule, price, and contact caveats. Closed Wolverhampton services and the council's conflicting soup-kitchen item were excluded. No existing directory record or ID was removed or reclassified.
+
+The coverage register reconciles the UK catalog to 1,450 unique IDs (1,432 locality-tagged; England 662, Scotland 287, Wales 267, Northern Ireland 216; 18 country-level). England and all four UK constituent countries remain in progress; the batch does not claim exhaustive or phone-confirmed coverage.
+
+Local verification passed: focused England/Scotland/Wales batch tests (6); full UI suite (155 files / 717 tests); Fireworks verifier (2), agent contracts (58), authenticated client-agent workflows (12), client-practitioner journey (1), practitioner care (12), scheduling (8), messaging (4), workspace lifecycle (1), Help Directory (7), recovery-source access (9), food directory (4), Firestore Rules (13), production build, Firebase predeploy and `git diff --check`. The production build emitted no chunk-size warning. The local shell runtime was Node 24.16.0 while the repository package range is Node 22; GitHub's required `verify` workflow remains the supported-runtime confirmation. PR creation, required checks, merge and production deployment are pending; no hosted behavior or release is claimed yet.
+
 ### 2026-11-23 — Conflicting country evidence rejected in resource search (released)
 
 PR [#154](https://github.com/retrojunkjie1/wellcafeland/pull/154) merged to `main` as `a33daa3b27225de2f1e79af805518d35940bdafa`. Country scoping now reconciles explicit country and ISO-code fields with city, state/province, region, location-line, and nested-address evidence. A record claiming GB is excluded from a UK search if its location evidence identifies Nigeria. The change is limited to the shared resource-country filter and its regression tests.
