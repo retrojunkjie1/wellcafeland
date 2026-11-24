@@ -10,9 +10,14 @@ import { getAnonymousUserId } from "../lib/userId";
 import { auth } from "../firebase";
 import { logError } from "@/lib/logger";
 import { callAiSession } from "@/services/aiSessionClient";
+import { getPublicPracticeAvailability } from "@/services/practiceAvailability";
 
 // in-memory buffer so Admin can see something even before backend wiring
 const telemetryBuffer = [];
+const AVAILABILITY_CACHE_MS = 30_000;
+let telemetryAvailabilityCache = null;
+let telemetryAvailabilityExpiresAt = 0;
+let telemetryAvailabilityRequest = null;
 
 const TELEMETRY_PAGE_IDS = new Set([
   "home", "provider_client_detail", "session_template_detail", "tools", "session_viewer",
@@ -76,9 +81,27 @@ const safeFetch = async (body) => {
   }
 };
 
+const isTelemetryCollectionEnabled = async () => {
+  if (Date.now() < telemetryAvailabilityExpiresAt && telemetryAvailabilityCache !== null) {
+    return telemetryAvailabilityCache;
+  }
+  if (!telemetryAvailabilityRequest) {
+    telemetryAvailabilityRequest = getPublicPracticeAvailability()
+      .then((availability) => availability?.telemetry === true)
+      .catch(() => false)
+      .then((enabled) => {
+        telemetryAvailabilityCache = enabled;
+        telemetryAvailabilityExpiresAt = Date.now() + AVAILABILITY_CACHE_MS;
+        return enabled;
+      })
+      .finally(() => { telemetryAvailabilityRequest = null; });
+  }
+  return telemetryAvailabilityRequest;
+};
+
 export const trackEvent = async (event) => {
   const safeEvent = sanitizeEvent(event);
-  if (!safeEvent) return;
+  if (!safeEvent || !(await isTelemetryCollectionEnabled())) return;
   const payload = {
     ...basePayload(),
     type: "event",

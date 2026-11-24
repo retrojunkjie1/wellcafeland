@@ -829,6 +829,29 @@ async function handleSession(req, res) {
     const userId = req.user?.uid || body.userId || "unknown";
     const mode = body.mode || "session";
 
+    // Operational telemetry does not require an AI provider. Check the saved
+    // admin kill switch before accepting or persisting any telemetry payload.
+    if (mode === "telemetry") {
+      try {
+        if (!(await isProductFeatureEnabled("telemetry", db))) {
+          return res.status(200).json({ ok: true, stored: false, disabled: true });
+        }
+        const sanitizedEvent = sanitizeOperationalTelemetry(body.event);
+        if (!sanitizedEvent) return res.status(200).json({ ok: true, stored: false });
+        const expiresAt = admin.firestore.Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await db.collection("telemetry").add({
+          userId,
+          event: sanitizedEvent,
+          ts: sanitizedEvent.timestamp,
+          expiresAt,
+        });
+        return res.status(200).json({ ok: true, stored: true });
+      } catch (err) {
+        console.error("Telemetry save error:", err?.code || "UNKNOWN");
+        return res.status(200).json({ ok: true, stored: false }); // Best-effort; fail closed.
+      }
+    }
+
     // This flag is currently wired only to custom AI-generated sessions.
     // Do not block the general Guide/chat route when an administrator pauses it.
     if (mode === "generate_session") {
@@ -882,25 +905,6 @@ async function handleSession(req, res) {
         links: [],
         meta: {},
       }));
-    }
-
-    // Handle telemetry mode
-    if (mode === "telemetry") {
-      try {
-        const sanitizedEvent = sanitizeOperationalTelemetry(body.event);
-        if (!sanitizedEvent) return res.status(200).json({ ok: true, stored: false });
-        const expiresAt = admin.firestore.Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        await db.collection("telemetry").add({
-          userId,
-          event: sanitizedEvent,
-          ts: sanitizedEvent.timestamp,
-          expiresAt,
-        });
-        return res.status(200).json({ ok: true, stored: true });
-      } catch (err) {
-        console.error("Telemetry save error:", err);
-        return res.status(200).json({ ok: true }); // Don't fail the request
-      }
     }
 
     // MODE: templates  → list AI-ready templates

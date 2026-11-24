@@ -29,7 +29,7 @@ async function clearCollection(name) {
 }
 
 async function clean() {
-  await Promise.all(["agent_events", "users", "sessions", "user_runtime", "checkins", "practitioner_applications", "community_supporter_applications"].map(clearCollection));
+  await Promise.all(["agent_events", "telemetry", "users", "sessions", "user_runtime", "checkins", "practitioner_applications", "community_supporter_applications"].map(clearCollection));
   await db.doc("admin/systemSettings").delete();
 }
 
@@ -190,9 +190,38 @@ test("AI session feature setting defaults on and reads the saved server value", 
 });
 
 test("public practice availability exposes allowlisted catalog and practitioner discovery flags", async () => {
-  assert.deepEqual(await getPublicPracticeAvailability({ data: {} }), { toolsCatalog: true, providersMarketplace: true });
-  await setSettings({ ...adminRequest, data: { settings: { features: { toolsCatalog: false, providersMarketplace: false } } } });
-  assert.deepEqual(await getPublicPracticeAvailability({ data: {} }), { toolsCatalog: false, providersMarketplace: false });
+  assert.deepEqual(await getPublicPracticeAvailability({ data: {} }), { toolsCatalog: true, providersMarketplace: true, telemetry: true });
+  await setSettings({ ...adminRequest, data: { settings: { features: { toolsCatalog: false, providersMarketplace: false, telemetry: false } } } });
+  assert.deepEqual(await getPublicPracticeAvailability({ data: {} }), { toolsCatalog: false, providersMarketplace: false, telemetry: false });
+});
+
+test("paused telemetry is dropped before storage and does not require an AI provider key", async () => {
+  const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url");
+  const token = `${encode({ alg: "none" })}.${encode({ sub: "telemetry-client" })}.`;
+  const response = {
+    headers: {},
+    set(name, value) { this.headers[name] = value; return this; },
+    status(code) { this.statusCode = code; return this; },
+    json(value) { this.body = value; return this; },
+    send(value) { this.body = value; return this; },
+  };
+  const request = {
+    method: "POST",
+    headers: { host: "localhost", authorization: `Bearer ${token}` },
+    body: { mode: "telemetry", event: { kind: "page_view", path: "home" } },
+  };
+
+  await handleSession(request, response);
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.stored, true);
+  assert.equal((await db.collection("telemetry").get()).size, 1);
+
+  await setSettings({ ...adminRequest, data: { settings: { features: { telemetry: false } } } });
+  const pausedResponse = { ...response, headers: {}, statusCode: null, body: null };
+  await handleSession(request, pausedResponse);
+  assert.equal(pausedResponse.statusCode, 200);
+  assert.deepEqual(pausedResponse.body, { ok: true, stored: false, disabled: true });
+  assert.equal((await db.collection("telemetry").get()).size, 1);
 });
 
 test("paused custom AI sessions stop at the server feature gate", async () => {

@@ -1,5 +1,9 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-23 — God-Eye operational telemetry control wired (local verification passed)
+
+Connected the saved Operational Telemetry switch end to end for allowlisted page-view and UI-action events. The public App Check availability callable returns only its allowlisted boolean; clients do not buffer or send those events when the switch is off and fail closed if availability cannot be checked. The authenticated server handler independently checks the saved flag before sanitization/storage, so stale clients cannot bypass the pause. This path no longer depends on an AI provider key. Existing stored events are retained; disabling the switch does not delete data and does not control security/audit records or other legacy telemetry paths. Verification passed: admin-observability Firestore Emulator (10 tests), focused telemetry/catalog UI tests (5), production Vite build, and `git diff --check`. Changed-file lint was attempted; the repository ESLint configuration ignores these service/Functions files and emits its existing `.eslintignore` deprecation warning. This is local only: no Functions/Hosting deploy, live toggle exercise, or production behavior is claimed. Remaining disconnected global controls are Recovery Tracking (behavior contract not yet defined) and Notifications (no delivery service); both remain honestly disabled in the console. Directory expansion remains paused.
+
 ### 2026-11-23 — Directory work paused; cross-role journey resumed
 
 Per the project owner's direction, pause further assistance-directory expansion until it is selected again. The existing five-locality England batch remains committed locally as `221e207`; it is not represented as pushed, merged, or deployed. The current next workstream is cross-phase client → practitioner → admin integration.

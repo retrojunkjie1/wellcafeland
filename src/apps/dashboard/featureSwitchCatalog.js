@@ -21,8 +21,8 @@ export const FEATURE_SWITCH_CATALOG = Object.freeze({
   },
   telemetry: {
     label: "Operational telemetry",
-    description: "This saved switch does not change telemetry collection yet.",
-    connected: false,
+    description: "Controls future allowlisted page-view and UI-action events. It does not delete stored events or control security/audit records.",
+    connected: true,
   },
   riskRadar: {
     label: "Risk Radar",
