@@ -30,6 +30,30 @@ function deferred() {
 }
 
 describe("useSessionIdentity account transitions", () => {
+  it("keeps Firebase anonymous sessions in local guest identity without reading account profiles", async () => {
+    const anonymousUser = {
+      uid: "firebase-anonymous-guest",
+      isAnonymous: true,
+      getIdTokenResult: vi.fn(),
+    };
+    const { result } = renderHook(() => useSessionIdentity());
+
+    await waitFor(() => expect(mocks.authListener).toBeTypeOf("function"));
+    await act(async () => { mocks.authListener(anonymousUser); });
+
+    await waitFor(() => expect(result.current).toMatchObject({
+      mode: "guest",
+      userId: "guest-test-id",
+      isLoading: false,
+      isProvider: false,
+      isAdmin: false,
+      isGiver: false,
+      roles: [],
+    }));
+    expect(anonymousUser.getIdTokenResult).not.toHaveBeenCalled();
+    expect(mocks.getDoc).not.toHaveBeenCalled();
+  });
+
   it("does not let a late prior-account lookup overwrite the active account", async () => {
     mocks.getDoc.mockResolvedValue({ exists: () => false });
     const priorToken = deferred();
