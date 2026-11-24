@@ -25,6 +25,54 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function validUserSettings() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'themeMode', 'interfaceDensity', 'allowEmotionFromChat', 'allowFaceSignals',
+          'trajectoryTrackingEnabled', 'personalizationMemoryEnabled',
+          'recoveryStorySuggestionsEnabled', 'recoveryMode', 'notifications', 'privacy', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'themeMode', 'interfaceDensity', 'allowEmotionFromChat', 'allowFaceSignals',
+          'trajectoryTrackingEnabled', 'personalizationMemoryEnabled',
+          'recoveryStorySuggestionsEnabled', 'recoveryMode', 'notifications', 'privacy', 'updatedAt'
+        ])
+        && data.themeMode in ['deep-night', 'dawn', 'system']
+        && data.interfaceDensity in ['cozy', 'compact']
+        && data.allowEmotionFromChat is bool
+        && data.allowFaceSignals is bool
+        && data.trajectoryTrackingEnabled is bool
+        && data.personalizationMemoryEnabled is bool
+        && data.recoveryStorySuggestionsEnabled is bool
+        && data.recoveryMode in ['gentle', 'standard', 'intensive']
+        && data.notifications is map
+        && data.notifications.keys().hasOnly([
+          'emailEnabled', 'pushEnabled', 'dailyCheckIn', 'milestoneAlerts', 'providerMessages', 'circleActivity'
+        ])
+        && data.notifications.keys().hasAll([
+          'emailEnabled', 'pushEnabled', 'dailyCheckIn', 'milestoneAlerts', 'providerMessages', 'circleActivity'
+        ])
+        && data.notifications.emailEnabled is bool
+        && data.notifications.pushEnabled is bool
+        && data.notifications.dailyCheckIn is bool
+        && data.notifications.milestoneAlerts is bool
+        && data.notifications.providerMessages is bool
+        && data.notifications.circleActivity is bool
+        && data.privacy is map
+        && data.privacy.keys().hasOnly([
+          'hideSensitiveText', 'redactNamesInHistory', 'dataRetention', 'requirePinForProviderView'
+        ])
+        && data.privacy.keys().hasAll([
+          'hideSensitiveText', 'redactNamesInHistory', 'dataRetention', 'requirePinForProviderView'
+        ])
+        && data.privacy.hideSensitiveText is bool
+        && data.privacy.redactNamesInHistory is bool
+        && data.privacy.dataRetention in ['7d', '30d', '90d', 'forever']
+        && data.privacy.requirePinForProviderView is bool
+        && data.updatedAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
     function validInitialUserRole() {
       return !('role' in request.resource.data)
         || request.resource.data.role == 'client'
@@ -147,6 +195,15 @@ service cloud.firestore {
         // must use an explicitly authorized server-side workflow.
         allow read, write: if isOwner(userId);
       }
+    }
+
+    // Account preferences are private to their owner. Restrict writes to the
+    // client settings schema so this path cannot become a role or policy store.
+    match /user_settings/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create, update: if isOwner(userId) && validUserSettings();
+      allow delete: if false;
     }
 
     // Community giving data is callable-function-only. The public listing

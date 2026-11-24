@@ -6,9 +6,11 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
+  serverTimestamp,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -241,5 +243,69 @@ describe("clinical care-plan Firestore rules", () => {
     await assertFails(setDoc(doc(scopedDb, "resources", "resource-denied"), { title: "No directory scope" }));
     await assertFails(getDoc(doc(scopedDb, "admin_access_assignments", "scoped-admin")));
     await assertFails(getDoc(doc(scopedDb, "admin_access_audit", "event-1")));
+  });
+});
+
+describe("account preference Firestore rules", () => {
+  const validPreferences = () => ({
+    themeMode: "deep-night",
+    interfaceDensity: "cozy",
+    allowEmotionFromChat: false,
+    allowFaceSignals: false,
+    trajectoryTrackingEnabled: true,
+    personalizationMemoryEnabled: false,
+    recoveryStorySuggestionsEnabled: false,
+    recoveryMode: "standard",
+    notifications: {
+      emailEnabled: true,
+      pushEnabled: false,
+      dailyCheckIn: true,
+      milestoneAlerts: true,
+      providerMessages: true,
+      circleActivity: true,
+    },
+    privacy: {
+      hideSensitiveText: false,
+      redactNamesInHistory: true,
+      dataRetention: "90d",
+      requirePinForProviderView: false,
+    },
+    updatedAt: serverTimestamp(),
+  });
+
+  it("allows an account to create and read only its validated preference document", async () => {
+    const ownerDb = testEnv.authenticatedContext("client-a").firestore();
+    const ref = doc(ownerDb, "user_settings", "client-a");
+
+    await assertSucceeds(setDoc(ref, validPreferences()));
+    await assertSucceeds(getDoc(ref));
+  });
+
+  it("denies cross-account, signed-out, list, and delete access", async () => {
+    const ownerDb = testEnv.authenticatedContext("client-a").firestore();
+    const anotherDb = testEnv.authenticatedContext("client-b").firestore();
+    const signedOutDb = testEnv.unauthenticatedContext().firestore();
+    const ownerRef = doc(ownerDb, "user_settings", "client-a");
+
+    await assertSucceeds(setDoc(ownerRef, validPreferences()));
+    await assertFails(getDoc(doc(anotherDb, "user_settings", "client-a")));
+    await assertFails(getDoc(doc(signedOutDb, "user_settings", "client-a")));
+    await assertFails(getDocs(collection(ownerDb, "user_settings")));
+    await assertFails(setDoc(doc(anotherDb, "user_settings", "client-a"), validPreferences()));
+    await assertFails(setDoc(doc(signedOutDb, "user_settings", "client-a"), validPreferences()));
+    await assertFails(deleteDoc(ownerRef));
+  });
+
+  it("rejects unknown fields and malformed preference values", async () => {
+    const ownerDb = testEnv.authenticatedContext("client-a").firestore();
+
+    await assertFails(setDoc(doc(ownerDb, "user_settings", "client-a"), {
+      ...validPreferences(),
+      godAdmin: true,
+    }));
+    await assertFails(setDoc(doc(ownerDb, "user_settings", "client-a"), {
+      ...validPreferences(),
+      notifications: { ...validPreferences().notifications, providerMessages: "yes" },
+    }));
   });
 });

@@ -33,7 +33,7 @@ const NotificationsSettingsPage = () => {
           <Bell className="mt-0.5 h-5 w-5 shrink-0 text-amber-200" />
           <div>
             <h2 className="text-sm font-semibold text-white">Reminder delivery is not connected yet</h2>
-            <p className="mt-1 text-sm leading-relaxed text-white/60">Your choices below are saved for your account, but this app is not currently sending reminder emails or phone notifications. We’ll show that clearly when delivery is ready.</p>
+            <p className="mt-1 text-sm leading-relaxed text-white/60">Your choices stay on this device in guest mode and sync to your account when you’re signed in. This app is not currently sending reminder emails or phone notifications; we’ll show that clearly when delivery is ready.</p>
           </div>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
