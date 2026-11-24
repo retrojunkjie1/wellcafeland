@@ -12,6 +12,16 @@ test("Healer prompt is built only from an allowed selected support topic", () =>
   assert.throws(() => normalizeHealerRequest({ concern: "self-harm", note: "private" }), { code: "INVALID_HEALER_CONCERN" });
 });
 
+test("Healer accepts the bounded reflection topics without forwarding reflection answers", () => {
+  for (const [concern, label] of [["meaning", "meaning"], ["values", "personal values"], ["connection", "connection"], ["gratitude", "gratitude"], ["hope", "hope"]]) {
+    const request = normalizeHealerRequest({ concern, frame: "everyday", answer: "private reflection that must not be used" });
+    const prompt = buildHealerPrompt(request);
+    assert.equal(request.concern, concern);
+    assert.match(prompt, new RegExp(`selected the topic: ${label}`));
+    assert.doesNotMatch(prompt, /private reflection that must not be used/);
+  }
+});
+
 test("Healer uses spiritual framing only when explicitly selected and never infers a tradition", () => {
   const request = normalizeHealerRequest({ concern: "grief", frame: "spiritual", faith: "private and ignored" });
   const prompt = buildHealerPrompt(request);

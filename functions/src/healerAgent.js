@@ -5,6 +5,11 @@ const CONCERNS = Object.freeze({
   sleep: "sleep",
   grief: "grief",
   "self-worth": "self-worth",
+  meaning: "meaning",
+  values: "personal values",
+  connection: "connection",
+  gratitude: "gratitude",
+  hope: "hope",
 });
 const LANGUAGE_FRAMES = Object.freeze({
   everyday: "everyday and non-religious",

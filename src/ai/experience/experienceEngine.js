@@ -68,7 +68,7 @@ const EXPERIENCE_ROUTES = Object.freeze({
     buildPayload(selection) {
       const frame = selection?.frame ?? "everyday";
       return {
-        concern: requireChoice(selection, "concern", ["anxiety", "cravings", "shame", "sleep", "grief", "self-worth"]),
+        concern: requireChoice(selection, "concern", ["anxiety", "cravings", "shame", "sleep", "grief", "self-worth", "meaning", "values", "connection", "gratitude", "hope"]),
         frame: requireChoice({ frame }, "frame", ["everyday", "spiritual"]),
       };
     },

@@ -39,6 +39,7 @@ import UrgeSurfingTool from "./modules/UrgeSurfingTool";
 import MeditationTool from "./modules/MeditationTool";
 import AcuwellnessTool from "./modules/AcuwellnessTool";
 import AffirmationsTool from "./modules/AffirmationsTool";
+import SpiritualReflectionTool from "./modules/SpiritualReflectionTool";
 import SpecializedPathwayTool from "./modules/SpecializedPathwayTool";
 import LowEnergyPlanTool from "./modules/LowEnergyPlanTool";
 import VisitPrepTool from "./modules/VisitPrepTool";
@@ -64,6 +65,7 @@ const MODULE_TOOLS = {
   "care-coordination": CareHandoffTool,
   acuwellness: AcuwellnessTool,
   affirmations: AffirmationsTool,
+  "spiritual-reflection": SpiritualReflectionTool,
   "panic-reset": PanicResetSessionView,
 };
 
@@ -90,6 +92,7 @@ const MODULE_OWNED_COMPLETION = new Set([
   "emotion-regulator",
   "shame-release",
   "sleep-reset",
+  "spiritual-reflection",
 ]);
 
 const COMPLETION_COPY = {
