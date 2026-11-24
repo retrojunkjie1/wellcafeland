@@ -1,5 +1,9 @@
 # WELLNESSCAFE — CURRENT PHASE
 
+### 2026-11-24 — Anonymous-auth preferences remain local (PR in progress)
+
+A follow-up audit found that Firebase anonymous-auth sessions were classified as account sessions by the session-identity hook. That allowed the account-settings hook to read or write `/user_settings/{anonymousUid}`, despite the intended device-local guest boundary. Account preference I/O now requires a resolved identity whose UID matches the current Firebase user and whose session is non-anonymous. Added four hook regressions for anonymous guests, valid account hydration/write ordering, failed account reads, and switching accounts. Focused tests passed (4/4); full `verify:release` passed (UI 156 files / 722 tests, all scoped server/emulator suites, 16 Firestore Rules tests, production build, Firebase predeploy, and diff check). This fix is not deployed yet. Account preference persistence in an authorized production session remains unverified; no real account was changed.
+
 ### 2026-11-24 — Account preferences and cross-role verification released
 
 PR [#156](https://github.com/retrojunkjie1/wellcafeland/pull/156) merged to `main` as `697d0a60f69e3e1173891fadf5b3121e2770d32f`. It connects authenticated account preferences to Firestore with owner-only reads/writes and strict field/value allowlists. Guest identities stay local and are not used as account document IDs. Writes wait for a successful account read and use a server timestamp. The change also upgrades client-practitioner and scoped-admin/workspace integration journeys to synthetic Auth Emulator users and verified emulator-issued tokens.
