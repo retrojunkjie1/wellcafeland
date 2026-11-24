@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
   confirmMyAppointment,
+  cancelMyAppointment,
   listAppointmentsForClient,
   listMyAppointmentRequests,
   listMyConnectedPractitioners,
@@ -54,6 +55,8 @@ export default function ClientUpcomingAppointments() {
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState("");
   const [actionError, setActionError] = useState("");
+  const [actionNotice, setActionNotice] = useState("");
+  const [cancelRequestId, setCancelRequestId] = useState("");
   const [requestId, setRequestId] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
   const [practitioners, setPractitioners] = useState([]);
@@ -84,6 +87,8 @@ export default function ClientUpcomingAppointments() {
     setRefreshing(false);
     setBusyId("");
     setActionError("");
+    setActionNotice("");
+    setCancelRequestId("");
     setRequestServiceError("");
     setRequestId("");
     setRequestMessage("");
@@ -225,6 +230,26 @@ export default function ClientUpcomingAppointments() {
     }
   };
 
+  const cancel = async (appointmentId) => {
+    const scope = identityScope;
+    setBusyId(appointmentId);
+    setActionError("");
+    setActionNotice("");
+    try {
+      const result = await cancelMyAppointment(appointmentId);
+      if (identityScopeRef.current !== scope) return;
+      if (result?.ok) {
+        setAppointments((current) => current.filter((item) => item.id !== appointmentId));
+        setCancelRequestId("");
+        setActionNotice("Session cancelled. Your practitioner will see it in their schedule the next time it refreshes.");
+      } else setActionError(result?.error || "We couldn’t cancel this session right now. Please try again.");
+    } catch {
+      if (identityScopeRef.current === scope) setActionError("We couldn’t cancel this session right now. Check your connection and try again.");
+    } finally {
+      if (identityScopeRef.current === scope) setBusyId("");
+    }
+  };
+
   const sendSessionRequest = async (event) => {
     event.preventDefault();
     const scope = identityScope;
@@ -315,6 +340,7 @@ export default function ClientUpcomingAppointments() {
       </div>}
       {status === "ready" && appointments.length === 0 && <p className="mt-4 rounded-xl border border-white/8 bg-slate-950/30 p-3 text-sm text-white/55">No upcoming sessions have been scheduled yet.</p>}
       {actionError && <p className="mt-3 rounded-lg border border-amber-100/15 bg-amber-100/[0.04] p-3 text-sm text-amber-50/80" role="alert">{actionError}</p>}
+      {actionNotice && <p className="mt-3 rounded-lg border border-emerald-100/15 bg-emerald-100/[0.04] p-3 text-sm text-emerald-50/85" role="status">{actionNotice}</p>}
       {status === "ready" && <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/35 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-medium text-white">Request a session</h3><p className="mt-1 text-xs leading-relaxed text-white/50">Choose a time to ask about. It isn’t booked until your practitioner accepts.</p></div>
           {practitioners.length > 0 && <button type="button" onClick={() => { setRequestFormOpen((open) => !open); setActionError(""); }} className="min-h-10 rounded-lg bg-sky-100 px-3 text-sm font-semibold text-slate-950">{requestFormOpen ? "Close" : "Choose a time"}</button>}
@@ -343,9 +369,10 @@ export default function ClientUpcomingAppointments() {
           <p className="mt-2 text-xs text-white/55">With {appointment.practitionerName}</p>
           <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-white/55">{appointment.sessionFormat !== "in-person" ? <Video className="h-3.5 w-3.5" aria-hidden="true" /> : null}{appointment.sessionFormat === "wellnesscafe-video" ? "WellnessCafe private room" : appointment.sessionFormat === "video" ? "External video session" : "In-person session"}</p>
           {appointment.sessionFormat === "wellnesscafe-video" && <div className="mt-3 rounded-xl border border-emerald-200/15 bg-emerald-200/[0.045] p-3"><p className="text-sm text-emerald-100">WellnessCafe private room</p>{appointment.status === "confirmed" ? <Link to={`/sessions/${encodeURIComponent(appointment.id)}/video?returnTo=client`} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg bg-emerald-100 px-4 text-sm font-semibold text-slate-950"><Video className="h-4 w-4" aria-hidden="true" />Join private session</Link> : <p className="mt-1 text-xs text-white/55">Join becomes available once both people confirm.</p>}</div>}
-          {appointment.sessionFormat === "video" && getSecureMeetingHost(appointment.meetingLink) && <div className="mt-3 rounded-xl border border-sky-200/15 bg-sky-200/[0.045] p-3"><p className="text-xs text-white/65">Your practitioner shared a video meeting link.</p><p className="mt-1 text-xs text-white/45">Opens {getSecureMeetingHost(appointment.meetingLink)} in a new tab; this page stays open.</p><a href={appointment.meetingLink} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg bg-sky-100 px-4 text-sm font-semibold text-slate-950"><Video className="h-4 w-4" aria-hidden="true" />Join video session<ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a></div>}
+          {appointment.sessionFormat === "video" && appointment.status !== "cancelled" && getSecureMeetingHost(appointment.meetingLink) && <div className="mt-3 rounded-xl border border-sky-200/15 bg-sky-200/[0.045] p-3"><p className="text-xs text-white/65">Your practitioner shared a video meeting link.</p><p className="mt-1 text-xs text-white/45">Opens {getSecureMeetingHost(appointment.meetingLink)} in a new tab; this page stays open.</p><a href={appointment.meetingLink} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-lg bg-sky-100 px-4 text-sm font-semibold text-slate-950"><Video className="h-4 w-4" aria-hidden="true" />Join video session<ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /></a></div>}
           {startsSoon && <p className="mt-3 rounded-lg bg-sky-100/[0.07] px-3 py-2 text-xs font-medium text-sky-100">Coming up within 24 hours</p>}
           {appointment.status === "scheduled" && <button type="button" disabled={busyId === appointment.id} onClick={() => confirm(appointment.id)} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-200 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-60"><Check className="h-4 w-4" aria-hidden="true" />{busyId === appointment.id ? "Saving…" : "Confirm session"}</button>}
+          {["scheduled", "confirmed"].includes(appointment.status) && <div className="mt-3">{cancelRequestId === appointment.id ? <div className="rounded-xl border border-rose-200/15 bg-rose-200/[0.035] p-3"><p className="text-sm text-white/80">Cancel this session for both you and your practitioner? This can’t be undone.</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={busyId === appointment.id} onClick={() => cancel(appointment.id)} className="min-h-10 rounded-lg bg-rose-200 px-3 py-2 text-sm font-semibold text-slate-950 disabled:opacity-60">{busyId === appointment.id ? "Cancelling…" : "Confirm cancellation"}</button><button type="button" disabled={busyId === appointment.id} onClick={() => setCancelRequestId("")} className="min-h-10 rounded-lg border border-white/15 px-3 py-2 text-sm text-white/75">Keep session</button></div></div> : <button type="button" disabled={busyId === appointment.id} onClick={() => { setCancelRequestId(appointment.id); setActionError(""); setActionNotice(""); }} className="min-h-10 rounded-lg border border-rose-200/20 px-3 py-2 text-sm text-rose-100/85 transition hover:bg-rose-200/[0.06] disabled:opacity-50">Cancel session</button>}</div>}
           {appointment.changeRequest?.status === "pending" && <p className="mt-3 rounded-lg border border-amber-100/15 bg-amber-100/[0.045] px-3 py-2 text-sm text-amber-50/85" role="status">Your request for a different time has been sent. Your practitioner will follow up.{appointment.changeRequest.message && <span className="mt-1 block text-xs text-white/55">Your note: {appointment.changeRequest.message}</span>}</p>}
           {["accepted", "declined"].includes(appointment.changeRequest?.status) && <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2 text-sm text-white/70" role="status">{appointment.changeRequest.responseMessage || (appointment.changeRequest.status === "accepted" ? "Your practitioner updated the session time." : "The current session time remains scheduled.")}</p>}
           {["scheduled", "confirmed"].includes(appointment.status) && appointment.changeRequest?.status !== "pending" && <div className="mt-3">

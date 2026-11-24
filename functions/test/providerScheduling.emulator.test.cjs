@@ -14,6 +14,7 @@ const listProviderAppointmentRequests = scheduling.listProviderAppointmentReques
 const respondToProviderAppointmentRequest = scheduling.respondToProviderAppointmentRequest.run;
 const listMyUpcomingAppointments = scheduling.listMyUpcomingAppointments.run;
 const respondToMyAppointment = scheduling.respondToMyAppointment.run;
+const cancelMyAppointment = scheduling.cancelMyAppointment.run;
 const listProviderAppointments = scheduling.listProviderAppointments.run;
 const requestAppointmentChange = scheduling.requestAppointmentChange.run;
 const updateProviderAppointment = scheduling.updateProviderAppointment.run;
@@ -97,6 +98,61 @@ test("client request, practitioner acceptance, and client confirmation stay in s
   await respondToMyAppointment(clientRequest({ appointmentId: scheduled.id }));
   assert.equal((await listMyUpcomingAppointments(clientRequest())).appointments[0].status, "confirmed");
   assert.equal((await listProviderAppointments(providerRequest({ from: new Date(), to: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) }))).appointments[0].status, "confirmed");
+});
+
+test("client cancellation is owner-scoped, idempotent, audited, and visible to the practitioner", async () => {
+  const startAt = futureStart();
+  const appointmentRef = db.collection("appointments").doc("client-cancel-lifecycle");
+  await appointmentRef.set({
+    clientId, providerId,
+    startAt: admin.firestore.Timestamp.fromDate(startAt),
+    endAt: admin.firestore.Timestamp.fromDate(new Date(startAt.getTime() + 45 * 60_000)),
+    status: "confirmed",
+    sessionFormat: "wellnesscafe-video",
+    note: "private appointment note",
+  });
+
+  await assert.rejects(
+    cancelMyAppointment(clientRequest({ appointmentId: appointmentRef.id }, "unrelated-client")),
+    (error) => error.code === "not-found",
+  );
+  await assert.rejects(
+    cancelMyAppointment({ data: { appointmentId: appointmentRef.id } }),
+    (error) => error.code === "unauthenticated",
+  );
+  const cancelled = await cancelMyAppointment(clientRequest({ appointmentId: appointmentRef.id }));
+  const retry = await cancelMyAppointment(clientRequest({ appointmentId: appointmentRef.id }));
+  assert.deepEqual(cancelled, { ok: true, status: "cancelled", alreadyCancelled: false });
+  assert.deepEqual(retry, { ok: true, status: "cancelled", alreadyCancelled: true });
+  const stored = await appointmentRef.get();
+  assert.equal(stored.get("status"), "cancelled");
+  assert.equal(stored.get("cancelledBy"), "client");
+  assert.deepEqual((await listMyUpcomingAppointments(clientRequest())).appointments, []);
+  const providerAppointments = await listProviderAppointments(providerRequest({ from: new Date(), to: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) }));
+  assert.equal(providerAppointments.appointments[0].status, "cancelled");
+  const [clientEvents, providerEvents] = await Promise.all([
+    db.collection("support_activity_events").where("uid", "==", clientId).get(),
+    db.collection("support_activity_events").where("uid", "==", providerId).get(),
+  ]);
+  assert.deepEqual(clientEvents.docs.map((doc) => doc.get("eventCode")), ["appointment_cancelled"]);
+  assert.deepEqual(providerEvents.docs.map((doc) => doc.get("eventCode")), ["appointment_cancelled"]);
+  assert.ok([...clientEvents.docs, ...providerEvents.docs].every((doc) => !doc.data().note && !doc.data().meetingLink));
+});
+
+test("a client cannot cancel a past appointment", async () => {
+  const appointmentRef = db.collection("appointments").doc("client-cancel-past");
+  const startAt = new Date(Date.now() - 60 * 60_000);
+  await appointmentRef.set({
+    clientId, providerId,
+    startAt: admin.firestore.Timestamp.fromDate(startAt),
+    endAt: admin.firestore.Timestamp.fromDate(new Date(startAt.getTime() + 45 * 60_000)),
+    status: "confirmed",
+  });
+  await assert.rejects(
+    cancelMyAppointment(clientRequest({ appointmentId: appointmentRef.id })),
+    (error) => error.code === "failed-precondition",
+  );
+  assert.equal((await appointmentRef.get()).get("status"), "confirmed");
 });
 
 test("retrying a completed practitioner response is idempotent", async () => {

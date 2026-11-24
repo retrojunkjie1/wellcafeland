@@ -161,6 +161,16 @@ export async function confirmMyAppointment(id) {
   }
 }
 
+export async function cancelMyAppointment(id) {
+  try {
+    if (!id) return { ok: false, error: "Choose an appointment to cancel." };
+    const response = await invokeAppointmentFunction("cancelMyAppointment", { appointmentId: id });
+    return { ok: true, status: response.status };
+  } catch (err) {
+    return { ok: false, error: err?.message || "This appointment could not be cancelled. Please try again." };
+  }
+}
+
 export async function requestAppointmentTimeChange(id, message = "") {
   try {
     if (!id) return { ok: false, error: "Choose an appointment first." };
@@ -212,6 +222,7 @@ export default {
   listAppointmentsForClient,
   updateAppointment,
   confirmMyAppointment,
+  cancelMyAppointment,
   requestAppointmentTimeChange,
   respondToAppointmentTimeChange,
   requestAppointmentVideoToken,

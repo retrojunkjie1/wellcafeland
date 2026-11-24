@@ -122,6 +122,7 @@ exports.listProviderAppointments = providerScheduling.listProviderAppointments;
 exports.listMyUpcomingAppointments = providerScheduling.listMyUpcomingAppointments;
 exports.listAppointmentsForProviderClient = providerScheduling.listAppointmentsForProviderClient;
 exports.respondToMyAppointment = providerScheduling.respondToMyAppointment;
+exports.cancelMyAppointment = providerScheduling.cancelMyAppointment;
 exports.requestAppointmentChange = providerScheduling.requestAppointmentChange;
 exports.respondToAppointmentChangeRequest = providerScheduling.respondToAppointmentChangeRequest;
 exports.createProviderAppointment = providerScheduling.createProviderAppointment;

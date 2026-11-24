@@ -92,6 +92,7 @@ Use this checklist during the later hands-on testing phase. Automated checks and
 - Submit the same request twice or retry after a slow response. Confirm there is one request, no false success, and a clear status.
 - Confirm the practitioner's accept, decline, or proposed change appears with the right status. Confirm a declined or cancelled request cannot be joined as an appointment.
 - Cancel or change a request and confirm both workspaces show the same current state after refresh and a new sign-in.
+- Cancel a future appointment as the client and confirm it disappears from the client's upcoming list, remains visibly cancelled in the practitioner's schedule after refresh, cannot be joined, and cannot be cancelled by another client. Confirm no real-time notification is implied or expected.
 
 ### Practitioner: receive and respond
 

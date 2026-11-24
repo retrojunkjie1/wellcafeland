@@ -7,6 +7,7 @@ import ClientUpcomingAppointments from "./ClientUpcomingAppointments";
 const mocks = vi.hoisted(() => ({
   user: { uid: "client-1", isAnonymous: false },
   confirmMyAppointment: vi.fn(),
+  cancelMyAppointment: vi.fn(),
   listAppointmentsForClient: vi.fn(),
   listMyAppointmentRequests: vi.fn(),
   listMyConnectedPractitioners: vi.fn(),
@@ -21,6 +22,7 @@ vi.mock("@/context/AuthContext", () => ({
 
 vi.mock("@/services/appointmentService", () => ({
   confirmMyAppointment: mocks.confirmMyAppointment,
+  cancelMyAppointment: mocks.cancelMyAppointment,
   listAppointmentsForClient: mocks.listAppointmentsForClient,
   listMyAppointmentRequests: mocks.listMyAppointmentRequests,
   listMyConnectedPractitioners: mocks.listMyConnectedPractitioners,
@@ -49,6 +51,7 @@ function setReadyDefaults({ appointments = [], practitioners = [], requests = []
 beforeEach(() => {
   mocks.user = { uid: "client-1", isAnonymous: false };
   mocks.confirmMyAppointment.mockResolvedValue({ ok: true });
+  mocks.cancelMyAppointment.mockResolvedValue({ ok: true, status: "cancelled" });
   mocks.listAppointmentsForClient.mockResolvedValue([]);
   mocks.listMyAppointmentRequests.mockResolvedValue([]);
   mocks.listMyConnectedPractitioners.mockResolvedValue([]);
@@ -131,6 +134,36 @@ describe("client session workspace lifecycle", () => {
 
     expect(await screen.findByRole("link", { name: "Join private session" })).toHaveAttribute("href", "/sessions/appointment-1/video?returnTo=client");
     expect(mocks.confirmMyAppointment).toHaveBeenCalledWith("appointment-1");
+  });
+
+  it("requires an explicit second action to cancel and removes the session after success", async () => {
+    setReadyDefaults({
+      appointments: [{ id: "appointment-cancel", startAt: futureStart(), status: "confirmed", sessionFormat: "in-person", practitionerName: "Sam Practitioner" }],
+    });
+    renderAppointments();
+
+    expect(await screen.findByText("With Sam Practitioner")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel session" }));
+    expect(screen.getByText(/This can’t be undone/)).toBeInTheDocument();
+    expect(mocks.cancelMyAppointment).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Confirm cancellation" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Session cancelled.");
+    expect(mocks.cancelMyAppointment).toHaveBeenCalledWith("appointment-cancel");
+    expect(screen.queryByText("With Sam Practitioner")).not.toBeInTheDocument();
+  });
+
+  it("keeps the appointment visible and explains failure when cancellation does not save", async () => {
+    setReadyDefaults({ appointments: [{ id: "appointment-stays", startAt: futureStart(), status: "scheduled", practitionerName: "Sam Practitioner" }] });
+    mocks.cancelMyAppointment.mockResolvedValueOnce({ ok: false, error: "The session is no longer cancellable." });
+    renderAppointments();
+
+    expect(await screen.findByText("With Sam Practitioner")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel session" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm cancellation" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The session is no longer cancellable.");
+    expect(screen.getByText("With Sam Practitioner")).toBeInTheDocument();
   });
 
   it("offers a real retry when the schedule service fails", async () => {

@@ -20,12 +20,12 @@ const EVENTS = new Set([
   "message_sent", "message_send_failed", "connection_request_sent",
   "connection_request_received", "connection_request_failed", "connection_request_accepted",
   "connection_request_declined", "connection_response_failed", "connection_ended", "session_request_received",
-  "message_received",
+  "message_received", "appointment_cancelled",
 ]);
 const SERVER_EVENTS = new Set([
   "connection_request_sent", "connection_request_received", "connection_request_accepted",
   "connection_request_declined", "connection_ended", "session_request_sent", "session_request_received",
-  "session_request_accepted", "session_request_declined", "message_sent", "message_received",
+  "session_request_accepted", "session_request_declined", "message_sent", "message_received", "appointment_cancelled",
 ]);
 const WORKSPACES = new Set(["client", "practitioner", "giver", "admin"]);
 const REQUIRED_FEATURE = new Map([
@@ -42,6 +42,7 @@ const REQUIRED_FEATURE = new Map([
   ["session_request_accepted", "sessions"],
   ["session_request_declined", "sessions"],
   ["session_response_failed", "sessions"],
+  ["appointment_cancelled", "sessions"],
   ["message_sent", "sessions"],
   ["message_received", "sessions"],
   ["message_send_failed", "sessions"],

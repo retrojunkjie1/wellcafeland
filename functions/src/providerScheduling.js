@@ -559,7 +559,7 @@ exports.listProviderAppointments = onCall({ region: REGION, enforceAppCheck: tru
       .where("startAt", "<=", Timestamp.fromDate(until))
       .orderBy("startAt", "asc")
       .limit(250));
-    return { appointments: snapshot.docs.map(serialize).filter((item) => item.status !== "cancelled") };
+    return { appointments: snapshot.docs.map(serialize) };
   });
 });
 
@@ -635,6 +635,40 @@ exports.respondToMyAppointment = onCall({ region: REGION, enforceAppCheck: true 
     });
     return { ok: true, status: "confirmed" };
   });
+});
+
+exports.cancelMyAppointment = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid || request.auth.token.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("unauthenticated", "Sign in to cancel an appointment.");
+  }
+  const appointmentId = typeof request.data?.appointmentId === "string" ? request.data.appointmentId.trim() : "";
+  if (!appointmentId) throw new HttpsError("invalid-argument", "Choose an appointment to cancel.");
+  const ref = db.collection("appointments").doc(appointmentId);
+  const outcome = await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists || snapshot.get("clientId") !== uid) {
+      throw new HttpsError("not-found", "This appointment is not available in your schedule.");
+    }
+    const current = snapshot.data();
+    if (current.status === "cancelled") return { newlyCancelled: false, providerId: current.providerId };
+    if (!["scheduled", "confirmed"].includes(current.status)
+      || !current.startAt?.toDate || current.startAt.toDate().getTime() <= Date.now()) {
+      throw new HttpsError("failed-precondition", "This appointment can no longer be cancelled from your schedule.");
+    }
+    transaction.update(ref, {
+      status: "cancelled",
+      cancelledBy: "client",
+      cancelledAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    return { newlyCancelled: true, providerId: current.providerId };
+  });
+  if (outcome.newlyCancelled) await recordTrustedSupportActivity([
+    { uid, feature: "sessions", eventCode: "appointment_cancelled" },
+    { uid: outcome.providerId, feature: "sessions", eventCode: "appointment_cancelled" },
+  ]);
+  return { ok: true, status: "cancelled", alreadyCancelled: !outcome.newlyCancelled };
 });
 
 exports.listAppointmentsForProviderClient = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
