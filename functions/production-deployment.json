@@ -1,0 +1,8 @@
+{
+  "functions": [
+    "aiSession",
+    "multimodalTts",
+    "multimodalChat",
+    "cancelMyAppointment"
+  ]
+}
